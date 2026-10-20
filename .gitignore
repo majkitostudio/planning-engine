@@ -1,5 +1,19 @@
-# Poznámka: stack je zatím neurčen. Toto je opatrný minimální soubor,
-# který lze po výběru stacku nahradit vhodnější šablonou.
+# Node / Next.js
+node_modules/
+.next/
+out/
+build/
+*.tsbuildinfo
+next-env.d.ts
+
+# Prostředí a tajné údaje
+.env
+.env.*
+!.env.example
+
+# Logy
+*.log
+npm-debug.log*
 
 # Editor / IDE
 .vscode/
@@ -9,11 +23,3 @@
 .DS_Store
 Thumbs.db
 desktop.ini
-
-# Prostředí a tajné údaje
-.env
-.env.*
-!.env.example
-
-# Logy
-*.log

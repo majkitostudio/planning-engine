@@ -5,8 +5,8 @@ Technický repozitář: `planning-engine`
 ## Účel projektu
 
 Plánovací Engine je záměr základu budoucího plánovacího nebo směnovacího enginu.
-Přesná doménová pravidla, omezení, optimalizační cíle, datový model, uživatelské role
-i technologický stack ještě **nejsou schváleny**.
+Přesná doménová pravidla, omezení, optimalizační cíle, datový model a uživatelské
+role ještě **nejsou schváleny**.
 
 ## Stav projektu
 
@@ -18,7 +18,29 @@ Toto je **počáteční technický scaffold**. Nejedná se o hotovou ani produk�
 
 ## Technologický stack
 
-Zatím **neurčen**. Stack-specifické soubory budou přidány až po výslovném rozhodnutí.
+- **Next.js** (App Router) + **TypeScript**
+- **React**
+
+Stack-specifické soubory: `package.json`, `tsconfig.json`, `next.config.mjs`,
+`app/`, `lib/`.
+
+## Struktura
+
+| Cesta | Popis | Stav |
+| --- | --- | --- |
+| `app/` | Next.js App Router (výchozí obrazovka) | `IMPLEMENTED` (scaffold) |
+| `lib/planning/` | Základ pro budoucí plánovací logiku (zatím prázdný) | `PLANNED` |
+| `docs/` | Přehled dokumentace | `IMPLEMENTED` (scaffold) |
+| `AGENTS.md` | Projektové instrukce pro agenty | `IMPLEMENTED` (scaffold) |
+
+## Vývoj
+
+```bash
+npm install
+npm run dev
+```
+
+Další příkazy: `npm run build`, `npm run start`, `npm run typecheck`.
 
 ## Dokumentace
 
@@ -27,7 +49,7 @@ Instrukce pro agenty v [`AGENTS.md`](AGENTS.md).
 
 ## Bezpečnost a hranice
 
-- Žádná produkční databáze, žádná autentizace/integrace, žádná reálná data.
+- Žádná produkční databáze, žádná autentizace/integrace, žádná reální data.
 - Přístup k externím službám (např. GitHub) vyžaduje samostatné potvrzení.
 
 ## Stav informací
