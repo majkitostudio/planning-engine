@@ -4,9 +4,10 @@ Technický repozitář: `planning-engine`
 
 ## Účel projektu
 
-Plánovací Engine je záměr základu budoucího plánovacího nebo směnovacího enginu.
-Přesná doménová pravidla, omezení, optimalizační cíle, datový model a uživatelské
-role ještě **nejsou schváleny**.
+Plánovací Engine je záměr **chytrého plánovače směn pro zaměstnance call centra**,
+určeného pro **managera telemarketingového oddělení**.
+Konkrétní doménová pravidla, omezení, optimalizační cíle, datový model a další
+role ještě **nejsou schváleny** (návrh v `docs/DOMAIN_SPECIFICATION.md`).
 
 ## Stav projektu
 
@@ -29,6 +30,7 @@ Stack-specifické soubory: `package.json`, `tsconfig.json`, `next.config.mjs`,
 | Cesta | Popis | Stav |
 | --- | --- | --- |
 | `app/` | Next.js App Router (výchozí obrazovka) | `IMPLEMENTED` (scaffold) |
+| `docs/DOMAIN_SPECIFICATION.md` | Návrh doménové specifikace | `PROPOSAL` |
 | `lib/planning/` | Základ pro budoucí plánovací logiku (zatím prázdný) | `PLANNED` |
 | `docs/` | Přehled dokumentace | `IMPLEMENTED` (scaffold) |
 | `AGENTS.md` | Projektové instrukce pro agenty | `IMPLEMENTED` (scaffold) |
@@ -44,12 +46,13 @@ Další příkazy: `npm run build`, `npm run start`, `npm run typecheck`.
 
 ## Dokumentace
 
-Přehled najdeš v [`docs/README.md`](docs/README.md).
-Instrukce pro agenty v [`AGENTS.md`](AGENTS.md).
+- Přehled: [`docs/README.md`](docs/README.md)
+- Návrh doménové specifikace: [`docs/DOMAIN_SPECIFICATION.md`](docs/DOMAIN_SPECIFICATION.md)
+- Instrukce pro agenty: [`AGENTS.md`](AGENTS.md)
 
 ## Bezpečnost a hranice
 
-- Žádná produkční databáze, žádná autentizace/integrace, žádná reální data.
+- Žádná produkční databáze, žádná autentizace/integrace, žádná reálná data.
 - Přístup k externím službám (např. GitHub) vyžaduje samostatné potvrzení.
 
 ## Stav informací

@@ -51,7 +51,9 @@ Tento soubor obsahuje projektové instrukce pro agenty pracující na projektu
 - **Plánovací Engine je počáteční technický scaffold (Next.js + TypeScript).**
 - Plánovací pravidla a doménová logika: neimplementovány (`lib/planning/` je zatím
   prázdný základ).
-- Doménová specifikace: `OPEN QUESTION`.
+- Doménová specifikace: návrh v `docs/DOMAIN_SPECIFICATION.md` (`PROPOSAL`) — kontext
+  domény (plánovač směn call centra pro managera telemarketingu) je `VERIFIED`,
+  pravidla a entity zatím ne.
 - Stav informací označuj popisky (`VERIFIED`, `PLANNED`, `ASSUMPTION`,
   `OPEN QUESTION`, `NOT VERIFIED`, `SIMULATED`, `BLOCKED`).
 
