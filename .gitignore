@@ -1,0 +1,19 @@
+# Poznámka: stack je zatím neurčen. Toto je opatrný minimální soubor,
+# který lze po výběru stacku nahradit vhodnější šablonou.
+
+# Editor / IDE
+.vscode/
+.idea/
+
+# Operační systém
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Prostředí a tajné údaje
+.env
+.env.*
+!.env.example
+
+# Logy
+*.log
