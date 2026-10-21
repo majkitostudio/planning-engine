@@ -1,9 +1,28 @@
 import type { Metadata } from "next";
+import { IBM_Plex_Mono, IBM_Plex_Sans } from "next/font/google";
 import "./globals.css";
 
+const sans = IBM_Plex_Sans({
+  subsets: ["latin", "latin-ext"],
+  weight: ["400", "500", "600", "700"],
+  variable: "--font-sans",
+  display: "swap",
+});
+
+const mono = IBM_Plex_Mono({
+  subsets: ["latin", "latin-ext"],
+  weight: ["400", "500"],
+  variable: "--font-mono",
+  display: "swap",
+});
+
 export const metadata: Metadata = {
-  title: "Plánovací Engine",
-  description: "Počáteční technický scaffold budoucího plánovacího enginu.",
+  title: {
+    default: "Plánovací engine",
+    template: "%s · Plánovací engine",
+  },
+  description:
+    "Chytrý plánovač měsíčních rozpisů směn zaměstnanců call centra AAAAuto.",
 };
 
 export default function RootLayout({
@@ -12,7 +31,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="cs">
+    <html lang="cs" className={`${sans.variable} ${mono.variable}`}>
       <body>{children}</body>
     </html>
   );
