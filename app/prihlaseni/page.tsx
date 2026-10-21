@@ -1,5 +1,11 @@
+import type { Metadata } from "next";
+import { Icon } from "@/components/icons";
 import { LoginForm } from "@/components/login-form";
 import { Alert } from "@/components/ui/alert";
+
+export const metadata: Metadata = {
+  title: "Přihlášení",
+};
 
 export default function LoginPage() {
   return (
@@ -7,11 +13,11 @@ export default function LoginPage() {
       <div className="login__card">
         <div className="login__brand">
           <span className="brand__mark" aria-hidden="true">
-            PE
+            <Icon name="calendar" width={19} height={19} />
           </span>
           <span className="brand__text">
             <span className="brand__name">Plánovací engine</span>
-            <span className="brand__sub">AAAAuto · TM oddělení</span>
+            <span className="brand__sub">AAAAuto Callcenter</span>
           </span>
         </div>
 

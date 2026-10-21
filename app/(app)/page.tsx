@@ -1,180 +1,223 @@
 import Link from "next/link";
-import { Alert } from "@/components/ui/alert";
-import { Badge } from "@/components/ui/badge";
-import { Def } from "@/components/ui/def";
-import { EmptyState } from "@/components/ui/empty-state";
 import { Icon } from "@/components/icons";
+import { Badge } from "@/components/ui/badge";
+import { StatCard } from "@/components/ui/stat-card";
+import { DEMO_ALERTS, DEMO_FREQUENT, DEMO_STATS } from "@/lib/demo-data";
 
-const INPUT_ITEMS = [
-  "Seznam zaměstnanců",
-  "Dostupnost zaměstnanců",
-  "Směny a šablony",
-  "Pravidla a preference",
+const STEPS = [
+  {
+    title: "Výběr plánovacího období",
+    desc: "Měsíc, na který se rozpis sestavuje.",
+    status: "Připraveno k návrhu",
+    variant: "info",
+  },
+  {
+    title: "Příprava vstupních dat",
+    desc: "Zaměstnanci, dostupnost, směny a pravidla.",
+    status: "Připraveno k návrhu",
+    variant: "info",
+  },
+  {
+    title: "Spuštění plánování",
+    desc: "Vyžaduje schválená pravidla a plánovací logiku.",
+    status: "Blokováno",
+    variant: "warning",
+  },
+  {
+    title: "Návrh rozpisu",
+    desc: "Zobrazí se po dokončení výpočtu.",
+    status: "Blokováno",
+    variant: "warning",
+  },
+  {
+    title: "Kontrola konfliktů",
+    desc: "Přehled nepokrytých směn a nesplněných požadavků.",
+    status: "Blokováno",
+    variant: "warning",
+  },
 ] as const;
 
 export default function DashboardPage() {
   return (
     <>
-      <div className="page-header">
-        <div>
-          <p className="page-header__eyebrow">Plánovací engine · Přehled</p>
-          <h1 className="page-header__title">Přehled plánování</h1>
-          <p className="page-header__desc">
-            Pracovní přehled pro sestavování měsíčních rozpisů směn zaměstnanců
-            call centra. Zatím nejsou připravena žádná vstupní data ani plán.
-          </p>
-        </div>
-        <Badge variant="neutral" dot={false}>
-          Období není vybráno
-        </Badge>
-      </div>
-
-      <div className="stack-lg">
-        <Alert>
-          <strong>Demonstrační prostředí.</strong> Aplikace zatím nemá
-          připojení k databázi ani plánovací logiku. Hodnoty zde jsou prázdné
-          nebo čekají na vstupní data.
-        </Alert>
-
-        <div className="grid grid--2">
-          <section className="card" aria-labelledby="card-period">
-            <div className="card__header">
-              <div>
-                <h2 className="card__title" id="card-period">
-                  Plánovací období
-                </h2>
-                <p className="card__sub">
-                  Kalendářní měsíc, na který se sestavuje rozpis
-                </p>
-              </div>
-              <Badge variant="neutral" dot={false}>
-                Nez vybráno
-              </Badge>
-            </div>
-            <div className="card__body">
-              <EmptyState
-                icon="calendar"
-                title="Nebylo vybráno žádné období"
-                description="Pro přípravu rozpisu nejprve vyberte kalendářní měsíc."
-                action={
-                  <button
-                    className="btn btn--ghost btn--sm"
-                    type="button"
-                    aria-disabled="true"
-                    title="Připravované — výběr období zatím není provázán se vstupními daty"
-                  >
-                    Vybrat období
-                  </button>
-                }
-              />
-            </div>
-            <div className="card__footer">
-              Výběr období bude k dispozici po navázání vstupních dat.
-            </div>
-          </section>
-
-          <section className="card" aria-labelledby="card-progress">
-            <div className="card__header">
-              <div>
-                <h2 className="card__title" id="card-progress">
-                  Stav přípravy rozpisu
-                </h2>
-                <p className="card__sub">Průběh pracovního postupu plánování</p>
-              </div>
-              <Badge variant="neutral" dot={false}>
-                Nezahájeno
-              </Badge>
-            </div>
-            <div className="card__body">
-              <div
-                className="progress"
-                role="img"
-                aria-label="Dokončeno 0 z 5 kroků"
-              >
-                {[0, 1, 2, 3, 4].map((segment) => (
-                  <span className="progress__seg" key={segment} />
-                ))}
-              </div>
-              <div className="defs">
-                <Def label="Dokončené kroky">
-                  <span className="mono">0 / 5</span>
-                </Def>
-                <Def label="Navrhovaný rozpis" muted>
-                  Zatím žádný
-                </Def>
-                <Def label="Konflikty" muted>
-                  Není co kontrolovat
-                </Def>
-              </div>
-            </div>
-          </section>
-        </div>
-
-        <div className="grid grid--2">
-          <section className="card" aria-labelledby="card-inputs">
-            <div className="card__header">
-              <div>
-                <h2 className="card__title" id="card-inputs">
-                  Vstupní data a připravenost
-                </h2>
-                <p className="card__sub">
-                  Co je třeba připravit před sestavením rozpisu
-                </p>
-              </div>
-              <Badge variant="neutral" dot={false}>
-                Nepřipraveno
-              </Badge>
-            </div>
-            <div className="card__body">
-              <div className="defs">
-                {INPUT_ITEMS.map((item) => (
-                  <Def key={item} label={item}>
-                    <Badge variant="neutral" dot={false}>
-                      Nepřipraveno
-                    </Badge>
-                  </Def>
-                ))}
-              </div>
-            </div>
-            <div className="card__footer">
-              Data se budou načítat z databáze po navázání doménového modelu.
-            </div>
-          </section>
-
-          <section className="card" aria-labelledby="card-conflicts">
-            <div className="card__header">
-              <div>
-                <h2 className="card__title" id="card-conflicts">
-                  Konflikty a nepokryté směny
-                </h2>
-                <p className="card__sub">
-                  Kontrola výsledku po sestavení rozpisu
-                </p>
-              </div>
-              <Badge variant="neutral" dot={false}>
-                Není co kontrolovat
-              </Badge>
-            </div>
-            <div className="card__body">
-              <EmptyState
-                icon="check"
-                title="Zatím nelze kontrolovat"
-                description="Kontrola konfliktů je k dispozici až po vygenerování návrhu rozpisu."
-              />
-            </div>
-          </section>
-        </div>
-
-        <div className="summary">
+      <div className="page-head">
+        <div className="page-head__lead">
+          <span className="page-head__icon" aria-hidden="true">
+            <Icon name="dashboard" width={22} height={22} />
+          </span>
           <div>
-            <p className="summary__label">Pracovní prostor plánování</p>
-            <p className="summary__value">Připraven k navrhování</p>
+            <h1 className="page-head__title">Přehled</h1>
+            <p className="page-head__sub">
+              Manažerský přehled plánování měsíčních rozpisů směn. Zobrazená
+              data jsou ukázková, nikoli skutečný provoz.
+            </p>
           </div>
+        </div>
+
+        <div className="page-head__actions">
           <Link className="btn btn--primary" href="/planovani">
-            <Icon name="calendar" width={16} height={16} aria-hidden="true" />
-            Otevřít pracovní plochu
+            <Icon name="calendar" width={17} height={17} />
+            Otevřít plán směn
           </Link>
         </div>
+      </div>
+
+      <div className="demo-notice" role="note">
+        <span className="demo-notice__icon" aria-hidden="true">
+          <Icon name="info" width={17} height={17} />
+        </span>
+        <p>
+          <strong>Demonstrační data.</strong> Čísla, jména i směny jsou smyšlené
+          ukázky rozvržení. Plánovací logika ani databázová data zatím nejsou
+          implementovány.
+        </p>
+      </div>
+
+      <div className="stat-grid">
+        {DEMO_STATS.map((stat) => (
+          <StatCard
+            key={stat.key}
+            icon={stat.icon}
+            tone={stat.tone}
+            label={stat.label}
+            value={stat.value}
+            meta={stat.meta}
+            trend={stat.trend}
+            detailHref={stat.detail ? "/planovani#upozorneni" : undefined}
+          />
+        ))}
+      </div>
+
+      <div className="layout-2col">
+        <div className="plan-main">
+          <section className="card" aria-labelledby="dash-steps">
+            <div className="card__head">
+              <div>
+                <h2 className="card__title" id="dash-steps">
+                  Postup přípravy rozpisu
+                </h2>
+                <p className="card__sub">
+                  Navržený pracovní postup, nikoli schválená pravidla
+                </p>
+              </div>
+              <Badge variant="neutral" dot={false}>
+                0 / 5
+              </Badge>
+            </div>
+            <ol className="data-list">
+              {STEPS.map((step, index) => (
+                <li className="data-row" key={step.title}>
+                  <span className="step-index" aria-hidden="true">
+                    {index + 1}
+                  </span>
+                  <span className="data-row__main">
+                    <span className="data-row__title">{step.title}</span>
+                    <span className="data-row__sub">{step.desc}</span>
+                  </span>
+                  <Badge variant={step.variant} dot={false}>
+                    {step.status}
+                  </Badge>
+                </li>
+              ))}
+            </ol>
+            <p className="table-note">
+              Kroky 3–5 jsou blokované do schválení doménového kontraktu.
+            </p>
+          </section>
+
+          <div className="cta-card">
+            <div>
+              <p className="cta-card__title">Připraveni k návrhu rozhraní</p>
+              <p className="cta-card__text">
+                Prohlédněte si pracovní plochu plánu směn s ukázkovou tabulkou,
+                záložkami a přehledy.
+              </p>
+            </div>
+            <Link className="btn btn--primary" href="/planovani">
+              Otevřít plán směn
+            </Link>
+          </div>
+        </div>
+
+        <aside className="plan-rail" aria-label="Přehledy a upozornění">
+          <section
+            className="card card--alert"
+            aria-labelledby="dash-alerts"
+          >
+            <div className="card__head">
+              <div>
+                <h2 className="card__title" id="dash-alerts">
+                  Aktuální upozornění
+                </h2>
+                <p className="card__sub">Ukázková data</p>
+              </div>
+              <Badge variant="danger" dot={false}>
+                7
+              </Badge>
+            </div>
+            <div className="alert-list">
+              {DEMO_ALERTS.map((alert) => (
+                <div className="alert-item" key={alert.label}>
+                  <Icon name="alert" width={15} height={15} />
+                  <span className="alert-item__label">{alert.label}</span>
+                  <span className="alert-item__count">{alert.count}</span>
+                </div>
+              ))}
+            </div>
+          </section>
+
+          <section className="card" aria-labelledby="dash-frequent">
+            <div className="card__head">
+              <div>
+                <h2 className="card__title" id="dash-frequent">
+                  Nejčastější požadavky
+                </h2>
+                <p className="card__sub">Ukázkové souhrny</p>
+              </div>
+              <span className="card__head-icon" aria-hidden="true">
+                <Icon name="users" width={18} height={18} />
+              </span>
+            </div>
+            <div className="rail-list">
+              {DEMO_FREQUENT.map((row) => (
+                <div className="rail-row" key={row.label}>
+                  <span
+                    className={`rail-row__icon rail-row__icon--${row.tone}`}
+                    aria-hidden="true"
+                  >
+                    <Icon name={row.icon} width={15} height={15} />
+                  </span>
+                  <span className="rail-row__label">{row.label}</span>
+                  <span className="rail-row__value">{row.value}</span>
+                  <span className={`rail-row__delta delta--${row.trend}`}>
+                    {row.delta}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </section>
+
+          <section className="ai-card" aria-labelledby="dash-ai">
+            <div className="ai-card__head">
+              <span className="ai-card__icon" aria-hidden="true">
+                <Icon name="sparkles" width={16} height={16} />
+              </span>
+              <h2 className="ai-card__title" id="dash-ai">
+                Plánovací asistent
+              </h2>
+              <Badge variant="warning" dot={false}>
+                Připravované
+              </Badge>
+            </div>
+            <p className="ai-card__text">
+              Pomůže sestavit rozpis podle dostupnosti a schválených pravidel.
+              Plánovací logika zatím není implementována.
+            </p>
+            <Link className="btn btn--primary" href="/planovani">
+              Otevřít plán směn
+            </Link>
+          </section>
+        </aside>
       </div>
     </>
   );
