@@ -4,8 +4,9 @@ Technický repozitář: `planning-engine`
 
 ## Účel projektu
 
-Plánovací Engine je záměr **chytrého plánovače směn pro zaměstnance call centra**,
-určeného pro **managera telemarketingového oddělení**.
+Plánovací Engine je záměr **chytrého plánovače měsíčních rozpisů směn** pro
+**zaměstnance call centra společnosti AAAAuto**, určeného pro **managera
+telemarketingového oddělení** (rozsah **více než 100 zaměstnanců**).
 Konkrétní doménová pravidla, omezení, optimalizační cíle, datový model a další
 role ještě **nejsou schváleny** (návrh v `docs/DOMAIN_SPECIFICATION.md`).
 
@@ -21,9 +22,10 @@ Toto je **počáteční technický scaffold**. Nejedná se o hotovou ani produk�
 
 - **Next.js** (App Router) + **TypeScript**
 - **React**
+- **PostgreSQL** + **Prisma**
 
 Stack-specifické soubory: `package.json`, `tsconfig.json`, `next.config.mjs`,
-`app/`, `lib/`.
+`prisma/`, `lib/`, `app/`.
 
 ## Struktura
 
@@ -31,18 +33,26 @@ Stack-specifické soubory: `package.json`, `tsconfig.json`, `next.config.mjs`,
 | --- | --- | --- |
 | `app/` | Next.js App Router (výchozí obrazovka) | `IMPLEMENTED` (scaffold) |
 | `docs/DOMAIN_SPECIFICATION.md` | Návrh doménové specifikace | `PROPOSAL` |
-| `lib/planning/` | Základ pro budoucí plánovací logiku (zatím prázdný) | `PLANNED` |
+| `prisma/` | Prisma konfigurace a schéma (bez doménových modelů) | `IMPLEMENTED` (technický základ) |
+| `lib/db.ts` | Singleton PrismaClient (technická vrstva) | `IMPLEMENTED` |
+| `lib/planning/` | Čistá plánovací logika (zatím bez implementace) | `PLANNED` |
+| `tests/` | Testy (Vitest) | `IMPLEMENTED` (smoke) |
 | `docs/` | Přehled dokumentace | `IMPLEMENTED` (scaffold) |
 | `AGENTS.md` | Projektové instrukce pro agenty | `IMPLEMENTED` (scaffold) |
 
 ## Vývoj
 
 ```bash
-npm install
+npm install        # nainstaluje závislosti a vygeneruje Prisma klienta
 npm run dev
 ```
 
-Další příkazy: `npm run build`, `npm run start`, `npm run typecheck`.
+Další příkazy: `npm run build`, `npm run start`, `npm run typecheck`,
+`npm run test`, `npm run test:watch`, `npm run db:generate`, `npm run db:validate`,
+`npm run db:migrate`, `npm run db:studio`.
+
+Databázové příkazy (`db:migrate`, `db:studio`) vyžadují běžící PostgreSQL a nastavenou
+proměnnou `DATABASE_URL` (viz `.env.example`).
 
 ## Dokumentace
 

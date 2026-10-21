@@ -6,6 +6,9 @@ build/
 *.tsbuildinfo
 next-env.d.ts
 
+# Prisma
+prisma/generated/
+
 # Prostředí a tajné údaje
 .env
 .env.*

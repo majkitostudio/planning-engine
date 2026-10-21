@@ -10,29 +10,38 @@ Toto je počáteční přehled dokumentace projektu Plánovací Engine.
 | --- | --- | --- |
 | `../README.md` | Úvod, účel, stack, stav projektu | `IMPLEMENTED` (scaffold) |
 | `../AGENTS.md` | Projektové instrukce pro agenty | `IMPLEMENTED` (scaffold) |
-| `../package.json` | Next.js + TypeScript závislosti a skripty | `IMPLEMENTED` (scaffold) |
+| `../package.json` | Závislosti a skripty | `IMPLEMENTED` |
 | `../app/` | Next.js App Router (výchozí obrazovka) | `IMPLEMENTED` (scaffold) |
 | `docs/DOMAIN_SPECIFICATION.md` | Návrh doménové specifikace (call centrum) | `PROPOSAL` |
-| `lib/planning/README.md` | Základ pro budoucí plánovací logiku | `PLANNED` (prázdný) |
-| `../.gitignore` | Ignorované soubory (Node/Next) | `IMPLEMENTED` (scaffold) |
-| `docs/README.md` | Tento přehled | `IMPLEMENTED` (scaffold) |
+| `../prisma/` | Prisma konfigurace a schéma (bez doménových modelů) | `IMPLEMENTED` (technický základ) |
+| `../lib/db.ts` | Singleton PrismaClient (technická vrstva) | `IMPLEMENTED` |
+| `../vitest.config.mts` | Konfigurace testů (Vitest) | `IMPLEMENTED` |
+| `../tests/` | Testy (Vitest) | `IMPLEMENTED` (smoke test) |
+| `lib/planning/README.md` | Čistá plánovací logika (zatím bez implementace) | `PLANNED` |
+| `../.gitignore` | Ignorované soubory (Node/Next/Prisma) | `IMPLEMENTED` |
+| `docs/README.md` | Tento přehled | `IMPLEMENTED` |
 
 ## Zamýšlený účel
 
-Chytrý plánovač směn pro **zaměstnance call centra**, určený pro **managera
-telemarketingového oddělení** (Next.js + TypeScript).
+Chytrý plánovač **měsíčních rozpisů směn** pro **zaměstnance call centra společnosti
+AAAAuto**, určený pro **managera telemarketingového oddělení** (rozsah **více než
+100 zaměstnanců**).
 
-Kontext domény je potvrzen (`VERIFIED`), ale doménová pravidla, datový model a
-optimalizační cíle zatím nejsou uzavřeny. Návrh najdeš v
+Technologický stack: **Next.js, React, TypeScript, PostgreSQL, Prisma**.
+
+Kontext domény i technologický směr jsou potvrzeny (`VERIFIED`), ale doménová
+pravidla, datový model a optimalizační cíle zatím nejsou uzavřeny. Návrh najdeš v
 [`docs/DOMAIN_SPECIFICATION.md`](DOMAIN_SPECIFICATION.md).
 
 ## Stav rozhodnutí
 
 | Oblast | Stav |
 | --- | --- |
-| Technologický stack | `VERIFIED` — Next.js + TypeScript |
-| Kontext domény | `VERIFIED` — plánovač směn call centra pro managera telemarketingu |
+| Technologický stack | `VERIFIED` — Next.js + React + TypeScript + PostgreSQL + Prisma |
+| Kontext domény | `VERIFIED` — měsíční rozpisy směn call centra AAAAuto pro managera telemarketingu (100+ zaměstnanců) |
 | Lokální scaffold | `IMPLEMENTED` |
+| Testovací základ (Vitest) | `IMPLEMENTED` |
+| Databázová vrstva (Prisma) | `IMPLEMENTED` — technický základ, bez doménových modelů |
 | Doménová specifikace | `PROPOSAL` — `docs/DOMAIN_SPECIFICATION.md` |
 | Plánovací pravidla | `OPEN QUESTION` — neimplementovány |
 | Datový model | `OPEN QUESTION` — neurčen |

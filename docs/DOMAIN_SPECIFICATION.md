@@ -27,8 +27,11 @@ Dokument: `docs/DOMAIN_SPECIFICATION.md`
 
 Následující skutečnosti uživatel explicitně potvrdil v tomto projektu:
 
-- Jedná se o **chytrý plánovač směn pro zaměstnance call centra**.
+- Jedná se o **chytrý plánovač směn** pro **zaměstnance call centra společnosti
+  AAAAuto**.
 - Nástroj je určen pro **managera telemarketingového oddělení**.
+- Cílem je sestavování **měsíčních rozpisů směn** pro **více než 100 zaměstnanců**.
+- Technologický směr: **Next.js, React, TypeScript, PostgreSQL a Prisma**.
 - Plánovací předmět tedy není obecný „slot", ale **pracovní směna** v call centru.
 
 Tato kontextová fakta jsou `VERIFIED` (potvrzena požadavkem). Konkrétní pravidla,
@@ -39,24 +42,34 @@ nezávazně nepotvrdí.
 
 ### 1.1 Účel (`PROPOSAL`)
 
-Poskytnout textový základ pro **chytrý plánovač směn zaměstnanců call centra**
-(nástroj pro managera telemarketingového oddělení, §0.1): co se plánuje, z jakých
-vstupů, jakými pravidly a jak se reportují konflikty. Cílem je **odhalit rozhodnutí,
-která je třeba potvrdit**, než bude možné psát kód.
+Poskytnout textový základ pro **chytrý plánovač měsíčních rozpisů směn** pro
+**zaměstnance call centra společnosti AAAAuto** (nástroj pro managera
+telemarketingového oddělení, §0.1): co se plánuje, z jakých vstupů, jakými
+pravidly a jak se reportují konflikty. Cílem je **odhalit rozhodnutí, která je
+třeba potvrdit**, než bude možné psát kód.
 
 ### 1.2 V rozsahu první verze (`PROPOSAL`, k potvrzení)
 
 - Definice předmětu plánování, časové oblasti a způsobu zadávání vstupů.
 - Seznam tvrdých pravidel (hard constraints) a měkkých preferencí (soft preferences).
 - Způsob detekce a hlášení konfliktů a neřešitelných situací.
-- Předpokládané uživatelské role (vraní, bez oprávnění).
+- Předpokládané uživatelské role (v první verzi, bez oprávnění).
 
 ### 1.3 Mimo rozsah první verze (explicitně)
 
 - Žádný plánovací algoritmus ani optimalizační funkce.
-- Žádná produkční databáze, backend, API, autentizace/integrace.
-- Žádné reálné osobní ani zaměstnanecká data.
+- Žádná **schválená doménová pravidla** (H1–H7 a S1–S5 zůstávají `ASSUMPTION`).
+- Žádné reálné osobní ani zaměstnanecká data (jen syntetická/anonymizovaná).
+- Žádná autentizace, zaměstnanecký portál, docházka, mzdy ani integrace s EDocházkou.
 - Žádný deployment, CI/CD, cloud.
+
+**Poznámka k databázi a API (rozlišení technické připravenosti a domény):**
+Technologický směr zahrnuje **PostgreSQL a Prisma** (`VERIFIED`). Je proto v pořádku
+připravit technický základ databázové vrstvy — Prisma klient, konfiguraci a schéma
+**bez doménových modelů**. To se **nezaměňuje** s implementací doménových funkcí:
+konkrétní databázové modely, migrace a aplikační pravidla čekají na schválení
+doménových entit (OQ3–OQ5, OQ9–OQ11). Produkční databáze a reálná data zůstávají
+mimo rozsah první verze.
 
 ## 2. Co má plánovací nástroj plánovat
 
@@ -66,7 +79,7 @@ Otázka OQ1 je tedy zodpovězena.
 `ASSUMPTION` (pracovní předpoklad, k potvrzení):
 
 - Plánuje se rozdělení **směn** mezi **zaměstnanci call centra** v rámci
-  **plánovacího období**.
+  **měsíčního rozpisu** (platnost `VERIFIED`, §0.1; konkrétní pravidla však ne).
 - Směna má časový rozsah (od–do) a případně požadovanou roli/odbornost
   (např. typ kampaně/fronty — k potvrzení).
 - Plánovač může ponechat některé směny nepřiřazené (nedokončený plán).
@@ -216,8 +229,8 @@ Zda existují další role, není určeno. Žádná autentizace není v rozsahu.
 
 ### Příklad 1 — základní plán (`DEMO`)
 
-- Období: 1 týden, 5 zaměstnanců call centra, směny po dnech ( ráno / odpoledne ).
-- Pravidla: H1, H2, H3, H5 (max. 5 směn/týden).
+- Období: **měsíc**, 5 zaměstnanců call centra (ukázka zjednodušena), směny po dnech.
+- Pravidla: H1, H2, H3, H5 (max. počet směn za měsíc).
 - Výstup: tabulka přiřazení + seznam „nepokryté směny" (prázdné).
 
 ### Příklad 2 — konflikt (`DEMO`)
@@ -280,7 +293,7 @@ výše; v závorce je uvedena sekce (`S`).
 | Základ pro budoucí logiku | `lib/planning/README.md` — `PLANNED` |
 | Přehled dokumentace | `docs/README.md` |
 | Projektové instrukce | `AGENTS.md` |
-| Technologický stack | Next.js + TypeScript (`VERIFIED`) |
+| Technologický stack | Next.js + React + TypeScript + PostgreSQL + Prisma (`VERIFIED`) |
 | Tento dokument | `PROPOSAL` — potvrzený kontext domény (§0.1), zbytek čeká na rozhodnutí |
 
 Po potvrzení klíčových `OPEN QUESTION` by měly vzniknout **schválená** doménová

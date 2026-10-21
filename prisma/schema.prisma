@@ -1,0 +1,16 @@
+// Prisma schema — technický základ.
+//
+// Doménové modely (entity, atributy, vztahy) zatím NEJSOU definovány: čekají na
+// schválení doménové specifikace (viz docs/DOMAIN_SPECIFICATION.md).
+//
+// Po schválení dodat modely sem. Soubor lze zformátovat příkazem
+// `npm run db:generate` nevyžaduje běžící databázový server.
+
+datasource db {
+  provider = "postgresql"
+}
+
+generator client {
+  provider = "prisma-client"
+  output   = "./generated"
+}

@@ -44,7 +44,9 @@ Tento soubor obsahuje projektové instrukce pro agenty pracující na projektu
 ## Technologický stack
 
 - Next.js (App Router) + TypeScript + React.
-- Příkazy: `npm run dev`, `npm run build`, `npm run start`, `npm run typecheck`.
+- PostgreSQL + Prisma (technický základ; doménové modely čekají na schválení domény).
+- Příkazy: `npm run dev`, `npm run build`, `npm run start`, `npm run typecheck`,
+  `npm run test`, `npm run test:watch`, databázové `db:*`.
 
 ## Aktuální stav projektu
 
@@ -52,8 +54,8 @@ Tento soubor obsahuje projektové instrukce pro agenty pracující na projektu
 - Plánovací pravidla a doménová logika: neimplementovány (`lib/planning/` je zatím
   prázdný základ).
 - Doménová specifikace: návrh v `docs/DOMAIN_SPECIFICATION.md` (`PROPOSAL`) — kontext
-  domény (plánovač směn call centra pro managera telemarketingu) je `VERIFIED`,
-  pravidla a entity zatím ne.
+  domény (měsíční rozpisy směn call centra AAAAuto pro managera telemarketingu,
+  100+ zaměstnanců) je `VERIFIED`, pravidla a entity zatím ne.
 - Stav informací označuj popisky (`VERIFIED`, `PLANNED`, `ASSUMPTION`,
   `OPEN QUESTION`, `NOT VERIFIED`, `SIMULATED`, `BLOCKED`).
 
