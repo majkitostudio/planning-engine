@@ -13,6 +13,8 @@ Toto je počáteční přehled dokumentace projektu Plánovací Engine.
 | `../package.json` | Závislosti a skripty | `IMPLEMENTED` |
 | `../app/` | Next.js App Router (výchozí obrazovka) | `IMPLEMENTED` (scaffold) |
 | `docs/DOMAIN_SPECIFICATION.md` | Návrh doménové specifikace (call centrum) | `PROPOSAL` |
+| `docs/ROADMAP.md` | Praktická roadmapa a To-Do pro OpenCode | `IMPLEMENTED` (pracovní plán) |
+| `docs/OPEN_CODE_PLANNING_CORE_TASK.md` | První task: pravidlově nezávislá kostra plánovacího jádra | `PLANNED` |
 | `../prisma/` | Prisma konfigurace a schéma (bez doménových modelů) | `IMPLEMENTED` (technický základ) |
 | `../lib/db.ts` | Singleton PrismaClient (technická vrstva) | `IMPLEMENTED` |
 | `../vitest.config.mts` | Konfigurace testů (Vitest) | `IMPLEMENTED` |
@@ -32,6 +34,9 @@ Technologický stack: **Next.js, React, TypeScript, PostgreSQL, Prisma**.
 Kontext domény i technologický směr jsou potvrzeny (`VERIFIED`), ale doménová
 pravidla, datový model a optimalizační cíle zatím nejsou uzavřeny. Návrh najdeš v
 [`docs/DOMAIN_SPECIFICATION.md`](DOMAIN_SPECIFICATION.md).
+Praktický postup po prioritách je v [`docs/ROADMAP.md`](ROADMAP.md). První
+implementační zadání pro OpenCode je v
+[`docs/OPEN_CODE_PLANNING_CORE_TASK.md`](OPEN_CODE_PLANNING_CORE_TASK.md).
 
 ## Stav rozhodnutí
 
@@ -43,6 +48,7 @@ pravidla, datový model a optimalizační cíle zatím nejsou uzavřeny. Návrh 
 | Testovací základ (Vitest) | `IMPLEMENTED` |
 | Databázová vrstva (Prisma) | `IMPLEMENTED` — technický základ, bez doménových modelů |
 | Doménová specifikace | `PROPOSAL` — `docs/DOMAIN_SPECIFICATION.md` |
+| Roadmapa / To-Do | `IMPLEMENTED` — `docs/ROADMAP.md`; obecné plánovací jádro lze připravit před doménovými rozhodnutími |
 | Plánovací pravidla | `OPEN QUESTION` — neimplementovány |
 | Datový model | `OPEN QUESTION` — neurčen |
 | Uživatelské role | `OPEN QUESTION` — primární role (manager) potvrzena |
