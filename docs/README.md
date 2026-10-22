@@ -13,6 +13,7 @@ Toto je počáteční přehled dokumentace projektu Plánovací Engine.
 | `../package.json` | Závislosti a skripty | `IMPLEMENTED` |
 | `../app/` | Next.js App Router (výchozí obrazovka) | `IMPLEMENTED` (scaffold) |
 | `docs/DOMAIN_SPECIFICATION.md` | Návrh doménové specifikace (call centrum) | `PROPOSAL` |
+| `docs/DOMAIN_DECISIONS.md` | Rozhodovací list pro managera (otázky, varianty, sběr odpovědí) | `OPEN QUESTION` (čeká na odpovědi) |
 | `docs/ROADMAP.md` | Praktická roadmapa a To-Do pro OpenCode | `IMPLEMENTED` (pracovní plán) |
 | `docs/OPEN_CODE_PLANNING_CORE_TASK.md` | První task: pravidlově nezávislá kostra plánovacího jádra | `PLANNED` |
 | `docs/OPEN_CODE_VISUAL_TASK.md` | Starší zadání vizuální revize (překonáno realizovaným vizuálem) | `SUPERSEDED` |
@@ -50,6 +51,7 @@ implementační zadání pro OpenCode je v
 | Testovací základ (Vitest) | `IMPLEMENTED` |
 | Databázová vrstva (Prisma) | `IMPLEMENTED` — technický základ, bez doménových modelů |
 | Doménová specifikace | `PROPOSAL` — `docs/DOMAIN_SPECIFICATION.md` |
+| Rozhodovací list pro managera | `OPEN QUESTION` — `docs/DOMAIN_DECISIONS.md`, čeká na odpovědi |
 | Roadmapa / To-Do | `IMPLEMENTED` — `docs/ROADMAP.md`; obecné plánovací jádro lze připravit před doménovými rozhodnutími |
 | Plánovací jádro (kostra) | `IMPLEMENTED` — `lib/planning/`: kontrakty a běh pravidel, bez doménových typů |
 | Plánovací pravidla | `OPEN QUESTION` — neimplementovány |
@@ -67,3 +69,7 @@ Plný seznam otázek (OQ1–OQ20) je v
 2. Je plán statický, nebo průběžně upravovaný?
 3. Která pravidla jsou skutečně tvrdá (H1–H7) a jaké limity mají?
 4. Které entity a atributy jsou povinné (role, kapacita směny, dovednosti, kampaň)?
+
+Pro praktické vyplnění s managerem slouží
+[`docs/DOMAIN_DECISIONS.md`](DOMAIN_DECISIONS.md) — varianty odpovědí, dopad na
+kód a místo na odpověď. Do vyplnění zůstávají doménové typy a pravidla `BLOCKED`.

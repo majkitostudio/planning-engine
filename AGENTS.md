@@ -68,6 +68,9 @@ Tento soubor obsahuje projektové instrukce pro agenty pracující na projektu
 - Doménová specifikace: návrh v `docs/DOMAIN_SPECIFICATION.md` (`PROPOSAL`) — kontext
   domény (měsíční rozpisy směn call centra AAAAuto pro managera telemarketingu,
   100+ zaměstnanců) je `VERIFIED`, pravidla a entity zatím ne.
+- Rozhodovací list pro managera: `docs/DOMAIN_DECISIONS.md` (`OPEN QUESTION`) —
+  čeká na odpovědi. Do jeho vyplnění jsou doménové typy a pravidla `BLOCKED`;
+  odpovědi ani doménu nedomýšlej.
 - Stav informací označuj popisky (`VERIFIED`, `PLANNED`, `ASSUMPTION`,
   `OPEN QUESTION`, `NOT VERIFIED`, `SIMULATED`, `BLOCKED`).
 

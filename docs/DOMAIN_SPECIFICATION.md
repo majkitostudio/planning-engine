@@ -250,6 +250,10 @@ Zda existují další role, není určeno. Žádná autentizace není v rozsahu.
 Autoritativní seznam otázek. Čísla `OQ` odpovídají číslům `OPEN QUESTION` v sekcích
 výše; v závorce je uvedena sekce (`S`).
 
+Praktická podoba těchto otázek pro vyplnění s managerem (varianty, dopad na kód,
+místo na odpověď) je v [`DOMAIN_DECISIONS.md`](DOMAIN_DECISIONS.md). Zůstává
+podřízený tomuto dokumentu — autoritativní seznam je tento.
+
 ### Vyřešené otázky
 
 - **OQ1** (S2) — `VERIFIED`: předmětem plánování jsou **směny zaměstnanců call centra**;

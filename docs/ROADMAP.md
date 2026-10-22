@@ -79,6 +79,8 @@ První konkrétní zadání je v
 
 ### P0 — doménová rozhodnutí, která počkají na managera
 
+- [ ] Vyplnit s managerem [rozhodovací list](DOMAIN_DECISIONS.md) — překlad
+  otázek do variant a odpovědí, bez domýšlení domény.
 - [ ] Projít `docs/DOMAIN_SPECIFICATION.md` a schválit minimální doménový
   kontrakt místo současného `PROPOSAL`.
 - [ ] Rozhodnout, zda se plán po vygenerování pouze zobrazí, nebo se bude
@@ -147,15 +149,18 @@ dat.
 Kostra plánovacího jádra je hotová (`lib/planning/`, viz
 [`OPEN_CODE_PLANNING_CORE_TASK.md`](OPEN_CODE_PLANNING_CORE_TASK.md)), takže
 dalším krokem je **doménové P0**: potvrdit typy, pravidla a chování plánu s
-managerem. Po potvrzení doplníme doménové typy a první tvrdá pravidla (H1–H7)
-jako `PlanningRule` ve vrstvě `lib/planning/`. Do té doby zůstává konkrétní
-mechanika generování rozpisu `BLOCKED`; obecný tok návrhu a kontroly blokovaný
-není.
+managerem. Praktickým nástrojem je [rozhodovací list](DOMAIN_DECISIONS.md)
+(OQ2–OQ5, OQ9–OQ11, OQ15–OQ20); bez jeho vyplnění se doménové typy a pravidla
+neimplementují. Po potvrzení doplníme doménové typy a první tvrdá pravidla
+(H1–H7) jako `PlanningRule` ve vrstvě `lib/planning/`. Do té doby zůstává
+konkrétní mechanika generování rozpisu `BLOCKED`; obecný tok návrhu a kontroly
+blokovaný není.
 
 ## 7. Odkazy
 
 - [Přehled dokumentace](README.md)
 - [Návrh doménové specifikace](DOMAIN_SPECIFICATION.md)
+- [Rozhodovací list pro managera](DOMAIN_DECISIONS.md)
 - [Plánovací vrstva](../lib/planning/README.md)
 - [Vizuální úkol pro OpenCode](OPEN_CODE_VISUAL_TASK.md)
 - [První task: plánovací jádro](OPEN_CODE_PLANNING_CORE_TASK.md)
