@@ -22,6 +22,10 @@ npm-debug.log*
 .vscode/
 .idea/
 
+# Nástroje pro vizuální kontrolu (artefakty prohlížeče)
+.playwright-cli/
+.playwright-mcp/
+
 # Operační systém
 .DS_Store
 Thumbs.db

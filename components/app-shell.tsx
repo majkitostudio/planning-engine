@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { useEffect, useState, type ReactNode } from "react";
 import { Icon, type IconName } from "@/components/icons";
 import { Avatar } from "@/components/ui/avatar";
+import { BrandMark } from "@/components/ui/brand-mark";
 import { DEMO_ALERTS } from "@/lib/demo-data";
 
 type NavItem = {
@@ -96,7 +97,7 @@ export function AppShell({ children }: { children: ReactNode }) {
       >
         <div className="sidebar__brand">
           <span className="brand__mark" aria-hidden="true">
-            <Icon name="calendar" width={19} height={19} />
+            <BrandMark size={34} />
           </span>
           <span className="brand__text">
             <span className="brand__name">Plánovací engine</span>
@@ -139,7 +140,7 @@ export function AppShell({ children }: { children: ReactNode }) {
           </div>
 
           <div className="user-card">
-            <Avatar name="Manažer telemarketingu" color="blue" size="sm" />
+            <Avatar name="Manažer telemarketingu" color="stone" size="sm" />
             <div className="user-card__text">
               <p className="user-card__name">Manažer telemarketingu</p>
               <p className="user-card__role">Telemarketing · demo</p>
@@ -214,7 +215,7 @@ export function AppShell({ children }: { children: ReactNode }) {
                   setPanel((value) => (value === "user" ? null : "user"))
                 }
               >
-                <Avatar name="Manažer telemarketingu" color="blue" size="sm" />
+                <Avatar name="Manažer telemarketingu" color="stone" size="sm" />
                 <span className="topbar__user-text">
                   <span className="topbar__user-name">Manažer telemarketingu</span>
                   <span className="topbar__user-role">Telemarketing</span>

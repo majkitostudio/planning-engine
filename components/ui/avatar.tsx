@@ -1,6 +1,24 @@
+/**
+ * Avatar s neutrálním zbarvením.
+ *
+ * Barva z ukázkových dat už neslouží k rozlišování osob. Avatary mají
+ * jen několik tlumených tónů, aby rozhraní nepůsobilo jako barevná
+ * šablona a pozornost zůstala na rozpisu směn.
+ */
+const TONES: Record<string, string> = {
+  blue: "slate",
+  indigo: "slate",
+  purple: "slate",
+  teal: "sage",
+  green: "sage",
+  amber: "stone",
+  orange: "stone",
+  rose: "stone",
+};
+
 export function Avatar({
   name,
-  color = "blue",
+  color = "stone",
   size = "md",
 }: {
   name: string;
@@ -15,9 +33,11 @@ export function Avatar({
     .join("")
     .toUpperCase();
 
+  const tone = TONES[color] ?? "stone";
+
   return (
     <span
-      className={`avatar avatar--${color}${size === "sm" ? " avatar--sm" : ""}`}
+      className={`avatar avatar--${tone}${size === "sm" ? " avatar--sm" : ""}`}
       aria-hidden="true"
     >
       {initials}
