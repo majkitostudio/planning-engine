@@ -1,0 +1,52 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  NEXT_TELEMETRY_DISABLED: "1"
+  # Lint, testy, validace schématu ani build nepotřebují běžící databázi.
+  # Adresa je jen syntakticky platná, aby Prisma CLI prošlo validací.
+  DATABASE_URL: postgresql://planning:planning@localhost:5432/planning?schema=public
+
+jobs:
+  quality:
+    name: Lint, typecheck, test, build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      - name: Instalace závislostí
+        run: npm ci
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Testy
+        run: npm run test
+
+      - name: Validace Prisma schématu
+        run: npm run db:validate
+
+      - name: Build
+        run: npm run build

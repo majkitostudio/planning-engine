@@ -35,7 +35,9 @@ Stack-specifické soubory: `package.json`, `tsconfig.json`, `next.config.mjs`,
 | `docs/DOMAIN_SPECIFICATION.md` | Návrh doménové specifikace | `PROPOSAL` |
 | `prisma/` | Prisma konfigurace a schéma (bez doménových modelů) | `IMPLEMENTED` (technický základ) |
 | `lib/db.ts` | Singleton PrismaClient (technická vrstva) | `IMPLEMENTED` |
-| `lib/planning/` | Čistá plánovací logika (zatím bez implementace) | `PLANNED` |
+| `lib/planning/` | Čistá plánovací logika (kontrakty a běh pravidel, bez domény) | `IMPLEMENTED` (kostra) |
+| `eslint.config.mjs` | ESLint (Next.js + TypeScript pravidla) | `IMPLEMENTED` |
+| `.github/workflows/ci.yml` | CI: lint, typecheck, testy, build, validace Prisma | `IMPLEMENTED` |
 | `tests/` | Testy (Vitest) | `IMPLEMENTED` (smoke) |
 | `docs/` | Přehled dokumentace | `IMPLEMENTED` (scaffold) |
 | `AGENTS.md` | Projektové instrukce pro agenty | `IMPLEMENTED` (scaffold) |
@@ -47,9 +49,9 @@ npm install        # nainstaluje závislosti a vygeneruje Prisma klienta
 npm run dev
 ```
 
-Další příkazy: `npm run build`, `npm run start`, `npm run typecheck`,
-`npm run test`, `npm run test:watch`, `npm run db:generate`, `npm run db:validate`,
-`npm run db:migrate`, `npm run db:studio`.
+Další příkazy: `npm run lint`, `npm run lint:fix`, `npm run build`, `npm run start`,
+`npm run typecheck`, `npm run test`, `npm run test:watch`, `npm run db:generate`,
+`npm run db:validate`, `npm run db:migrate`, `npm run db:studio`.
 
 Databázové příkazy (`db:migrate`, `db:studio`) vyžadují běžící PostgreSQL a nastavenou
 proměnnou `DATABASE_URL` (viz `.env.example`).

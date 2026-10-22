@@ -22,11 +22,13 @@ není závislá příprava obecného toku návrhu a jeho kontroly.
 | Demo data | `IMPLEMENTED` / `DEMO` | Jsou soustředěna v `lib/demo-data.ts`; neobsahují skutečná osobní data. |
 | Prisma | `IMPLEMENTED` technicky | Klient a PostgreSQL konfigurace existují, `prisma/schema.prisma` zatím nemá doménové modely. |
 | Čistá plánovací vrstva | `IMPLEMENTED` (kostra) | `lib/planning/` má kontrakty a běh pravidel nad návrhem; žádné doménové typy ani směnová pravidla. |
-| Testy | `IMPLEMENTED` minimálně | Vitest běží, ale aktuálně ověřuje pouze testovací infrastrukturu. |
+| Testy | `IMPLEMENTED` minimálně | Vitest běží a pokrývá smoke test i kontroly plánovacího jádra. |
+| Kvalitní brána | `IMPLEMENTED` | ESLint (`npm run lint`) + GitHub Actions: lint, typecheck, testy, build a validace Prisma schématu při pushi i PR. |
 | Doména | `PROPOSAL` | Kontext call centra je potvrzený; pravidla, entity a optimalizační cíle čekají na rozhodnutí. |
 
 Aktuální ověření pracovního stromu:
 
+- `npm run lint` — prošlo (ESLint, bez warningů).
 - `npm run typecheck` — prošlo.
 - `npm run test` — prošel (smoke test + testy plánovacího jádra).
 - `npm run build` — prošel; statické routy se vygenerovaly.
@@ -73,6 +75,8 @@ Otevřené vizuální otázky (`OPEN QUESTION`, rozhoduje manager):
   úspěšný či schválený plán.
 - [ ] Nechat rozhodnutí o přijetí návrhu na managerovi; automatické vytvoření
   návrhu samo o sobě plán neschvaluje.
+- [x] Minimální kvalitní brána: ESLint, `.gitattributes`/`.editorconfig`,
+  `.nvmrc` a CI (lint, typecheck, testy, build, validace Prisma).
 
 První konkrétní zadání je v
 [`OPEN_CODE_PLANNING_CORE_TASK.md`](OPEN_CODE_PLANNING_CORE_TASK.md).
@@ -130,7 +134,7 @@ dat.
 ### P3 — až po ověření základního workflow
 
 - [ ] Přidat autentizaci, role a audit, pokud to potvrdí P0.
-- [ ] Promyslet export, integrace, CI/CD a produkční provoz.
+- [ ] Promyslet export, integrace, produkční CI/CD a produkční provoz.
 - [ ] Provést zátěžové a uživatelské ověření na anonymizovaném vzorku 100+
   zaměstnanců.
 

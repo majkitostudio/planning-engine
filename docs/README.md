@@ -22,7 +22,9 @@ Toto je počáteční přehled dokumentace projektu Plánovací Engine.
 | `../lib/db.ts` | Singleton PrismaClient (technická vrstva) | `IMPLEMENTED` |
 | `../vitest.config.mts` | Konfigurace testů (Vitest) | `IMPLEMENTED` |
 | `../tests/` | Testy (Vitest) | `IMPLEMENTED` (smoke test) |
-| `lib/planning/README.md` | Čistá plánovací vrstva — kontrakty a běh pravidel | `IMPLEMENTED` (kostra) |
+| `../lib/planning/README.md` | Čistá plánovací vrstva — kontrakty a běh pravidel | `IMPLEMENTED` (kostra) |
+| `../eslint.config.mjs` | ESLint konfigurace (Next.js + TypeScript) | `IMPLEMENTED` |
+| `../.github/workflows/ci.yml` | CI: lint, typecheck, testy, build, validace Prisma | `IMPLEMENTED` |
 | `../.gitignore` | Ignorované soubory (Node/Next/Prisma) | `IMPLEMENTED` |
 | `docs/README.md` | Tento přehled | `IMPLEMENTED` |
 
@@ -54,6 +56,7 @@ implementační zadání pro OpenCode je v
 | Rozhodovací list pro managera | `OPEN QUESTION` — `docs/DOMAIN_DECISIONS.md`, čeká na odpovědi |
 | Roadmapa / To-Do | `IMPLEMENTED` — `docs/ROADMAP.md`; obecné plánovací jádro lze připravit před doménovými rozhodnutími |
 | Plánovací jádro (kostra) | `IMPLEMENTED` — `lib/planning/`: kontrakty a běh pravidel, bez doménových typů |
+| Kvalitní brána (CI) | `IMPLEMENTED` — ESLint + GitHub Actions (lint, typecheck, testy, build, validace Prisma) |
 | Plánovací pravidla | `OPEN QUESTION` — neimplementovány |
 | Datový model | `OPEN QUESTION` — neurčen |
 | Uživatelské role | `OPEN QUESTION` — primární role (manager) potvrzena |

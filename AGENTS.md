@@ -56,8 +56,13 @@ Tento soubor obsahuje projektové instrukce pro agenty pracující na projektu
 
 - Next.js (App Router) + TypeScript + React.
 - PostgreSQL + Prisma (technický základ; doménové modely čekají na schválení domény).
-- Příkazy: `npm run dev`, `npm run build`, `npm run start`, `npm run typecheck`,
-  `npm run test`, `npm run test:watch`, databázové `db:*`.
+- Příkazy: `npm run dev`, `npm run build`, `npm run start`, `npm run lint`,
+  `npm run typecheck`, `npm run test`, `npm run test:watch`, databázové `db:*`.
+- **TypeScript 7 a typescript-eslint:** v `devDependencies` je `typescript`
+  aliasovaný na `@typescript/typescript6` (API 6.0, které potřebuje
+  typescript-eslint) a nativní compiler 7.0 je v `@typescript/native`
+  (`npx tsc` běží z něj). Aliasy neměň bez ověření — typescript-eslint zatím
+  API TypeScriptu 7 nepodporuje.
 
 ## Aktuální stav projektu
 

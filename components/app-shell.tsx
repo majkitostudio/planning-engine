@@ -44,10 +44,15 @@ export function AppShell({ children }: { children: ReactNode }) {
   const [panel, setPanel] = useState<Panel>(null);
 
   // Zavři navigaci i panely při změně trasy.
-  useEffect(() => {
+  // Stav se resetuje během renderu (doporučený vzor Reactu pro odvozený stav
+  // z props) — efekt by způsobil kaskádové překreslení navíc.
+  // https://react.dev/learn/you-might-not-need-an-effect#adjusting-some-state-when-a-prop-changes
+  const [syncedPathname, setSyncedPathname] = useState(pathname);
+  if (syncedPathname !== pathname) {
+    setSyncedPathname(pathname);
     setSidebarOpen(false);
     setPanel(null);
-  }, [pathname]);
+  }
 
   // Esc zavře vše otevřené.
   useEffect(() => {
