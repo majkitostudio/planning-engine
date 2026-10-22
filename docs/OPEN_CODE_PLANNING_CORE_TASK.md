@@ -63,6 +63,10 @@ typy, které lze později změnit bez předpokladu o směnových pravidlech.
 
 ## Ověření a výstup
 
+- Kód umísti do `lib/planning/`. Rozdělení do souborů si zvol sám, ale vrstva
+  zůstane nezávislá (žádné importy UI, databáze ani Next.js).
+- Po dokončení aktualizuj stav v `lib/planning/README.md`, aby odpovídal tomu,
+  co v adresáři skutečně je.
 - Spusť `npm run typecheck` a `npm run test`.
 - Spusť `npm run build`, pokud nové importy zasahují do aplikace; jinak stačí
   typová kontrola a testy.

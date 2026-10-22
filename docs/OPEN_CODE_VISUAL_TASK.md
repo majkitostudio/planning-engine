@@ -1,5 +1,18 @@
 # Task pro OpenCode: Vizuální revize Plánovacího enginu
 
+> **Stav: `SUPERSEDED` (od 22. 10. 2026).** Toto zadání popisovalo dřívější,
+> neutrální vizuální směr (teplá paleta, tlumený akcent, bez modrých
+> gradientů, bez kruhových tónovaných ikon). Vizuál byl následně realizovaný
+> podle referenčního vzoru `planning-engine-official.png` — chladná světlá
+> paleta, námořní rail, plná modrá aktivní záložka, plné chipy směn,
+> kruhové tmavé monogramové avatary, vektorové logo — a je commitnutý v
+> repozitáři (commit `de6d4f0`).
+>
+> Nepoužívej toto zadání jako zdroj cílového vizuálu. Aktuální stav popisuje
+> `docs/ROADMAP.md` (§3 „Vizuální revize UI“ včetně otevřených vizuálních
+> otázek) a zdrojem pravdy je committed CSS v `app/globals.css`.
+> Text zadání níže zůstává zachovaný pro historii.
+
 ## Cíl
 Zpřesnit současný vizuál do klidného, dospělého a profesionálního manažerského nástroje. Nejde o redesign doménové logiky ani o vytvoření nové aplikace.
 

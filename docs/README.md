@@ -15,6 +15,8 @@ Toto je počáteční přehled dokumentace projektu Plánovací Engine.
 | `docs/DOMAIN_SPECIFICATION.md` | Návrh doménové specifikace (call centrum) | `PROPOSAL` |
 | `docs/ROADMAP.md` | Praktická roadmapa a To-Do pro OpenCode | `IMPLEMENTED` (pracovní plán) |
 | `docs/OPEN_CODE_PLANNING_CORE_TASK.md` | První task: pravidlově nezávislá kostra plánovacího jádra | `PLANNED` |
+| `docs/OPEN_CODE_VISUAL_TASK.md` | Starší zadání vizuální revize (překonáno realizovaným vizuálem) | `SUPERSEDED` |
+| `../app/globals.css` | Vizuální systém (chladná paleta, komponenty) | `IMPLEMENTED` (demo vizuál) |
 | `../prisma/` | Prisma konfigurace a schéma (bez doménových modelů) | `IMPLEMENTED` (technický základ) |
 | `../lib/db.ts` | Singleton PrismaClient (technická vrstva) | `IMPLEMENTED` |
 | `../vitest.config.mts` | Konfigurace testů (Vitest) | `IMPLEMENTED` |

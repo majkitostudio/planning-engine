@@ -34,12 +34,33 @@ Aktuální ověření pracovního stromu:
 
 ## 3. Co je rozpracované, ale není to hotová produktová funkce
 
-- Vizuální úpravy jsou aktuálně necommitnuté v `app/globals.css`,
-  `app/icon.svg`, `app/prihlaseni/page.tsx`, `components/app-shell.tsx`,
-  `components/ui/avatar.tsx` a v novém `components/ui/brand-mark.tsx`.
-- K těmto úpravám existuje zadání v `docs/OPEN_CODE_VISUAL_TASK.md`.
+### Vizuální revize UI
+
+- Realizovaná revize vzhledu je commitnutá v repozitáři (vizuálně hotová pro
+  demo): chladná světlá paleta `#f4f8fd`, námořní rail `#121c2a` s tmavě modrým
+  aktivním prvkem a 2 px světle modrým indikátorem, plná modrá aktivní záložka,
+  plné chipy směn (modrá ráno / levandulová odpoledne, zelená dovolená, červená
+  nemoc), kruhové tmavé monogramové avatary, vektorová značka
+  `components/ui/brand-mark.tsx` a aktualizovaný `app/icon.svg`.
+- Zadání v [`OPEN_CODE_VISUAL_TASK.md`](OPEN_CODE_VISUAL_TASK.md) popisovalo
+  starší, neutrální směr a je označeno jako `SUPERSEDED`. Nepoužívej ho jako
+  zdroj cílového vizuálu; zdrojem pravdy je committed CSS v `app/globals.css`
+  a realizované komponenty.
 - Tyto změny řeší vzhled a prezentaci. Neřeší plánovací pravidla, databázi ani
   výpočet rozpisu.
+
+Otevřené vizuální otázky (`OPEN QUESTION`, rozhoduje manager):
+
+- [ ] Odpolední směna v levandulové (`--violet`) — jediná barva navíc vedle
+  sémantických; alternativa je neutrální šedomodrý chip.
+- [ ] Avatary zaměstnanců — zůstat u tmavých monogramů (aktuální stav), nebo
+  přejít na tlumené barevné odstíny osob.
+- [ ] Ikona „Nesplněné požadavky“ zůstává jantarová (sémantické upozornění,
+  demo tón v `lib/demo-data.ts`); alternativa je neutrální šedomodrá ikona
+  jako v referenčním vzoru.
+- [ ] Referenční vzor `planning-engine-official.png` je uložen mimo repozitář.
+  Pokud ho chceme udržet dostupné pro další agenty, zvaž umístit kopii do
+  `docs/`.
 
 ## 4. Prioritizovaný To-Do list
 
