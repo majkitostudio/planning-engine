@@ -41,6 +41,17 @@ Tento soubor obsahuje projektové instrukce pro agenty pracující na projektu
   bez výslovného pokynu.
 - Nikdy nevypisuj token (`gh auth token` apod.).
 
+### Commity a pull requesty
+
+- Commit je interní a vratná operace: vytváří ho projektový engineer **cíleně
+  sám**, když je dokončený a ověřený logický celek. Uživatel ho nemusí žádat
+  pokaždé.
+- Commit dělej účelově, ne „aby se něco dělo“: jeden srozumitelný celek,
+  ověřený podle typu změny (typecheck/test/build) a s popisem, který říká,
+  co a proč se změnilo.
+- Push, pull request a jakákoli změna vzdáleného repozitáře zůstávají **externí
+  operace** — před nimi ověř stav a potvrď cíl s uživatelem (viz výše).
+
 ## Technologický stack
 
 - Next.js (App Router) + TypeScript + React.
@@ -51,8 +62,9 @@ Tento soubor obsahuje projektové instrukce pro agenty pracující na projektu
 ## Aktuální stav projektu
 
 - **Plánovací Engine je počáteční technický scaffold (Next.js + TypeScript).**
-- Plánovací pravidla a doménová logika: neimplementovány (`lib/planning/` je zatím
-  prázdný základ).
+- Plánovací jádro: `IMPLEMENTED` (kostra) — `lib/planning/` obsahuje doménově
+  nezávislé kontrakty a běh pravidel. Doménová pravidla, doménové typy a
+  skutečné generování rozpisu nejsou implementovány.
 - Doménová specifikace: návrh v `docs/DOMAIN_SPECIFICATION.md` (`PROPOSAL`) — kontext
   domény (měsíční rozpisy směn call centra AAAAuto pro managera telemarketingu,
   100+ zaměstnanců) je `VERIFIED`, pravidla a entity zatím ne.
