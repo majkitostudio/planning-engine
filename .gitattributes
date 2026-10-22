@@ -1,0 +1,13 @@
+# Jednotné řádkování v repozitáři i v pracovním stromu bez ohledu na OS.
+* text=auto eol=lf
+
+# Binární soubory — bez normalizace řádků.
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.webp binary
+*.woff binary
+*.woff2 binary
+*.pdf binary
