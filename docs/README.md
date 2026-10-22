@@ -21,7 +21,7 @@ Toto je počáteční přehled dokumentace projektu Plánovací Engine.
 | `../lib/db.ts` | Singleton PrismaClient (technická vrstva) | `IMPLEMENTED` |
 | `../vitest.config.mts` | Konfigurace testů (Vitest) | `IMPLEMENTED` |
 | `../tests/` | Testy (Vitest) | `IMPLEMENTED` (smoke test) |
-| `lib/planning/README.md` | Čistá plánovací logika (zatím bez implementace) | `PLANNED` |
+| `lib/planning/README.md` | Čistá plánovací vrstva — kontrakty a běh pravidel | `IMPLEMENTED` (kostra) |
 | `../.gitignore` | Ignorované soubory (Node/Next/Prisma) | `IMPLEMENTED` |
 | `docs/README.md` | Tento přehled | `IMPLEMENTED` |
 
@@ -51,6 +51,7 @@ implementační zadání pro OpenCode je v
 | Databázová vrstva (Prisma) | `IMPLEMENTED` — technický základ, bez doménových modelů |
 | Doménová specifikace | `PROPOSAL` — `docs/DOMAIN_SPECIFICATION.md` |
 | Roadmapa / To-Do | `IMPLEMENTED` — `docs/ROADMAP.md`; obecné plánovací jádro lze připravit před doménovými rozhodnutími |
+| Plánovací jádro (kostra) | `IMPLEMENTED` — `lib/planning/`: kontrakty a běh pravidel, bez doménových typů |
 | Plánovací pravidla | `OPEN QUESTION` — neimplementovány |
 | Datový model | `OPEN QUESTION` — neurčen |
 | Uživatelské role | `OPEN QUESTION` — primární role (manager) potvrzena |

@@ -21,14 +21,14 @@ není závislá příprava obecného toku návrhu a jeho kontroly.
 | Plánovací pracovní plocha | `DEMO` | Tabulka směn, filtry, záložky, přehledy a tlačítko výpočtu; data jsou syntetická a výpočet není skutečný. |
 | Demo data | `IMPLEMENTED` / `DEMO` | Jsou soustředěna v `lib/demo-data.ts`; neobsahují skutečná osobní data. |
 | Prisma | `IMPLEMENTED` technicky | Klient a PostgreSQL konfigurace existují, `prisma/schema.prisma` zatím nemá doménové modely. |
-| Čistá plánovací vrstva | `PLANNED` | `lib/planning/` obsahuje pouze popis záměru, žádný engine. |
+| Čistá plánovací vrstva | `IMPLEMENTED` (kostra) | `lib/planning/` má kontrakty a běh pravidel nad návrhem; žádné doménové typy ani směnová pravidla. |
 | Testy | `IMPLEMENTED` minimálně | Vitest běží, ale aktuálně ověřuje pouze testovací infrastrukturu. |
 | Doména | `PROPOSAL` | Kontext call centra je potvrzený; pravidla, entity a optimalizační cíle čekají na rozhodnutí. |
 
 Aktuální ověření pracovního stromu:
 
 - `npm run typecheck` — prošlo.
-- `npm run test` — prošel 1 smoke test.
+- `npm run test` — prošel (smoke test + testy plánovacího jádra).
 - `npm run build` — prošel; statické routy se vygenerovaly.
 - `npm run db:validate` — Prisma schéma je validní.
 
@@ -66,7 +66,7 @@ Otevřené vizuální otázky (`OPEN QUESTION`, rozhoduje manager):
 
 ### P0 — společný technický základ (lze dělat před e-mailem)
 
-- [ ] Připravit obecný tok `návrh rozpisu → kontrola podle dostupných pravidel → výsledek kontroly`.
+- [x] Připravit obecný tok `návrh rozpisu → kontrola podle dostupných pravidel → výsledek kontroly` — hotovo v `lib/planning/` (kostra bez doménových typů).
 - [ ] Umožnit, aby návrh vznikl ručně, mechanickým plánovačem nebo později AI;
   všechny zdroje návrhu používají stejnou kontrolu.
 - [ ] Pokud nejsou nakonfigurovaná pravidla, vracet stav `NOT VERIFIED`, ne
@@ -144,11 +144,13 @@ dat.
 
 ## 6. Doporučený nejbližší krok
 
-Poslat OpenCode task z
-[`OPEN_CODE_PLANNING_CORE_TASK.md`](OPEN_CODE_PLANNING_CORE_TASK.md). Ten připraví
-pravidlově nezávislou kostru, takže čekání na odpovědi managera nezastaví práci.
-Po doručení e-mailu navážeme doménovým P0: potvrdíme typy, pravidla a chování
-plánu a teprve potom přidáme konkrétní mechaniku generování.
+Kostra plánovacího jádra je hotová (`lib/planning/`, viz
+[`OPEN_CODE_PLANNING_CORE_TASK.md`](OPEN_CODE_PLANNING_CORE_TASK.md)), takže
+dalším krokem je **doménové P0**: potvrdit typy, pravidla a chování plánu s
+managerem. Po potvrzení doplníme doménové typy a první tvrdá pravidla (H1–H7)
+jako `PlanningRule` ve vrstvě `lib/planning/`. Do té doby zůstává konkrétní
+mechanika generování rozpisu `BLOCKED`; obecný tok návrhu a kontroly blokovaný
+není.
 
 ## 7. Odkazy
 
