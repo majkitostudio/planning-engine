@@ -14,6 +14,7 @@ Toto je počáteční přehled dokumentace projektu Plánovací Engine.
 | `../app/` | Next.js App Router (výchozí obrazovka) | `IMPLEMENTED` (scaffold) |
 | `docs/DOMAIN_SPECIFICATION.md` | Návrh doménové specifikace (call centrum) | `PROPOSAL` |
 | `docs/DOMAIN_DECISIONS.md` | Rozhodovací list pro managera (otázky, varianty, sběr odpovědí) | `OPEN QUESTION` (čeká na odpovědi) |
+| `docs/DOMAIN_DECISIONS_AGENDA.md` | Jednostránková agenda schůzky — 6 otázek pro první řez | `OPEN QUESTION` (čeká na schůzku) |
 | `docs/DOMAIN_SEAM.md` | Kde se doména napojí na jádro (typy, limity, zobrazení) | `PROPOSAL` |
 | `docs/ROADMAP.md` | Praktická roadmapa a To-Do pro OpenCode | `IMPLEMENTED` (pracovní plán) |
 | `docs/OPEN_CODE_PLANNING_CORE_TASK.md` | První task: pravidlově nezávislá kostra plánovacího jádra | `PLANNED` |

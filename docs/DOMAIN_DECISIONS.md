@@ -23,6 +23,9 @@ Vyplnil: ______________________
 - **„Nevím" je platná odpověď.** Otázka pak zůstane `OPEN QUESTION` a věc, která
   na ní závisí, zůstane `BLOCKED`. Nic se nedomýšlí.
 - Co v tomto listu není, je shrnuté v části „Mimo tento list" na konci.
+- Na samotnou schůzku použij jednostránkovou
+  [agendu se 6 klíčovými otázkami](DOMAIN_DECISIONS_AGENDA.md); tento list je
+  plné znění a místo pro zápis odpovědí.
 
 ## Přehled a co co odblokuje
 
