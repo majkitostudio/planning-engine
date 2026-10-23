@@ -143,4 +143,85 @@ describe("runControl", () => {
       ),
     ).toThrow(TypeError);
   });
+
+  it("nález bez neprázdného textu je chyba pravidla", () => {
+    const rule: PlanningRule<TestPlan> = {
+      id: "TEST-EMPTY-MESSAGE",
+      severity: "error",
+      check: () => [{ message: "" }],
+    };
+
+    expect(() => runControl(proposal, [rule])).toThrow(
+      'Pravidlo "TEST-EMPTY-MESSAGE" vrátilo nález bez neprázdného textu.',
+    );
+  });
+
+  it("pravidlo bez implementovaného check() je chyba konfigurace", () => {
+    const brokenRule = {
+      id: "TEST-NO-CHECK",
+      severity: "error",
+    } as unknown as PlanningRule<TestPlan>;
+
+    expect(() => runControl(proposal, [brokenRule])).toThrow(
+      RuleConfigurationError,
+    );
+  });
+
+  it("předá technické detaily nálezu beze změny", () => {
+    const rule: PlanningRule<TestPlan> = {
+      id: "TEST-DETAILS",
+      severity: "warning",
+      check: () => [
+        {
+          message: "Nález s detailem.",
+          details: { index: 2, entry: "b", hidden: false },
+        },
+      ],
+    };
+
+    const result = runControl(proposal, [rule]);
+
+    expect(result.problems[0]?.details).toEqual({
+      index: 2,
+      entry: "b",
+      hidden: false,
+    });
+  });
+
+  it("pořadí problémů odpovídá pořadí pravidel a jejich nálezů", () => {
+    const first: PlanningRule<TestPlan> = {
+      id: "TEST-FIRST",
+      severity: "error",
+      check: () => [{ message: "První nález." }, { message: "Druhý nález." }],
+    };
+    const second: PlanningRule<TestPlan> = {
+      id: "TEST-SECOND",
+      severity: "error",
+      check: () => [{ message: "Třetí nález." }],
+    };
+
+    const result = runControl(proposal, [first, second]);
+
+    expect(result.problems.map((problem) => problem.message)).toEqual([
+      "První nález.",
+      "Druhý nález.",
+      "Třetí nález.",
+    ]);
+    expect(result.problems.map((problem) => problem.ruleId)).toEqual([
+      "TEST-FIRST",
+      "TEST-FIRST",
+      "TEST-SECOND",
+    ]);
+  });
+
+  it("výsledek je snapshot — pozdější změna pole pravidel ho neovlivní", () => {
+    const rules: PlanningRule<TestPlan>[] = [alwaysFailingRule];
+    const result = runControl(proposal, rules);
+
+    rules.push(emptyEntriesRule);
+    rules.length = 0;
+
+    expect(result.checkedRuleIds).toEqual(["TEST-ALWAYS-FAILS"]);
+    expect(result.problems).toHaveLength(1);
+  });
 });

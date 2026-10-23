@@ -30,7 +30,12 @@ export class RuleConfigurationError extends Error {
  * - Bez jakéhokoli pravidla je výsledek `not_verified` (nikoli úspěch).
  * - Chyba uvnitř pravidla se **nechá propadnout** — kontrola se tím nikdy
  *   netváří jako čistá. Volající si může chybu odchytit sám.
- * - Duplicitní identifikátor pravidla je chyba konfigurace.
+ * - Duplicitní identifikátor nebo chybějící `check()` je chyba konfigurace
+ *   (`RuleConfigurationError`).
+ * - Pořadí problémů je deterministické: nejdřív podle pořadí pravidel, uvnitř
+ *   pravidla podle pořadí nálezů.
+ * - Vstupní návrh ani pole pravidel se nemění; výsledek je nový objekt, který
+ *   se pozdějšími změnami vstupu nemění.
  *
  * Výsledek **není schválení plánu**. Přijetí je vždy rozhodnutí managera.
  */
@@ -54,6 +59,11 @@ export function runControl<TPlan>(
     if (!rule || typeof rule.id !== "string" || rule.id.length === 0) {
       throw new RuleConfigurationError(
         "Každé pravidlo musí mít neprázdný identifikátor.",
+      );
+    }
+    if (typeof rule.check !== "function") {
+      throw new RuleConfigurationError(
+        `Pravidlo "${rule.id}" nemá implementovanou metodu check().`,
       );
     }
     if (seenRuleIds.has(rule.id)) {
@@ -83,6 +93,11 @@ export function runControl<TPlan>(
     checkedRuleIds.push(rule.id);
 
     for (const issue of issues) {
+      if (!issue || typeof issue.message !== "string" || issue.message.length === 0) {
+        throw new TypeError(
+          `Pravidlo "${rule.id}" vrátilo nález bez neprázdného textu.`,
+        );
+      }
       problems.push({
         ruleId: rule.id,
         severity: issue.severity ?? rule.severity,

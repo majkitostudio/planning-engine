@@ -165,6 +165,7 @@ blokovaný není.
 - [Přehled dokumentace](README.md)
 - [Návrh doménové specifikace](DOMAIN_SPECIFICATION.md)
 - [Rozhodovací list pro managera](DOMAIN_DECISIONS.md)
+- [Architektonická rozhodnutí (ADR)](adr/README.md)
 - [Plánovací vrstva](../lib/planning/README.md)
 - [Vizuální úkol pro OpenCode](OPEN_CODE_VISUAL_TASK.md)
 - [První task: plánovací jádro](OPEN_CODE_PLANNING_CORE_TASK.md)

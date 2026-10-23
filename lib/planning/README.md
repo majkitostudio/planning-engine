@@ -48,6 +48,18 @@ Plánovací logika nad směnami **stále není implementována**.
   přiřazení. Jejich tvar závisí na odpovědích manažera (OQ3–OQ5, OQ9–OQ11).
 - Algoritmus, optimalizace ani pravidla H1–H7 a S1–S5 **zatím neimplementovat**.
 
+## Rozhodnutí (ADR)
+
+Proč je vrstva postavená takhle, zaznamenávají krátká architektonická
+rozhodnutí:
+
+- [ADR 0001 — Doménově nezávislé plánovací jádro](../../docs/adr/0001-domenove-nezavisle-jadro.md)
+- [ADR 0002 — Tři stavy kontroly](../../docs/adr/0002-tri-stavy-kontroly.md)
+- [ADR 0003 — Zdroj návrhu není schválení](../../docs/adr/0003-zdroj-navrhu-neni-schvaleni.md)
+- [ADR 0004 — Chyba pravidla se nepolyká](../../docs/adr/0004-chyba-pravidla-se-nepolyka.md)
+
+Index a pravidla zápisu: [`docs/adr/README.md`](../../docs/adr/README.md).
+
 ## Proč je kontrakt otevřený
 
 Před přímo doménovými typy je třeba potvrdit:

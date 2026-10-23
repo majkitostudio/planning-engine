@@ -23,6 +23,7 @@ Toto je počáteční přehled dokumentace projektu Plánovací Engine.
 | `../vitest.config.mts` | Konfigurace testů (Vitest) | `IMPLEMENTED` |
 | `../tests/` | Testy (Vitest) | `IMPLEMENTED` (smoke test) |
 | `../lib/planning/README.md` | Čistá plánovací vrstva — kontrakty a běh pravidel | `IMPLEMENTED` (kostra) |
+| `adr/README.md` | Architektonická rozhodnutí (ADR) — index a pravidla zápisu | `IMPLEMENTED` |
 | `../eslint.config.mjs` | ESLint konfigurace (Next.js + TypeScript) | `IMPLEMENTED` |
 | `../.github/workflows/ci.yml` | CI: lint, typecheck, testy, build, validace Prisma | `IMPLEMENTED` |
 | `../.gitignore` | Ignorované soubory (Node/Next/Prisma) | `IMPLEMENTED` |

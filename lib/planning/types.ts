@@ -87,7 +87,7 @@ export interface PlanningRule<TPlan = unknown> {
   /** Volitelný popis pravidla pro člověka. */
   description?: string;
   /** Zkontroluje návrh a vrátí nalezené problémy. */
-  check(context: RuleContext<TPlan>): RuleIssue[];
+  check(context: RuleContext<TPlan>): readonly RuleIssue[];
 }
 
 /**
@@ -118,9 +118,9 @@ export interface ControlResult {
   /** Stav kontroly. */
   status: ControlStatus;
   /** Nalezené problémy; prázdné, pokud žádné nebyly nalezeny. */
-  problems: RuleProblem[];
+  problems: readonly RuleProblem[];
   /** Identifikátory pravidel, která se skutečně spustila. */
-  checkedRuleIds: string[];
+  checkedRuleIds: readonly string[];
   /** Identifikátor kontrolovaného návrhu. */
   proposalId: string;
   /** Původ návrhu — informace o původu, ne oprávnění. */
