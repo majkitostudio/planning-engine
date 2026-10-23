@@ -29,7 +29,7 @@ jádro nezná žádné konkrétní směnové pravidlo.
 - Cena: uvnitř pravidel je do schválení domény slabší typová opora; tu dodá
   doménový typ až po OQ3–OQ4.
 - Vzniká potřeba „švu" — místa, kde se doménový typ napojí (viz
-  `docs/DOMAIN_SEAM.md`).
+  [Šev pro doménu](../DOMAIN_SEAM.md)).
 
 ## Co to neznamená
 
