@@ -24,7 +24,7 @@ sítě. Volání AI je schované za rozhraním; konkrétní poskytovatel je v `l
 | `ai-provider.ts` | `PlanningModelProvider`, `AiProviderError`, `isPlanDraft()` — provider-neutral AI kontrakt. |
 | `orchestrator.ts` | `runPlanning()` — vstup → AI → validace → změny a pokrytí. |
 | `orchestrator.test.ts` | Testy orchestrace s fake providerem. |
-| `index.ts` | Veřejné API generického jádra. |
+| `index.ts` | Veřejné API jádra: generické typy, doména, AI kontrakt a orchestrátor. |
 | `domain/types.ts` | Doménový kontrakt prvního týdne a typy výsledku. |
 | `domain/confirmed.ts` | Potvrzené časy směn, pravidla a pomocné funkce. |
 | `domain/time.ts` | Datum, místní časy, časová zóna a intervaly směn. |

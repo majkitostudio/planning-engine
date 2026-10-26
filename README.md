@@ -29,8 +29,8 @@ produkční aplikaci.
 - Potvrzené jsou časy směn, pravidlo 35 h odpočinku po šesti dnech a dva dny
   volna po práci o víkendu.
 - Projekt neobsahuje skutečná osobní ani zaměstnanecká data a není připraven
-  k produkčnímu provozu. Aktuální pracovní strom neprochází lintem (viz
-  [`docs/ROADMAP.md`](docs/ROADMAP.md)).
+  k produkčnímu provozu. Aktuální pracovní strom prochází lintem, typecheckem,
+  testy i buildem (viz [`docs/ROADMAP.md`](docs/ROADMAP.md)).
 
 ## Technologický stack
 
@@ -52,11 +52,11 @@ Stack-specifické soubory: `package.json`, `tsconfig.json`, `next.config.mjs`,
 | `lib/ai/` | Serverový Gemini adaptér | `IMPLEMENTED`; reálné volání `NOT VERIFIED` |
 | `lib/db.ts` | Singleton PrismaClient (technická vrstva) | `IMPLEMENTED` |
 | `prisma/` | Prisma konfigurace a schéma (bez doménových modelů) | `IMPLEMENTED` (technický základ) |
-| `tests/` | Testy (Vitest) | `IMPLEMENTED` |
+| `lib/**/*.test.ts` | Testy (Vitest) vedle testovaného kódu | `IMPLEMENTED` |
 | `docs/` | Dokumentace a ADR | `IMPLEMENTED` |
 | `AGENTS.md` | Projektové instrukce pro agenty | `IMPLEMENTED` |
 | `eslint.config.mjs` | ESLint (Next.js + TypeScript pravidla) | `IMPLEMENTED` |
-| `.github/workflows/ci.yml` | CI: lint, typecheck, testy, build, validace Prisma | `IMPLEMENTED`; lint aktuálně neprochází |
+| `.github/workflows/ci.yml` | CI: lint, typecheck, testy, build, validace Prisma | `IMPLEMENTED` |
 
 ## Vývoj
 

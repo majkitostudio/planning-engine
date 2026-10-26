@@ -35,7 +35,7 @@ jiných dokumentů neopakuje.
 | Potvrzení manažera | `PLANNED` | `confirmed` je vždy `false` |
 | Ukládání plánu | `PLANNED` | Bez doménových modelů v Prisma |
 | Testy | `IMPLEMENTED` | 90 prochází, 1 integrační se přeskakuje |
-| Kvalitní brána (CI) | `IMPLEMENTED` | Aktuální strom neprochází lintem; viz `ROADMAP.md` |
+| Kvalitní brána (CI) | `IMPLEMENTED` | Lint, typecheck, testy, build a Prisma validace procházejí |
 | Produkční připravenost | `NOT VERIFIED` | Není produkční aplikace |
 
 ## Stavové popisky

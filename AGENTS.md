@@ -127,9 +127,9 @@ pravidel. Způsob započítávání přestávek je `OPEN QUESTION` — viz
 - Rozhodovací list pro managera: `docs/DOMAIN_DECISIONS.md` — částečně
   zodpovězený; otevřené otázky zůstávají `OPEN QUESTION`. Odpovědi ani doménu
   nedomýšlej.
-- Aktuální pracovní strom **neprochází lintem** (nepoužité importy a pomocné
-  funkce v `ai-provider.ts`, `orchestrator.ts` a testech). Je to známá vada
-  mimo dokumentační rozsah; podrobnosti v `docs/ROADMAP.md`.
+- Aktuální pracovní strom prochází lintem, typecheckem, testy i buildem.
+  Známý dluh je napojení UI na orchestrátor, potvrzení manažera a ukládání;
+  podrobnosti v `docs/ROADMAP.md`.
 - Stav informací označuj popisky (`VERIFIED`, `IMPLEMENTED`, `PLANNED`,
   `ASSUMPTION`, `OPEN QUESTION`, `NOT VERIFIED`, `SIMULATED`, `BLOCKED`).
   Jejich význam a rozdíl mezi `IMPLEMENTED` a `VERIFIED` vysvětluje

@@ -30,8 +30,7 @@ Aktuální ověření pracovního stromu (26. 10. 2026):
 - `npm run typecheck` — prošlo.
 - `npm run build` — prošlo.
 - `npm run db:validate` — schéma je validní.
-- `npm run lint` — **neprošlo**: 5 warningů (nepoužité importy v
-  `ai-provider.ts`, `orchestrator.ts` a testech). Vada kódu, viz §7.
+- `npm run lint` — prošlo bez warningů.
 
 ## 3. Implementováno, ale potřebuje ověření nebo potvrzení
 
@@ -94,16 +93,12 @@ Podrobnosti a místo pro odpovědi: [`DOMAIN_DECISIONS.md`](DOMAIN_DECISIONS.md)
 
 ## 7. Známé vady a dluhy
 
-Tyto body jsou mimo dokumentační rozsah a nejsou opravené:
-
-- **Lint neprochází.** Pět warningů `@typescript-eslint/no-unused-vars`
-  (nepoužité importy a pomocné funkce): `lib/planning/ai-provider.ts`
-  (nepoužitý `IsoDate`), `lib/planning/orchestrator.ts` (nepoužitý `addDays`)
-  a tři v testech. Dokud to platí, CI brána je červená.
-- **`package.json` popisuje „měsíční rozpisy“**, ale první řez je týdenní.
-- **`lib/planning/ai-provider.ts` je untracked**, přestože je součástí jádra.
 - **`patch_orchestrator.mjs` a `patch_orchestrator2.mjs`** jsou untracked
   jednorázové skripty; neměly by se commitovat.
+- **Napojení UI na orchestrátor, potvrzení manažera a ukládání** jsou stále
+  `PLANNED`; tato omezení popisuje §4 a `README.md`.
+- **Reálné volání Gemini** je `NOT VERIFIED`, dokud neproběhne integrační test
+  s klíčem.
 
 ## 8. Historie
 
@@ -117,6 +112,8 @@ Tyto body jsou mimo dokumentační rozsah a nejsou opravené:
   pokrytí a změn, dvouvrstvá kontrola `PlanDraft` a doplněné testy.
 - **26. 10. 2026:** sjednocení dokumentace na pět dokumentů a ADR; zrušeny
   duplicitní souhrny a historické tasky.
+- **26. 10. 2026:** lint je zelený; dokumentace a demo UI srovnány se
+  skutečným stavem kódu.
 
 ## 9. Odkazy
 
