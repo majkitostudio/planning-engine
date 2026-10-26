@@ -338,7 +338,8 @@ export interface PlanDraft {
 /**
  * Stav výsledku plánovacího běhu.
  *
- * - `not_verified` — validace nemohla proběhnout (např. žádná pravidla).
+ * - `not_verified` — některou kontrolu nešlo spolehlivě provést (chybí
+ *   historie, požadavek na obsazení nebo potvrzený výklad pravidla).
  * - `needs_changes` — validace našla problém nebo chybí obsazení.
  * - `ready_for_review` — validace nic nenašla, ale stále čeká na manažera.
  *

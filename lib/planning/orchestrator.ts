@@ -28,7 +28,7 @@ import type {
   AiProviderErrorCode,
   RunPlanningOptions,
 } from "./ai-provider";
-import { isIsoDate, weekdayIndex, addDays } from "./domain/time";
+import { isIsoDate, weekdayIndex } from "./domain/time";
 
 const DEFAULT_TIMEOUT_MS = 30_000;
 

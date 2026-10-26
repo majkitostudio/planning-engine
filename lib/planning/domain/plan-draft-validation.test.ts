@@ -74,10 +74,6 @@ function makeInput(overrides: Partial<PlanningInput> = {}): PlanningInput {
   };
 }
 
-function makeAssignment(employeeId: string, date: string, shiftKind: ShiftKind): ProposedAssignment {
-  return { employeeId, date, shiftKind };
-}
-
 function makeDraft(assignments: ProposedAssignment[]): PlanDraft {
   return {
     weekStart: WEEK_START,

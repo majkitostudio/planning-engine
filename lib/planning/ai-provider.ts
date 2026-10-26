@@ -7,7 +7,7 @@
  * rozhraním a nikdy nevolá síť přímo.
  */
 
-import type { PlanningInput, PlanDraft, IsoDate } from "./domain";
+import type { PlanningInput, PlanDraft } from "./domain";
 import { isIsoDate } from "./domain/time";
 
 /** Strukturovaná chyba poskytovatele modelu. */

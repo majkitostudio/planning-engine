@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from "vitest";
+import { describe, expect, it } from "vitest";
 
 import {
   CONFIRMED_PLANNING_RULES,
@@ -76,10 +76,6 @@ function makeInput(overrides: Partial<PlanningInput> = {}): PlanningInput {
     history: { assignments: [], complete: true },
     ...overrides,
   };
-}
-
-function makeAssignment(employeeId: string, date: string, shiftKind: ShiftKind): ProposedAssignment {
-  return { employeeId, date, shiftKind };
 }
 
 function makeDraft(assignments: ProposedAssignment[]): PlanDraft {
