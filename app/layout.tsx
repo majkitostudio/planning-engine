@@ -22,7 +22,7 @@ export const metadata: Metadata = {
     template: "%s · Plánovací engine",
   },
   description:
-    "Chytrý plánovač měsíčních rozpisů směn zaměstnanců call centra AAAAuto.",
+    "Plánovač týdenních rozpisů směn zaměstnanců call centra AAAAuto.",
 };
 
 export default function RootLayout({

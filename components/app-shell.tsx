@@ -140,7 +140,7 @@ export function AppShell({ children }: { children: ReactNode }) {
             <span className="engine-card__dot" aria-hidden="true" />
             <div>
               <p className="engine-card__title">Plánovací engine</p>
-              <p className="engine-card__sub">Logika není implementována</p>
+              <p className="engine-card__sub">Jádro hotové, UI nepřipojené</p>
             </div>
           </div>
 

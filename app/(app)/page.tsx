@@ -6,33 +6,33 @@ import { DEMO_ALERTS, DEMO_FREQUENT, DEMO_STATS } from "@/lib/demo-data";
 
 const STEPS = [
   {
-    title: "Výběr plánovacího období",
-    desc: "Měsíc, na který se rozpis sestavuje.",
+    title: "Výběr plánovacího týdne",
+    desc: "Týden (pondělí–nedělí), na který se rozpis sestavuje.",
     status: "Připraveno k návrhu",
     variant: "info",
   },
   {
     title: "Příprava vstupních dat",
     desc: "Zaměstnanci, dostupnost, směny a pravidla.",
-    status: "Připraveno k návrhu",
+    status: "Ukázková data",
     variant: "info",
   },
   {
     title: "Spuštění plánování",
-    desc: "Vyžaduje schválená pravidla a plánovací logiku.",
-    status: "Blokováno",
-    variant: "warning",
+    desc: "Jádro a orchestrátor jsou hotové; chybí napojení UI.",
+    status: "Jádro hotové",
+    variant: "info",
   },
   {
     title: "Návrh rozpisu",
-    desc: "Zobrazí se po dokončení výpočtu.",
-    status: "Blokováno",
+    desc: "Zobrazí se po napojení UI na orchestrátor.",
+    status: "Plánováno",
     variant: "warning",
   },
   {
     title: "Kontrola konfliktů",
-    desc: "Přehled nepokrytých směn a nesplněných požadavků.",
-    status: "Blokováno",
+    desc: "Validace je hotová; zobrazení výsledku v UI chybí.",
+    status: "Plánováno",
     variant: "warning",
   },
 ] as const;
@@ -48,7 +48,7 @@ export default function DashboardPage() {
           <div>
             <h1 className="page-head__title">Přehled</h1>
             <p className="page-head__sub">
-              Manažerský přehled plánování měsíčních rozpisů směn. Zobrazená
+              Manažerský přehled plánování týdenních rozpisů směn. Zobrazená
               data jsou ukázková, nikoli skutečný provoz.
             </p>
           </div>
@@ -68,8 +68,8 @@ export default function DashboardPage() {
         </span>
         <p>
           <strong>Demonstrační data.</strong> Čísla, jména i směny jsou smyšlené
-          ukázky rozvržení. Plánovací logika ani databázová data zatím nejsou
-          implementovány.
+          ukázky rozvržení. Plánovací jádro je hotové, ale UI zatím není
+          napojené na orchestrátor a databázová data nejsou implementována.
         </p>
       </div>
 
@@ -210,8 +210,8 @@ export default function DashboardPage() {
               </Badge>
             </div>
             <p className="ai-card__text">
-              Pomůže sestavit rozpis podle dostupnosti a schválených pravidel.
-              Plánovací logika zatím není implementována.
+              Jádro, validace a orchestrátor jsou hotové. Napojení na tuto
+              obrazovku a potvrzení manažera ještě implementované nejsou.
             </p>
             <Link className="btn btn--primary" href="/planovani">
               Otevřít plán směn

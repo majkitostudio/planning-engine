@@ -1,10 +1,16 @@
 /**
  * SYNTETICKÁ DEMONSTRAČNÍ DATA PRO UI.
  *
- * Všechna jména, čísla i časy směn jsou smyšlené a slouží výhradně
- * k vizuální ukázce rozvržení. Nejedná se o skutečný rozpis, schválená
- * provozní pravidla ani zaměstnanecká data.
+ * Všechna jména a čísla jsou smyšlená a slouží výhradně k vizuální ukázce
+ * rozvržení. Nejedná se o skutečný rozpis, schválená provozní pravidla ani
+ * zaměstnanecká data. Časy směn se odvozují z potvrzených konstant, aby se
+ * demo UI nerozešlo s doménovým kontraktem.
  */
+
+import {
+  CONFIRMED_SHIFT_DEFINITIONS,
+  getShiftWindow,
+} from "./planning/domain/confirmed";
 
 export type ShiftKind = "morning" | "afternoon" | "off" | "vacation" | "sick";
 
@@ -29,27 +35,45 @@ export type DemoStat = {
   tone: "blue" | "green" | "red" | "amber";
 };
 
+function formatWindow(kind: "morning" | "afternoon", isWeekend: boolean): string {
+  const window = getShiftWindow(CONFIRMED_SHIFT_DEFINITIONS, kind, isWeekend);
+  return `${window.start}–${window.end}`;
+}
+
 export const SHIFT_META: Record<
   ShiftKind,
-  { label: string; className: string; option: string }
+  { label: string; weekendLabel: string; className: string; option: string }
 > = {
   morning: {
-    label: "8:00–16:00",
+    label: formatWindow("morning", false),
+    weekendLabel: formatWindow("morning", true),
     className: "shift--morning",
-    option: "Ranní (8:00–16:00)",
+    option: `Ranní (${formatWindow("morning", false)})`,
   },
   afternoon: {
-    label: "12:00–20:00",
+    label: formatWindow("afternoon", false),
+    weekendLabel: formatWindow("afternoon", true),
     className: "shift--afternoon",
-    option: "Odpolední (12:00–20:00)",
+    option: `Odpolední (${formatWindow("afternoon", false)} / víkend ${formatWindow("afternoon", true)})`,
   },
-  off: { label: "Volno", className: "shift--off", option: "Volno" },
+  off: {
+    label: "Volno",
+    weekendLabel: "Volno",
+    className: "shift--off",
+    option: "Volno",
+  },
   vacation: {
     label: "Dovolená",
+    weekendLabel: "Dovolená",
     className: "shift--vacation",
     option: "Dovolená",
   },
-  sick: { label: "Nemoc", className: "shift--sick", option: "Nemoc" },
+  sick: {
+    label: "Nemoc",
+    weekendLabel: "Nemoc",
+    className: "shift--sick",
+    option: "Nemoc",
+  },
 };
 
 const M: ShiftKind = "morning";
@@ -340,40 +364,23 @@ export const DEMO_ABSENCES: DemoAbsence[] = [
   },
 ];
 
-export const DEMO_PERIOD = { year: 2026, month: 9 } as const;
-
-export const CZECH_MONTHS = [
-  "Leden",
-  "Únor",
-  "Březen",
-  "Duben",
-  "Květen",
-  "Červen",
-  "Červenec",
-  "Srpen",
-  "Září",
-  "Říjen",
-  "Listopad",
-  "Prosinec",
-];
+/** Ukázkový týden prvního řezu: pondělí 5. 10. 2026. */
+export const DEMO_WEEK_START = new Date(2026, 9, 5);
 
 export const CZECH_DAYS = ["Po", "Út", "St", "Čt", "Pá", "So", "Ne"];
 
-export function monthLabel(year: number, month: number): string {
-  return `${CZECH_MONTHS[month] ?? ""} ${year}`;
+export function addDays(date: Date, days: number): Date {
+  return new Date(date.getFullYear(), date.getMonth(), date.getDate() + days);
 }
 
-/** Pondělí prvního celého týdne v daném měsíci. */
-export function getWeekDates(year: number, month: number): Date[] {
-  const first = new Date(year, month, 1);
-  const day = first.getDay();
-  const offset = (8 - day) % 7;
-  const monday = new Date(year, month, 1 + offset);
-  return Array.from(
-    { length: 7 },
-    (_, index) =>
-      new Date(monday.getFullYear(), monday.getMonth(), monday.getDate() + index),
-  );
+/** Sedm dní od zadaného pondělí. */
+export function getWeekDates(weekStart: Date): Date[] {
+  return Array.from({ length: 7 }, (_, index) => addDays(weekStart, index));
+}
+
+export function weekLabel(weekStart: Date): string {
+  const weekEnd = addDays(weekStart, 6);
+  return `${formatDayMonth(weekStart)} – ${formatDayMonth(weekEnd)} ${weekEnd.getFullYear()}`;
 }
 
 export function formatDayMonth(date: Date): string {

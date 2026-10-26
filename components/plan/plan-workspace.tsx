@@ -14,14 +14,15 @@ import {
   DEMO_EMPLOYEES,
   DEMO_FREQUENT,
   DEMO_OVERVIEW,
-  DEMO_PERIOD,
   DEMO_REQUESTS,
   DEMO_STATS,
+  DEMO_WEEK_START,
   SHIFT_META,
+  addDays,
   formatDayMonth,
   getWeekDates,
-  monthLabel,
   shiftCount,
+  weekLabel,
   type ShiftKind,
 } from "@/lib/demo-data";
 
@@ -41,19 +42,13 @@ const STATUS_LABEL = {
 } as const;
 
 export function PlanWorkspace() {
-  const [period, setPeriod] = useState<{ year: number; month: number }>({
-    year: DEMO_PERIOD.year,
-    month: DEMO_PERIOD.month,
-  });
+  const [weekStart, setWeekStart] = useState<Date>(() => DEMO_WEEK_START);
   const [tab, setTab] = useState<TabKey>("smeny");
   const [query, setQuery] = useState("");
   const [shiftFilter, setShiftFilter] = useState<"all" | ShiftKind>("all");
   const [notice, setNotice] = useState<string | null>(null);
 
-  const weekDates = useMemo(
-    () => getWeekDates(period.year, period.month),
-    [period],
-  );
+  const weekDates = useMemo(() => getWeekDates(weekStart), [weekStart]);
 
   const normalizedQuery = query.trim().toLowerCase();
 
@@ -81,16 +76,13 @@ export function PlanWorkspace() {
       absence.type.toLowerCase().includes(normalizedQuery),
   );
 
-  function movePeriod(delta: number) {
-    setPeriod((current) => {
-      const next = new Date(current.year, current.month + delta, 1);
-      return { year: next.getFullYear(), month: next.getMonth() };
-    });
+  function moveWeek(delta: number) {
+    setWeekStart((current) => addDays(current, delta * 7));
   }
 
   function runCalculation() {
     setNotice(
-      "Tlačítko je součástí vizuálního návrhu. Algoritmus, který by přiřazoval zaměstnance ke směnám, zatím není implementován.",
+      "Plánovací jádro, deterministická validace i orchestrátor jsou hotové, ale tato obrazovka zatím není napojená na orchestrátor. Na demo datech se proto žádný návrh nevytvoří.",
     );
   }
 
@@ -123,26 +115,26 @@ export function PlanWorkspace() {
         </div>
 
         <div className="page-head__actions">
-          <div className="period" role="group" aria-label="Plánovací období">
+          <div className="period" role="group" aria-label="Plánovací týden">
             <span className="period__icon" aria-hidden="true">
               <Icon name="calendar" width={17} height={17} />
             </span>
             <span className="period__label" aria-live="polite">
-              {monthLabel(period.year, period.month)}
+              {weekLabel(weekStart)}
             </span>
             <button
               type="button"
               className="period__btn"
-              aria-label="Předchozí měsíc"
-              onClick={() => movePeriod(-1)}
+              aria-label="Předchozí týden"
+              onClick={() => moveWeek(-1)}
             >
               <Icon name="chevronLeft" width={16} height={16} />
             </button>
             <button
               type="button"
               className="period__btn"
-              aria-label="Následující měsíc"
-              onClick={() => movePeriod(1)}
+              aria-label="Následující týden"
+              onClick={() => moveWeek(1)}
             >
               <Icon name="chevronRight" width={16} height={16} />
             </button>
@@ -160,9 +152,9 @@ export function PlanWorkspace() {
           <Icon name="info" width={17} height={17} />
         </span>
         <p>
-          <strong>Demonstrační data.</strong> Jména, čísla i časy směn jsou
-          smyšlené ukázky rozvržení. Nejde o platný rozpis ani schválená
-          provozní pravidla.
+          <strong>Demonstrační data.</strong> Jména, počty i přiřazení jsou
+          smyšlené ukázky rozvržení. Časy směn odpovídají potvrzeným časům, ale
+          nejde o platný ani schválený rozpis.
         </p>
       </div>
 
@@ -286,8 +278,8 @@ export function PlanWorkspace() {
                 <p className="table-note">
                   Ukázková data · zobrazeno {filteredEmployees.length} z 108
                   zaměstnanců · týden {formatDayMonth(weekFrom)} –{" "}
-                  {formatDayMonth(weekTo)} · časy směn jsou ilustrativní a rozpis
-                  se s volbou období nemění.
+                  {formatDayMonth(weekTo)} · časy odpovídají potvrzeným směnám,
+                  ale přiřazení se s volbou týdne nemění.
                 </p>
               </div>
             ) : null}
@@ -328,7 +320,7 @@ export function PlanWorkspace() {
                   />
                 )}
                 <p className="table-note">
-                  Ukázková data · seznam není vázán na zvolené období · nejde o
+                  Ukázková data · seznam není vázán na zvolený týden · nejde o
                   skutečné požadavky zaměstnanců.
                 </p>
               </div>
@@ -364,7 +356,7 @@ export function PlanWorkspace() {
                   />
                 )}
                 <p className="table-note">
-                  Ukázková data · seznam není vázán na zvolené období · nejde o
+                  Ukázková data · seznam není vázán na zvolený týden · nejde o
                   skutečné absence.
                 </p>
               </div>
@@ -415,7 +407,7 @@ export function PlanWorkspace() {
             <span>Ukázková data · neproběhl skutečný výpočet</span>
             <span className="footer-status__right">
               <span className="footer-status__dot footer-status__dot--amber" aria-hidden="true" />
-              Plánovací logika není implementována
+              Jádro je hotové, UI zatím není napojené na orchestrátor
             </span>
           </div>
         </div>
@@ -529,8 +521,8 @@ export function PlanWorkspace() {
               </Badge>
             </div>
             <p className="ai-card__text">
-              Pomůže sestavit rozpis podle dostupnosti a schválených pravidel.
-              Plánovací logika zatím není implementována.
+              Jádro, validace a orchestrátor jsou hotové. Napojení na tuto
+              obrazovku a potvrzení manažera ještě implementované nejsou.
             </p>
             <button type="button" className="btn btn--primary" onClick={runCalculation}>
               Spustit výpočet

@@ -66,7 +66,7 @@ export function RosterTable({
                   }
                 >
                   <span className={`shift ${SHIFT_META[shift].className}`}>
-                    {SHIFT_META[shift].label}
+                    {SHIFT_META[shift][index >= 5 ? "weekendLabel" : "label"]}
                   </span>
                 </td>
               ))}
