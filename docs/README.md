@@ -2,80 +2,68 @@
 
 Technický repozitář: `planning-engine`
 
-Toto je počáteční přehled dokumentace projektu Plánovací Engine.
+Rozcestník dokumentace. Každý dokument má jednu hlavní odpovědnost a podrobnosti
+jiných dokumentů neopakuje.
 
-## Struktura
+## Kde co hledat
 
-| Soubor | Obsah | Stav |
+| Dokument | Odpovídá na | Stav |
 | --- | --- | --- |
-| `../README.md` | Úvod, účel, stack, stav projektu | `IMPLEMENTED` (scaffold) |
-| `../AGENTS.md` | Projektové instrukce pro agenty | `IMPLEMENTED` (scaffold) |
-| `../package.json` | Závislosti a skripty | `IMPLEMENTED` |
-| `../app/` | Next.js App Router (výchozí obrazovka) | `IMPLEMENTED` (scaffold) |
-| `docs/DOMAIN_SPECIFICATION.md` | Návrh doménové specifikace (call centrum) | `PROPOSAL` |
-| `docs/DOMAIN_DECISIONS.md` | Rozhodovací list pro managera (otázky, varianty, sběr odpovědí) | `OPEN QUESTION` (čeká na odpovědi) |
-| `docs/DOMAIN_DECISIONS_AGENDA.md` | Jednostránková agenda schůzky — 6 otázek pro první řez | `OPEN QUESTION` (čeká na schůzku) |
-| `docs/DOMAIN_SEAM.md` | Kde se doména napojí na jádro (typy, limity, zobrazení) | `PROPOSAL` |
-| `docs/ROADMAP.md` | Praktická roadmapa a To-Do pro OpenCode | `IMPLEMENTED` (pracovní plán) |
-| `docs/OPEN_CODE_PLANNING_CORE_TASK.md` | První task: pravidlově nezávislá kostra plánovacího jádra | `PLANNED` |
-| `docs/OPEN_CODE_VISUAL_TASK.md` | Starší zadání vizuální revize (překonáno realizovaným vizuálem) | `SUPERSEDED` |
-| `../app/globals.css` | Vizuální systém (chladná paleta, komponenty) | `IMPLEMENTED` (demo vizuál) |
-| `../prisma/` | Prisma konfigurace a schéma (bez doménových modelů) | `IMPLEMENTED` (technický základ) |
-| `../lib/db.ts` | Singleton PrismaClient (technická vrstva) | `IMPLEMENTED` |
-| `../vitest.config.mts` | Konfigurace testů (Vitest) | `IMPLEMENTED` |
-| `../tests/` | Testy (Vitest) | `IMPLEMENTED` (smoke test) |
-| `../lib/planning/README.md` | Čistá plánovací vrstva — kontrakty a běh pravidel | `IMPLEMENTED` (kostra) |
-| `adr/README.md` | Architektonická rozhodnutí (ADR) — index a pravidla zápisu | `IMPLEMENTED` |
-| `../eslint.config.mjs` | ESLint konfigurace (Next.js + TypeScript) | `IMPLEMENTED` |
-| `../.github/workflows/ci.yml` | CI: lint, typecheck, testy, build, validace Prisma | `IMPLEMENTED` |
-| `../.gitignore` | Ignorované soubory (Node/Next/Prisma) | `IMPLEMENTED` |
-| `docs/README.md` | Tento přehled | `IMPLEMENTED` |
+| [`../README.md`](../README.md) | Co projekt je, jaký je stav a jak ho spustit | `IMPLEMENTED` |
+| [`../AGENTS.md`](../AGENTS.md) | Pravidla práce coding agenta a meze autonomie | `IMPLEMENTED` |
+| [`ROADMAP.md`](ROADMAP.md) | Co je hotové, co chybí a co dělat dál | `IMPLEMENTED` (pracovní plán) |
+| [`PLANNING_CONTRACT.md`](PLANNING_CONTRACT.md) | Tok vstup → AI → validace → manažer a tvary rozhraní | `PROPOSAL` (kontrakt) / `IMPLEMENTED` (kód) |
+| [`DOMAIN_SPECIFICATION.md`](DOMAIN_SPECIFICATION.md) | Doménový model a pravidla s mírou potvrzení | `PARTIALLY VERIFIED PROPOSAL` |
+| [`DOMAIN_DECISIONS.md`](DOMAIN_DECISIONS.md) | Otevřené otázky a odpovědi managera | `PARTIALLY ANSWERED` |
+| [`adr/`](adr/README.md) | Proč jsou technická rozhodnutí taková | `IMPLEMENTED` |
+| [`../lib/planning/README.md`](../lib/planning/README.md) | Co skutečně obsahuje plánovací jádro | `IMPLEMENTED` |
+| [`../prisma/schema.prisma`](../prisma/schema.prisma) | Databázový základ bez doménových modelů | `IMPLEMENTED` (technický základ) |
 
-## Zamýšlený účel
+## Aktuální stav
 
-Chytrý plánovač **měsíčních rozpisů směn** pro **zaměstnance call centra společnosti
-AAAAuto**, určený pro **managera telemarketingového oddělení** (rozsah **více než
-100 zaměstnanců**).
+| Oblast | Stav | Poznámka |
+| --- | --- | --- |
+| Next.js aplikace a routy | `IMPLEMENTED` | App Router, TypeScript, React |
+| Demo UI | `IMPLEMENTED` / `DEMO` | Syntetická data z `lib/demo-data.ts` |
+| Generické plánovací jádro | `IMPLEMENTED` | `lib/planning/types.ts`, `control.ts` |
+| Doménový kontrakt | `IMPLEMENTED` | `lib/planning/domain/`; kontrakt je `PROPOSAL` k ověření |
+| Deterministická validace | `IMPLEMENTED` | `validatePlan()`; testy procházejí |
+| AI kontrakt | `IMPLEMENTED` | `lib/planning/ai-provider.ts` |
+| Gemini adaptér | `IMPLEMENTED` | `lib/ai/gemini-planning-provider.ts`; reálné volání `NOT VERIFIED` |
+| Orchestrace | `IMPLEMENTED` | `runPlanning()` spojuje návrh, validaci a změny |
+| Napojení UI na orchestrátor | `PLANNED` | Tlačítko výpočtu je zatím demo |
+| Potvrzení manažera | `PLANNED` | `confirmed` je vždy `false` |
+| Ukládání plánu | `PLANNED` | Bez doménových modelů v Prisma |
+| Testy | `IMPLEMENTED` | 90 prochází, 1 integrační se přeskakuje |
+| Kvalitní brána (CI) | `IMPLEMENTED` | Aktuální strom neprochází lintem; viz `ROADMAP.md` |
+| Produkční připravenost | `NOT VERIFIED` | Není produkční aplikace |
 
-Technologický stack: **Next.js, React, TypeScript, PostgreSQL, Prisma**.
+## Stavové popisky
 
-Kontext domény i technologický směr jsou potvrzeny (`VERIFIED`), ale doménová
-pravidla, datový model a optimalizační cíle zatím nejsou uzavřeny. Návrh najdeš v
-[`docs/DOMAIN_SPECIFICATION.md`](DOMAIN_SPECIFICATION.md).
-Praktický postup po prioritách je v [`docs/ROADMAP.md`](ROADMAP.md). První
-implementační zadání pro OpenCode je v
-[`docs/OPEN_CODE_PLANNING_CORE_TASK.md`](OPEN_CODE_PLANNING_CORE_TASK.md).
-
-## Stav rozhodnutí
-
-| Oblast | Stav |
+| Popisek | Význam |
 | --- | --- |
-| Technologický stack | `VERIFIED` — Next.js + React + TypeScript + PostgreSQL + Prisma |
-| Kontext domény | `VERIFIED` — měsíční rozpisy směn call centra AAAAuto pro managera telemarketingu (100+ zaměstnanců) |
-| Lokální scaffold | `IMPLEMENTED` |
-| Testovací základ (Vitest) | `IMPLEMENTED` |
-| Databázová vrstva (Prisma) | `IMPLEMENTED` — technický základ, bez doménových modelů |
-| Doménová specifikace | `PROPOSAL` — `docs/DOMAIN_SPECIFICATION.md` |
-| Rozhodovací list pro managera | `OPEN QUESTION` — `docs/DOMAIN_DECISIONS.md`, čeká na odpovědi |
-| Roadmapa / To-Do | `IMPLEMENTED` — `docs/ROADMAP.md`; obecné plánovací jádro lze připravit před doménovými rozhodnutími |
-| Plánovací jádro (kostra) | `IMPLEMENTED` — `lib/planning/`: kontrakty a běh pravidel, bez doménových typů |
-| Kvalitní brána (CI) | `IMPLEMENTED` — ESLint + GitHub Actions (lint, typecheck, testy, build, validace Prisma) |
-| Plánovací pravidla | `OPEN QUESTION` — neimplementovány |
-| Datový model | `OPEN QUESTION` — neurčen |
-| Uživatelské role | `OPEN QUESTION` — primární role (manager) potvrzena |
-| Vzdálený repozitář GitHub | `IMPLEMENTED` — `majkitostudio/planning-engine` (private) |
-| Produkční připravenost | `NOT VERIFIED` — není produkční |
+| `IMPLEMENTED` | Kód nebo typ existuje. Neznamená, že chování je ověřené. |
+| `VERIFIED` | Konkrétní chování je doložené testem, příkazem nebo potvrzeným rozhodnutím. |
+| `ASSUMPTION` | Pracovní předpoklad, který nikdo nepotvrdil. |
+| `OPEN QUESTION` | Čeká na rozhodnutí nebo chybějící informaci. |
+| `PLANNED` | Implementace zatím neexistuje. |
 
-## Otevřené otázky pro další fázi
+Pomocné popisky: `NOT VERIFIED` (neověřeno), `DEMO`/`SIMULATED` (jen
+demonstrační chování), `PARTIALLY ...` (částečně), `SUPERSEDED` (nahrazeno),
+`BLOCKED` (nelze pokračovat bez rozhodnutí).
 
-Plný seznam otázek (OQ1–OQ20) je v
-[`docs/DOMAIN_SPECIFICATION.md`](DOMAIN_SPECIFICATION.md). Mezi nejblokujícíjší patří:
+`IMPLEMENTED` a `VERIFIED` se neslučují: implementovaná funkce může být
+neověřená a naopak.
 
-1. Co se plánuje — **vyřešeno**: směny zaměstnanců call centra.
-2. Je plán statický, nebo průběžně upravovaný?
-3. Která pravidla jsou skutečně tvrdá (H1–H7) a jaké limity mají?
-4. Které entity a atributy jsou povinné (role, kapacita směny, dovednosti, kampaň)?
+## Otevřené otázky
 
-Pro praktické vyplnění s managerem slouží
-[`docs/DOMAIN_DECISIONS.md`](DOMAIN_DECISIONS.md) — varianty odpovědí, dopad na
-kód a místo na odpověď. Do vyplnění zůstávají doménové typy a pravidla `BLOCKED`.
+Plný seznam OQ1–OQ24 je v [`DOMAIN_SPECIFICATION.md`](DOMAIN_SPECIFICATION.md);
+odpovědi a varianty sbírá [`DOMAIN_DECISIONS.md`](DOMAIN_DECISIONS.md). První
+týdenní řez není blokovaný, ale tyto otázky zůstávají:
+
+1. Co je „pracovní den“ pro šest dnů v řadě (OQ21)?
+2. Jak se započítávají přestávky (OQ24)?
+3. Může manažer potvrdit částečně neúplný návrh (OQ23)?
+4. Která další pravidla a limity platí (OQ9–OQ11)?
+5. Jak se zpracovávají preference a požadavky (OQ12–OQ14, OQ22)?
+6. Je plán statický, nebo průběžně upravovaný (OQ2)?

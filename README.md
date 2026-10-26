@@ -4,19 +4,33 @@ Technický repozitář: `planning-engine`
 
 ## Účel projektu
 
-Plánovací Engine je záměr **chytrého plánovače měsíčních rozpisů směn** pro
-**zaměstnance call centra společnosti AAAAuto**, určeného pro **managera
-telemarketingového oddělení** (rozsah **více než 100 zaměstnanců**).
-Konkrétní doménová pravidla, omezení, optimalizační cíle, datový model a další
-role ještě **nejsou schváleny** (návrh v `docs/DOMAIN_SPECIFICATION.md`).
+Plánovací Engine je záměr **chytrého plánovače směn** pro **zaměstnance call
+centra společnosti AAAAuto**, určeného pro **managera telemarketingového
+oddělení** (dlouhodobý rozsah **více než 100 zaměstnanců**). První funkční verze
+se zaměřuje na **jeden týden** a zaměstnance na **plný úvazek**.
+
+**AI je hlavní plánovací logika**: sestavuje konkrétní návrh směn, vyhodnocuje
+požadavky, absence, dostupnost a obsazení a navrhuje řešení problémů.
+Deterministická validace návrh nezávisle kontroluje. Manažer návrh potvrzuje;
+bez potvrzení se nic neukládá.
 
 ## Stav projektu
 
-Toto je **počáteční technický scaffold**. Nejedná se o hotovou ani produkční aplikaci.
+Toto je **rozpracovaný technický základ s demo UI**. Nejedná se o hotovou ani
+produkční aplikaci.
 
-- Plánovací pravidla a doménová logika zatím nejsou schválené ani implementované.
-- Projekt neobsahuje skutečná osobní ani zaměstnanecká data.
-- Projekt není připraven k produkčnímu provozu.
+- Plánovací jádro, doménový kontrakt, deterministická validace, AI kontrakt,
+  Gemini adaptér a orchestrátor jsou `IMPLEMENTED` a pokryté testy.
+- Reálné volání Gemini je `NOT VERIFIED` (integrační test se bez klíče
+  přeskakuje).
+- UI zatím není napojené na orchestrátor; tlačítko výpočtu pracuje s demo daty.
+- Potvrzení manažera a ukládání plánu jsou `PLANNED`; `confirmed` je vždy
+  `false` a v Prisma nejsou doménové modely.
+- Potvrzené jsou časy směn, pravidlo 35 h odpočinku po šesti dnech a dva dny
+  volna po práci o víkendu.
+- Projekt neobsahuje skutečná osobní ani zaměstnanecká data a není připraven
+  k produkčnímu provozu. Aktuální pracovní strom neprochází lintem (viz
+  [`docs/ROADMAP.md`](docs/ROADMAP.md)).
 
 ## Technologický stack
 
@@ -31,16 +45,18 @@ Stack-specifické soubory: `package.json`, `tsconfig.json`, `next.config.mjs`,
 
 | Cesta | Popis | Stav |
 | --- | --- | --- |
-| `app/` | Next.js App Router (výchozí obrazovka) | `IMPLEMENTED` (scaffold) |
-| `docs/DOMAIN_SPECIFICATION.md` | Návrh doménové specifikace | `PROPOSAL` |
-| `prisma/` | Prisma konfigurace a schéma (bez doménových modelů) | `IMPLEMENTED` (technický základ) |
+| `app/` | Next.js App Router a obrazovky | `IMPLEMENTED` |
+| `components/` | Demo UI dashboardu a pracovní plochy | `IMPLEMENTED` (`DEMO`) |
+| `lib/planning/` | Plánovací jádro, doménový kontrakt, AI kontrakt a orchestrátor | `IMPLEMENTED` |
+| `lib/planning/domain/` | Doménové typy, potvrzené časy a deterministická validace | `IMPLEMENTED` |
+| `lib/ai/` | Serverový Gemini adaptér | `IMPLEMENTED`; reálné volání `NOT VERIFIED` |
 | `lib/db.ts` | Singleton PrismaClient (technická vrstva) | `IMPLEMENTED` |
-| `lib/planning/` | Čistá plánovací logika (kontrakty a běh pravidel, bez domény) | `IMPLEMENTED` (kostra) |
+| `prisma/` | Prisma konfigurace a schéma (bez doménových modelů) | `IMPLEMENTED` (technický základ) |
+| `tests/` | Testy (Vitest) | `IMPLEMENTED` |
+| `docs/` | Dokumentace a ADR | `IMPLEMENTED` |
+| `AGENTS.md` | Projektové instrukce pro agenty | `IMPLEMENTED` |
 | `eslint.config.mjs` | ESLint (Next.js + TypeScript pravidla) | `IMPLEMENTED` |
-| `.github/workflows/ci.yml` | CI: lint, typecheck, testy, build, validace Prisma | `IMPLEMENTED` |
-| `tests/` | Testy (Vitest) | `IMPLEMENTED` (smoke) |
-| `docs/` | Přehled dokumentace | `IMPLEMENTED` (scaffold) |
-| `AGENTS.md` | Projektové instrukce pro agenty | `IMPLEMENTED` (scaffold) |
+| `.github/workflows/ci.yml` | CI: lint, typecheck, testy, build, validace Prisma | `IMPLEMENTED`; lint aktuálně neprochází |
 
 ## Vývoj
 
@@ -58,8 +74,11 @@ proměnnou `DATABASE_URL` (viz `.env.example`).
 
 ## Dokumentace
 
-- Přehled: [`docs/README.md`](docs/README.md)
+- Rozcestník a legenda popisků: [`docs/README.md`](docs/README.md)
 - Návrh doménové specifikace: [`docs/DOMAIN_SPECIFICATION.md`](docs/DOMAIN_SPECIFICATION.md)
+- Minimální datový kontrakt: [`docs/PLANNING_CONTRACT.md`](docs/PLANNING_CONTRACT.md)
+- Rozhodovací list pro managera: [`docs/DOMAIN_DECISIONS.md`](docs/DOMAIN_DECISIONS.md)
+- Roadmapa a stav: [`docs/ROADMAP.md`](docs/ROADMAP.md)
 - Instrukce pro agenty: [`AGENTS.md`](AGENTS.md)
 
 ## Bezpečnost a hranice

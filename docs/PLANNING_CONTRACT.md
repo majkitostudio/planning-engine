@@ -1,12 +1,14 @@
 # Minimální datový kontrakt plánovacího jádra
 
-- **Stav:** `PROPOSAL` — první tvar ověřený implementací a testy; doména
-  zůstává částečně otevřená (`OPEN QUESTION`).
-- **Datum:** 24. 10. 2026
+- **Stav:** kontrakt je `PROPOSAL` (doména zůstává částečně otevřená);
+  jeho implementace je `IMPLEMENTED` a ověřená testy.
+- **Datum:** 24. 10. 2026, aktualizováno 26. 10. 2026
 - **Kód:** `lib/planning/domain/types.ts`, `lib/planning/domain/confirmed.ts`,
-  `lib/planning/domain/time.ts`, `lib/planning/domain/validation.ts`
+  `lib/planning/domain/time.ts`, `lib/planning/domain/validation.ts`,
+  `lib/planning/ai-provider.ts`, `lib/planning/orchestrator.ts`,
+  `lib/ai/gemini-planning-provider.ts`
 - **Souvisí:** [Doménová specifikace](DOMAIN_SPECIFICATION.md),
-  [Roadmapa](ROADMAP.md), [Šev pro doménu](DOMAIN_SEAM.md),
+  [Roadmapa](ROADMAP.md), [ADR 0005](adr/0005-ai-navrhuje-validace-overuje.md),
   [Plánovací vrstva](../lib/planning/README.md)
 
 ## 1. Proč tento kontrakt existuje
@@ -316,9 +318,13 @@ volna). Validace návrh nikdy neopravuje ani nemění.
 
 | Stav | Význam | Co smí UI udělat |
 | --- | --- | --- |
-| `not_verified` | Validace nemohla proběhnout (např. žádná pravidla) | Zobrazit výrazné „neověřeno“, nepředstírat úspěch |
+| `not_verified` | Validace nemohla proběhnout (např. chybějící historie nebo nejasný výklad) | Zobrazit výrazné „neověřeno“, nepředstírat úspěch |
 | `needs_changes` | Validace našla problém nebo chybí obsazení | Zobrazit nálezy a alternativy, nabídnout úpravu |
 | `ready_for_review` | Validace nic nenašla, čeká na manažera | Zobrazit „připraveno ke kontrole“, ne „schváleno“ |
+
+Pořadí stavů je `not_verified` → `needs_changes` → `ready_for_review`: pokud
+validace nemohla některou kontrolu provést, zůstane `not_verified` i při
+chybějícím obsazení.
 
 Ani `ready_for_review` není schválení. Tlačítko „Potvrdit“ je samostatná akce
 manažera a teprve ta vytvoří `ConfirmedPlan`.
@@ -372,6 +378,26 @@ Poznámky:
 - OQ24 zůstává otevřená: validace používá hrubé časy začátku a konce, ne
   odpracovanou dobu ani přestávky.
 
+### 7.1 Kontrola vstupu a výstupu AI
+
+Orchestrace ověřuje data ve třech krocích, aby se neplatný vstup nebo výstup
+nedostal do deterministické validace:
+
+1. **Hluboká kontrola vstupu** před voláním AI — `weekStart` musí být pondělí,
+   `timeZone` platná IANA zóna, zaměstnanci musí mít `id` a `full_time`, tvary
+   všech polí musí odpovídat kontraktu. Neplatný vstup končí jako
+   `invalid_input`.
+2. **Strukturální kontrola `PlanDraft`** — `isPlanDraft()` ověří kalendářní
+   data, témata vysvětlení, úplnost alternativ a typy polí. Povolené hodnoty
+   `shiftKind` nekontroluje; neznámou směnu řeší až deterministická validace.
+3. **Sémantická kontrola vůči vstupu** — orchestrátor odmítne jen neshodu
+   `weekStart` (`ai_invalid_output`). Neznámý zaměstnanec, den mimo týden nebo
+   neznámá směna jdou do `validatePlan()` a projeví se jako nálezy
+   v `validation.problems`; výsledkem je `needs_changes`, ne selhání běhu.
+
+Chybějící nebo neplatný vstup je selhání běhu, ne `not_verified`. `not_verified`
+patří jen deterministické validaci, která nemohla některou kontrolu provést.
+
 ## 8. Kontrakt AI plánovače
 
 AI plánovač je funkce/serverová služba, která dostane `PlanningInput` a vrátí
@@ -407,17 +433,19 @@ selhání běhu.
 
 ### 8.2 Poskytovatel modelu
 
-První implementovaný poskytovatel je Google Gemini (gemini-2.5-flash jako výchozí). Implementace je v `lib/ai/gemini-planning-provider.ts` a implementuje provider-neutral rozhraní `PlanningModelProvider`. Jádro na něm nezávisí. Nejjednodušší
-bezpečný směr pro navazující implementaci:
+První implementovaný poskytovatel je Google Gemini. Adaptér je v
+`lib/ai/gemini-planning-provider.ts` a implementuje provider-neutral rozhraní
+`PlanningModelProvider`; jádro na něm nezávisí.
 
-- serverové volání přes existující `fetch`, bez nové závislosti, pokud to jde;
-- konfigurace v prostředí (`AI_BASE_URL`, `AI_MODEL`, `AI_API_KEY`), nikdy
-  klíč ve zdrojovém kódu;
-- žádné volání z klientské komponenty;
-- testování přes injektovaný modelový klient, ne přes skutečnou síť.
+- volání je pouze serverové (`fetch`), bez nové závislosti;
+- konfigurace v prostředí: `GEMINI_API_KEY`, `GEMINI_MODEL` (výchozí
+  `gemini-2.5-flash`), `GEMINI_TIMEOUT_MS`, volitelně `GEMINI_BASE_URL`;
+- klíč se nikdy nedostane do klienta ani do logu;
+- testování probíhá přes injektovaný provider; integrační test proti reálnému
+  API se spouští jen s `RUN_GEMINI_INTEGRATION=1`.
 
-Konkrétní poskytovatel a model jsou `OPEN QUESTION`; tento dokument je
-nepředjímá.
+Volba konkrétního modelu je konfigurace, ne doménové rozhodnutí. Reálné volání
+Gemini je `NOT VERIFIED`, dokud není integrační test doložený.
 
 ## 9. Co kontrakt záměrně neobsahuje
 
@@ -459,8 +487,42 @@ typů.
 - Časové a kalendářní pomocné funkce: `lib/planning/domain/time.ts`.
 - Deterministická validace: `IMPLEMENTED` v `lib/planning/domain/validation.ts`
   s testy `lib/planning/domain/validation.test.ts`.
-- AI plánovač: `PLANNED` — vrací `PlanDraft`, nikdy neukládá.
-- Orchestrátor: `PLANNED` — spojí návrh, validaci a výpočet změn.
+- AI kontrakt: `IMPLEMENTED` v `lib/planning/ai-provider.ts` — rozhraní
+  `PlanningModelProvider`, chyby poskytovatele a `isPlanDraft()`.
+- Gemini adaptér: `IMPLEMENTED` v `lib/ai/gemini-planning-provider.ts`; reálné
+  volání je `NOT VERIFIED`.
+- Orchestrátor: `IMPLEMENTED` v `lib/planning/orchestrator.ts` — spojí vstup,
+  AI návrh, validaci a výpočet změn a pokrytí.
 
 Kontrakt je `PROPOSAL`. Pokud se při implementaci ukáže, že některý údaj
 chybí nebo je nadbytečný, uprav tento dokument i typy společně a uveď důvod.
+
+## 12. Kde se doména napojuje na jádro
+
+Jádro zůstává doménově nezávislé (ADR 0001). Doména se napojuje ve třech
+místech:
+
+| # | Styčný bod | Co se doplní | Stav |
+| --- | --- | --- | --- |
+| 1 | Doménový typ plánu | `PlanProposal<PlanDraft>` a konkrétní tvar | `IMPLEMENTED` |
+| 2 | Pravidla a limity | `PlanningRule<PlanDraft>` a jejich konfigurace | `IMPLEMENTED` pro potvrzená pravidla; zbytek `OPEN QUESTION` |
+| 3 | Zobrazení výsledku | mapování `ControlResult` a `PlanningRunResult` na stavy UI | `PLANNED` |
+
+Zásady, které se při napojení nesmí změnit:
+
+- doménové typy zůstávají vedle jádra, ne uvnitř něj;
+- limity jsou explicitní vstup, žádné tiché výchozí hodnoty; chybějící
+  konfigurace je chyba volajícího (`RuleConfigurationError`), ne nález v plánu;
+- UI výsledek jen čte a nikdy z něj neodvozuje schválení;
+- selhání pravidla (výjimka) není `not_verified`; volající zobrazí „kontrolu
+  nešlo provést“ (ADR 0004);
+- volání AI, potvrzení manažera, ukládání a autentizace zůstávají mimo jádro.
+
+Mapování stavů pro UI:
+
+| Stav | Co zobrazit | Co nesmí |
+| --- | --- | --- |
+| `valid` / `no_problems_found` | „Dostupná pravidla nic nenašla.“ | zelené „v pořádku / schváleno“ |
+| `invalid` / `problems_found` | nálezy s kódem a závažností | skrýt nálezy za souhrn |
+| `not_verified` | výrazné „Nepodařilo se ověřit.“ | splynout s úspěchem |
+| `ready_for_review` | „Připraveno ke kontrole.“ | „Schváleno“ nebo „Hotovo“ |

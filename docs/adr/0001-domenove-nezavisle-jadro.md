@@ -29,9 +29,16 @@ jádro nezná žádné konkrétní směnové pravidlo.
 - Cena: uvnitř pravidel je do schválení domény slabší typová opora; tu dodá
   doménový typ až po OQ3–OQ4.
 - Vzniká potřeba „švu" — místa, kde se doménový typ napojí (viz
-  [Šev pro doménu](../DOMAIN_SEAM.md)).
+  [§12 kontraktu](../PLANNING_CONTRACT.md#12-kde-se-doména-napojuje-na-jádro)).
 
 ## Co to neznamená
 
 - Neznamená, že na doméně nezáleží nebo že je jakýkoli tvar plánu přijatelný.
 - Neznamená, že doménová pravidla můžeme vymyslet — ta musí dodat manager.
+
+## Aktualizace 24. 10. 2026
+
+Rozhodnutí o doménově nezávislém jádru zůstává v platnosti. Doménový kontrakt
+prvního týdne je nyní **vedle** jádra v `lib/planning/domain/` a jádro o něm
+neví. Část domény je potvrzená, část zůstává `OPEN QUESTION`; to nemění hranici
+mezi jádrem a doménou.

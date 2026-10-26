@@ -9,6 +9,7 @@ pravidla — popisují **proč** je technické rozhodnutí takové a co z něj p
 | [0002](0002-tri-stavy-kontroly.md) | Tři stavy kontroly a význam `not_verified` | `IMPLEMENTED` |
 | [0003](0003-zdroj-navrhu-neni-schvaleni.md) | Zdroj návrhu není schválení | `IMPLEMENTED` |
 | [0004](0004-chyba-pravidla-se-nepolyka.md) | Chyba uvnitř pravidla se nepolyká | `IMPLEMENTED` |
+| [0005](0005-ai-navrhuje-validace-overuje.md) | AI navrhuje, validace ověřuje, manažer potvrzuje | `IMPLEMENTED` (rozhodnutí) |
 
 ## Jak přidat další rozhodnutí
 

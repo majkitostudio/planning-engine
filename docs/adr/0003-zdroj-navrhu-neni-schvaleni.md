@@ -29,3 +29,9 @@ slovník není potvrzený.
 - Neznamená, že na původu nezáleží — jen že podle něj jádro nerozhoduje.
 - Neznamená, že se rozhodnutí managera nikde nezaznamená; jen že to není věc
   tohoto jádra.
+
+## Aktualizace 24. 10. 2026
+
+AI je nyní **hlavní zdroj návrhu**, ale toto rozhodnutí se nemění: `source:
+"ai"` je pořád jen informace o původu. AI výstup prochází stejnou validací a
+nikdy není potvrzením. Potvrzení zůstává samostatný krok manažera (ADR 0005).

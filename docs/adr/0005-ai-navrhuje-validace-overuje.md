@@ -1,9 +1,11 @@
 # ADR 0005 — AI navrhuje, validace ověřuje, manažer potvrzuje
 
-- **Stav:** `IMPLEMENTED` (rozhodnutí), navazující kód `PLANNED`
-- **Datum:** 24. 10. 2026
+- **Stav:** `IMPLEMENTED` (rozhodnutí i navazující kód); reálné volání Gemini
+  je `NOT VERIFIED`
+- **Datum:** 24. 10. 2026, aktualizováno 26. 10. 2026
 - **Kontext kódu:** `lib/planning/types.ts`, `lib/planning/domain/types.ts`,
-  `docs/PLANNING_CONTRACT.md`
+  `lib/planning/ai-provider.ts`, `lib/planning/orchestrator.ts`,
+  `lib/ai/gemini-planning-provider.ts`, `docs/PLANNING_CONTRACT.md`
 
 ## Kontext
 

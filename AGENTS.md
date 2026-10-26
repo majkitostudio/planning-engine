@@ -64,20 +64,76 @@ Tento soubor obsahuje projektové instrukce pro agenty pracující na projektu
   (`npx tsc` běží z něj). Aliasy neměň bez ověření — typescript-eslint zatím
   API TypeScriptu 7 nepodporuje.
 
+## Plánovací model projektu
+
+Tato rozhodnutí jsou pro další práci závazná:
+
+- **AI je hlavní plánovací logika**, ne volitelný doplněk. AI sestavuje konkrétní
+  návrh směn, vyhodnocuje požadavky, absence, dostupnost a potřebné obsazení
+  a aktivně navrhuje řešení nalezených problémů.
+- **Deterministická validace je nezávislá kontrola návrhu AI.** Nenahrazuje
+  plánování a nesmí být jediným nositelem pravidel. AI ani validace se
+  nepovažují za schválení.
+- **Manažer návrh kontroluje a potvrzuje.** Aplikace nesmí bez potvrzení
+  automaticky uložit nebo aplikovat navržené změny.
+- **Návrh, ověřený návrh a potvrzené změny jsou tři různé stavy.** Samotné
+  vygenerování návrhu nic nemění v uloženém rozpisu.
+- **Neověřené nebo chybějící informace se nesmí prezentovat jako jistota.**
+  Výsledek musí přiznat omezení a nabídnout nejlepší dostupné alternativy.
+- **První funkční verze:** jeden týden (pondělí–nedělí) a zaměstnanci na plný
+  úvazek. Měsíční plánování, částečné úvazky a integrace jsou mimo první řez.
+- **Rozsah zůstává praktický.** Nevytvářej univerzální plánovací framework ani
+  integraci s Countdown CRM; to je pouze budoucí architektonický směr.
+
+### Potvrzené časy směn (`VERIFIED`)
+
+| Typ směny | Začátek | Konec |
+| --- | ---: | ---: |
+| Ranní směna (všední den i víkend) | 7:45 | 16:30 |
+| Odpolední směna ve všední den | 13:15 | 21:00 |
+| Víkendová odpolední směna | 12:45 | 21:00 |
+
+Časy jsou potvrzené zadáním, ale nejsou úplnou specifikací pracovněprávních
+pravidel. Způsob započítávání přestávek je `OPEN QUESTION` — viz
+`docs/DOMAIN_SPECIFICATION.md`.
+
+### Potvrzená pravidla (`VERIFIED`)
+
+- Po šesti po sobě jdoucích pracovních dnech musí následovat alespoň 35 hodin
+  nepřetržitého odpočinku.
+- Zaměstnanec, který pracuje o víkendu, má mít během téhož týdne dva dny volna.
+  Přesný výklad „během týdne“ je `ASSUMPTION` (pondělí–neděle) do potvrzení.
+- Potřebné obsazení směn je konfigurovatelný vstup. Historické počty se
+  nepovažují za univerzálně platné bez ověření.
+
 ## Aktuální stav projektu
 
-- **Plánovací Engine je počáteční technický scaffold (Next.js + TypeScript).**
-- Plánovací jádro: `IMPLEMENTED` (kostra) — `lib/planning/` obsahuje doménově
-  nezávislé kontrakty a běh pravidel. Doménová pravidla, doménové typy a
-  skutečné generování rozpisu nejsou implementovány.
-- Doménová specifikace: návrh v `docs/DOMAIN_SPECIFICATION.md` (`PROPOSAL`) — kontext
-  domény (měsíční rozpisy směn call centra AAAAuto pro managera telemarketingu,
-  100+ zaměstnanců) je `VERIFIED`, pravidla a entity zatím ne.
-- Rozhodovací list pro managera: `docs/DOMAIN_DECISIONS.md` (`OPEN QUESTION`) —
-  čeká na odpovědi. Do jeho vyplnění jsou doménové typy a pravidla `BLOCKED`;
-  odpovědi ani doménu nedomýšlej.
-- Stav informací označuj popisky (`VERIFIED`, `PLANNED`, `ASSUMPTION`,
-  `OPEN QUESTION`, `NOT VERIFIED`, `SIMULATED`, `BLOCKED`).
+- **Plánovací Engine je rozpracovaný technický základ s demo UI (Next.js +
+  TypeScript).** Není to hotová ani produkční aplikace.
+- Plánovací jádro: `IMPLEMENTED` — `lib/planning/` obsahuje doménově
+  nezávislé kontrakty, běh pravidel a deterministickou validaci
+  (`validatePlan()`).
+- AI kontrakt a orchestrace: `IMPLEMENTED` — `lib/planning/ai-provider.ts`
+  definuje provider-neutral rozhraní, `lib/planning/orchestrator.ts` spojuje
+  návrh, validaci, změny a pokrytí. Serverový Gemini adaptér je v
+  `lib/ai/gemini-planning-provider.ts`; reálné volání je `NOT VERIFIED`.
+- UI zatím **není napojené** na orchestrátor. Potvrzení manažera a ukládání
+  plánu jsou `PLANNED`; `confirmed` je vždy `false` a v Prisma nejsou doménové
+  modely.
+- Doménová specifikace: `PARTIALLY VERIFIED PROPOSAL` —
+  `docs/DOMAIN_SPECIFICATION.md` — část rozhodnutí je `VERIFIED` (zejména AI
+  role, rozsah prvního řezu, časy směn a dvě pravidla), zbytek zůstává
+  `PROPOSAL`/`OPEN QUESTION`.
+- Rozhodovací list pro managera: `docs/DOMAIN_DECISIONS.md` — částečně
+  zodpovězený; otevřené otázky zůstávají `OPEN QUESTION`. Odpovědi ani doménu
+  nedomýšlej.
+- Aktuální pracovní strom **neprochází lintem** (nepoužité importy a pomocné
+  funkce v `ai-provider.ts`, `orchestrator.ts` a testech). Je to známá vada
+  mimo dokumentační rozsah; podrobnosti v `docs/ROADMAP.md`.
+- Stav informací označuj popisky (`VERIFIED`, `IMPLEMENTED`, `PLANNED`,
+  `ASSUMPTION`, `OPEN QUESTION`, `NOT VERIFIED`, `SIMULATED`, `BLOCKED`).
+  Jejich význam a rozdíl mezi `IMPLEMENTED` a `VERIFIED` vysvětluje
+  [`docs/README.md`](docs/README.md#stavové-popisky).
 
 <!-- BEGIN:nextjs-agent-rules -->
 

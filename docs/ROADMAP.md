@@ -1,174 +1,129 @@
-# Roadmapa a To-Do — Plánovací Engine
+# Roadmapa — Plánovací Engine
 
-> Praktický pracovní seznam pro OpenCode. Stav je zkontrolovaný k 22. 10. 2026.
-> Označení `VERIFIED`, `IMPLEMENTED`, `PLANNED`, `OPEN QUESTION`, `BLOCKED` a
-> `DEMO` mají stejný význam jako v `AGENTS.md` a `docs/DOMAIN_SPECIFICATION.md`.
+> Stav zkontrolovaný 26. 10. 2026 proti kódu. Význam popisků vysvětluje
+> [`docs/README.md`](README.md#stavové-popisky).
 
 ## 1. Stav jednou větou
 
-Projekt má funkční technický základ a prohlédnutelné manažerské UI s
-demonstračními daty. Skutečný plánovací engine, doménový datový model,
-persistentní data a schválená pravidla zatím nejsou hotové. Na pravidlech ale
-není závislá příprava obecného toku návrhu a jeho kontroly.
+Plánovací jádro, doménová validace, AI kontrakt a orchestrátor jsou hotové a
+pokryté testy. Reálné volání Gemini není ověřené, UI na orchestrátor napojené
+není, potvrzení manažera ani ukládání plánu neexistuje.
 
-## 2. Co je skutečně hotové
+## 2. Implementováno a doložitelně ověřeno
 
-| Oblast | Stav | Co to znamená |
+| Oblast | Co existuje | Doklad |
 | --- | --- | --- |
-| Next.js aplikace | `IMPLEMENTED` | App Router, TypeScript, React a dostupný build. |
-| Základní UI | `IMPLEMENTED` / `DEMO` | Dashboard, pracovní plocha plánu, navigace a placeholdery sekcí. |
-| Routy | `IMPLEMENTED` jako scaffold | `/`, `/planovani`, `/zamestnanci`, `/pozadavky`, `/pravidla`, `/dovolene`, `/analyzy`, `/nastaveni`, `/prihlaseni`. |
-| Plánovací pracovní plocha | `DEMO` | Tabulka směn, filtry, záložky, přehledy a tlačítko výpočtu; data jsou syntetická a výpočet není skutečný. |
-| Demo data | `IMPLEMENTED` / `DEMO` | Jsou soustředěna v `lib/demo-data.ts`; neobsahují skutečná osobní data. |
-| Prisma | `IMPLEMENTED` technicky | Klient a PostgreSQL konfigurace existují, `prisma/schema.prisma` zatím nemá doménové modely. |
-| Čistá plánovací vrstva | `IMPLEMENTED` (kostra) | `lib/planning/` má kontrakty a běh pravidel nad návrhem; žádné doménové typy ani směnová pravidla. |
-| Testy | `IMPLEMENTED` minimálně | Vitest běží a pokrývá smoke test i kontroly plánovacího jádra. |
-| Kvalitní brána | `IMPLEMENTED` | ESLint (`npm run lint`) + GitHub Actions: lint, typecheck, testy, build a validace Prisma schématu při pushi i PR. |
-| Doména | `PROPOSAL` | Kontext call centra je potvrzený; pravidla, entity a optimalizační cíle čekají na rozhodnutí. |
+| Next.js aplikace | App Router, routy, produkční build | `app/`, `npm run build` |
+| Demo UI | dashboard a pracovní plocha se syntetickými daty | `components/`, `lib/demo-data.ts` |
+| Generické jádro | kontrakty, `runControl()`, tři stavy kontroly | `lib/planning/types.ts`, `control.ts`; 16 testů |
+| Doménový kontrakt | typy prvního týdne, potvrzené časy a pravidla | `lib/planning/domain/`, `PLANNING_CONTRACT.md` |
+| Deterministická validace | `validatePlan()`: vstup, pokrytí, překryvy, absence, odpočinek, víkend | `domain/validation.ts`; 54 testů v `domain/` |
+| AI kontrakt | `PlanningModelProvider`, `AiProviderError`, `isPlanDraft()` | `lib/planning/ai-provider.ts` |
+| Orchestrace | `runPlanning()`: vstup → AI → validace → změny a pokrytí | `lib/planning/orchestrator.ts`; 12 testů |
+| Gemini adaptér | serverové volání, strukturovaný JSON, konfigurace v prostředí | `lib/ai/gemini-planning-provider.ts`; 7 unit testů |
+| Prisma základ | PostgreSQL datasource a klient bez doménových modelů | `prisma/schema.prisma` |
+| CI | lint, typecheck, testy, build a validace Prisma | `.github/workflows/ci.yml` |
 
-Aktuální ověření pracovního stromu:
+Aktuální ověření pracovního stromu (26. 10. 2026):
 
-- `npm run lint` — prošlo (ESLint, bez warningů).
+- `npm run test` — 90 prošlo, 1 přeskočen (integrační Gemini test bez klíče).
 - `npm run typecheck` — prošlo.
-- `npm run test` — prošel (smoke test + testy plánovacího jádra).
-- `npm run build` — prošel; statické routy se vygenerovaly.
-- `npm run db:validate` — Prisma schéma je validní.
+- `npm run build` — prošlo.
+- `npm run db:validate` — schéma je validní.
+- `npm run lint` — **neprošlo**: 5 warningů (nepoužité importy v
+  `ai-provider.ts`, `orchestrator.ts` a testech). Vada kódu, viz §7.
 
-## 3. Co je rozpracované, ale není to hotová produktová funkce
+## 3. Implementováno, ale potřebuje ověření nebo potvrzení
 
-### Vizuální revize UI
+| Oblast | Co chybí | Dopad |
+| --- | --- | --- |
+| Reálné volání Gemini | integrační test se přeskakuje bez `GEMINI_API_KEY` a `RUN_GEMINI_INTEGRATION=1` | adaptér je `IMPLEMENTED`, ale pro reálný provoz `NOT VERIFIED` |
+| Výklad OQ21 | „pracovní den“ = kalendářní den s alespoň jednou směnou je `ASSUMPTION` | validace může být přísnější nebo volnější, než manažer čeká |
+| Výklad OQ24 | přestávky se nezapočítávají, používají se hrubé časy začátku a konce | soulad s pracovněprávním výkladem není doložený |
+| OQ23 | částečně neúplný návrh lze zobrazit, ale potvrzení není rozhodnuté | chybí pravidlo, co smí manažer potvrdit |
+| Význam stavů | `ready_for_review` znamená „validace nic nenašla“, ne schválení | UI to musí zobrazit jinak než „hotovo“ |
+| Plnění `explanations` a `alternatives` | typ je hotový, kvalita výstupu modelu není ověřená | manažer nemusí dostat použitelné vysvětlení |
 
-- Realizovaná revize vzhledu je commitnutá v repozitáři (vizuálně hotová pro
-  demo): chladná světlá paleta `#f4f8fd`, námořní rail `#121c2a` s tmavě modrým
-  aktivním prvkem a 2 px světle modrým indikátorem, plná modrá aktivní záložka,
-  plné chipy směn (modrá ráno / levandulová odpoledne, zelená dovolená, červená
-  nemoc), kruhové tmavé monogramové avatary, vektorová značka
-  `components/ui/brand-mark.tsx` a aktualizovaný `app/icon.svg`.
-- Zadání v [`OPEN_CODE_VISUAL_TASK.md`](OPEN_CODE_VISUAL_TASK.md) popisovalo
-  starší, neutrální směr a je označeno jako `SUPERSEDED`. Nepoužívej ho jako
-  zdroj cílového vizuálu; zdrojem pravdy je committed CSS v `app/globals.css`
-  a realizované komponenty.
-- Tyto změny řeší vzhled a prezentaci. Neřeší plánovací pravidla, databázi ani
-  výpočet rozpisu.
+## 4. Nejbližší práce pro užitečné MVP
 
-Otevřené vizuální otázky (`OPEN QUESTION`, rozhoduje manager):
+Pořadí je návrh podle závislostí, ne závazný plán.
 
-- [ ] Odpolední směna v levandulové (`--violet`) — jediná barva navíc vedle
-  sémantických; alternativa je neutrální šedomodrý chip.
-- [ ] Avatary zaměstnanců — zůstat u tmavých monogramů (aktuální stav), nebo
-  přejít na tlumené barevné odstíny osob.
-- [ ] Ikona „Nesplněné požadavky“ zůstává jantarová (sémantické upozornění,
-  demo tón v `lib/demo-data.ts`); alternativa je neutrální šedomodrá ikona
-  jako v referenčním vzoru.
-- [ ] Referenční vzor `planning-engine-official.png` je uložen mimo repozitář.
-  Pokud ho chceme udržet dostupné pro další agenty, zvaž umístit kopii do
-  `docs/`.
+1. **Napojit UI na orchestrátor.** Serverová akce nebo route zavolá
+   `runPlanning()` s `GeminiPlanningProvider`; API klíč zůstává jen na serveru.
+2. **Zobrazit výsledek po vrstvách.** Oddělit návrh, výsledek validace a
+   potvrzený stav; zobrazit změny, pokrytí, nálezy a předpoklady.
+3. **Přidat potvrzení manažera.** `ConfirmedPlan` vzniká až výslovnou akcí;
+   `ready_for_review` se nesmí tvářit jako schváleno.
+4. **Rozhodnout ukládání.** Buď potvrzení v paměti pro první řez, nebo
+   minimální Prisma modely. Modely navrhnout až podle potvrzeného kontraktu.
+5. **Doplnit end-to-end test.** UI → server → fake provider → validace →
+   potvrzení, bez reálné sítě.
+6. **Dořešit OQ21, OQ24 a OQ23.** Teprve potom lze vydávat výsledek validace
+   za doménově spolehlivý.
 
-## 4. Prioritizovaný To-Do list
+Blokátory: žádný netvrdí, že nelze pokračovat. Doménová potvrzení ale musí
+předcházet tvrzení, že validace je správná; reálný Gemini test zase předchází
+tvrzení, že AI plánování funguje.
 
-### P0 — společný technický základ (lze dělat před e-mailem)
+## 5. Pozdější rozšíření
 
-- [x] Připravit obecný tok `návrh rozpisu → kontrola podle dostupných pravidel → výsledek kontroly` — hotovo v `lib/planning/` (kostra bez doménových typů).
-- [ ] Umožnit, aby návrh vznikl ručně, mechanickým plánovačem nebo později AI;
-  všechny zdroje návrhu používají stejnou kontrolu.
-- [ ] Pokud nejsou nakonfigurovaná pravidla, vracet stav `NOT VERIFIED`, ne
-  úspěšný či schválený plán.
-- [ ] Nechat rozhodnutí o přijetí návrhu na managerovi; automatické vytvoření
-  návrhu samo o sobě plán neschvaluje.
-- [x] Minimální kvalitní brána: ESLint, `.gitattributes`/`.editorconfig`,
-  `.nvmrc` a CI (lint, typecheck, testy, build, validace Prisma).
+- Více týdnů nebo měsíční rozsah.
+- Částečné úvazky, pokud je manažer potvrdí.
+- Role a dovednosti jako povinná data.
+- Váhy preferencí a optimalizační cíle.
+- Import/export a integrace (Countdown CRM je jen budoucí směr).
+- Autentizace, role a audit.
+- Ukládání historie a zamykání přiřazení.
 
-První konkrétní zadání je v
-[`OPEN_CODE_PLANNING_CORE_TASK.md`](OPEN_CODE_PLANNING_CORE_TASK.md).
+## 6. Otevřené otázky
 
-### P0 — doménová rozhodnutí, která počkají na managera
+- Výklad „pracovního dne“ pro pravidlo šesti dnů v řadě (OQ21).
+- Zda musí být dva dny volna po víkendu po sobě jdoucí.
+- Způsob zápočtu přestávek (OQ24).
+- Zda lze potvrdit částečně neúplný návrh (OQ23).
+- Role, maximální hodiny, zamykání přiřazení (OQ9–OQ11).
+- Zpracování požadavků a preferencí (OQ12–OQ14, OQ22).
+- Statický vs. průběžně upravovaný plán (OQ2).
+- Způsob zadávání vstupů a tvar výstupu (OQ6–OQ8).
+- Role, schvalovací tok a audit (OQ18–OQ20).
+- Vizuální detaily demo UI (barva odpolední směny, avatary, ikona
+  „Nesplněné požadavky“) — `OPEN QUESTION`; zdrojem pravdy je
+  `app/globals.css`.
 
-- [ ] Vyplnit s managerem [rozhodovací list](DOMAIN_DECISIONS.md) — překlad
-  otázek do variant a odpovědí, bez domýšlení domény.
-- [ ] Projít `docs/DOMAIN_SPECIFICATION.md` a schválit minimální doménový
-  kontrakt místo současného `PROPOSAL`.
-- [ ] Rozhodnout, zda se plán po vygenerování pouze zobrazí, nebo se bude
-  průběžně ručně upravovat (OQ2).
-- [ ] Potvrdit minimální entity a jejich povinné atributy (OQ3–OQ5).
-- [ ] Vybrat první skutečně závazná tvrdá pravidla a jejich konkrétní limity
-  (OQ9–OQ11). Kandidáty H1–H7 zatím nebrat jako schválená pravidla.
-- [ ] Potvrdit vstup, výstup a chování při konfliktu: odkud data přijdou, jak
-  vypadá výsledek a zda je přípustný neúplný plán (OQ6–OQ8, OQ15–OQ17).
-- [ ] Rozhodnout, zda první verze potřebuje další role a audit změn
-  (OQ18–OQ20).
+Podrobnosti a místo pro odpovědi: [`DOMAIN_DECISIONS.md`](DOMAIN_DECISIONS.md).
 
-**Výsledek doménového P0:** krátká schválená specifikace, ze které lze odvodit
-konkrétní typy směn, testy pravidel a databázový model. Do té doby zůstávají
-doménová pravidla a generování skutečného rozpisu `BLOCKED`; obecný tok návrhu a
-kontroly blokovaný není.
+## 7. Známé vady a dluhy
 
-### P1 — první doménový vertikální řez (po obdržení odpovědí)
+Tyto body jsou mimo dokumentační rozsah a nejsou opravené:
 
-- [ ] Zapsat schválené doménové typy do čisté vrstvy `lib/planning/`.
-- [ ] Přidat syntetické fixtures pro jeden měsíc a malý počet zaměstnanců.
-- [ ] Implementovat první tvrdá pravidla jako samostatně testovatelné kroky.
-- [ ] Implementovat výstup ve tvaru: přiřazení, nepokryté směny, konflikty a
-  stav úplnosti plánu.
-- [ ] Přidat testy pro běžný případ, kolizi a neúplný vstup.
+- **Lint neprochází.** Pět warningů `@typescript-eslint/no-unused-vars`
+  (nepoužité importy a pomocné funkce): `lib/planning/ai-provider.ts`
+  (nepoužitý `IsoDate`), `lib/planning/orchestrator.ts` (nepoužitý `addDays`)
+  a tři v testech. Dokud to platí, CI brána je červená.
+- **`package.json` popisuje „měsíční rozpisy“**, ale první řez je týdenní.
+- **`lib/planning/ai-provider.ts` je untracked**, přestože je součástí jádra.
+- **`patch_orchestrator.mjs` a `patch_orchestrator2.mjs`** jsou untracked
+  jednorázové skripty; neměly by se commitovat.
 
-**Výsledek P1:** čistá funkce, která nad fiktivními daty vytvoří plán nebo
-transparentně vrátí konflikty. Bez databáze a bez skutečných zaměstnaneckých
-dat.
+## 8. Historie
 
-### P1/P2 — datový základ až po schválení domény
+- **22.–23. 10. 2026:** generické jádro a ADR 0001–0004, doménový kontrakt,
+  první deterministická validace.
+- **24. 10. 2026:** potvrzená rozhodnutí (AI jako hlavní logika, časy směn,
+  odpočinek, víkend); Gemini adaptér a orchestrátor.
+- **22. 10. 2026:** vizuální revize demo UI commitnuta (`de6d4f0`); zdrojem
+  pravdy je `app/globals.css`, ne starší vizuální zadání.
+- **Následně:** code review — hluboká validace vstupu před AI, deduplikace
+  pokrytí a změn, dvouvrstvá kontrola `PlanDraft` a doplněné testy.
+- **26. 10. 2026:** sjednocení dokumentace na pět dokumentů a ADR; zrušeny
+  duplicitní souhrny a historické tasky.
 
-- [ ] Převést schválené entity do `prisma/schema.prisma`.
-- [ ] Připravit migraci a bezpečný lokální seed pouze se syntetickými daty.
-- [ ] Oddělit načítání dat z Prisma od čisté plánovací logiky.
-- [ ] Doplnit integrační testy pro převod databázových dat na doménový vstup.
-
-### P2 — napojení UI na skutečný tok dat
-
-- [ ] Nahradit vybrané části `lib/demo-data.ts` skutečným načítáním dat.
-- [ ] Napojit volbu období, vstupní data a spuštění výpočtu na P1 engine.
-- [ ] Zobrazit výsledek výpočtu a konflikty tak, aby bylo jasné, co je
-  výsledek výpočtu a co je pouze návrh k ruční úpravě.
-- [ ] Dopracovat placeholdery sekcí podle schváleného workflow, ne podle
-  domněnek o doméně.
-
-### P3 — až po ověření základního workflow
-
-- [ ] Přidat autentizaci, role a audit, pokud to potvrdí P0.
-- [ ] Promyslet export, integrace, produkční CI/CD a produkční provoz.
-- [ ] Provést zátěžové a uživatelské ověření na anonymizovaném vzorku 100+
-  zaměstnanců.
-
-## 5. Co teď nedělat
-
-- Neimplementovat H1–H7 ani S1–S5 jen proto, že jsou uvedené jako kandidáti.
-- Nevytvářet finální Prisma modely před schválením entit a atributů.
-- Nevydávat čísla z `lib/demo-data.ts` za skutečné pokrytí nebo skutečné
-  konflikty.
-- Nepřidávat autentizaci, integrace ani produkční deployment do prvního řezu,
-  pokud k tomu nevznikne samostatné rozhodnutí.
-- Neměnit současné vizuální změny při práci na doméně, pokud to není nutné.
-
-## 6. Doporučený nejbližší krok
-
-Kostra plánovacího jádra je hotová (`lib/planning/`, viz
-[`OPEN_CODE_PLANNING_CORE_TASK.md`](OPEN_CODE_PLANNING_CORE_TASK.md)), takže
-dalším krokem je **doménové P0**: potvrdit typy, pravidla a chování plánu s
-managerem. Praktickým nástrojem je [rozhodovací list](DOMAIN_DECISIONS.md)
-(OQ2–OQ5, OQ9–OQ11, OQ15–OQ20); bez jeho vyplnění se doménové typy a pravidla
-neimplementují. Po potvrzení doplníme doménové typy a první tvrdá pravidla
-(H1–H7) jako `PlanningRule` ve vrstvě `lib/planning/`. Do té doby zůstává
-konkrétní mechanika generování rozpisu `BLOCKED`; obecný tok návrhu a kontroly
-blokovaný není.
-
-## 7. Odkazy
+## 9. Odkazy
 
 - [Přehled dokumentace](README.md)
+- [Minimální datový kontrakt](PLANNING_CONTRACT.md)
 - [Návrh doménové specifikace](DOMAIN_SPECIFICATION.md)
 - [Rozhodovací list pro managera](DOMAIN_DECISIONS.md)
-- [Agenda schůzky s managerem](DOMAIN_DECISIONS_AGENDA.md)
-- [Šev pro doménu](DOMAIN_SEAM.md)
 - [Architektonická rozhodnutí (ADR)](adr/README.md)
-- [Plánovací vrstva](../lib/planning/README.md)
-- [Vizuální úkol pro OpenCode](OPEN_CODE_VISUAL_TASK.md)
-- [První task: plánovací jádro](OPEN_CODE_PLANNING_CORE_TASK.md)
+- [Plánovací jádro](../lib/planning/README.md)
 - [Projektové instrukce](../AGENTS.md)

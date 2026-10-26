@@ -1,17 +1,40 @@
 # Rozhodovací list pro managera — doménové P0
 
-> **Stav: `OPEN QUESTION` — čeká na odpovědi managera.**
+> **Stav: `PARTIALLY ANSWERED` — část rozhodnutí potvrzena 24. 10. 2026,
+> zbytek čeká na managera.**
 >
 > Tento dokument **nerozhoduje**. Překládá otevřené otázky z
 > [`DOMAIN_SPECIFICATION.md`](DOMAIN_SPECIFICATION.md) do podoby, kterou lze
 > probrat s managerem telemarketingu, a sbírá odpovědi. Nic z toho, co je níže,
-> není schválené pravidlo ani hotová funkce.
+> není schválené pravidlo ani hotová funkce, dokud to není výslovně označeno
+> `VERIFIED`.
 >
 > Autoritativní seznam otázek zůstává v `DOMAIN_SPECIFICATION.md`. Tento list
 > ho jen překládá do praxe a zaznamenává odpovědi.
 
 Datum vytvoření: 22. 10. 2026
-Vyplnil: ______________________
+Poslední aktualizace: 26. 10. 2026
+Vyplnil: uživatel / zadání projektu (částečně)
+
+## Nová potvrzená rozhodnutí (`VERIFIED`)
+
+Tato rozhodnutí nejsou odpovědi na původní OQ, ale od 24. 10. 2026 platí a
+mění zadání:
+
+- **AI je hlavní plánovací logika.** Vytváří konkrétní návrh směn, vyhodnocuje
+  požadavky, absence, dostupnost a obsazení a navrhuje řešení problémů.
+- **Deterministická validace je nezávislá kontrola návrhu AI.** Nenahrazuje
+  plánování.
+- **Manažer návrh potvrzuje.** Aplikace bez potvrzení nic neukládá ani
+  neaplikuje.
+- **První funkční verze:** jeden týden, zaměstnanci na plný úvazek.
+- **Potvrzené časy směn:** ranní 7:45–16:30 (i víkend), odpolední ve všední den
+  13:15–21:00, víkendová odpolední 12:45–21:00.
+- **Po šesti po sobě jdoucích pracovních dnech:** alespoň 35 h nepřetržitého
+  odpočinku.
+- **Práce o víkendu:** dva dny volna během téhož týdne.
+- **Obsazení směn:** konfigurovatelný vstup, ne historická konstanta.
+- **Countdown CRM:** budoucí architektonický směr, nyní žádná integrace.
 
 ## Jak list použít
 
@@ -23,27 +46,48 @@ Vyplnil: ______________________
 - **„Nevím" je platná odpověď.** Otázka pak zůstane `OPEN QUESTION` a věc, která
   na ní závisí, zůstane `BLOCKED`. Nic se nedomýšlí.
 - Co v tomto listu není, je shrnuté v části „Mimo tento list" na konci.
-- Na samotnou schůzku použij jednostránkovou
-  [agendu se 6 klíčovými otázkami](DOMAIN_DECISIONS_AGENDA.md); tento list je
-  plné znění a místo pro zápis odpovědí.
+- Na první schůzku použij krátký výběr šesti otázek níže; tento list je plné
+  znění a místo pro zápis odpovědí.
+
+## První schůzka — šest otázek
+
+Na jednu schůzku (30–45 min) stačí těchto šest otázek. „Nevím“ je platná
+odpověď — otázka zůstane `OPEN QUESTION` a nic se nedomýšlí.
+
+| # | Otázka | Stav | Proč na první schůzku |
+| --- | --- | --- | --- |
+| OQ9 | Která pravidla jsou tvrdá? | `PARTIALLY ANSWERED` | určuje, co se kontroluje a jaká data potřebujeme |
+| OQ10 | Jaké jsou konkrétní limity? | `PARTIALLY ANSWERED` | čísla musí dodat manager, nejde je odvodit |
+| OQ3 | Které entity potřebujeme? | `PARTIALLY ANSWERED` | rozsah typů, formulářů a testů |
+| OQ4 | Které údaje jsou povinné? | `PARTIALLY ANSWERED` | bez nich pravidla nelze vyhodnotit |
+| OQ2 | Statický, nebo průběžně upravovaný plán? | `OPEN QUESTION` | určuje historii změn a zamykání |
+| OQ16 | Může být plán neúplný? | `VERIFIED` (navazuje OQ23) | určuje, co se zobrazí a uloží |
+
+**Co na první schůzce neřešit:** preference (OQ12–OQ14), zadávání dat (OQ6),
+tvar výstupu (OQ7), role a audit (OQ18–OQ20) — to je druhé kolo, až bude
+první řez stát.
 
 ## Přehled a co co odblokuje
 
 | # | Otázka | Co odblokuje | Stav |
 | --- | --- | --- | --- |
 | OQ2 | Statický, nebo průběžně upravovaný plán? | chování kontroly po ručních úpravách | `OPEN QUESTION` |
-| OQ3 | Které entity skutečně potřebujeme? | doménové typy | `OPEN QUESTION` |
-| OQ4 | Které atributy jsou povinné? | doménové typy a formuláře | `OPEN QUESTION` |
-| OQ5 | Pobočka / umístění call centra? | datový model, filtry | `OPEN QUESTION` |
-| OQ9 | Která pravidla jsou tvrdá? | první pravidla v jádře | `OPEN QUESTION` |
-| OQ10 | Jaké konkrétní limity? | implementace limitů (H5, H6) | `OPEN QUESTION` |
+| OQ3 | Které entity skutečně potřebujeme? | doménové typy | `PARTIALLY ANSWERED` — minimální kontrakt navržen |
+| OQ4 | Které atributy jsou povinné? | doménové typy a formuláře | `PARTIALLY ANSWERED` — kontrakt navržen |
+| OQ5 | Pobočka / umístění call centra? | datový model, filtry | `OPEN QUESTION` — první řez předpokládá plochý seznam |
+| OQ9 | Která pravidla jsou tvrdá? | první pravidla v jádře | `PARTIALLY ANSWERED` — odpočet 6 dnů a víkend potvrzeny |
+| OQ10 | Jaké konkrétní limity? | implementace limitů (H5, H6) | `PARTIALLY ANSWERED` — 35 h potvrzeno, ostatní ne |
 | OQ11 | Existují pravidla mimo seznam? | rozsah prvního řezu | `OPEN QUESTION` |
-| OQ15 | Kdo rozhoduje při konfliktu? | tok po nálezu problému | `OPEN QUESTION` |
-| OQ16 | Neúplný plán, nebo chyba? | stav úplnosti plánu | `OPEN QUESTION` |
+| OQ15 | Kdo rozhoduje při konfliktu? | tok po nálezu problému | `VERIFIED` — AI navrhne, validace zkontroluje, manažer potvrdí |
+| OQ16 | Neúplný plán, nebo chyba? | stav úplnosti plánu | `VERIFIED` — neúplný návrh se přizná a nabídnou se alternativy |
 | OQ17 | Pořadí obětování preferencí? | navazuje na OQ12–OQ14 | `OPEN QUESTION` |
 | OQ18 | Jaké další role? | později, až s přihlášením | `OPEN QUESTION` |
 | OQ19 | Plánovač vs. schvalovatel? | schvalovací tok | `OPEN QUESTION` |
 | OQ20 | Potřebujeme audit změn? | historie a odpovědnost | `OPEN QUESTION` |
+| OQ21 | Co je „pracovní den“ pro 6 dnů v řadě? | výklad pravidla odpočinku | `OPEN QUESTION` |
+| OQ22 | Schválený požadavek vs. přání? | zpracování preferencí | `OPEN QUESTION` |
+| OQ23 | Lze potvrdit částečně neúplný návrh? | schvalovací tok | `OPEN QUESTION` |
+| OQ24 | Jak se započítávají přestávky? | pracovní doba a validace | `OPEN QUESTION` |
 
 ---
 
@@ -90,7 +134,11 @@ jako samostatnou entitu.
 **Návrh k diskusi (`PROPOSAL`):** nejdřív rozhodnout OQ9 (která pravidla jsou
 tvrdá) a rozsah entit nechat vyplynout z nich. Pro první řez odhaduji A nebo B.
 
-**Odpověď:**
+**Odpověď:** `PARTIALLY ANSWERED` (24. 10. 2026) — pro první týdenní řez je
+navržený minimální kontrakt v [`PLANNING_CONTRACT.md`](PLANNING_CONTRACT.md):
+zaměstnanec, čas směny, potřebné obsazení, schválená absence, požadavek,
+existující směna a pravidla. Potvrzení tohoto tvaru vznikne ověřením
+v implementaci; nejde o potvrzení všech budoucích entit.
 
 ### OQ4 — Které atributy jsou povinné?
 
@@ -115,7 +163,10 @@ Zaškrtněte, co má být **povinné**:
 **Návrh k diskusi (`PROPOSAL`):** minimum pro H1 + H2 (směna: datum, od–do;
 zaměstnanec: identifikátor; přiřazení: obojí). Zbytek podle OQ9.
 
-**Odpověď:**
+**Odpověď:** `PARTIALLY ANSWERED` (24. 10. 2026) — povinné pro první řez:
+týden, zaměstnanec, den, druh směny, potřebné obsazení, absence a existující
+směny. Role, dovednosti a zamykání zůstávají otevřené. Přesný tvar je
+v [`PLANNING_CONTRACT.md`](PLANNING_CONTRACT.md).
 
 ### OQ5 — Existuje pojem pobočky / umístění call centra?
 
@@ -154,7 +205,16 @@ Zaškrtněte u každého pravidla, kam patří:
 **Návrh k diskusi (`PROPOSAL`):** H1 + H2 jako minimum — nepotřebují žádná další
 data. H3 až pokud existuje evidence dostupnosti. H7 jen pokud OQ2 = úpravy.
 
-**Odpověď:**
+**Odpověď:** `PARTIALLY ANSWERED` (24. 10. 2026) — potvrzeno:
+- Schválená absence blokuje přiřazení (H3).
+- Po šesti po sobě jdoucích pracovních dnech alespoň 35 h nepřetržitého
+  odpočinku (H6).
+- Zaměstnanec pracující o víkendu má v témže týdnu dva dny volna (H8).
+- Překryv směn a existence přiřazení jsou strukturální integrita návrhu (H1, H2).
+- Bez potvrzení manažera se nic neukládá (H11).
+
+Zůstává otevřené: role/dovednosti (H4), maximální hodiny nebo směny (H5),
+zamykání přiřazení (H7) a výklad „pracovního dne“ (OQ21).
 
 ### OQ10 — Jaké jsou konkrétní limity?
 
@@ -171,7 +231,12 @@ nesmím. Tohle je čistě vstup managera.
 
 **Návrh k diskusi (`PROPOSAL`):** žádný — čísla musí dodat manager.
 
-**Odpověď:**
+**Odpověď:** `PARTIALLY ANSWERED` (24. 10. 2026) — potvrzeno je pouze:
+- 6 po sobě jdoucích pracovních dnů → alespoň 35 h nepřetržitého odpočinku.
+- Práce o víkendu → 2 dny volna v témže týdnu.
+
+Ostatní limity (maximum hodin za týden, maximum směn v řadě, jiný odpočinek)
+zůstávají `OPEN QUESTION`. Čísla se nesmí domýšlet.
 
 ### OQ11 — Existují pravidla mimo uvedený seznam?
 
@@ -202,7 +267,10 @@ Projektové pravidlo, které platí vždy: **engine sám nikdy neschvaluje plán
 **Návrh k diskusi (`PROPOSAL`):** A nebo C. B by znamenalo, že musíme nejdřív
 vyřešit preference.
 
-**Odpověď:**
+**Odpověď:** `VERIFIED` (24. 10. 2026) — **C**. AI vytvoří konkrétní návrh
+a aktivně navrhne řešení; deterministická validace ho nezávisle zkontroluje;
+manažer rozhodne, zda návrh přijme, upraví, nebo odmítne. AI ani validace
+neschvalují a aplikace bez potvrzení nic neukládá.
 
 ### OQ16 — Má být neúplný plán platný stav, nebo chyba?
 
@@ -215,7 +283,11 @@ vyřešit preference.
 **Návrh k diskusi (`PROPOSAL`):** A — doménová specifikace (§7) už navrhuje
 „neúplný plán, ne chyba aplikace".
 
-**Odpověď:**
+**Odpověď:** `VERIFIED` (24. 10. 2026) — **A s podmínkou**. Neúplný návrh je
+přípustný výstup k posouzení, ale musí být výslovně označen jako neúplný,
+nesmí se vydávat za plně ověřený a musí nabídnout konkrétní alternativy.
+Zda ho manažer může potvrdit s vědomým nedostatkem, je stále `OPEN QUESTION`
+(OQ23).
 
 ### OQ17 — Jak se obětují preference, když se vylučují?
 
@@ -277,6 +349,45 @@ s přípravou na B, až přihlášení vznikne.
 
 ---
 
+## 6. Nové otázky z prvního řezu
+
+Tyto otázky vznikly při přípravě týdenního kontraktu. První řez je umí obejít
+s označeným předpokladem, ale před rozšířením je potřeba je rozhodnout.
+
+### OQ21 — Co je „pracovní den“ pro pravidlo šesti dnů v řadě?
+
+**Proč to potřebujeme:** pravidlo „po šesti po sobě jdoucích pracovních dnech
+35 h odpočinku“ potřebuje vědět, zda se počítají kalendářní dny s jakoukoli
+směnou, nebo jen dny se směnou přesahující určitou délku. Bez toho může
+validace označit správný plán za chybný nebo naopak přehlédnout únavu.
+
+**Odpověď:**
+
+### OQ22 — Jak se liší schválený požadavek od přání?
+
+**Proč to potřebujeme:** schválená dovolená musí blokovat přiřazení. Pouhé
+přání na volno nebo preference směny blokovat nemá; AI ho může zohlednit.
+Pokud se to nepotvrdí, hrozí, že se přání změní na nárok nebo naopak ignoruje.
+
+**Odpověď:**
+
+### OQ23 — Může manažer potvrdit částečně neúplný návrh?
+
+**Proč to potřebujeme:** návrh může mít méně lidí, než je potřeba. Systém to
+musí přiznat. Není ale potvrzené, zda takový návrh smí manažer uložit jako
+platný stav, nebo musí nejdřív doplnit obsazení.
+
+**Odpověď:**
+
+### OQ24 — Jak se započítávají přestávky?
+
+**Proč to potřebujeme:** zadání uvádí 30minutovou přestávku, ale časy
+víkendové odpolední směny 12:45–21:00 při ní nedávají osm odpracovaných hodin
+(vychází 7 h 45 min). Rozpor je potřeba vyřešit, jinak by se z něj stal tichý
+předpoklad. Do potvrzení se odpracovaná doba nepoužívá jako tvrdé pravidlo.
+
+**Odpověď:**
+
 ## Mimo tento list
 
 Tyto otázky zatím neblokují první řez, proto jsou v druhém kole:
@@ -293,7 +404,9 @@ Tyto otázky zatím neblokují první řez, proto jsou v druhém kole:
 1. Odpovědi se zapíšou do [`DOMAIN_SPECIFICATION.md`](DOMAIN_SPECIFICATION.md);
    potvrzené otázky se označí `VERIFIED` (potvrzeno managerem). Co zůstane
    otevřené, zůstane `OPEN QUESTION`.
-2. Podle potvrzených odpovědí vzniknou doménové typy v `lib/planning/` a první
-   tvrdá pravidla jako `PlanningRule`.
-3. Do té doby zůstává konkrétní generování rozpisu `BLOCKED` a nic se
-   nedomýšlí.
+2. Podle potvrzených odpovědí vzniknou doménové typy v `lib/planning/domain/`
+   a první tvrdá pravidla jako `PlanningRule`.
+3. První týdenní řez už není blokovaný: potvrzená rozhodnutí stačí na návrh,
+   validaci a potvrzení. Otevřené otázky omezují další rozšíření (měsíce,
+   částečné úvazky, role, váhy preferencí) a musí zůstat viditelně otevřené.
+   Nic se nedomýšlí.
