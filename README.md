@@ -20,12 +20,13 @@ Toto je **rozpracovaný technický základ s demo UI**. Nejedná se o hotovou an
 produkční aplikaci.
 
 - Plánovací jádro, doménový kontrakt, deterministická validace, AI kontrakt,
-  Gemini adaptér a orchestrátor jsou `IMPLEMENTED` a pokryté testy.
+  Gemini adaptér, orchestrátor **a napojení demo UI (Fáze 2)** jsou `IMPLEMENTED` a pokryté testy.
 - Reálné volání Gemini je `NOT VERIFIED` (integrační test se bez klíče
   přeskakuje).
-- UI zatím není napojené na orchestrátor; tlačítko výpočtu pracuje s demo daty.
-- Potvrzení manažera a ukládání plánu jsou `PLANNED`; `confirmed` je vždy
-  `false` a v Prisma nejsou doménové modely.
+- **UI je napojené na orchestrátor:** `POST /api/planning/run` spouští běh,
+  `POST /api/planning/confirm` potvrzuje návrh; potvrzení běží v in-memory registru.
+- Potvrzení manažera funguje (in-memory, `SIMULATED`, `NOT PERSISTED`); `ConfirmedPlan` vzniká až výslovnou akcí.
+- Ukládání do DB je `PLANNED`; v Prisma nejsou doménové modely.
 - Potvrzené jsou časy směn, pravidlo 35 h odpočinku po šesti dnech a dva dny
   volna po práci o víkendu.
 - Projekt neobsahuje skutečná osobní ani zaměstnanecká data a není připraven

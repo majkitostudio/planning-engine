@@ -11,8 +11,8 @@ sítě. Volání AI je schované za rozhraním; konkrétní poskytovatel je v `l
 - **Výstup:** `PlanningRunResult` s návrhem, změnami, pokrytím, výsledkem
   nezávislé validace a stavem `not_verified` / `needs_changes` /
   `ready_for_review`. `confirmed` je vždy `false`.
-- **Mimo zodpovědnost:** databáze, HTTP, Next.js, potvrzení manažera a
-  ukládání. Reálné volání modelu zajišťuje adaptér v `lib/ai/`.
+- **Mimo zodpovědnost:** databáze, potvrzení manažera a ukládání do DB.
+  HTTP API a serverová konfigurace jsou v této vrstvě (Fáze 2).
 
 ## Co je v adresáři
 
@@ -35,6 +35,21 @@ sítě. Volání AI je schované za rozhraním; konkrétní poskytovatel je v `l
 | `domain/input-validation.test.ts` | Testy kontroly vstupu před AI. |
 | `domain/plan-draft-validation.test.ts` | Testy strukturální a sémantické kontroly `PlanDraft`. |
 | `domain/duplicate-assignments.test.ts` | Testy deduplikace pokrytí a změn. |
+| `simulated/scenarios.ts` | Tři fixture scénáře pro pevný týden 5.–11. 10. 2026 (`complete`, `partial`, `unverified`). |
+| `simulated/scenarios.test.ts` | Testy fixture scénářů. |
+| `simulated/provider.ts` | `SimulatedPlanningProvider` — vrací fixture, odmítá jiný týden/neznámého zaměstnance. |
+| `simulated/provider.test.ts` | Testy simulovaného providera. |
+| `provider-factory.ts` | `createPlanningProvider()` — explicitní výběr `simulated` nebo `gemini`, žádný fallback. |
+| `server-config.ts` | `getPlanningRuntime()` — čte `PLANNING_PROVIDER`, vrací režim a scénarios. |
+| `runtime-types.ts` | `PlanningProviderMode` — `simulated` | `gemini`. |
+| `run-registry.ts` | `PlanningRunRegistry` — in-memory registr běhů (`SIMULATED`, `NOT PERSISTED`). |
+| `confirmation.ts` | `evaluateConfirmation()`, `createConfirmedPlan()` — pravidla blokování potvrzení (OQ23). |
+| `view-model.ts` | `toPlanningRunView()` — mapuje `PlanningRunResult` na serializovatelný UI model. |
+| `run-service.ts` | `executePlanningRun()` — testovatelná logika běhu plánování (bez Next.js). |
+| `run-service.test.ts` | Testy spuštění běhu pro všechny tři scénáře. |
+| `confirm-service.ts` | `confirmRun()` — testovatelná logika potvrzení manažera. |
+| `confirm-service.test.ts` | Testy potvrzení pro všechny stavy. |
+| `api-types.ts` | Sdílené typy odpovědí HTTP API (`PlanningRunApiResponse`, `PlanningConfirmApiResponse`). |
 
 ## Tok
 
@@ -68,10 +83,21 @@ nenašla“, ne schválení.
 Chybějící AI je `ai_not_configured`, ne prázdný plán. Selhání poskytovatele
 je `PlanningFailure`, ne tichý `not_verified`.
 
+## Fáze 2 — API a UI napojení
+
+- **Route handlery:** `app/api/planning/run/route.ts` (POST), `app/api/planning/confirm/route.ts` (POST).
+- **Serverová stránka:** `app/(app)/planovani/page.tsx` — `force-dynamic`, `runtime: nodejs`, předává `PlanningRuntime` klientovi.
+- **Klientská komponenta:** `components/plan/plan-workspace.tsx` — spouští běh, zobrazuje výsledek, potvrzuje.
+- **Výsledková komponenta:** `components/plan/planning-result.tsx` — tři vrstvy (návrh, validace, potvrzení), změny, pokrytí, vysvětlení, blokátory potvrzení.
+- **Provider režim:** `PLANNING_PROVIDER=simulated|gemini`; bez hodnoty → `ai_not_configured`.
+- **Simulované fixtures:** tři scénáře pro týden 5.–11. 10. 2026; provider selže u jiného týdne.
+- **In-memory registr:** `PlanningRunRegistry` drží výsledky v paměti procesu; restart ztratí data.
+- **Potvrzení:** povoleno jen při `ready_for_review` + `complete`; `partial` blokováno (OQ23).
+
 ## Stav
 
 `IMPLEMENTED` a ověřené testy: generické jádro, doménový kontrakt,
-`validatePlan()`, AI kontrakt a orchestrátor. `IMPLEMENTED`, ale `NOT VERIFIED`:
+`validatePlan()`, AI kontrakt, orchestrátor, **Fáze 2 API a UI**. `IMPLEMENTED`, ale `NOT VERIFIED`:
 reálné volání Gemini (integrační test se bez klíče přeskakuje).
 
 - Generické jádro zná tři stavy kontroly: `no_problems_found`,
@@ -107,12 +133,3 @@ Tyto otázky nebrání prvnímu řezu, ale nesmí se z nich stát tichý předpo
    a konce.
 4. Zda lze potvrdit částečně neúplný návrh (OQ23).
 5. Role, maximální hodiny, zamykání a váhy preferencí (OQ9–OQ14).
-
-## Co dál
-
-1. Napojit UI na `runPlanning()` přes serverovou akci nebo route; klíč zůstává
-   jen na serveru.
-2. Zobrazit návrh, validaci a potvrzený stav odděleně; `ready_for_review`
-   nesmí vypadat jako „hotovo“.
-3. Přidat potvrzení manažera a teprve potom ukládání.
-4. Doplnit end-to-end test s fake providerem, bez reálné sítě.

@@ -117,9 +117,15 @@ pravidel. Způsob započítávání přestávek je `OPEN QUESTION` — viz
   definuje provider-neutral rozhraní, `lib/planning/orchestrator.ts` spojuje
   návrh, validaci, změny a pokrytí. Serverový Gemini adaptér je v
   `lib/ai/gemini-planning-provider.ts`; reálné volání je `NOT VERIFIED`.
-- UI zatím **není napojené** na orchestrátor. Potvrzení manažera a ukládání
-  plánu jsou `PLANNED`; `confirmed` je vždy `false` a v Prisma nejsou doménové
-  modely.
+- **Fáze 2 — UI napojení na orchestrátor: `IMPLEMENTED`.** Route handlery
+  `POST /api/planning/run` a `/confirm` volají `runPlanning()` přes `run-service.ts`.
+  Potvrzení běží v `confirm-service.ts` s in-memory registrem `PlanningRunRegistry`
+  (`SIMULATED`, `NOT PERSISTED`). UI komponenta `PlanningResult` zobrazuje tři
+  vrstvy (návrh, validace, potvrzení) s blokátory potvrzení podle OQ23.
+- Provider režim přes `PLANNING_PROVIDER=simulated|gemini`; bez hodnoty →
+  `ai_not_configured`. Žádný tichý fallback na simulaci.
+- Simulovaný provider (`lib/planning/simulated/`) vrací tři fixture scénáře
+  (`complete`, `partial`, `unverified`) pro pevný týden 5.–11. 10. 2026.
 - Doménová specifikace: `PARTIALLY VERIFIED PROPOSAL` —
   `docs/DOMAIN_SPECIFICATION.md` — část rozhodnutí je `VERIFIED` (zejména AI
   role, rozsah prvního řezu, časy směn a dvě pravidla), zbytek zůstává
@@ -128,8 +134,8 @@ pravidel. Způsob započítávání přestávek je `OPEN QUESTION` — viz
   zodpovězený; otevřené otázky zůstávají `OPEN QUESTION`. Odpovědi ani doménu
   nedomýšlej.
 - Aktuální pracovní strom prochází lintem, typecheckem, testy i buildem.
-  Známý dluh je napojení UI na orchestrátor, potvrzení manažera a ukládání;
-  podrobnosti v `docs/ROADMAP.md`.
+  Známý dluh je ukládání potvrzení do DB (Prisma modely); podrobnosti v
+  `docs/ROADMAP.md`.
 - Stav informací označuj popisky (`VERIFIED`, `IMPLEMENTED`, `PLANNED`,
   `ASSUMPTION`, `OPEN QUESTION`, `NOT VERIFIED`, `SIMULATED`, `BLOCKED`).
   Jejich význam a rozdíl mezi `IMPLEMENTED` a `VERIFIED` vysvětluje

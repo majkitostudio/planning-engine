@@ -493,6 +493,13 @@ typů.
   volání je `NOT VERIFIED`.
 - Orchestrátor: `IMPLEMENTED` v `lib/planning/orchestrator.ts` — spojí vstup,
   AI návrh, validaci a výpočet změn a pokrytí.
+- **Fáze 2 — API a UI:** route handlery `app/api/planning/run/route.ts`,
+  `app/api/planning/confirm/route.ts`; služby `run-service.ts`,
+  `confirm-service.ts`; registr `run-registry.ts`; factory providerů
+  `provider-factory.ts`; serverová konfigurace `server-config.ts`;
+  simulovaný provider `simulated/`; view-model `view-model.ts`; potvrzení
+  `confirmation.ts`; UI komponenta `components/plan/planning-result.tsx`;
+  napojení v `components/plan/plan-workspace.tsx` a `app/(app)/planovani/page.tsx`.
 
 Kontrakt je `PROPOSAL`. Pokud se při implementaci ukáže, že některý údaj
 chybí nebo je nadbytečný, uprav tento dokument i typy společně a uveď důvod.
@@ -506,7 +513,7 @@ místech:
 | --- | --- | --- | --- |
 | 1 | Doménový typ plánu | `PlanProposal<PlanDraft>` a konkrétní tvar | `IMPLEMENTED` |
 | 2 | Pravidla a limity | `PlanningRule<PlanDraft>` a jejich konfigurace | `IMPLEMENTED` pro potvrzená pravidla; zbytek `OPEN QUESTION` |
-| 3 | Zobrazení výsledku | mapování `ControlResult` a `PlanningRunResult` na stavy UI | `PLANNED` |
+| 3 | Zobrazení výsledku | mapování `ControlResult` a `PlanningRunResult` na stavy UI | `IMPLEMENTED` (Fáze 2) |
 
 Zásady, které se při napojení nesmí změnit:
 

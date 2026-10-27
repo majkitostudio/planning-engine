@@ -5,9 +5,7 @@
 
 ## 1. Stav jednou větou
 
-Plánovací jádro, doménová validace, AI kontrakt a orchestrátor jsou hotové a
-pokryté testy. Reálné volání Gemini není ověřené, UI na orchestrátor napojené
-není, potvrzení manažera ani ukládání plánu neexistuje.
+Plánovací jádro, doménová validace, AI kontrakt, orchestrátor **a napojení demo UI** jsou hotové a pokryté testy. Reálné volání Gemini není ověřené, potvrzení manažera běží v in-memory registru (nepřetrvává restartem), ukládání plánu do DB neexistuje.
 
 ## 2. Implementováno a doložitelně ověřeno
 
@@ -20,13 +18,15 @@ není, potvrzení manažera ani ukládání plánu neexistuje.
 | Deterministická validace | `validatePlan()`: vstup, pokrytí, překryvy, absence, odpočinek, víkend | `domain/validation.ts`; 54 testů v `domain/` |
 | AI kontrakt | `PlanningModelProvider`, `AiProviderError`, `isPlanDraft()` | `lib/planning/ai-provider.ts` |
 | Orchestrace | `runPlanning()`: vstup → AI → validace → změny a pokrytí | `lib/planning/orchestrator.ts`; 12 testů |
+| Simulovaný provider & Fáze 2 API | 3 fixture scénáře, `POST /api/planning/run`, `POST /api/planning/confirm` | `lib/planning/simulated/`, `app/api/planning/`; 18 testů |
+| UI napojení | `PlanningResult` komponenta, výběr scénáře, badge `SIMULATED`, blokace potvrzení | `components/plan/plan-workspace.tsx`, `planning-result.tsx` |
 | Gemini adaptér | serverové volání, strukturovaný JSON, konfigurace v prostředí | `lib/ai/gemini-planning-provider.ts`; 7 unit testů |
 | Prisma základ | PostgreSQL datasource a klient bez doménových modelů | `prisma/schema.prisma` |
 | CI | lint, typecheck, testy, build a validace Prisma | `.github/workflows/ci.yml` |
 
 Aktuální ověření pracovního stromu (26. 10. 2026):
 
-- `npm run test` — 90 prošlo, 1 přeskočen (integrační Gemini test bez klíče).
+- `npm run test` — 137 prošlo, 1 přeskočen (integrační Gemini test bez klíče).
 - `npm run typecheck` — prošlo.
 - `npm run build` — prošlo.
 - `npm run db:validate` — schéma je validní.
@@ -39,30 +39,23 @@ Aktuální ověření pracovního stromu (26. 10. 2026):
 | Reálné volání Gemini | integrační test se přeskakuje bez `GEMINI_API_KEY` a `RUN_GEMINI_INTEGRATION=1` | adaptér je `IMPLEMENTED`, ale pro reálný provoz `NOT VERIFIED` |
 | Výklad OQ21 | „pracovní den“ = kalendářní den s alespoň jednou směnou je `ASSUMPTION` | validace může být přísnější nebo volnější, než manažer čeká |
 | Výklad OQ24 | přestávky se nezapočítávají, používají se hrubé časy začátku a konce | soulad s pracovněprávním výkladem není doložený |
-| OQ23 | částečně neúplný návrh lze zobrazit, ale potvrzení není rozhodnuté | chybí pravidlo, co smí manažer potvrdit |
-| Význam stavů | `ready_for_review` znamená „validace nic nenašla“, ne schválení | UI to musí zobrazit jinak než „hotovo“ |
+| OQ23 | částečně neúplný návrh lze zobrazit, ale potvrzení je blokované | pravidlo je záměrně konservativní do rozhodnutí |
+| Význam stavů | `ready_for_review` znamená „validace nic nenašla“, ne schválení | UI to zobrazuje jako „Připraveno ke kontrole“ s tlačítkem potvrzení |
 | Plnění `explanations` a `alternatives` | typ je hotový, kvalita výstupu modelu není ověřená | manažer nemusí dostat použitelné vysvětlení |
 
-## 4. Nejbližší práce pro užitečné MVP
+## 4. Hotové (Fáze 2 – napojení UI na orchestrátor)
 
-Pořadí je návrh podle závislostí, ne závazný plán.
+Pořadí odpovídá provedené práci.
 
-1. **Napojit UI na orchestrátor.** Serverová akce nebo route zavolá
-   `runPlanning()` s `GeminiPlanningProvider`; API klíč zůstává jen na serveru.
-2. **Zobrazit výsledek po vrstvách.** Oddělit návrh, výsledek validace a
-   potvrzený stav; zobrazit změny, pokrytí, nálezy a předpoklady.
-3. **Přidat potvrzení manažera.** `ConfirmedPlan` vzniká až výslovnou akcí;
-   `ready_for_review` se nesmí tvářit jako schváleno.
-4. **Rozhodnout ukládání.** Buď potvrzení v paměti pro první řez, nebo
-   minimální Prisma modely. Modely navrhnout až podle potvrzeného kontraktu.
-5. **Doplnit end-to-end test.** UI → server → fake provider → validace →
-   potvrzení, bez reálné sítě.
-6. **Dořešit OQ21, OQ24 a OQ23.** Teprve potom lze vydávat výsledek validace
-   za doménově spolehlivý.
+1. ✅ **Napojit UI na orchestrátor.** Route handlery `POST /api/planning/run` a `/confirm` volají `runPlanning()` přes `run-service.ts`; API klíč zůstává jen na serveru.
+2. ✅ **Zobrazit výsledek po vrstvách.** `PlanningResult` komponenta odděluje návrh, výsledek validace a potvrzený stav; zobrazuje změny, pokrytí, nálezy a předpoklady.
+3. ✅ **Přidat potvrzení manažera.** `ConfirmedPlan` vzniká až výslovnou akcí v `confirm-service.ts`; `ready_for_review` se netváří jako schváleno; částečný návrh blokován (OQ23).
+4. ✅ **Provider režim.** `PLANNING_PROVIDER=simulated|gemini`; bez hodnoty → `ai_not_configured`. Žádný tichý fallback.
+5. ✅ **Simulované fixtures.** Tři scénáře (`complete`, `partial`, `unverified`) pro pevný týden; provider selže u jiného týdne/neznámého zaměstnance.
+6. ✅ **In-memory registr.** `PlanningRunRegistry` drží výsledky v paměti procesu (`SIMULATED`, `NOT PERSISTED`).
+6. ✅ **Testy a CI.** 18 nových testů pro simulované scénáře, provider, server-config, confirmation, view-model, run-service, confirm-service. Vše zeleně.
 
-Blokátory: žádný netvrdí, že nelze pokračovat. Doménová potvrzení ale musí
-předcházet tvrzení, že validace je správná; reálný Gemini test zase předchází
-tvrzení, že AI plánování funguje.
+**Blokátory pro další práci:** žádný technický. Doménová potvrzení (OQ21, OQ24, OQ23) musí předcházet tvrzení, že validace je doménově spolehlivá; reálný Gemini test předchází tvrzení, že AI plánování funguje.
 
 ## 5. Pozdější rozšíření
 
@@ -95,10 +88,12 @@ Podrobnosti a místo pro odpovědi: [`DOMAIN_DECISIONS.md`](DOMAIN_DECISIONS.md)
 
 - **`patch_orchestrator.mjs` a `patch_orchestrator2.mjs`** jsou untracked
   jednorázové skripty; neměly by se commitovat.
-- **Napojení UI na orchestrátor, potvrzení manažera a ukládání** jsou stále
-  `PLANNED`; tato omezení popisuje §4 a `README.md`.
+- **Potvrzení manažera** běží v in-memory registru (`SIMULATED`, `NOT PERSISTED`);
+  restart serveru ztratí potvrzení. Ukládání do DB je `PLANNED`.
 - **Reálné volání Gemini** je `NOT VERIFIED`, dokud neproběhne integrační test
   s klíčem.
+- **Doménové pravidla** OQ21, OQ24, OQ23 jsou `ASSUMPTION` / `OPEN QUESTION`;
+  validace používá výklad z `DOMAIN_DECISIONS.md`, ale není doménově schválená.
 
 ## 8. Historie
 
@@ -114,6 +109,9 @@ Podrobnosti a místo pro odpovědi: [`DOMAIN_DECISIONS.md`](DOMAIN_DECISIONS.md)
   duplicitní souhrny a historické tasky.
 - **26. 10. 2026:** lint je zelený; dokumentace a demo UI srovnány se
   skutečným stavem kódu.
+- **26. 10. 2026:** **Fáze 2 dokončena** — route handlery `/api/planning/run` a
+  `/confirm`, simulovaný provider se třemi scénáři, `PlanningResult` komponenta,
+  in-memory registr potvrzení, 18 nových testů, build zelený.
 
 ## 9. Odkazy
 
