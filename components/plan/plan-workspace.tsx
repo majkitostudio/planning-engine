@@ -8,6 +8,8 @@ import { Avatar } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { EmptyState } from "@/components/ui/empty-state";
 import { StatCard } from "@/components/ui/stat-card";
+import { PlanningResult } from "@/components/plan/planning-result";
+import type { PlanningRunView, PlanningFailureView } from "@/lib/planning/view-model";
 import {
   DEMO_ABSENCES,
   DEMO_ALERTS,
@@ -25,6 +27,8 @@ import {
   weekLabel,
   type ShiftKind,
 } from "@/lib/demo-data";
+import type { PlanningRuntime } from "@/lib/planning/server-config";
+import type { SimulatedScenarioSummary } from "@/lib/planning/simulated/scenarios";
 
 const TABS = [
   { key: "smeny", label: "Směny" },
@@ -41,12 +45,22 @@ const STATUS_LABEL = {
   conflict: "Konflikt",
 } as const;
 
-export function PlanWorkspace() {
+interface PlanWorkspaceProps {
+  runtime: PlanningRuntime;
+}
+
+export function PlanWorkspace({ runtime }: PlanWorkspaceProps) {
   const [weekStart, setWeekStart] = useState<Date>(() => DEMO_WEEK_START);
   const [tab, setTab] = useState<TabKey>("smeny");
   const [query, setQuery] = useState("");
   const [shiftFilter, setShiftFilter] = useState<"all" | ShiftKind>("all");
   const [notice, setNotice] = useState<string | null>(null);
+
+  // Planning result state
+  const [planningView, setPlanningView] = useState<PlanningRunView | null>(null);
+  const [planningFailure, setPlanningFailure] = useState<PlanningFailureView | null>(null);
+  const [isPlanningLoading, setIsPlanningLoading] = useState(false);
+  const [selectedScenario, setSelectedScenario] = useState<string>("complete");
 
   const weekDates = useMemo(() => getWeekDates(weekStart), [weekStart]);
 
@@ -80,10 +94,80 @@ export function PlanWorkspace() {
     setWeekStart((current) => addDays(current, delta * 7));
   }
 
-  function runCalculation() {
-    setNotice(
-      "Plánovací jádro, deterministická validace i orchestrátor jsou hotové, ale tato obrazovka zatím není napojená na orchestrátor. Na demo datech se proto žádný návrh nevytvoří.",
-    );
+  async function runPlanning() {
+    if (!runtime.configured) {
+      setNotice("Plánování není nakonfigurované. Nastavte PLANNING_PROVIDER.");
+      return;
+    }
+
+    setIsPlanningLoading(true);
+    setPlanningView(null);
+    setPlanningFailure(null);
+    setNotice(null);
+
+    try {
+      const response = await fetch("/api/planning/run", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          scenario: selectedScenario,
+          weekStart: weekDates[0].toISOString().split("T")[0],
+        }),
+      });
+
+      const data = await response.json();
+
+      if (data.ok && data.view) {
+        setPlanningView(data.view);
+      } else if (data.failure) {
+        setPlanningFailure(data.failure);
+      } else if (data.rejected) {
+        setPlanningFailure({
+          code: data.rejected.code,
+          title: data.rejected.code,
+          message: data.rejected.message,
+          details: data.rejected.blockers
+            ? { blockers: data.rejected.blockers }
+            : undefined,
+        });
+      }
+    } catch (error) {
+      setPlanningFailure({
+        code: "ai_failed",
+        title: "Síťová chyba",
+        message: error instanceof Error ? error.message : "Neznámá chyba při volání API.",
+      });
+    } finally {
+      setIsPlanningLoading(false);
+    }
+  }
+
+  async function confirmPlanning(proposalId: string) {
+    setIsPlanningLoading(true);
+    try {
+      const response = await fetch("/api/planning/confirm", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ proposalId }),
+      });
+
+      const data = await response.json();
+
+      if (data.ok && data.view) {
+        setPlanningView(data.view);
+        if (!data.alreadyConfirmed) {
+          setNotice("Návrh byl úspěšně potvrzen.");
+        }
+      } else if (data.rejected) {
+        setNotice(data.rejected.message);
+      }
+    } catch (error) {
+      setNotice(
+        error instanceof Error ? error.message : "Chyba při potvrzování návrhu.",
+      );
+    } finally {
+      setIsPlanningLoading(false);
+    }
   }
 
   function onTabKeyDown(event: KeyboardEvent<HTMLButtonElement>, index: number) {
@@ -98,6 +182,10 @@ export function PlanWorkspace() {
   const weekFrom = weekDates[0];
   const weekTo = weekDates[weekDates.length - 1];
 
+  const scenarios: readonly SimulatedScenarioSummary[] = runtime.configured
+    ? runtime.scenarios
+    : [];
+
   return (
     <>
       <div className="page-head">
@@ -108,7 +196,7 @@ export function PlanWorkspace() {
           <div>
             <h1 className="page-head__title">Plán směn</h1>
             <p className="page-head__sub">
-              Spravujte směny, požadavky a absence. Návrh rozpisu bude vznikat
+              Spravujte směny, požadavky a absence. Návrh rozpisu vznika
               podle schválených pravidel a dostupnosti zaměstnanců.
             </p>
           </div>
@@ -139,11 +227,6 @@ export function PlanWorkspace() {
               <Icon name="chevronRight" width={16} height={16} />
             </button>
           </div>
-
-          <button type="button" className="btn btn--primary" onClick={runCalculation}>
-            <Icon name="sparkles" width={17} height={17} />
-            Spustit výpočet
-          </button>
         </div>
       </div>
 
@@ -165,6 +248,20 @@ export function PlanWorkspace() {
           </Alert>
         </div>
       ) : null}
+
+      {/* Planning Result Section - NEW */}
+      <PlanningResult
+        view={planningView}
+        failure={planningFailure}
+        onConfirm={confirmPlanning}
+        onRun={runPlanning}
+        scenarios={scenarios}
+        selectedScenario={selectedScenario}
+        setSelectedScenario={setSelectedScenario}
+        isLoading={isPlanningLoading}
+        runtimeNotice={runtime.configured ? runtime.notice : runtime.reason}
+        providerMode={runtime.configured ? runtime.mode : "simulated"}
+      />
 
       <div className="stat-grid">
         {DEMO_STATS.map((stat) => (
@@ -407,7 +504,7 @@ export function PlanWorkspace() {
             <span>Ukázková data · neproběhl skutečný výpočet</span>
             <span className="footer-status__right">
               <span className="footer-status__dot footer-status__dot--amber" aria-hidden="true" />
-              Jádro je hotové, UI zatím není napojené na orchestrátor
+              Jádro je hotové, UI napojené na orchestrátor (Fáze 2)
             </span>
           </div>
         </div>
@@ -516,17 +613,26 @@ export function PlanWorkspace() {
               <h2 className="ai-card__title" id="rail-ai">
                 Plánovací asistent
               </h2>
-              <Badge variant="warning" dot={false}>
-                Připravované
+              <Badge variant={runtime.configured ? "success" : "warning"} dot={false}>
+                {runtime.configured ? "Aktivní" : "Nekonfigurovaný"}
               </Badge>
             </div>
             <p className="ai-card__text">
-              Jádro, validace a orchestrátor jsou hotové. Napojení na tuto
-              obrazovku a potvrzení manažera ještě implementované nejsou.
+              {runtime.configured
+                ? `Režim: ${runtime.mode === "simulated" ? "Simulace (fixtures)" : "Gemini (NOT VERIFIED)"}. Vyberte scénář a spusťte výpočet.`
+                : "Není nastaven PLANNING_PROVIDER. Nastavte \"simulated\" pro demo fixtures."}
             </p>
-            <button type="button" className="btn btn--primary" onClick={runCalculation}>
-              Spustit výpočet
-            </button>
+            {runtime.configured && (
+              <button
+                type="button"
+                className="btn btn--primary"
+                onClick={runPlanning}
+                disabled={isPlanningLoading}
+              >
+                <Icon name="sparkles" width={17} height={17} />
+                Spustit výpočet
+              </button>
+            )}
           </section>
         </aside>
       </div>
