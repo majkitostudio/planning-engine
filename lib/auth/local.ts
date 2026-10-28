@@ -101,7 +101,19 @@ export function getActiveAuthRuntimeConfig(
 ): ActiveAuthRuntimeConfigResult {
   const mode = env.PLANNING_AUTH_MODE?.trim().toLowerCase() || "local";
 
-  if (mode === "local") return getLocalAuthRuntimeConfig(env);
+  if (mode === "local") {
+    if (env.NODE_ENV === "production") {
+      return {
+        ok: false,
+        code: "auth_invalid_config",
+        missing: [],
+        message:
+          "PLANNING_AUTH_MODE=local je pouze pro vývoj a testy. Pro produkční běh nastavte entra.",
+      };
+    }
+
+    return getLocalAuthRuntimeConfig(env);
+  }
 
   if (mode === "entra") {
     const runtime = getAuthRuntimeConfig(env);

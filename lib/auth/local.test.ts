@@ -73,4 +73,15 @@ describe("local MVP auth", () => {
         "https://login.microsoftonline.com/tenant-id/v2.0",
     })).toMatchObject({ ok: true, mode: "entra" });
   });
+
+  it("v produkci odmítne lokální MVP přihlášení", () => {
+    expect(getActiveAuthRuntimeConfig({
+      ...configuredEnvironment,
+      NODE_ENV: "production",
+    })).toMatchObject({
+      ok: false,
+      code: "auth_invalid_config",
+      message: expect.stringContaining("pouze pro vývoj a testy"),
+    });
+  });
 });
