@@ -208,8 +208,8 @@ export function PlanWorkspace({ runtime }: PlanWorkspaceProps) {
           <div>
             <h1 className="page-head__title">Plán směn</h1>
             <p className="page-head__sub">
-              Spravujte směny, požadavky a absence. Návrh rozpisu vznika
-              podle schválených pravidel a dostupnosti zaměstnanců.
+              Připravte návrh směn pro vybraný týden z dostupných vstupů.
+              AI zohlední zaměstnance, absence, požadavky a potřebné obsazení.
             </p>
           </div>
         </div>
@@ -248,8 +248,7 @@ export function PlanWorkspace({ runtime }: PlanWorkspaceProps) {
         </span>
         <p>
           <strong>Demonstrační data.</strong> Jména, počty i přiřazení jsou
-          smyšlené ukázky rozvržení. Časy směn odpovídají potvrzeným časům, ale
-          nejde o platný ani schválený rozpis.
+          smyšlené ukázky. Výsledek není platný ani schválený rozpis.
         </p>
       </div>
 
@@ -637,8 +636,8 @@ export function PlanWorkspace({ runtime }: PlanWorkspaceProps) {
             </div>
             <p className="ai-card__text">
               {runtime.configured
-                ? `Režim: ${runtime.mode === "simulated" ? "Simulace (fixtures)" : "Gemini (NOT VERIFIED)"}. Vyberte scénář a spusťte výpočet.`
-                : "Není nastaven PLANNING_PROVIDER. Nastavte \"simulated\" pro demo fixtures."}
+                ? `${runtime.mode === "simulated" ? "Ukázka používá připravená data" : "Reálné volání Gemini (NOT VERIFIED)"}. Vyberte případ a spusťte návrh.`
+                : "Ukázka není připravená. Pro spuštění dema nastavte režim simulated."}
             </p>
             {runtime.configured && (
               <button
@@ -648,7 +647,7 @@ export function PlanWorkspace({ runtime }: PlanWorkspaceProps) {
                 disabled={isPlanningLoading}
               >
                 <Icon name="sparkles" width={17} height={17} />
-                Spustit výpočet
+                Spustit ukázku
               </button>
             )}
           </section>
