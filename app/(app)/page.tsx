@@ -69,8 +69,8 @@ export default function DashboardPage() {
         <p>
           <strong>Demonstrační data.</strong> Čísla, jména i směny jsou syntetické
           ukázky. Demo UI je napojené na orchestrátor a plánovací běh používá
-          SIMULATED fixtures; potvrzení je pouze in-memory a není trvalé.
-          Aplikace není produkční systém.
+          SIMULATED fixtures; potvrzení se ukládá přes nastavenou
+          perzistenční vrstvu. Aplikace není produkční systém.
         </p>
       </div>
 
@@ -214,7 +214,7 @@ export default function DashboardPage() {
             <p className="ai-card__text">
               Demo asistent spouští simulovaný běh přes orchestrátor, zobrazuje
               návrh i validaci a umožňuje potvrzení kompletního návrhu.
-              Potvrzení je pouze in-memory a není trvalé.
+              Potvrzení se ukládá přes nastavenou perzistenční vrstvu.
             </p>
             <Link className="btn btn--primary" href="/planovani">
               Otevřít plán směn
