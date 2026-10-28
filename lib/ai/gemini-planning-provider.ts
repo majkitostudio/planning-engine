@@ -9,6 +9,7 @@
 
 import { AiProviderError, isPlanDraft, type PlanningModelProvider } from "../planning/ai-provider";
 import type { PlanningInput, PlanDraft } from "../planning/domain";
+import { buildDomainSystemPrompt } from "./planning-domain-prompt";
 
 const DEFAULT_BASE_URL = "https://generativelanguage.googleapis.com";
 const DEFAULT_MODEL = "gemini-2.5-flash";
@@ -85,17 +86,7 @@ const PLAN_DRAFT_JSON_SCHEMA = {
 } as const;
 
 function buildPrompt(input: PlanningInput): string {
-  return [
-    "You are a shift planning assistant for a call center.",
-    "Create a concrete weekly shift assignment plan as JSON matching the provided schema.",
-    "Respect staffing requirements, approved absences, rest rules and weekend days off.",
-    "Do not invent employees, dates or shift kinds. Use only the provided input.",
-    "Explain important decisions and list assumptions. Offer alternatives if not all requirements can be met.",
-    "Return only JSON, no markdown.",
-    "",
-    "INPUT (JSON):",
-    JSON.stringify(input, null, 2),
-  ].join("\n");
+  return buildDomainSystemPrompt(input);
 }
 
 export class GeminiPlanningProvider implements PlanningModelProvider {
