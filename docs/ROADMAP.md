@@ -108,9 +108,19 @@ a produkční databáze zůstávají `NOT VERIFIED`.
    managerovi a čte jen uložené události `planning.confirmed`. Rozsah plného
    auditu a další role zůstávají `OPEN QUESTION`.
 
-Dalším doporučeným krokem je ověřit produkční hranici autentizace a databáze bez
-rozšíření domény. Entra rekonstrukce, širší audit a další role jsou pozdější
-rozšíření; integrace s CRM zůstává mimo rozsah.
+Původně doporučené ověření produkční hranice autentizace a databáze je nyní
+`DEFERRED`: k tomuto kroku se vrátíme až po představení projektu vedení AAAAuto
+a schválení jeho implementace jako firemního nástroje. Entra rekonstrukce,
+produkční databáze, širší audit a další role proto nejsou aktuálním úkolem;
+integrace s CRM zůstává mimo rozsah.
+
+### Nejbližší aktivní krok
+
+Připravit současné demo k představení vedení: ověřit, že srozumitelně ukazuje
+čtvrteční plánování dalšího týdne, návrh AI, nezávislou kontrolu, omezení
+syntetických dat a nutnost potvrzení managerem. Do této přípravy nepatří
+produkční přihlášení, napojení na Outlook, podpora částečných úvazků ani
+automatický přenos do rosteru.
 
 ## 6. Pozdější rozšíření
 
