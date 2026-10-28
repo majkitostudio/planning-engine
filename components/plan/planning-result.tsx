@@ -73,17 +73,17 @@ export function PlanningResult({
             <div className="empty__icon" aria-hidden="true">
               <Icon name="sparkles" width={24} height={24} />
             </div>
-            <h3 className="empty__title">Plánovací asistent</h3>
+            <h3 className="empty__title">Ukázkový plánovací návrh</h3>
             <p className="empty__desc">
-              Vyberte scénář a spusťte výpočet. Výsledek se zobrazí zde nad
-              tabulkou ukázkových dat.
+              Vyberte připravený ukázkový případ a spusťte návrh. Výsledek se
+              zobrazí zde nad tabulkou ukázkových dat.
             </p>
           </div>
         </div>
         <div className="planning-result__controls card card--pad">
           <div className="stack-sm">
             <label className="select" htmlFor="scenario-select">
-              <span className="sr-only">Vyberte simulovaný scénář</span>
+              <span className="sr-only">Vyberte ukázkový případ</span>
               <select
                 id="scenario-select"
                 value={selectedScenario}
@@ -114,12 +114,12 @@ export function PlanningResult({
                 {isLoading ? (
                   <>
                     <span className="spinner" aria-hidden="true" />
-                    Provádím výpočet…
+                    Připravuji návrh…
                   </>
                 ) : (
                   <>
                     <Icon name="sparkles" width={17} height={17} />
-                    Spustit výpočet
+                    Spustit návrh
                   </>
                 )}
               </button>
@@ -194,7 +194,7 @@ export function PlanningResult({
                 const [y, m, d] = v.weekStart.split("-").map(Number);
                 const end = new Date(y, m - 1, d + 6);
                 return `${end.getDate()}.${end.getMonth() + 1}.${end.getFullYear()}`;
-              })()} · Poskytovatel: {v.providerName} · ID: {v.proposalId.slice(0, 12)}…
+              })()} · Nejprve návrh zkontrolujte; potvrzení je na managerovi.
             </p>
           </div>
           <div className="row" style={{ gap: "8px", flexWrap: "wrap" }}>
@@ -214,7 +214,7 @@ export function PlanningResult({
               ) : v.confirmation.allowed ? (
                 <>
                   <Icon name="checkCircle" width={17} height={17} />
-                  Potvrdit návrh
+                  Potvrdit jako manager
                 </>
               ) : (
                 <>
@@ -541,7 +541,7 @@ export function PlanningResult({
       <div className="planning-result__controls card card--pad" style={{ marginTop: "12px" }}>
         <div className="row" style={{ gap: "10px", flexWrap: "wrap", alignItems: "center" }}>
           <label className="select" htmlFor="scenario-select-2">
-            <span className="sr-only">Změnit scénář</span>
+            <span className="sr-only">Změnit ukázkový případ</span>
             <select
               id="scenario-select-2"
               value={selectedScenario}
