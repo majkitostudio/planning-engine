@@ -34,9 +34,9 @@ export type PlanningRuntime =
 type PlanningEnvironment = Readonly<Record<string, string | undefined>>;
 
 const SIMULATED_NOTICE =
-  "Běh používá pevné SIMULATED fixtures. Nejde o skutečný rozpis ani o potvrzená data.";
+  "SIMULATED: ukázka používá připravený týden a smyšlená data. Nejde o skutečný rozpis ani o potvrzená data.";
 const GEMINI_NOTICE =
-  "Vstupní data jsou SIMULATED fixtures. Reálné volání Gemini je VERIFIED integračním testem, ale výsledek není skutečný produkční rozpis.";
+  "SIMULATED vstupní data. Reálné volání Gemini je VERIFIED integračním testem, ale výsledek není skutečný produkční rozpis.";
 
 export function getPlanningRuntime(
   env: PlanningEnvironment = process.env,
