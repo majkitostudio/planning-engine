@@ -20,18 +20,18 @@ const actor = toPlanningActor({
 
 if (!actor) throw new Error("Test actor se nepodařilo vytvořit.");
 
-function makeSnapshot(): PlanningRunSnapshot {
+function makeSnapshot(proposalId = "plan-persisted"): PlanningRunSnapshot {
   const scenario = getSimulatedScenario("complete");
   if (!scenario) throw new Error("Test scenario se nepodařilo načíst.");
 
   return {
-    proposalId: "plan-persisted",
+    proposalId,
     scenarioId: scenario.id,
     scenarioLabel: scenario.label,
     providerName: "simulated-fixture/complete",
     mode: "simulated",
     input: scenario.input,
-    result: makeRunResult({ id: "plan-persisted" }),
+    result: makeRunResult({ id: proposalId }),
     confirmedPlan: null,
     confirmedAt: null,
     confirmedById: null,
@@ -93,5 +93,43 @@ describe("planning persistence", () => {
         new Date("2026-10-28T12:00:00.000Z"),
       ),
     ).resolves.toBeNull();
+  });
+
+  it("vrátí potvrzení pro audit od nejnovějšího", async () => {
+    const persistence = new InMemoryPlanningPersistence();
+    const older = makeSnapshot("plan-older");
+    const newer = makeSnapshot("plan-newer");
+
+    await persistence.saveRun(older, actor);
+    await persistence.confirmRun(
+      older.proposalId,
+      older.result.proposal.plan.assignments,
+      actor,
+      new Date("2026-10-28T12:00:00.000Z"),
+    );
+    await persistence.saveRun(newer, actor);
+    await persistence.confirmRun(
+      newer.proposalId,
+      newer.result.proposal.plan.assignments,
+      actor,
+      new Date("2026-10-28T13:00:00.000Z"),
+    );
+
+    await expect(persistence.listAuditEvents()).resolves.toMatchObject([
+      {
+        action: "planning.confirmed",
+        entityId: "plan-newer",
+        actorId: actor.userId,
+        createdAt: "2026-10-28T13:00:00.000Z",
+        details: { weekStart: "2026-10-05", email: "manager@aaauto.cz" },
+      },
+      {
+        action: "planning.confirmed",
+        entityId: "plan-older",
+        actorId: actor.userId,
+        createdAt: "2026-10-28T12:00:00.000Z",
+        details: { weekStart: "2026-10-05", email: "manager@aaauto.cz" },
+      },
+    ]);
   });
 });

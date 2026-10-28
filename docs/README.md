@@ -35,7 +35,7 @@ jiných dokumentů neopakuje.
 | Přihlášení a role | `IMPLEMENTED` / `VERIFIED` (lokální smoke) | Lokální Auth.js credentials gate pro MVP byl ověřen přes browser; produkční úroveň a Entra ID zůstávají `NOT VERIFIED`/`PLANNED` |
 | Potvrzení manažera | `IMPLEMENTED` | `POST /api/planning/confirm`, manager-only, blokace částečných/neověřených návrhů |
 | Ukládání běhů a potvrzení | `IMPLEMENTED` / `VERIFIED` (lokální Docker smoke) | Prisma snapshot a `ConfirmedPlan`; migrace a zápis potvrzení byly ověřeny v izolované lokální PostgreSQL |
-| Audit potvrzení | `IMPLEMENTED` / `VERIFIED` (lokální Docker smoke) | Zápis `planning.confirmed` byl ověřen; čtecí auditní API není součástí tohoto kroku |
+| Audit potvrzení | `IMPLEMENTED` / `VERIFIED` (lokální Docker smoke) | Zápis `planning.confirmed` byl ověřen; čtecí pohled je `IMPLEMENTED` pro managera a ukazuje pouze tato potvrzení |
 | Testy | `IMPLEMENTED` / `VERIFIED` | Jádro, služby a route handlery mají testy; plný UI/E2E test není součástí dema |
 | Kvalitní brána (CI) | `IMPLEMENTED` | Lint, typecheck, testy, build a Prisma validace procházejí |
 | Produkční připravenost | `NOT VERIFIED` | Není produkční aplikace |
@@ -93,6 +93,6 @@ Následující kroky zachycují aktuální target a jeho ověření; položky oz
    jsou `VERIFIED` v izolovaném Docker prostředí. Produkční DB zůstává
    `NOT VERIFIED`.
 
-Další doporučený krok je řešit produkční hranici autentizace, databáze a auditu.
-Entra rekonstrukce, čtecí auditní pohled a další role jsou pozdější rozšíření;
-CRM integrace zůstává mimo rozsah.
+Další doporučený krok je ověřit produkční hranici autentizace a databáze.
+Entra rekonstrukce, širší audit a další role jsou pozdější rozšíření; CRM
+integrace zůstává mimo rozsah.

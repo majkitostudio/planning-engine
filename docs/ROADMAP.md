@@ -28,12 +28,13 @@ jsou `NOT VERIFIED` nebo `PLANNED`; lokální Docker PostgreSQL běh je `VERIFIE
 | Auth.js / lokální login gate | credentials přihlášení, session, role a ochrana aplikace bez CRM | `auth.ts`, `lib/auth/`, `proxy.ts`; MVP `IMPLEMENTED` |
 | Budoucí Entra brána | ponechaný provider-neutral základ pro pozdější rekonstrukci | `lib/auth/config.ts`; `PLANNED` |
 | Perzistence a audit | snapshot běhu, potvrzený plán, auditní událost | `lib/planning/persistence.ts`, `prisma/schema.prisma`; lokální Docker DB `VERIFIED`, produkční DB `NOT VERIFIED` |
+| Čtecí auditní pohled | historie `planning.confirmed` pro managera | `app/(app)/audit/page.tsx`, `lib/planning/audit-service.ts`; logika přístupu ověřená unit testy |
 | Prisma základ | PostgreSQL datasource, provozní modely a připravená migrace bez doménových modelů | `prisma/schema.prisma`, `prisma/migrations/` |
 | CI | lint, typecheck, testy, build a validace Prisma | `.github/workflows/ci.yml` |
 
 Aktuální ověření pracovního stromu (28. 10. 2026):
 
-- `npm run test` — 167 prošlo, 1 přeskočen (integrační Gemini test bez explicitního spuštění).
+- `npm run test` — 170 prošlo, 1 přeskočen (integrační Gemini test bez explicitního spuštění).
 - `npm run test -- lib/ai/gemini-planning-provider.integration.test.ts` s lokálním
   `.env.local` — 1 integrační test prošel; skutečné volání Gemini bylo ověřeno.
 - `npm run typecheck` — prošlo.
@@ -71,6 +72,8 @@ Pořadí odpovídá provedené práci.
    běhu, potvrzený návrh a událost `planning.confirmed`; `memory` je pouze pro testy.
 9. ✅ **Testy a CI.** Integrační minimum pokrývá anonymní přístup, viewer/manager
    oprávnění, konfiguraci, simulované scénáře, potvrzení, idempotenci a neznámý návrh.
+10. ✅ **Čtecí audit potvrzení.** Manager vidí existující události
+    `planning.confirmed`; viewer k nim nemá přístup. Nejde o plný audit změn.
    Celá sada je zelená.
 
 **Blokátory pro další práci:** žádný technický pro demo. Výklad OQ21, OQ23 a
@@ -101,10 +104,13 @@ a produkční databáze zůstávají `NOT VERIFIED`.
    role, snapshoty, potvrzení a audit jsou implementované bez CRM spojení. Entra
    rekonstrukce je `PLANNED`; lokální Docker DB běh je `VERIFIED`, produkční DB
    zůstává `NOT VERIFIED`.
+7. ✅ **Zpřístupnit čtecí audit potvrzení.** Pohled `/audit` je dostupný pouze
+   managerovi a čte jen uložené události `planning.confirmed`. Rozsah plného
+   auditu a další role zůstávají `OPEN QUESTION`.
 
-Dalším doporučeným krokem je řešit produkční hranici autentizace, databáze a auditu
-bez rozšíření domény. Entra rekonstrukce, čtecí auditní pohled a další role jsou
-pozdější rozšíření; integrace s CRM zůstává mimo rozsah.
+Dalším doporučeným krokem je ověřit produkční hranici autentizace a databáze bez
+rozšíření domény. Entra rekonstrukce, širší audit a další role jsou pozdější
+rozšíření; integrace s CRM zůstává mimo rozsah.
 
 ## 6. Pozdější rozšíření
 
@@ -113,7 +119,7 @@ pozdější rozšíření; integrace s CRM zůstává mimo rozsah.
 - Role a dovednosti jako povinná data.
 - Váhy preferencí a optimalizační cíle.
 - Import/export a integrace (Countdown CRM je jen budoucí směr).
-- Čtecí auditní pohled a rozšířená správa rolí.
+- Širší audit a rozšířená správa rolí.
 - Ukládání historie a zamykání přiřazení.
 
 ## 7. Otevřené otázky
@@ -140,6 +146,8 @@ Podrobnosti a místo pro odpovědi: [`DOMAIN_DECISIONS.md`](DOMAIN_DECISIONS.md)
 - **Entra autentizace** je ponechaná jako `PLANNED` budoucí rekonstrukce brány.
 - **Potvrzení manažera** se v aplikačním režimu ukládá přes Prisma a zapisuje audit;
   `memory` zůstává pouze testovací režim.
+- **Čtecí audit** v tomto kroku ukazuje jen události `planning.confirmed` a je
+  dostupný pouze managerovi. Nejde o historii všech změn ani o rozhodnutí OQ20.
 - **Reálné volání Gemini** je `VERIFIED` integračním testem. Kvalita výstupu pro
   produkční provoz a práce s reálnými daty zůstávají `NOT VERIFIED`.
 - **OQ24** je potvrzené pouze jako výklad pro plánovací engine: validace
@@ -175,6 +183,9 @@ Podrobnosti a místo pro odpovědi: [`DOMAIN_DECISIONS.md`](DOMAIN_DECISIONS.md)
   připravený jako budoucí autentizační brána; plná sada má 167 průchozích testů
   a 1 přeskočený integrační test. Lokální Docker smoke ověřil migraci, potvrzení
   a auditní událost.
+- **28. 10. 2026:** přidán čtecí pohled `/audit` pro managera nad uloženými
+  událostmi `planning.confirmed`; viewer k nim nemá přístup. Nejde o plný audit
+  změn a produkční databáze zůstává `NOT VERIFIED`.
 
 ## 10. Odkazy
 

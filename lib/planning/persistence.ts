@@ -27,7 +27,7 @@ export interface PlanningAuditEvent {
   readonly action: "planning.confirmed";
   readonly entityType: "planning_run";
   readonly entityId: string;
-  readonly actorId: string;
+  readonly actorId: string | null;
   readonly createdAt: string;
   readonly details: Readonly<Record<string, string>>;
 }
@@ -45,6 +45,7 @@ export interface PersistedConfirmation {
 export interface PlanningPersistence {
   saveRun(snapshot: PlanningRunSnapshot, actor?: PlanningActor): Promise<void>;
   getRun(proposalId: string): Promise<PlanningRunSnapshot | null>;
+  listAuditEvents(): Promise<readonly PlanningAuditEvent[]>;
   confirmRun(
     proposalId: string,
     assignments: readonly ProposedAssignment[],
@@ -76,6 +77,12 @@ export class InMemoryPlanningPersistence implements PlanningPersistence {
 
   async getRun(proposalId: string): Promise<PlanningRunSnapshot | null> {
     return this.state.runs.get(proposalId) ?? null;
+  }
+
+  async listAuditEvents(): Promise<readonly PlanningAuditEvent[]> {
+    return [...this.state.auditEvents].sort((left, right) =>
+      right.createdAt.localeCompare(left.createdAt),
+    );
   }
 
   async confirmRun(
@@ -175,6 +182,26 @@ export class PrismaPlanningPersistence implements PlanningPersistence {
     return row ? snapshotFromRecord(row) : null;
   }
 
+  async listAuditEvents(): Promise<readonly PlanningAuditEvent[]> {
+    const rows = await this.db.auditEvent.findMany({
+      where: {
+        action: "planning.confirmed",
+        entityType: "planning_run",
+      },
+      orderBy: { createdAt: "desc" },
+    });
+
+    return rows.map((row) => ({
+      id: row.id,
+      action: "planning.confirmed",
+      entityType: "planning_run",
+      entityId: row.entityId,
+      actorId: row.actorId,
+      createdAt: row.createdAt.toISOString(),
+      details: auditDetailsFromJson(row.details),
+    }));
+  }
+
   async confirmRun(
     proposalId: string,
     assignments: readonly ProposedAssignment[],
@@ -248,6 +275,18 @@ async function ensureActor(
 
 function toInputJson(value: unknown): Prisma.InputJsonValue {
   return value as Prisma.InputJsonValue;
+}
+
+function auditDetailsFromJson(
+  value: Prisma.JsonValue | null,
+): Readonly<Record<string, string>> {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return {};
+
+  return Object.fromEntries(
+    Object.entries(value).filter(
+      (entry): entry is [string, string] => typeof entry[1] === "string",
+    ),
+  );
 }
 
 function snapshotFromRecord(row: PlanningRunRecord): PlanningRunSnapshot {

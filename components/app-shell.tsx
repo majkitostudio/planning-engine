@@ -14,6 +14,7 @@ type NavItem = {
   label: string;
   icon: IconName;
   badge?: string;
+  managerOnly?: boolean;
 };
 
 const NAV_ITEMS: NavItem[] = [
@@ -24,6 +25,7 @@ const NAV_ITEMS: NavItem[] = [
   { href: "/dovolene", label: "Dovolené a absence", icon: "umbrella" },
   { href: "/pravidla", label: "Pravidla", icon: "shield" },
   { href: "/analyzy", label: "Analýzy", icon: "chart" },
+  { href: "/audit", label: "Audit potvrzení", icon: "clipboard", managerOnly: true },
   { href: "/nastaveni", label: "Nastavení", icon: "settings" },
 ];
 
@@ -95,6 +97,9 @@ export function AppShell({
     href === "/" ? pathname === "/" : pathname.startsWith(href);
   const userName = user?.name?.trim() || user?.email || "Přihlášený uživatel";
   const userRole = user?.role === "manager" ? "Manažer" : "Uživatel";
+  const visibleNavItems = NAV_ITEMS.filter(
+    (item) => !item.managerOnly || user?.role === "manager",
+  );
 
   return (
     <div className="shell">
@@ -127,7 +132,7 @@ export function AppShell({
 
         <nav className="sidebar__nav" aria-label="Sekce aplikace">
           <ul className="nav-list">
-            {NAV_ITEMS.map((item) => (
+            {visibleNavItems.map((item) => (
               <li key={item.href}>
                 <Link
                   href={item.href}
