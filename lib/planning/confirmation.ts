@@ -3,7 +3,7 @@
  *
  * Potvrzení je samostatný krok mimo AI i validaci. `ready_for_review` není
  * schválení a `ConfirmedPlan` vzniká až tady. Částečně neúplný návrh zůstává
- * blokovaný, dokud není rozhodnutá OQ23.
+ * blokovaný podle rozhodnutí OQ23.
  */
 
 import type { ConfirmedPlan, PlanningRunResult } from "./domain/types";
@@ -58,7 +58,7 @@ export function evaluateConfirmation(
     blockers.push({
       code: "partial_blocked_by_oq23",
       message:
-        "Návrh je částečně neúplný. Zda ho lze potvrdit, není rozhodnuté (OQ23); potvrzení je proto zakázané.",
+        "Návrh je částečně neúplný. Podle rozhodnutí OQ23 je potvrzení neúplného návrhu zakázané.",
     });
   }
 

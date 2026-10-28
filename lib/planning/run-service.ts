@@ -8,6 +8,8 @@
 
 import { runPlanning } from "./orchestrator";
 import { createPlanningProvider } from "./provider-factory";
+import type { PlanningActor } from "../auth/actor";
+import type { PlanningRunSnapshot } from "./persistence";
 import { planningRunRegistry, type PlanningRunRegistry } from "./run-registry";
 import type { IsoDate, PlanningFailure } from "./domain/types";
 import type { PlanningProviderMode } from "./runtime-types";
@@ -24,11 +26,16 @@ export interface ExecutePlanningRunRequest {
 }
 
 export type ExecutePlanningRunResult =
-  | { readonly ok: true; readonly view: PlanningRunView }
+  | {
+      readonly ok: true;
+      readonly view: PlanningRunView;
+      readonly snapshot: PlanningRunSnapshot;
+    }
   | { readonly ok: false; readonly failure: PlanningFailure };
 
 export interface ExecutePlanningRunOptions {
   readonly now?: () => number;
+  readonly actor?: PlanningActor;
 }
 
 export async function executePlanningRun(
@@ -102,6 +109,19 @@ export async function executePlanningRun(
     { id: scenario.id, label: scenario.label },
   );
 
+  const snapshot: PlanningRunSnapshot = {
+    proposalId: outcome.result.proposal.id,
+    scenarioId: scenario.id,
+    scenarioLabel: scenario.label,
+    providerName: provider.name,
+    mode: request.mode,
+    input: scenario.input,
+    result: outcome.result,
+    confirmedPlan: null,
+    confirmedAt: null,
+    confirmedById: null,
+  };
+
   return {
     ok: true,
     view: toPlanningRunView(outcome.result, {
@@ -114,6 +134,7 @@ export async function executePlanningRun(
         displayName,
       })),
     }),
+    snapshot,
   };
 }
 

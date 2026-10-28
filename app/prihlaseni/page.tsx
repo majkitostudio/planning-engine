@@ -1,13 +1,17 @@
 import type { Metadata } from "next";
 import { LoginForm } from "@/components/login-form";
-import { Alert } from "@/components/ui/alert";
 import { BrandMark } from "@/components/ui/brand-mark";
+import { getActiveAuthRuntimeConfig } from "@/lib/auth/local";
 
 export const metadata: Metadata = {
   title: "Přihlášení",
 };
 
 export default function LoginPage() {
+  const authRuntime = getActiveAuthRuntimeConfig();
+  const authConfigured = authRuntime.ok;
+  const authMode = authRuntime.ok ? authRuntime.mode : "local";
+
   return (
     <div className="login">
       <div className="login__card">
@@ -22,18 +26,8 @@ export default function LoginPage() {
         </div>
 
         <h1 className="login__title">Přihlášení</h1>
-        <p className="login__lead">
-          Vstup do manažerského prostředí pro sestavování rozpisů směn.
-        </p>
 
-        <div className="login__alert">
-          <Alert variant="warning">
-            <strong>Bez skutečného přihlášení.</strong> Formulář je pouze vizuální
-            náhled, aplikaci nezabezpečuje.
-          </Alert>
-        </div>
-
-        <LoginForm />
+        <LoginForm authConfigured={authConfigured} authMode={authMode} />
       </div>
     </div>
   );

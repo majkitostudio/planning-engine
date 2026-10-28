@@ -11,8 +11,8 @@ sítě. Volání AI je schované za rozhraním; konkrétní poskytovatel je v `l
 - **Výstup:** `PlanningRunResult` s návrhem, změnami, pokrytím, výsledkem
   nezávislé validace a stavem `not_verified` / `needs_changes` /
   `ready_for_review`. `confirmed` je vždy `false`.
-- **Mimo zodpovědnost:** databáze, potvrzení manažera a ukládání do DB.
-  HTTP API a serverová konfigurace jsou v této vrstvě (Fáze 2).
+- **Mimo zodpovědnost čistého jádra:** databázové připojení a autentizace.
+  HTTP API, potvrzení a perzistenční adaptér jsou serverové vrstvy nad jádrem.
 
 ## Co je v adresáři
 
@@ -44,6 +44,8 @@ sítě. Volání AI je schované za rozhraním; konkrétní poskytovatel je v `l
 | `runtime-types.ts` | `PlanningProviderMode` — `simulated` | `gemini`. |
 | `run-registry.ts` | `PlanningRunRegistry` — in-memory registr běhů (`SIMULATED`, `NOT PERSISTED`). |
 | `confirmation.ts` | `evaluateConfirmation()`, `createConfirmedPlan()` — pravidla blokování potvrzení (OQ23). |
+| `persistence.ts` | Snapshot běhu, potvrzení a auditní zápis; in-memory test double a Prisma adaptér. |
+| `persistence-runtime.ts` | Explicitní výběr `prisma` pro aplikaci nebo `memory` pro testy; žádný fallback. |
 | `view-model.ts` | `toPlanningRunView()` — mapuje `PlanningRunResult` na serializovatelný UI model. |
 | `run-service.ts` | `executePlanningRun()` — testovatelná logika běhu plánování (bez Next.js). |
 | `run-service.test.ts` | Testy spuštění běhu pro všechny tři scénáře. |
@@ -91,14 +93,15 @@ je `PlanningFailure`, ne tichý `not_verified`.
 - **Výsledková komponenta:** `components/plan/planning-result.tsx` — tři vrstvy (návrh, validace, potvrzení), změny, pokrytí, vysvětlení, blokátory potvrzení.
 - **Provider režim:** `PLANNING_PROVIDER=simulated|gemini`; bez hodnoty → `ai_not_configured`.
 - **Simulované fixtures:** tři scénáře pro týden 5.–11. 10. 2026; provider selže u jiného týdne.
-- **In-memory registr:** `PlanningRunRegistry` drží výsledky v paměti procesu; restart ztratí data.
-- **Potvrzení:** povoleno jen při `ready_for_review` + `complete`; `partial` blokováno (OQ23).
+- **Perzistence:** route handler po běhu ukládá snapshot do Prisma a při potvrzení zapisuje `ConfirmedPlan` a auditní událost. `memory` je pouze testovací režim.
+- **Potvrzení:** endpoint vyžaduje přihlášení a roli `manager`; povoleno jen při `ready_for_review` + `complete`; `partial` blokováno (`VERIFIED`, OQ23).
 
 ## Stav
 
 `IMPLEMENTED` a ověřené testy: generické jádro, doménový kontrakt,
-`validatePlan()`, AI kontrakt, orchestrátor, **Fáze 2 API a UI**. `IMPLEMENTED`, ale `NOT VERIFIED`:
-reálné volání Gemini (integrační test se bez klíče přeskakuje).
+`validatePlan()`, AI kontrakt, orchestrátor, **Fáze 2 API a UI** a integrační
+volání Gemini jsou `IMPLEMENTED` a ověřené. `NOT VERIFIED` zůstává kvalita
+plánovacího výstupu pro produkční provoz.
 
 - Generické jádro zná tři stavy kontroly: `no_problems_found`,
   `problems_found` a `not_verified`. `not_verified` se nesmí číst jako úspěch,
@@ -127,9 +130,5 @@ Index a pravidla zápisu: [`docs/adr/README.md`](../../docs/adr/README.md).
 
 Tyto otázky nebrání prvnímu řezu, ale nesmí se z nich stát tichý předpoklad:
 
-1. Výklad „pracovního dne“ pro šest dnů v řadě (OQ21).
-2. Zda musí být dva dny volna po víkendu po sobě jdoucí.
-3. Způsob zápočtu přestávek (OQ24) — validace používá hrubé časy začátku
-   a konce.
-4. Zda lze potvrdit částečně neúplný návrh (OQ23).
-5. Role, maximální hodiny, zamykání a váhy preferencí (OQ9–OQ14).
+1. Zda musí být dva dny volna po víkendu po sobě jdoucí.
+2. Role, maximální hodiny, zamykání a váhy preferencí (OQ9–OQ14).

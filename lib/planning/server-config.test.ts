@@ -29,14 +29,15 @@ describe("getPlanningRuntime", () => {
     expect(runtime.notice).toContain("SIMULATED");
   });
 
-  it("gemini zůstává označený jako neověřený a se SIMULATED vstupy", () => {
+  it("gemini je ověřený integračním testem, ale stále používá SIMULATED vstupy", () => {
     const runtime = getPlanningRuntime({ PLANNING_PROVIDER: "gemini" });
 
     expect(runtime.configured).toBe(true);
     if (!runtime.configured) return;
     expect(runtime.mode).toBe("gemini");
     expect(runtime.notice).toContain("SIMULATED");
-    expect(runtime.notice).toContain("NOT VERIFIED");
+    expect(runtime.notice).toContain("VERIFIED");
+    expect(runtime.notice).toContain("není skutečný produkční rozpis");
   });
 
   it("neznámou hodnotu odmítne místo tichého fallbacku", () => {

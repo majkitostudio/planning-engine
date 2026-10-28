@@ -84,10 +84,10 @@ první řez stát.
 | OQ18 | Jaké další role? | později, až s přihlášením | `OPEN QUESTION` |
 | OQ19 | Plánovač vs. schvalovatel? | schvalovací tok | `OPEN QUESTION` |
 | OQ20 | Potřebujeme audit změn? | historie a odpovědnost | `OPEN QUESTION` |
-| OQ21 | Co je „pracovní den“ pro 6 dnů v řadě? | výklad pravidla odpočinku | `OPEN QUESTION` |
+| OQ21 | Co je „pracovní den“ pro 6 dnů v řadě? | výklad pravidla odpočinku | `VERIFIED` |
 | OQ22 | Schválený požadavek vs. přání? | zpracování preferencí | `OPEN QUESTION` |
-| OQ23 | Lze potvrdit částečně neúplný návrh? | schvalovací tok | `OPEN QUESTION` |
-| OQ24 | Jak se započítávají přestávky? | pracovní doba a validace | `OPEN QUESTION` |
+| OQ23 | Lze potvrdit částečně neúplný návrh? | schvalovací tok | `VERIFIED` |
+| OQ24 | Jak se započítávají přestávky? | pracovní doba a validace | `VERIFIED` |
 
 ---
 
@@ -213,8 +213,8 @@ data. H3 až pokud existuje evidence dostupnosti. H7 jen pokud OQ2 = úpravy.
 - Překryv směn a existence přiřazení jsou strukturální integrita návrhu (H1, H2).
 - Bez potvrzení manažera se nic neukládá (H11).
 
-Zůstává otevřené: role/dovednosti (H4), maximální hodiny nebo směny (H5),
-zamykání přiřazení (H7) a výklad „pracovního dne“ (OQ21).
+Zůstává otevřené: role/dovednosti (H4), maximální hodiny nebo směny (H5) a
+zamykání přiřazení (H7).
 
 ### OQ10 — Jaké jsou konkrétní limity?
 
@@ -286,8 +286,8 @@ neschvalují a aplikace bez potvrzení nic neukládá.
 **Odpověď:** `VERIFIED` (24. 10. 2026) — **A s podmínkou**. Neúplný návrh je
 přípustný výstup k posouzení, ale musí být výslovně označen jako neúplný,
 nesmí se vydávat za plně ověřený a musí nabídnout konkrétní alternativy.
-Zda ho manažer může potvrdit s vědomým nedostatkem, je stále `OPEN QUESTION`
-(OQ23).
+OQ23 je nyní rozhodnuto samostatně níže: částečný návrh se zobrazí k posouzení,
+ale potvrzení zůstává zakázané.
 
 ### OQ17 — Jak se obětují preference, když se vylučují?
 
@@ -351,8 +351,8 @@ s přípravou na B, až přihlášení vznikne.
 
 ## 6. Nové otázky z prvního řezu
 
-Tyto otázky vznikly při přípravě týdenního kontraktu. První řez je umí obejít
-s označeným předpokladem, ale před rozšířením je potřeba je rozhodnout.
+Tyto otázky vznikly při přípravě týdenního kontraktu. OQ21, OQ23 a OQ24 jsou
+níže uzavřené pro první řez; ostatní otázky zůstávají předmětem dalšího kola.
 
 ### OQ21 — Co je „pracovní den“ pro pravidlo šesti dnů v řadě?
 
@@ -361,7 +361,10 @@ s označeným předpokladem, ale před rozšířením je potřeba je rozhodnout.
 směnou, nebo jen dny se směnou přesahující určitou délku. Bez toho může
 validace označit správný plán za chybný nebo naopak přehlédnout únavu.
 
-**Odpověď:**
+**Odpověď:** `VERIFIED` (28. 10. 2026) — pracovním dnem je kalendářní den,
+ve kterém má zaměstnanec alespoň jednu směnu. Více směn v jednom kalendářním
+dni se započítá jako jeden pracovní den. První řez nepoužívá práh délky směny;
+výklad se vztahuje k datu přiřazení.
 
 ### OQ22 — Jak se liší schválený požadavek od přání?
 
@@ -377,7 +380,9 @@ Pokud se to nepotvrdí, hrozí, že se přání změní na nárok nebo naopak ig
 musí přiznat. Není ale potvrzené, zda takový návrh smí manažer uložit jako
 platný stav, nebo musí nejdřív doplnit obsazení.
 
-**Odpověď:**
+**Odpověď:** `VERIFIED` (28. 10. 2026) — částečný návrh se smí zobrazit a
+projednávat, ale manažer jej nesmí potvrdit. `ConfirmedPlan` vzniká pouze u
+kompletního návrhu, který je `ready_for_review`.
 
 ### OQ24 — Jak se započítávají přestávky?
 
@@ -386,7 +391,10 @@ víkendové odpolední směny 12:45–21:00 při ní nedávají osm odpracovaný
 (vychází 7 h 45 min). Rozpor je potřeba vyřešit, jinak by se z něj stal tichý
 předpoklad. Do potvrzení se odpracovaná doba nepoužívá jako tvrdé pravidlo.
 
-**Odpověď:**
+**Odpověď:** `VERIFIED` (28. 10. 2026) — validace v první verzi používá hrubý
+interval začátku a konce směny. Přestávka ani odpracovaná doba nejsou tvrdým
+validačním pravidlem. Toto rozhodnutí popisuje chování plánovacího engine;
+není pracovněprávním posudkem ani výpočtem placené doby.
 
 ## Mimo tento list
 

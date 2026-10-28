@@ -22,7 +22,9 @@ import {
   SHIFT_META,
   addDays,
   formatDayMonth,
+  formatIsoDate,
   getWeekDates,
+  isSupportedDemoWeek,
   shiftCount,
   weekLabel,
   type ShiftKind,
@@ -63,6 +65,8 @@ export function PlanWorkspace({ runtime }: PlanWorkspaceProps) {
   const [selectedScenario, setSelectedScenario] = useState<string>("complete");
 
   const weekDates = useMemo(() => getWeekDates(weekStart), [weekStart]);
+  const isSupportedWeek = isSupportedDemoWeek(weekDates[0]);
+  const unsupportedWeekNotice = `DEMO: Simulovaný běh je dostupný jen pro týden ${weekLabel(DEMO_WEEK_START)}. Zvolený týden lze prohlížet, ale nelze ho naplánovat.`;
 
   const normalizedQuery = query.trim().toLowerCase();
 
@@ -92,11 +96,19 @@ export function PlanWorkspace({ runtime }: PlanWorkspaceProps) {
 
   function moveWeek(delta: number) {
     setWeekStart((current) => addDays(current, delta * 7));
+    setPlanningView(null);
+    setPlanningFailure(null);
+    setNotice(null);
   }
 
   async function runPlanning() {
     if (!runtime.configured) {
       setNotice("Plánování není nakonfigurované. Nastavte PLANNING_PROVIDER.");
+      return;
+    }
+
+    if (!isSupportedWeek) {
+      setNotice(unsupportedWeekNotice);
       return;
     }
 
@@ -111,7 +123,7 @@ export function PlanWorkspace({ runtime }: PlanWorkspaceProps) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           scenario: selectedScenario,
-          weekStart: weekDates[0].toISOString().split("T")[0],
+          weekStart: formatIsoDate(weekDates[0]),
         }),
       });
 
@@ -259,7 +271,13 @@ export function PlanWorkspace({ runtime }: PlanWorkspaceProps) {
         selectedScenario={selectedScenario}
         setSelectedScenario={setSelectedScenario}
         isLoading={isPlanningLoading}
-        runtimeNotice={runtime.configured ? runtime.notice : runtime.reason}
+        runtimeNotice={
+          isSupportedWeek
+            ? runtime.configured
+              ? runtime.notice
+              : runtime.reason
+            : unsupportedWeekNotice
+        }
         providerMode={runtime.configured ? runtime.mode : "simulated"}
       />
 

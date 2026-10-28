@@ -17,7 +17,7 @@ jiných dokumentů neopakuje.
 | [`DOMAIN_DECISIONS.md`](DOMAIN_DECISIONS.md) | Otevřené otázky a odpovědi managera | `PARTIALLY ANSWERED` |
 | [`adr/`](adr/README.md) | Proč jsou technická rozhodnutí taková | `IMPLEMENTED` |
 | [`../lib/planning/README.md`](../lib/planning/README.md) | Co skutečně obsahuje plánovací jádro | `IMPLEMENTED` |
-| [`../prisma/schema.prisma`](../prisma/schema.prisma) | Databázový základ bez doménových modelů | `IMPLEMENTED` (technický základ) |
+| [`../prisma/schema.prisma`](../prisma/schema.prisma) | Provozní modely identity, běhu a auditu; doménové modely stále chybí | `IMPLEMENTED` (lokální migrace `VERIFIED`, produkční DB `NOT VERIFIED`) |
 
 ## Aktuální stav
 
@@ -29,12 +29,14 @@ jiných dokumentů neopakuje.
 | Doménový kontrakt | `IMPLEMENTED` | `lib/planning/domain/`; kontrakt je `PROPOSAL` k ověření |
 | Deterministická validace | `IMPLEMENTED` | `validatePlan()`; testy procházejí |
 | AI kontrakt | `IMPLEMENTED` | `lib/planning/ai-provider.ts` |
-| Gemini adaptér | `IMPLEMENTED` | `lib/ai/gemini-planning-provider.ts`; reálné volání `NOT VERIFIED` |
+| Gemini adaptér | `IMPLEMENTED` / `VERIFIED` | `lib/ai/gemini-planning-provider.ts`; integrační volání prošlo, produkční kvalita výstupu `NOT VERIFIED` |
 | Orchestrace | `IMPLEMENTED` | `runPlanning()` spojuje návrh, validaci a změny |
-| Napojení UI na orchestrátor | `PLANNED` | Tlačítko výpočtu je zatím demo |
-| Potvrzení manažera | `PLANNED` | `confirmed` je vždy `false` |
-| Ukládání plánu | `PLANNED` | Bez doménových modelů v Prisma |
-| Testy | `IMPLEMENTED` | 90 prochází, 1 integrační se přeskakuje |
+| Napojení UI na orchestrátor | `IMPLEMENTED` / `DEMO` | `POST /api/planning/run`, `PlanningResult`; vstupy jsou simulované fixtures |
+| Přihlášení a role | `IMPLEMENTED` / `VERIFIED` (lokální smoke) | Lokální Auth.js credentials gate pro MVP byl ověřen přes browser; produkční úroveň a Entra ID zůstávají `NOT VERIFIED`/`PLANNED` |
+| Potvrzení manažera | `IMPLEMENTED` | `POST /api/planning/confirm`, manager-only, blokace částečných/neověřených návrhů |
+| Ukládání běhů a potvrzení | `IMPLEMENTED` / `VERIFIED` (lokální Docker smoke) | Prisma snapshot a `ConfirmedPlan`; migrace a zápis potvrzení byly ověřeny v izolované lokální PostgreSQL |
+| Audit potvrzení | `IMPLEMENTED` / `VERIFIED` (lokální Docker smoke) | Zápis `planning.confirmed` byl ověřen; čtecí auditní API není součástí tohoto kroku |
+| Testy | `IMPLEMENTED` / `VERIFIED` | Jádro, služby a route handlery mají testy; plný UI/E2E test není součástí dema |
 | Kvalitní brána (CI) | `IMPLEMENTED` | Lint, typecheck, testy, build a Prisma validace procházejí |
 | Produkční připravenost | `NOT VERIFIED` | Není produkční aplikace |
 
@@ -58,12 +60,39 @@ neověřená a naopak.
 ## Otevřené otázky
 
 Plný seznam OQ1–OQ24 je v [`DOMAIN_SPECIFICATION.md`](DOMAIN_SPECIFICATION.md);
-odpovědi a varianty sbírá [`DOMAIN_DECISIONS.md`](DOMAIN_DECISIONS.md). První
-týdenní řez není blokovaný, ale tyto otázky zůstávají:
+odpovědi a varianty sbírá [`DOMAIN_DECISIONS.md`](DOMAIN_DECISIONS.md). OQ21,
+OQ23 a OQ24 jsou pro první řez uzavřené; dále zůstávají:
 
-1. Co je „pracovní den“ pro šest dnů v řadě (OQ21)?
-2. Jak se započítávají přestávky (OQ24)?
-3. Může manažer potvrdit částečně neúplný návrh (OQ23)?
-4. Která další pravidla a limity platí (OQ9–OQ11)?
-5. Jak se zpracovávají preference a požadavky (OQ12–OQ14, OQ22)?
-6. Je plán statický, nebo průběžně upravovaný (OQ2)?
+1. Která další pravidla a limity platí (OQ9–OQ11)?
+2. Jak se zpracovávají preference a požadavky (OQ12–OQ14, OQ22)?
+3. Je plán statický, nebo průběžně upravovaný (OQ2)?
+
+## Aktuální target po kontrolním checkpointu
+
+Následující kroky zachycují aktuální target a jeho ověření; položky označené
+✅ jsou dokončené v uvedeném rozsahu.
+
+1. ✅ **Sjednotit zdroj pravdy o stavu.** Opravit zastaralé texty v dashboardu,
+   které stále tvrdí, že napojení UI a kontrola výsledku chybí. Po změně znovu
+   ověřit, že `README.md`, `docs/README.md`, `docs/ROADMAP.md` a obrazovka
+   používají stejné stavové popisky.
+2. ✅ **Zpevnit demo tok testy.** Route-handler testy pokrývají nekonfigurovaný
+   provider, úspěšný simulovaný běh, neúplný návrh, neověřený scénář a
+   potvrzení včetně chybových větví.
+3. ✅ **Odstranit nejasnost kolem simulovaného týdne.** Demo UI u jiného týdne
+   předem zobrazuje stav `DEMO` a výpočet na API neodesílá.
+4. ✅ **Uzavřít doménová rozhodnutí před rozšířením.** OQ21, OQ23 a OQ24
+   jsou potvrzené pro první řez; jejich omezení zůstávají popsána v doménové
+   dokumentaci.
+5. ✅ **Připravit technickou hranici MVP.** Reálné volání Gemini je ověřené,
+   lokální login gate chrání aplikaci a běh/potvrzení/audit mají perzistenční
+   vrstvu. Lokální Docker smoke je `VERIFIED`; produkční autentizace a připojení
+   k produkční PostgreSQL zůstávají `NOT VERIFIED`.
+6. ✅ **Přidat samostatné provozní uložení.** Snapshoty běhů, potvrzené plány
+   a auditní události mají Prisma adaptér; migrace a živé lokální DB připojení
+   jsou `VERIFIED` v izolovaném Docker prostředí. Produkční DB zůstává
+   `NOT VERIFIED`.
+
+Další doporučený krok je řešit produkční hranici autentizace, databáze a auditu.
+Entra rekonstrukce, čtecí auditní pohled a další role jsou pozdější rozšíření;
+CRM integrace zůstává mimo rozsah.

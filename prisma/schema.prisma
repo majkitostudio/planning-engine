@@ -1,7 +1,8 @@
 // Prisma schema — technický základ.
 //
-// Doménové modely (entity, atributy, vztahy) zatím NEJSOU definovány: čekají na
-// schválení doménové specifikace (viz docs/DOMAIN_SPECIFICATION.md).
+// Doménové modely zaměstnanců a směn zatím NEJSOU definovány: čekají na
+// schválení doménové specifikace (viz docs/DOMAIN_SPECIFICATION.md). Níže jsou
+// pouze provozní modely identity, snapshotu plánovacího běhu a auditu.
 //
 // Po schválení dodat modely sem. Soubor lze zformátovat příkazem
 // `npm run db:generate` nevyžaduje běžící databázový server.
@@ -13,4 +14,57 @@ datasource db {
 generator client {
   provider = "prisma-client"
   output   = "./generated"
+}
+
+enum AppUserRole {
+  manager
+  viewer
+}
+
+model AppUser {
+  id              String              @id @default(cuid())
+  externalSubject String              @unique
+  email           String              @unique
+  displayName     String
+  role            AppUserRole         @default(viewer)
+  active          Boolean             @default(true)
+  createdAt       DateTime            @default(now())
+  updatedAt       DateTime            @updatedAt
+  confirmedRuns   PlanningRunRecord[] @relation("PlanningRunConfirmedBy")
+  auditEvents     AuditEvent[]
+}
+
+model PlanningRunRecord {
+  id             String       @id @default(cuid())
+  proposalId     String       @unique
+  scenarioId     String
+  scenarioLabel  String
+  providerName   String
+  mode           String
+  weekStart      String
+  input          Json
+  result         Json
+  confirmedPlan  Json?
+  confirmedAt    DateTime?
+  confirmedById  String?
+  confirmedBy    AppUser?     @relation("PlanningRunConfirmedBy", fields: [confirmedById], references: [id], onDelete: SetNull)
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  @@index([weekStart])
+  @@index([confirmedById])
+}
+
+model AuditEvent {
+  id         String   @id @default(cuid())
+  action     String
+  entityType String
+  entityId   String
+  actorId    String?
+  actor      AppUser? @relation(fields: [actorId], references: [id], onDelete: SetNull)
+  details    Json?
+  createdAt  DateTime @default(now())
+
+  @@index([entityType, entityId])
+  @@index([actorId, createdAt])
 }

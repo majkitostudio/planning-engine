@@ -367,6 +367,14 @@ export const DEMO_ABSENCES: DemoAbsence[] = [
 /** Ukázkový týden prvního řezu: pondělí 5. 10. 2026. */
 export const DEMO_WEEK_START = new Date(2026, 9, 5);
 
+export function isSupportedDemoWeek(weekStart: Date): boolean {
+  return (
+    weekStart.getFullYear() === DEMO_WEEK_START.getFullYear() &&
+    weekStart.getMonth() === DEMO_WEEK_START.getMonth() &&
+    weekStart.getDate() === DEMO_WEEK_START.getDate()
+  );
+}
+
 export const CZECH_DAYS = ["Po", "Út", "St", "Čt", "Pá", "So", "Ne"];
 
 export function addDays(date: Date, days: number): Date {
@@ -385,6 +393,14 @@ export function weekLabel(weekStart: Date): string {
 
 export function formatDayMonth(date: Date): string {
   return `${date.getDate()}.${date.getMonth() + 1}.`;
+}
+
+/** ISO datum pro API podle lokálního kalendářního dne, ne podle UTC. */
+export function formatIsoDate(date: Date): string {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
 }
 
 export function shiftCount(shifts: ShiftKind[]): number {

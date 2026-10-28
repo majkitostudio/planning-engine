@@ -50,6 +50,26 @@ describe("validatePlan — pokrytí", () => {
     expect(result.unverifiedChecks).toEqual([]);
   });
 
+  it("neoznačí schválený výklad pracovního dne a hrubých časů jako otevřený", () => {
+    const input = makeInput({
+      staffingRequirements: makeRequirements({
+        [`${WEEK_DATES[0]}|morning`]: 1,
+      }),
+    });
+
+    const result = validatePlan(
+      input,
+      makeProposal([makeAssignment(EMPLOYEE_1, WEEK_DATES[0], "morning")]),
+    );
+
+    expect(result.assumptions).not.toEqual(
+      expect.arrayContaining([expect.stringContaining("OQ21")]),
+    );
+    expect(result.assumptions).not.toEqual(
+      expect.arrayContaining([expect.stringContaining("OQ24")]),
+    );
+  });
+
   it("odhalí nedostatečné obsazení jako chybu", () => {
     const input = makeInput({
       staffingRequirements: makeRequirements({

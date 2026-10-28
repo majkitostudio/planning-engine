@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { signOut } from "next-auth/react";
 import { usePathname } from "next/navigation";
 import { useEffect, useState, type ReactNode } from "react";
 import { Icon, type IconName } from "@/components/icons";
@@ -30,6 +31,12 @@ const ALERT_COUNT = DEMO_ALERTS.length;
 
 type Panel = "alerts" | "user" | null;
 
+type AppShellUser = {
+  readonly name?: string | null;
+  readonly email?: string | null;
+  readonly role?: "manager" | "viewer";
+};
+
 function titleFor(pathname: string): string {
   if (pathname === "/") return "Přehled";
   const match = NAV_ITEMS.find(
@@ -38,7 +45,13 @@ function titleFor(pathname: string): string {
   return match ? match.label : "Přehled";
 }
 
-export function AppShell({ children }: { children: ReactNode }) {
+export function AppShell({
+  children,
+  user,
+}: {
+  children: ReactNode;
+  user: AppShellUser | null;
+}) {
   const pathname = usePathname();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [panel, setPanel] = useState<Panel>(null);
@@ -80,6 +93,8 @@ export function AppShell({ children }: { children: ReactNode }) {
 
   const isActive = (href: string) =>
     href === "/" ? pathname === "/" : pathname.startsWith(href);
+  const userName = user?.name?.trim() || user?.email || "Přihlášený uživatel";
+  const userRole = user?.role === "manager" ? "Manažer" : "Uživatel";
 
   return (
     <div className="shell">
@@ -140,15 +155,15 @@ export function AppShell({ children }: { children: ReactNode }) {
             <span className="engine-card__dot" aria-hidden="true" />
             <div>
               <p className="engine-card__title">Plánovací engine</p>
-              <p className="engine-card__sub">Jádro hotové, UI nepřipojené</p>
+              <p className="engine-card__sub">Demo UI napojené na engine</p>
             </div>
           </div>
 
           <div className="user-card">
-            <Avatar name="Manažer telemarketingu" color="stone" size="sm" />
+            <Avatar name={userName} color="stone" size="sm" />
             <div className="user-card__text">
-              <p className="user-card__name">Manažer telemarketingu</p>
-              <p className="user-card__role">Telemarketing · demo</p>
+              <p className="user-card__name">{userName}</p>
+              <p className="user-card__role">{userRole}</p>
             </div>
           </div>
         </div>
@@ -220,10 +235,10 @@ export function AppShell({ children }: { children: ReactNode }) {
                   setPanel((value) => (value === "user" ? null : "user"))
                 }
               >
-                <Avatar name="Manažer telemarketingu" color="stone" size="sm" />
+                <Avatar name={userName} color="stone" size="sm" />
                 <span className="topbar__user-text">
-                  <span className="topbar__user-name">Manažer telemarketingu</span>
-                  <span className="topbar__user-role">Telemarketing</span>
+                  <span className="topbar__user-name">{userName}</span>
+                  <span className="topbar__user-role">{userRole}</span>
                 </span>
                 <Icon name="chevronDown" width={15} height={15} />
               </button>
@@ -234,14 +249,17 @@ export function AppShell({ children }: { children: ReactNode }) {
                   role="dialog"
                   aria-label="Uživatel"
                 >
-                  <p className="popover__title">Vizuální náhled</p>
+                  <p className="popover__title">Přihlášený účet</p>
                   <p className="popover__note">
-                    Přihlášení není implementováno. Prostředí je dostupné bez
-                    autentizace.
+                    {user?.email ?? "E-mail není k dispozici"}
                   </p>
-                  <Link className="popover__link" href="/prihlaseni">
-                    Otevřít přihlašovací obrazovku
-                  </Link>
+                  <button
+                    className="popover__link"
+                    type="button"
+                    onClick={() => void signOut({ callbackUrl: "/prihlaseni" })}
+                  >
+                    Odhlásit se
+                  </button>
                 </div>
               ) : null}
             </div>

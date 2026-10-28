@@ -10,6 +10,8 @@ import {
   evaluateConfirmation,
   type ConfirmationBlocker,
 } from "./confirmation";
+import type { PlanningActor } from "../auth/actor";
+import type { PlanningPersistence } from "./persistence";
 import type { PlanningRunRegistry, StoredPlanningRun } from "./run-registry";
 import { toPlanningRunView, type PlanningRunView } from "./view-model";
 
@@ -82,6 +84,64 @@ export function confirmRun(
   };
 }
 
+export async function confirmPersistedRun(
+  persistence: PlanningPersistence,
+  proposalId: string,
+  actor: PlanningActor,
+  confirmedAtMs: number = Date.now(),
+): Promise<ConfirmRunResult> {
+  const snapshot = await persistence.getRun(proposalId);
+
+  if (!snapshot) {
+    return {
+      ok: false,
+      code: "unknown_proposal",
+      message: `Návrh "${proposalId}" není v úložišti známý.`,
+      blockers: [],
+    };
+  }
+
+  if (snapshot.confirmedPlan) {
+    return {
+      ok: true,
+      view: buildPersistedView(snapshot),
+      alreadyConfirmed: true,
+    };
+  }
+
+  const confirmation = evaluateConfirmation(snapshot.result);
+  if (!confirmation.allowed) {
+    return {
+      ok: false,
+      code: "confirmation_blocked",
+      message: confirmation.blockers.map((blocker) => blocker.message).join(" "),
+      blockers: confirmation.blockers,
+    };
+  }
+
+  const persisted = await persistence.confirmRun(
+    proposalId,
+    snapshot.result.proposal.plan.assignments,
+    actor,
+    new Date(confirmedAtMs),
+  );
+
+  if (!persisted) {
+    return {
+      ok: false,
+      code: "unknown_proposal",
+      message: `Návrh "${proposalId}" zmizel z úložiště před potvrzením.`,
+      blockers: [],
+    };
+  }
+
+  return {
+    ok: true,
+    view: buildPersistedView(persisted.snapshot),
+    alreadyConfirmed: persisted.alreadyConfirmed,
+  };
+}
+
 function buildView(stored: StoredPlanningRun): PlanningRunView {
   return toPlanningRunView(stored.result, {
     scenarioId: stored.scenarioId,
@@ -93,5 +153,21 @@ function buildView(stored: StoredPlanningRun): PlanningRunView {
       displayName,
     })),
     confirmedPlan: stored.confirmedPlan,
+  });
+}
+
+function buildPersistedView(
+  snapshot: import("./persistence").PlanningRunSnapshot,
+): PlanningRunView {
+  return toPlanningRunView(snapshot.result, {
+    scenarioId: snapshot.scenarioId,
+    scenarioLabel: snapshot.scenarioLabel,
+    providerName: snapshot.providerName,
+    mode: snapshot.mode,
+    employees: snapshot.input.employees.map(({ id, displayName }) => ({
+      id,
+      displayName,
+    })),
+    confirmedPlan: snapshot.confirmedPlan,
   });
 }

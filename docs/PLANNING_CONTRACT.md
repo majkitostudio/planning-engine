@@ -57,11 +57,11 @@ mimo AI i validační jádro. Aplikace nesmí návrh uložit nebo aplikovat jen 
 | `afternoon` | všední | 13:15 | 21:00 | 7 h 45 min |
 | `afternoon` | víkend | 12:45 | 21:00 | 8 h 15 min |
 
-**Přestávky (`OPEN QUESTION`, OQ24):** zadání uvádí 30minutovou přestávku a
-zároveň tvrdí, že víkendová odpolední směna 12:45–21:00 při ní dává osm
-odpracovaných hodin. Aritmeticky vychází 7 h 45 min. Kontrakt proto pracuje
-s hrubými časy začátku a konce; odpracovaná doba se do potvrzení nepoužívá jako
-tvrdé pravidlo. Rozpor se nesmí tiše „opravit“.
+**Přestávky (`VERIFIED`, OQ24):** zadání uvádí 30minutovou přestávku a zároveň
+tvrdí, že víkendová odpolední směna 12:45–21:00 při ní dává osm odpracovaných
+hodin. Aritmeticky vychází 7 h 45 min. První verze proto pracuje s hrubými
+časy začátku a konce; odpracovaná ani placená doba nejsou tvrdým pravidlem.
+Nejde o pracovněprávní posudek.
 
 ## 4. Vstup (`PlanningInput`)
 
@@ -311,7 +311,7 @@ interface PlanValidationResult {
 `problems` obsahují stabilní `code`, `severity`, text a podle možnosti
 `employeeId`, `date`, `shiftKind` a `details`. `unverifiedChecks` nejsou
 porušená pravidla; jen brání tomu, aby byl výsledek označen jako `valid`.
-`assumptions` přiznávají použité výklady (OQ21, OQ22, OQ24 a výklad dvou dnů
+`assumptions` přiznávají pouze dosud neuzavřené výklady (OQ22 a výklad dvou dnů
 volna). Validace návrh nikdy neopravuje ani nemění.
 
 ### 6.4 Stav běhu
@@ -358,7 +358,7 @@ testovatelná bez AI a bez databáze.
 | `ASSIGNMENT-OVERLAP` | Žádné překrývající se směny jednoho zaměstnance, včetně přes půlnoc | `IMPLEMENTED` |
 | `ABSENCE-APPROVED` | Schválená absence blokuje přiřazení; neschválené ne | `IMPLEMENTED` |
 | `COVERAGE-REQUIRED` | Počet přiřazených odpovídá požadavku; nedostatek = `error`, přebytek = `warning` | `IMPLEMENTED` |
-| `REST-AFTER-SIX-DAYS` | Po 6 po sobě jdoucích pracovních dnech ≥ 35 h odpočinku; používá historii | `IMPLEMENTED` s výkladem OQ21 |
+| `REST-AFTER-SIX-DAYS` | Po 6 po sobě jdoucích pracovních dnech ≥ 35 h odpočinku; používá historii | `IMPLEMENTED` s potvrzeným výkladem OQ21 |
 | `WEEKEND-TWO-DAYS-OFF` | Práce o víkendu → 2 dny volna v témže týdnu | `IMPLEMENTED` s výkladem |
 | `UNKNOWN-ASSIGNMENT` | Přiřazení mimo vstupní týden nebo neznámý druh směny | `IMPLEMENTED` |
 
@@ -370,13 +370,13 @@ Poznámky:
   (`ASSUMPTION`). Dva dny volna se počítají jako libovolné dva dny; pokud
   nejsou po sobě jdoucí, validace vrátí `not_verified`, protože striktnější
   výklad není potvrzený.
-- `REST-AFTER-SIX-DAYS` používá výklad „pracovní den“ = kalendářní den
-  s alespoň jednou směnou (`ASSUMPTION`, OQ21). 35 h se měří od konce 6. dne
+- `REST-AFTER-SIX-DAYS` používá potvrzený výklad „pracovní den“ = kalendářní den
+  s alespoň jednou směnou (OQ21). 35 h se měří od konce 6. dne
   do začátku další směny. Chybějící historie před týdnem vede k `not_verified`.
 - `COVERAGE-REQUIRED` nesmí být zaměněno s tvrzením, že neúplný plán je
   nemožný. Neúplný návrh je přípustný, ale musí být označen.
-- OQ24 zůstává otevřená: validace používá hrubé časy začátku a konce, ne
-  odpracovanou dobu ani přestávky.
+- OQ24 je uzavřená pro první verzi: validace používá hrubé časy začátku a
+  konce, ne odpracovanou dobu ani přestávky.
 
 ### 7.1 Kontrola vstupu a výstupu AI
 
@@ -445,7 +445,8 @@ První implementovaný poskytovatel je Google Gemini. Adaptér je v
   API se spouští jen s `RUN_GEMINI_INTEGRATION=1`.
 
 Volba konkrétního modelu je konfigurace, ne doménové rozhodnutí. Reálné volání
-Gemini je `NOT VERIFIED`, dokud není integrační test doložený.
+Gemini je `VERIFIED` doloženým integračním testem. Produkční kvalita
+plánovacího výstupu a jeho použití s reálnými daty zůstávají `NOT VERIFIED`.
 
 ## 9. Co kontrakt záměrně neobsahuje
 
@@ -466,13 +467,13 @@ typů.
 
 | # | Otázka / předpoklad | Stav |
 | --- | --- | --- |
-| OQ21 | Co je „pracovní den“ pro šest dnů v řadě? | `OPEN QUESTION` |
+| OQ21 | Co je „pracovní den“ pro šest dnů v řadě? | `VERIFIED` |
 | OQ22 | Jak se liší schválený požadavek od přání? | `OPEN QUESTION` |
-| OQ23 | Lze potvrdit částečně neúplný návrh? | `OPEN QUESTION` |
-| OQ24 | Jak se započítávají přestávky? | `OPEN QUESTION` — rozpor v zadání |
+| OQ23 | Lze potvrdit částečně neúplný návrh? | `VERIFIED` — potvrzení je blokované |
+| OQ24 | Jak se započítávají přestávky? | `VERIFIED` — používají se hrubé časy |
 | — | Časová zóna `Europe/Prague` | `ASSUMPTION` |
 | — | „Během týdne“ = pondělí–neděle | `ASSUMPTION` |
-| — | Pracovní den = kalendářní den s alespoň jednou směnou | `ASSUMPTION` — OQ21 |
+| — | Pracovní den = kalendářní den s alespoň jednou směnou | `VERIFIED` — OQ21 |
 | — | Dva dny volna mohou být libovolné; po sobě jdoucí výklad není potvrzen | `ASSUMPTION` |
 | — | Historie musí být úplná alespoň za 6 dnů před `weekStart` | `ASSUMPTION` |
 | — | Existující směny lze měnit (bez zamykání) | `ASSUMPTION` |
@@ -490,7 +491,8 @@ typů.
 - AI kontrakt: `IMPLEMENTED` v `lib/planning/ai-provider.ts` — rozhraní
   `PlanningModelProvider`, chyby poskytovatele a `isPlanDraft()`.
 - Gemini adaptér: `IMPLEMENTED` v `lib/ai/gemini-planning-provider.ts`; reálné
-  volání je `NOT VERIFIED`.
+  volání je `VERIFIED` integračním testem, produkční kvalita výstupu je
+  `NOT VERIFIED`.
 - Orchestrátor: `IMPLEMENTED` v `lib/planning/orchestrator.ts` — spojí vstup,
   AI návrh, validaci a výpočet změn a pokrytí.
 - **Fáze 2 — API a UI:** route handlery `app/api/planning/run/route.ts`,

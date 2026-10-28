@@ -36,7 +36,7 @@ type PlanningEnvironment = Readonly<Record<string, string | undefined>>;
 const SIMULATED_NOTICE =
   "Běh používá pevné SIMULATED fixtures. Nejde o skutečný rozpis ani o potvrzená data.";
 const GEMINI_NOTICE =
-  "Vstupní data jsou SIMULATED fixtures. Reálné volání Gemini je NOT VERIFIED a výsledek není skutečný rozpis.";
+  "Vstupní data jsou SIMULATED fixtures. Reálné volání Gemini je VERIFIED integračním testem, ale výsledek není skutečný produkční rozpis.";
 
 export function getPlanningRuntime(
   env: PlanningEnvironment = process.env,

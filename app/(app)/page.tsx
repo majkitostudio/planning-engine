@@ -19,21 +19,21 @@ const STEPS = [
   },
   {
     title: "Spuštění plánování",
-    desc: "Jádro a orchestrátor jsou hotové; chybí napojení UI.",
-    status: "Jádro hotové",
+    desc: "Jádro a orchestrátor jsou implementované; demo UI spouští simulovaný běh.",
+    status: "IMPLEMENTED / DEMO",
     variant: "info",
   },
   {
     title: "Návrh rozpisu",
-    desc: "Zobrazí se po napojení UI na orchestrátor.",
-    status: "Plánováno",
-    variant: "warning",
+    desc: "Po spuštění se zobrazí návrh z vybraného simulovaného fixture scénáře.",
+    status: "DEMO",
+    variant: "info",
   },
   {
     title: "Kontrola konfliktů",
-    desc: "Validace je hotová; zobrazení výsledku v UI chybí.",
-    status: "Plánováno",
-    variant: "warning",
+    desc: "Deterministická validace výsledku se zobrazuje v demo UI.",
+    status: "IMPLEMENTED / DEMO",
+    variant: "info",
   },
 ] as const;
 
@@ -67,9 +67,10 @@ export default function DashboardPage() {
           <Icon name="info" width={17} height={17} />
         </span>
         <p>
-          <strong>Demonstrační data.</strong> Čísla, jména i směny jsou smyšlené
-          ukázky rozvržení. Plánovací jádro je hotové, ale UI zatím není
-          napojené na orchestrátor a databázová data nejsou implementována.
+          <strong>Demonstrační data.</strong> Čísla, jména i směny jsou syntetické
+          ukázky. Demo UI je napojené na orchestrátor a plánovací běh používá
+          SIMULATED fixtures; potvrzení je pouze in-memory a není trvalé.
+          Aplikace není produkční systém.
         </p>
       </div>
 
@@ -101,7 +102,7 @@ export default function DashboardPage() {
                 </p>
               </div>
               <Badge variant="neutral" dot={false}>
-                0 / 5
+                DEMO
               </Badge>
             </div>
             <ol className="data-list">
@@ -121,16 +122,17 @@ export default function DashboardPage() {
               ))}
             </ol>
             <p className="table-note">
-              Kroky 3–5 jsou blokované do schválení doménového kontraktu.
+              Kroky 3–5 jsou v demu dostupné; doménová pravidla zůstávají
+              částečně neověřená.
             </p>
           </section>
 
           <div className="cta-card">
             <div>
-              <p className="cta-card__title">Připraveni k návrhu rozhraní</p>
+              <p className="cta-card__title">Připraveni ke spuštění plánovacího dema</p>
               <p className="cta-card__text">
-                Prohlédněte si pracovní plochu plánu směn s ukázkovou tabulkou,
-                záložkami a přehledy.
+                Otevřete pracovní plochu plánu směn s ukázkovou tabulkou,
+                výsledkem simulovaného běhu a kontrolou validace.
               </p>
             </div>
             <Link className="btn btn--primary" href="/planovani">
@@ -206,12 +208,13 @@ export default function DashboardPage() {
                 Plánovací asistent
               </h2>
               <Badge variant="warning" dot={false}>
-                Připravované
+                DEMO / SIMULATED
               </Badge>
             </div>
             <p className="ai-card__text">
-              Jádro, validace a orchestrátor jsou hotové. Napojení na tuto
-              obrazovku a potvrzení manažera ještě implementované nejsou.
+              Demo asistent spouští simulovaný běh přes orchestrátor, zobrazuje
+              návrh i validaci a umožňuje potvrzení kompletního návrhu.
+              Potvrzení je pouze in-memory a není trvalé.
             </p>
             <Link className="btn btn--primary" href="/planovani">
               Otevřít plán směn

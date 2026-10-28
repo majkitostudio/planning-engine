@@ -1,62 +1,104 @@
 "use client";
 
-import { useState, type FormEvent } from "react";
+import { signIn } from "next-auth/react";
+import { useState } from "react";
 import Link from "next/link";
+import type { AuthMode } from "@/lib/auth/local";
 
-export function LoginForm() {
-  const [notice, setNotice] = useState(false);
+export function LoginForm({
+  authConfigured,
+  authMode,
+}: {
+  authConfigured: boolean;
+  authMode: AuthMode;
+}) {
+  const [error, setError] = useState(false);
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
 
-  function handleSubmit(event: FormEvent<HTMLFormElement>) {
+  async function handleSignIn(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    setNotice(true);
+    setError(false);
+    try {
+      const result = await signIn(
+        authMode === "local" ? "credentials" : "microsoft-entra-id",
+        {
+          ...(authMode === "local" ? { email, password } : {}),
+          callbackUrl: "/",
+          redirect: false,
+        },
+      );
+      if (result?.error) setError(true);
+      if (result?.url) window.location.assign(result.url);
+    } catch {
+      setError(true);
+    }
   }
 
   return (
-    <form onSubmit={handleSubmit} noValidate>
-      <div className="field">
-        <label className="field__label" htmlFor="email">
-          E-mail
-        </label>
-        <input
-          className="input"
-          id="email"
-          name="email"
-          type="email"
-          autoComplete="email"
-          placeholder="jmeno.prijmeni@aaauto.cz"
-        />
-      </div>
+    <div>
+      <form onSubmit={(event) => void handleSignIn(event)}>
+        {authMode === "local" ? (
+          <>
+            <label className="field__label" htmlFor="login-email">
+              E-mail
+            </label>
+            <input
+              className="input"
+              id="login-email"
+              name="email"
+              type="email"
+              autoComplete="username"
+              value={email}
+              onChange={(event) => setEmail(event.target.value)}
+              required
+              disabled={!authConfigured}
+            />
+            <label className="field__label" htmlFor="login-password">
+              Heslo
+            </label>
+            <input
+              className="input"
+              id="login-password"
+              name="password"
+              type="password"
+              autoComplete="current-password"
+              value={password}
+              onChange={(event) => setPassword(event.target.value)}
+              required
+              disabled={!authConfigured}
+            />
+          </>
+        ) : null}
 
-      <div className="field">
-        <label className="field__label" htmlFor="password">
-          Heslo
-        </label>
-        <input
-          className="input"
-          id="password"
-          name="password"
-          type="password"
-          autoComplete="current-password"
-          placeholder="••••••••"
-        />
-      </div>
+        <button
+          className="btn btn--primary btn--block"
+          type="submit"
+          disabled={!authConfigured}
+        >
+          {authMode === "local"
+            ? "Přihlásit se"
+            : "Přihlásit přes Microsoft 365"}
+        </button>
+      </form>
 
-      <button className="btn btn--primary btn--block" type="submit">
-        Přihlásit se
-      </button>
+      {!authConfigured ? (
+        <p className="form-notice form-notice--visible" role="alert">
+          <strong>Přihlášení není nakonfigurované.</strong> Doplňte lokální
+          nastavení MVP login gate.
+        </p>
+      ) : null}
 
-      <p
-        className={`form-notice${notice ? " form-notice--visible" : ""}`}
-        role="alert"
-      >
-        <strong>Autentizace není implementována.</strong> Jedná se o vizuální
-        náhled přihlašovací obrazovky — formulář nic neodesílá a nezabezpečuje
-        aplikaci.
-      </p>
+      {error ? (
+        <p className="form-notice form-notice--visible" role="alert">
+          <strong>Přihlášení se nepodařilo.</strong> Zkontrolujte údaje a
+          zkuste to znovu.
+        </p>
+      ) : null}
 
       <p className="login__foot">
-        <Link href="/">Zobrazit ukázkový přehled</Link>
+        <Link href="/">Zpět</Link>
       </p>
-    </form>
+    </div>
   );
 }

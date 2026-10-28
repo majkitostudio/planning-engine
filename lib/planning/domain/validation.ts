@@ -40,12 +40,8 @@ const RULE_ABSENCE = "ABSENCE-APPROVED";
 const RULE_REST = "REST-AFTER-SIX-DAYS";
 const RULE_WEEKEND = "WEEKEND-TWO-DAYS-OFF";
 
-const ASSUMPTION_WORKING_DAY =
-  "Pracovní den pro pravidlo šesti dnů je kalendářní den s alespoň jednou směnou; přesný výklad je otevřený (OQ21).";
 const ASSUMPTION_WEEKEND =
   "„Během týdne“ je vyhodnoceno jako pondělí–nedělí; dva dny volna se počítají jako libovolné dva dny, pokud nejsou po sobě jdoucí, výsledek je označen jako neověřený.";
-const ASSUMPTION_BREAKS =
-  "Validace používá hrubé časy začátku a konce směn; přestávky ani odpracovaná doba se nevyhodnocují (OQ24).";
 const ASSUMPTION_REQUESTS =
   "Jako tvrdá překážka se používají jen schválené absence; požadavky a neschválené absence jsou pouze kontext (OQ22).";
 
@@ -133,7 +129,6 @@ export function validatePlan(
   }
 
   markChecked(state, RULE_INPUT_SHAPE);
-  state.assumptions.add(ASSUMPTION_BREAKS);
   state.assumptions.add(ASSUMPTION_REQUESTS);
 
   const employees = validateEmployees(input, state);
@@ -821,7 +816,6 @@ function checkRest(
     return;
   }
 
-  state.assumptions.add(ASSUMPTION_WORKING_DAY);
   let fullyChecked = false;
 
   for (const employeeId of employees.keys()) {

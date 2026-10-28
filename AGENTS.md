@@ -94,15 +94,21 @@ Tato rozhodnutí jsou pro další práci závazná:
 | Víkendová odpolední směna | 12:45 | 21:00 |
 
 Časy jsou potvrzené zadáním, ale nejsou úplnou specifikací pracovněprávních
-pravidel. Způsob započítávání přestávek je `OPEN QUESTION` — viz
+pravidel. Pro první verzi validace používá hrubý interval začátku a konce
+směny; přestávky ani výpočet odpracované doby nejsou samostatné tvrdé pravidlo
+(`VERIFIED`, OQ24). Nejde o pracovněprávní posudek — viz
 `docs/DOMAIN_SPECIFICATION.md`.
 
 ### Potvrzená pravidla (`VERIFIED`)
 
+- Pracovní den pro pravidlo šesti dnů je kalendářní den s alespoň jednou směnou
+  (`VERIFIED`, OQ21).
 - Po šesti po sobě jdoucích pracovních dnech musí následovat alespoň 35 hodin
   nepřetržitého odpočinku.
 - Zaměstnanec, který pracuje o víkendu, má mít během téhož týdne dva dny volna.
   Přesný výklad „během týdne“ je `ASSUMPTION` (pondělí–neděle) do potvrzení.
+- Částečný návrh lze zobrazit a diskutovat, ale nelze jej potvrdit
+  (`VERIFIED`, OQ23).
 - Potřebné obsazení směn je konfigurovatelný vstup. Historické počty se
   nepovažují za univerzálně platné bez ověření.
 
@@ -116,26 +122,35 @@ pravidel. Způsob započítávání přestávek je `OPEN QUESTION` — viz
 - AI kontrakt a orchestrace: `IMPLEMENTED` — `lib/planning/ai-provider.ts`
   definuje provider-neutral rozhraní, `lib/planning/orchestrator.ts` spojuje
   návrh, validaci, změny a pokrytí. Serverový Gemini adaptér je v
-  `lib/ai/gemini-planning-provider.ts`; reálné volání je `NOT VERIFIED`.
+  `lib/ai/gemini-planning-provider.ts`; reálné volání je `VERIFIED` integračním
+  testem. Kvalita plánovacího výstupu pro produkční provoz zůstává `NOT VERIFIED`.
 - **Fáze 2 — UI napojení na orchestrátor: `IMPLEMENTED`.** Route handlery
-  `POST /api/planning/run` a `/confirm` volají `runPlanning()` přes `run-service.ts`.
-  Potvrzení běží v `confirm-service.ts` s in-memory registrem `PlanningRunRegistry`
-  (`SIMULATED`, `NOT PERSISTED`). UI komponenta `PlanningResult` zobrazuje tři
-  vrstvy (návrh, validace, potvrzení) s blokátory potvrzení podle OQ23.
+  `POST /api/planning/run` a `/confirm` volají plánovací službu přes
+  `run-service.ts`; UI komponenta `PlanningResult` zobrazuje tři vrstvy
+  (návrh, validace, potvrzení) s blokátory potvrzení podle OQ23.
+- **MVP autentizace: `IMPLEMENTED`, lokální smoke `VERIFIED`, produkční úroveň `NOT VERIFIED`.** Auth.js
+  používá lokální credentials login gate, role `manager`/`viewer` jsou v lokální
+  konfiguraci a přihlášení nemá spojení s CRM ani Graph. Microsoft Entra provider
+  zůstává v kódu jako `PLANNED` budoucí autentizační brána.
+- **Perzistence a audit: `IMPLEMENTED`, lokální Docker DB `VERIFIED`, produkční DB `NOT VERIFIED`.**
+  `PLANNING_PERSISTENCE=prisma` ukládá snapshoty běhů, potvrzené plány a událost
+  `planning.confirmed`; `memory` je pouze testovací režim. Migrace a potvrzení byly
+  ověřeny v izolované lokální Docker PostgreSQL.
 - Provider režim přes `PLANNING_PROVIDER=simulated|gemini`; bez hodnoty →
   `ai_not_configured`. Žádný tichý fallback na simulaci.
 - Simulovaný provider (`lib/planning/simulated/`) vrací tři fixture scénáře
   (`complete`, `partial`, `unverified`) pro pevný týden 5.–11. 10. 2026.
 - Doménová specifikace: `PARTIALLY VERIFIED PROPOSAL` —
   `docs/DOMAIN_SPECIFICATION.md` — část rozhodnutí je `VERIFIED` (zejména AI
-  role, rozsah prvního řezu, časy směn a dvě pravidla), zbytek zůstává
+  role, rozsah prvního řezu, časy směn, OQ21, OQ23 a OQ24), zbytek zůstává
   `PROPOSAL`/`OPEN QUESTION`.
 - Rozhodovací list pro managera: `docs/DOMAIN_DECISIONS.md` — částečně
   zodpovězený; otevřené otázky zůstávají `OPEN QUESTION`. Odpovědi ani doménu
   nedomýšlej.
-- Aktuální pracovní strom prochází lintem, typecheckem, testy i buildem.
-  Známý dluh je ukládání potvrzení do DB (Prisma modely); podrobnosti v
-  `docs/ROADMAP.md`.
+- Aktuální pracovní strom prochází lintem, typecheckem, testy, buildem i validací
+  Prisma schématu. Lokální login gate a izolované Docker PostgreSQL připojení jsou
+  ověřené smoke testem; produkční úroveň, produkční DB a budoucí Entra rekonstrukce
+  zůstávají neověřené/plánované. Podrobnosti jsou v `docs/ROADMAP.md`.
 - Stav informací označuj popisky (`VERIFIED`, `IMPLEMENTED`, `PLANNED`,
   `ASSUMPTION`, `OPEN QUESTION`, `NOT VERIFIED`, `SIMULATED`, `BLOCKED`).
   Jejich význam a rozdíl mezi `IMPLEMENTED` a `VERIFIED` vysvětluje

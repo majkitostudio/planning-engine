@@ -36,7 +36,7 @@ describe("evaluateConfirmation", () => {
     ]);
   });
 
-  it("částečný návrh blokuje i při ready_for_review, dokud není rozhodnutá OQ23", () => {
+  it("částečný návrh zůstává blokovaný i při ready_for_review", () => {
     const state = evaluateConfirmation(
       makeRunResult({ status: "ready_for_review", completeness: "partial" }),
     );
@@ -44,7 +44,8 @@ describe("evaluateConfirmation", () => {
     expect(state.allowed).toBe(false);
     expect(state.blockers).toHaveLength(1);
     expect(state.blockers[0]?.code).toBe("partial_blocked_by_oq23");
-    expect(state.blockers[0]?.message).toContain("OQ23");
+    expect(state.blockers[0]?.message).toContain("Podle rozhodnutí OQ23");
+    expect(state.blockers[0]?.message).not.toContain("není rozhodnuté");
   });
 
   it("už potvrzený plán se znovu nepotvrzuje", () => {

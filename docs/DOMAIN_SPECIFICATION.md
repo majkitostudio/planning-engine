@@ -49,7 +49,7 @@ Tato kontextová fakta jsou `VERIFIED` (potvrzena požadavkem). Konkrétní prav
 entity i role zůstávají `ASSUMPTION` nebo `OPEN QUESTION`, dokud je uživatel
 nezávazně nepotvrdí.
 
-### 0.2 Potvrzená rozhodnutí ze 24. 10. 2026 (`VERIFIED`)
+### 0.2 Potvrzená rozhodnutí z 24. a 28. 10. 2026 (`VERIFIED`)
 
 Následující rozhodnutí potvrdil uživatel v zadání pro pokračování projektu.
 Jsou závazná pro další implementaci:
@@ -80,13 +80,10 @@ Jsou závazná pro další implementaci:
 Víkendová ranní směna se řídí ranním časem výše, protože dokumentace ani
 potvrzené rozhodnutí neříká jiný čas.
 
-`OPEN QUESTION` **(OQ24) — přestávky a výpočet odpracované doby:** zadání uvádí, že
-víkendová odpolední směna začíná ve 12:45, „aby při 30minutové přestávce
-vycházelo osm odpracovaných hodin“. Při 12:45–21:00 a 30minutové přestávce
-však vychází 7 h 45 min odpracované doby, ne 8 h. Rozpor se nesmí tiše
-„opravit“; způsob zápočtu přestávek je potřeba potvrdit. Do té doby se
-odpracovaná doba nepoužívá jako tvrdé pravidlo a validace pracuje s časy
-začátku a konce směny.
+`VERIFIED` **(OQ24) — přestávky a výpočet odpracované doby:** první verze
+validace používá hrubý interval začátku a konce směny. Přestávka ani odpracovaná
+doba nejsou tvrdým validačním pravidlem. Toto rozhodnutí popisuje chování
+plánovacího engine; nejde o pracovněprávní posudek ani výpočet placené doby.
 
 #### Potvrzená pravidla
 
@@ -99,6 +96,10 @@ začátku a konce směny.
   `VERIFIED` jako rozsah, ne jako doménové pravidlo.
 - **Konfigurovatelné obsazení:** počty potřebných zaměstnanců na směnách jsou
   vstup, ne historická konstanta. `VERIFIED`
+- **Pracovní den pro pravidlo šesti dnů:** kalendářní den s alespoň jednou
+  směnou; více směn v jednom dni se počítá jako jeden pracovní den. `VERIFIED`
+- **Potvrzení neúplného návrhu:** neúplný návrh se smí zobrazit k posouzení,
+  ale nesmí být potvrzen. `VERIFIED` (OQ23)
 
 ## 1. Účel a hranice první verze
 
@@ -268,7 +269,7 @@ musí být vynuceno deterministickou validací, ne jen instrukcí pro AI.
 | H3 | Schválená absence blokuje přiřazení | `VERIFIED` | Jiná omezení dostupnosti jsou `OPEN QUESTION`. |
 | H4 | Směnu smí obsadit jen zaměstnanec s požadovanou rolí/dovedností | `ASSUMPTION` | Role nejsou potvrzené. |
 | H5 | Maximální počet hodin nebo směn za týden | `OPEN QUESTION` | Číslo není potvrzené. |
-| H6 | Po šesti po sobě jdoucích pracovních dnech alespoň 35 h nepřetržitého odpočinku | `VERIFIED` | Konkrétní výklad okrajů je `ASSUMPTION`. |
+| H6 | Po šesti po sobě jdoucích pracovních dnech alespoň 35 h nepřetržitého odpočinku | `VERIFIED` | Pracovní den je kalendářní den s alespoň jednou směnou (OQ21). |
 | H7 | Uzamčené přiřazení nelze přepsat | `OPEN QUESTION` | První řez nemá potvrzené zamykání. |
 | H8 | Zaměstnanec pracující o víkendu má v témže týdnu dva dny volna | `VERIFIED` | Výklad „během týdne“ = pondělí–nedělí je `ASSUMPTION`. |
 | H9 | První verze pouze plné úvazky | `VERIFIED` (rozsah) | Není pravidlo pro plánování, ale omezení rozsahu. |
@@ -314,7 +315,7 @@ validace je nesmí vydávat za splněný nárok.
 - Manažer rozhoduje, zda návrh přijme, upraví, nebo odmítne. Aplikace sama
   neukládá ani neaplikuje změny.
 - Neúplný návrh je přípustný výstup k posouzení, ale není „platný schválený
-  plán“. Zda ho manažer může potvrdit s vědomým nedostatkem, je `OPEN QUESTION`.
+  plán“. Podle OQ23 jej manažer v první verzi potvrdit nemůže.
 
 `ASSUMPTION` — typy situací:
 
@@ -397,8 +398,9 @@ podřízený tomuto dokumentu — autoritativní seznam je tento.
   Nejedná se o automatické schválení AI.
 - **OQ16** (S7) — `VERIFIED`: neúplný návrh je přípustný výstup k posouzení,
   musí být označen jako neúplný a nesmí se vydávat za plně ověřený.
-- **AI role, rozsah prvního řezu, časy směn, 35 h odpočinku a dva dny volna po
-  víkendu** — `VERIFIED` (§0.2). Nejde o OQ, ale o nová závazná rozhodnutí.
+- **AI role, rozsah prvního řezu, časy směn, 35 h odpočinku, dva dny volna po
+  víkendu a výklady OQ21, OQ23 a OQ24** — `VERIFIED` (§0.2). Jde o závazná
+  rozhodnutí v jejich popsaném rozsahu.
 
 ### Blokující pro úplnou definici domény
 
@@ -410,16 +412,12 @@ podřízený tomuto dokumentu — autoritativní seznam je tento.
 - **OQ9** (S5) Která pravidla jsou skutečně tvrdá (H4, H5, H7)?
 - **OQ10** (S5) Konkrétní limity tvrdých pravidel (max. hodiny, jiný odpočinek)?
 - **OQ11** (S5) Existují pravidla mimo uvedený seznam?
-- **OQ21** (S5) Co přesně je „pracovní den“ pro počítání šesti dnů v řadě?
-- **OQ24** (§0.2) Jak se započítávají přestávky? *(rozpor u víkendové
-  odpolední směny)*
 
 ### Blokující pro chování výstupu
 
 - **OQ6** (S4) Jak se vstupy zadávají (ručně / soubor / budoucí integrace)?
 - **OQ7** (S4) Jaký je požadovaný tvar výstupu?
 - **OQ8** (S4) Kdy se preference vyhodnocují?
-- **OQ23** (S7) Může manažer potvrdit částečně neúplný návrh?
 
 ### Blokující pro preference a optimalizaci
 

@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 
+import { requirePlanningActor } from "@/lib/auth/route-access";
 import type { PlanningRunApiResponse } from "@/lib/planning/api-types";
+import { getPlanningPersistenceRuntime } from "@/lib/planning/persistence-runtime";
 import { getPlanningRuntime } from "@/lib/planning/server-config";
 import { executePlanningRun } from "@/lib/planning/run-service";
 import { isSimulatedScenarioId } from "@/lib/planning/simulated/scenarios";
@@ -9,6 +11,20 @@ export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
 
 export async function POST(request: Request) {
+  const actorAccess = await requirePlanningActor();
+  if (!actorAccess.ok) {
+    return NextResponse.json<PlanningRunApiResponse>(
+      {
+        ok: false,
+        rejected: {
+          code: actorAccess.code,
+          message: actorAccess.message,
+        },
+      },
+      { status: actorAccess.status },
+    );
+  }
+
   const planningRuntime = getPlanningRuntime();
 
   if (!planningRuntime.configured) {
@@ -18,6 +34,20 @@ export async function POST(request: Request) {
         rejected: {
           code: "not_configured",
           message: planningRuntime.reason,
+        },
+      },
+      { status: 503 },
+    );
+  }
+
+  const persistenceRuntime = getPlanningPersistenceRuntime();
+  if (!persistenceRuntime.configured) {
+    return NextResponse.json<PlanningRunApiResponse>(
+      {
+        ok: false,
+        rejected: {
+          code: "persistence_not_configured",
+          message: persistenceRuntime.reason,
         },
       },
       { status: 503 },
@@ -67,6 +97,30 @@ export async function POST(request: Request) {
     mode: planningRuntime.mode,
   });
 
+  if (result.ok) {
+    try {
+      await persistenceRuntime.persistence.saveRun(result.snapshot, actorAccess.actor);
+    } catch {
+      return NextResponse.json<PlanningRunApiResponse>(
+        {
+          ok: false,
+          rejected: {
+            code: "persistence_failed",
+            message: "Výsledek plánování se nepodařilo uložit.",
+          },
+        },
+        { status: 503 },
+      );
+    }
+  }
+
   // Plánovací selhání je doménový výsledek, ne HTTP chyba.
-  return NextResponse.json<PlanningRunApiResponse>(result, { status: 200 });
+  if (!result.ok) {
+    return NextResponse.json<PlanningRunApiResponse>(result, { status: 200 });
+  }
+
+  return NextResponse.json<PlanningRunApiResponse>(
+    { ok: true, view: result.view },
+    { status: 200 },
+  );
 }

@@ -1,13 +1,42 @@
 import { NextResponse } from "next/server";
 
+import { canConfirmPlanning } from "@/lib/auth/actor";
+import { requirePlanningActor } from "@/lib/auth/route-access";
 import type { PlanningConfirmApiResponse } from "@/lib/planning/api-types";
-import { confirmRun } from "@/lib/planning/confirm-service";
-import { planningRunRegistry } from "@/lib/planning/run-registry";
+import { confirmPersistedRun } from "@/lib/planning/confirm-service";
+import { getPlanningPersistenceRuntime } from "@/lib/planning/persistence-runtime";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
 
 export async function POST(request: Request) {
+  const actorAccess = await requirePlanningActor();
+  if (!actorAccess.ok) {
+    return NextResponse.json<PlanningConfirmApiResponse>(
+      {
+        ok: false,
+        rejected: {
+          code: actorAccess.code,
+          message: actorAccess.message,
+        },
+      },
+      { status: actorAccess.status },
+    );
+  }
+
+  if (!canConfirmPlanning(actorAccess.actor)) {
+    return NextResponse.json<PlanningConfirmApiResponse>(
+      {
+        ok: false,
+        rejected: {
+          code: "forbidden",
+          message: "Návrh může potvrdit pouze uživatel s rolí manager.",
+        },
+      },
+      { status: 403 },
+    );
+  }
+
   let body: unknown;
   try {
     body = await request.json();
@@ -42,7 +71,39 @@ export async function POST(request: Request) {
     );
   }
 
-  const result = confirmRun(planningRunRegistry, record.proposalId);
+  const persistenceRuntime = getPlanningPersistenceRuntime();
+  if (!persistenceRuntime.configured) {
+    return NextResponse.json<PlanningConfirmApiResponse>(
+      {
+        ok: false,
+        rejected: {
+          code: "persistence_not_configured",
+          message: persistenceRuntime.reason,
+        },
+      },
+      { status: 503 },
+    );
+  }
+
+  let result;
+  try {
+    result = await confirmPersistedRun(
+      persistenceRuntime.persistence,
+      record.proposalId,
+      actorAccess.actor,
+    );
+  } catch {
+    return NextResponse.json<PlanningConfirmApiResponse>(
+      {
+        ok: false,
+        rejected: {
+          code: "persistence_failed",
+          message: "Potvrzení návrhu se nepodařilo uložit.",
+        },
+      },
+      { status: 503 },
+    );
+  }
 
   if (result.ok) {
     return NextResponse.json<PlanningConfirmApiResponse>(

@@ -35,8 +35,8 @@ export interface ShiftWindow {
 /**
  * Definice směny.
  *
- * Časy jsou potvrzené (`VERIFIED`), ale nejsou úplnou specifikací přestávek
- * ani pracovněprávních pravidel. Způsob zápočtu přestávek je `OPEN QUESTION`.
+ * Časy jsou potvrzené (`VERIFIED`). První verze používá hrubý interval
+ * začátku–konce; nejde o výpočet odpracované doby ani o pracovněprávní posudek.
  */
 export interface ShiftDefinition {
   readonly kind: ShiftKind;
