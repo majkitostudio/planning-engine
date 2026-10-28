@@ -21,6 +21,14 @@ export function getPlanningPersistenceRuntime(
   const mode = env.PLANNING_PERSISTENCE?.trim().toLowerCase();
 
   if (mode === "memory") {
+    if (env.NODE_ENV !== "test") {
+      return {
+        configured: false,
+        reason:
+          "PLANNING_PERSISTENCE=memory je určena pouze pro testy. Pro běh aplikace nastav prisma a DATABASE_URL.",
+      };
+    }
+
     memoryPersistence ??= new InMemoryPlanningPersistence();
     return { configured: true, mode: "memory", persistence: memoryPersistence };
   }

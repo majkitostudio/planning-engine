@@ -34,7 +34,7 @@ jsou `NOT VERIFIED` nebo `PLANNED`; lokální Docker PostgreSQL běh je `VERIFIE
 
 Aktuální ověření pracovního stromu (28. 10. 2026):
 
-- `npm run test` — 170 prošlo, 1 přeskočen (integrační Gemini test bez explicitního spuštění).
+- `npm run test` — 172 prošlo, 1 přeskočen (integrační Gemini test bez explicitního spuštění).
 - `npm run test -- lib/ai/gemini-planning-provider.integration.test.ts` s lokálním
   `.env.local` — 1 integrační test prošel; skutečné volání Gemini bylo ověřeno.
 - `npm run typecheck` — prošlo.
