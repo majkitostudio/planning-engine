@@ -101,6 +101,28 @@ plánovacího engine; nejde o pracovněprávní posudek ani výpočet placené d
 - **Potvrzení neúplného návrhu:** neúplný návrh se smí zobrazit k posouzení,
   ale nesmí být potvrzen. `VERIFIED` (OQ23)
 
+### 0.3 Evidence z původního emailu managera (`SOURCE EVIDENCE`, 28. 10. 2026)
+
+Původní email s odpověďmi managera potvrzuje současný pracovní postup:
+čtvrteční plánování na další týden, nejprve zadání absencí, následné obsazení
+odpoledních směn a víkendu, požadavky sbírané přes Outlook a ruční přepis
+hotového rozpisu do současného rosteru. Automatický přenos proto není
+požadavkem prvního řezu.
+
+Email také uvádí konkrétní provozní minima (23 / 8 ve všední den a 12 / 9 o
+víkendu) a šest částečných úvazků. Obojí je zdrojová informace o dnešní praxi,
+nikoli nové univerzální pravidlo: minima zůstávají konfigurovatelným vstupem a
+částečné úvazky mimo první řez.
+
+Email obsahuje rozpor proti potvrzeným víkendovým časům v §0.2: uvádí ranní
+7:45–18:00 a odpolední 10:45–21:00, zatímco aktuální projektové rozhodnutí
+uvádí 7:45–16:30 a 12:45–21:00. Do vyřešení tohoto rozporu se potvrzené časy
+nemění. Pravidlo 35 hodin po šesti pracovních dnech se naopak shoduje.
+
+Zbývá také rozhodnout, zda „kdo požadavek odešle dříve, má přednost“ je
+pravidlo pro engine, nebo jen popis dnešního ručního postupu. Tato informace
+se proto zatím nepoužívá jako implementované pravidlo.
+
 ## 1. Účel a hranice první verze
 
 ### 1.1 Účel (`VERIFIED`)

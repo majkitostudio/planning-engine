@@ -13,8 +13,41 @@
 > ho jen překládá do praxe a zaznamenává odpovědi.
 
 Datum vytvoření: 22. 10. 2026
-Poslední aktualizace: 26. 10. 2026
+Poslední aktualizace: 28. 10. 2026
 Vyplnil: uživatel / zadání projektu (částečně)
+
+## Evidence z původního emailu managera (`SOURCE EVIDENCE`, 28. 10. 2026)
+
+Přiložený email s odpověďmi managera doplňuje obraz současného provozu. Nejde
+automaticky o nové schválení všech pravidel; níže uvedené body proto nemění
+stav `VERIFIED` bez dalšího sjednocení s aktuálním zadáním projektu.
+
+- Plánování dnes probíhá každý čtvrtek na následující týden. Nejprve se
+  zapisují dovolené, náhradní volno a nemoci, poté odpolední směny a víkend;
+  ranní směny lze v současném programu doplnit hromadně.
+- Požadavky zaměstnanců přicházejí přes Outlook přes jejich nadřízené a mají
+  čtvrteční uzávěrku. Současné přenášení hotového rozpisu do rosteru je ruční;
+  automatický přenos není požadován.
+- Sestavení rastru běžně zabere jeden až dva dny. Hlavní obtíž je dodržet
+  potřebné počty lidí při absencích a dovolených.
+- Email uvádí konkrétní minima obsazení: všední den ráno 23, všední den
+  odpoledne 8, víkend ráno 12 a víkend odpoledne 9. Aktuální projektové
+  rozhodnutí ale říká, že obsazení je konfigurovatelný vstup; tato čísla proto
+  nejsou zapsána jako univerzální konstanty.
+- Email uvádí šest zaměstnanců na částečný úvazek. To potvrzuje, že v reálném
+  provozu existují, ale nemění rozhodnutí, že jsou mimo první funkční řez.
+
+### Rozpor k vyřešení před použitím emailu jako specifikace
+
+Email uvádí víkendovou ranní směnu 7:45–18:00 a odpolední 10:45–21:00.
+Aktuální projektové rozhodnutí (`VERIFIED`) uvádí 7:45–16:30 a 12:45–21:00.
+Dokud manager nepotvrdí, která varianta platí pro tento projekt, zůstávají
+stávající potvrzené časy beze změny a email je pouze zdrojem otevřené otázky.
+
+Email zároveň popisuje pravidlo 35 hodin po šesti pracovních dnech, které se
+se stávajícím rozhodnutím shoduje. Pravidlo „kdo pošle požadavek dříve, má
+prioritu“ je třeba ještě výslovně přijmout jako pravidlo pro engine, nebo jej
+ponechat jako popis dnešní ruční praxe.
 
 ## Nová potvrzená rozhodnutí (`VERIFIED`)
 
