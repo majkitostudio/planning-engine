@@ -6,33 +6,33 @@ import { DEMO_ALERTS, DEMO_FREQUENT, DEMO_STATS } from "@/lib/demo-data";
 
 const STEPS = [
   {
-    title: "Výběr plánovacího týdne",
-    desc: "Týden (pondělí–nedělí), na který se rozpis sestavuje.",
-    status: "Připraveno k návrhu",
+    title: "Vyberte týden",
+    desc: "Jeden týden od pondělí do neděle, pro který se připraví rozpis.",
+    status: "1. krok",
     variant: "info",
   },
   {
-    title: "Příprava vstupních dat",
-    desc: "Zaměstnanci, dostupnost, směny a pravidla.",
-    status: "Ukázková data",
+    title: "Zkontrolujte vstupy",
+    desc: "Zaměstnanci, absence, požadavky a potřebné obsazení směn.",
+    status: "2. krok",
     variant: "info",
   },
   {
-    title: "Spuštění plánování",
-    desc: "Jádro a orchestrátor jsou implementované; demo UI spouští simulovaný běh.",
-    status: "IMPLEMENTED / DEMO",
+    title: "Nechte AI připravit návrh",
+    desc: "AI navrhne konkrétní přiřazení směn; v této ukázce jde o simulovaný běh.",
+    status: "3. krok",
     variant: "info",
   },
   {
-    title: "Návrh rozpisu",
-    desc: "Po spuštění se zobrazí návrh z vybraného simulovaného fixture scénáře.",
-    status: "DEMO",
+    title: "Prohlédněte výsledek",
+    desc: "Uvidíte pokrytí směn, změny, upozornění a předpoklady návrhu.",
+    status: "4. krok",
     variant: "info",
   },
   {
-    title: "Kontrola konfliktů",
-    desc: "Deterministická validace výsledku se zobrazuje v demo UI.",
-    status: "IMPLEMENTED / DEMO",
+    title: "Rozhodněte jako manager",
+    desc: "Návrh se bez potvrzení managera neuloží ani nepoužije.",
+    status: "5. krok",
     variant: "info",
   },
 ] as const;
@@ -48,8 +48,8 @@ export default function DashboardPage() {
           <div>
             <h1 className="page-head__title">Přehled</h1>
             <p className="page-head__sub">
-              Manažerský přehled plánování týdenních rozpisů směn. Zobrazená
-              data jsou ukázková, nikoli skutečný provoz.
+              Ukázka týdenního plánování směn pro managera. AI připraví návrh,
+              systém ho zkontroluje a poslední rozhodnutí zůstává na člověku.
             </p>
           </div>
         </div>
@@ -67,10 +67,9 @@ export default function DashboardPage() {
           <Icon name="info" width={17} height={17} />
         </span>
         <p>
-          <strong>Demonstrační data.</strong> Čísla, jména i směny jsou syntetické
-          ukázky. Demo UI je napojené na orchestrátor a plánovací běh používá
-          SIMULATED fixtures; potvrzení se ukládá přes nastavenou
-          perzistenční vrstvu. Aplikace není produkční systém.
+          <strong>Demonstrační data.</strong> Jména, čísla i směny jsou syntetické
+          ukázky. Tato ukázka nepracuje s Outlookem ani současným rosterem a
+          není produkčním systémem.
         </p>
       </div>
 
@@ -95,10 +94,10 @@ export default function DashboardPage() {
             <div className="card__head">
               <div>
                 <h2 className="card__title" id="dash-steps">
-                  Postup přípravy rozpisu
+                  Jak ukázka funguje
                 </h2>
                 <p className="card__sub">
-                  Navržený pracovní postup, nikoli schválená pravidla
+                  Od vstupních údajů až po rozhodnutí managera
                 </p>
               </div>
               <Badge variant="neutral" dot={false}>
@@ -122,8 +121,9 @@ export default function DashboardPage() {
               ))}
             </ol>
             <p className="table-note">
-              Kroky 3–5 jsou v demu dostupné; doménová pravidla zůstávají
-              částečně neověřená.
+              V ukázce si můžete projít celý postup od návrhu až po rozhodnutí
+              managera. Některá pravidla a vstupy ještě nejsou pro provoz
+              potvrzené.
             </p>
           </section>
 
@@ -132,7 +132,7 @@ export default function DashboardPage() {
               <p className="cta-card__title">Připraveni ke spuštění plánovacího dema</p>
               <p className="cta-card__text">
                 Otevřete pracovní plochu plánu směn s ukázkovou tabulkou,
-                výsledkem simulovaného běhu a kontrolou validace.
+                výsledkem simulovaného běhu a kontrolou návrhu.
               </p>
             </div>
             <Link className="btn btn--primary" href="/planovani">
@@ -212,9 +212,8 @@ export default function DashboardPage() {
               </Badge>
             </div>
             <p className="ai-card__text">
-              Demo asistent spouští simulovaný běh přes orchestrátor, zobrazuje
-              návrh i validaci a umožňuje potvrzení kompletního návrhu.
-              Potvrzení se ukládá přes nastavenou perzistenční vrstvu.
+              Asistent připraví ukázkový návrh, zobrazí jeho kontrolu a nechá
+              managera rozhodnout, zda kompletní návrh potvrdit.
             </p>
             <Link className="btn btn--primary" href="/planovani">
               Otevřít plán směn
