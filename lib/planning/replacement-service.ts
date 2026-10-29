@@ -88,9 +88,15 @@ export function evaluateReplacementOption(
       assumptions: [],
     },
   };
-  const validation = validatePlan(validationInput, proposal);
+  const baseValidation = validatePlan(validationInput, proposal);
   const changes = computeChanges(basePlan.assignments, assignments);
   const coverage = computeCoverage(validationInput, assignments);
+  const impact = computeImpact(changes, request, input);
+  const validation = applyReplacementChecks(
+    baseValidation,
+    validationInput,
+    assignments,
+  );
 
   return {
     id: draft.id,
@@ -98,7 +104,7 @@ export function evaluateReplacementOption(
     draft,
     changes,
     coverage,
-    impact: computeImpact(changes, request),
+    impact,
     validation,
     status: validation.status,
   };
@@ -200,6 +206,7 @@ function computeCoverage(
 function computeImpact(
   changes: readonly AssignmentChange[],
   request: ReplacementRequest,
+  input: PlanningInput,
 ): ReplacementImpact {
   const changed = changes.filter((change) => change.type !== "unchanged");
   const affectedEmployeeIds = [
@@ -219,10 +226,20 @@ function computeImpact(
   const changedDates = [
     ...new Set(changed.map((change) => change.assignment.date)),
   ];
+  const timeOffChanges = changed
+    .filter((change) => change.type === "added")
+    .flatMap((change) => timeOffChangeFor(input, change.assignment));
+  const unverifiedReasons = timeOffChanges.length > 0
+    ? [
+        "Varianta zasahuje do potvrzeného volna; přesun nebo zrušení volna vyžaduje samostatné potvrzení a není automaticky právně ani HR ověřené.",
+      ]
+    : [];
 
   return {
     kind:
-      affectedEmployeeIds.length > 1
+      timeOffChanges.length > 0
+        ? "confirmed_time_off_change"
+        : affectedEmployeeIds.length > 1
         ? "domino"
         : affectedEmployeeIds.length === 1
           ? "secondary_changes"
@@ -230,9 +247,133 @@ function computeImpact(
     affectedEmployeeIds,
     changedDates,
     dominoChain,
-    timeOffChanges: [],
-    unverifiedReasons: [],
+    timeOffChanges,
+    unverifiedReasons,
   };
+}
+
+function applyReplacementChecks(
+  validation: ReturnType<typeof validatePlan>,
+  input: PlanningInput,
+  assignments: readonly ProposedAssignment[],
+): ReturnType<typeof validatePlan> {
+  const problems = [...validation.problems];
+  const unverifiedChecks = [...validation.unverifiedChecks];
+
+  const confirmedTimeOffAssignments = assignments.filter((assignment) =>
+    input.requests.some(
+      (request) =>
+        request.employeeId === assignment.employeeId &&
+        request.date === assignment.date &&
+        request.kind === "day_off" &&
+        request.status === "approved",
+    ),
+  );
+
+  for (const assignment of confirmedTimeOffAssignments) {
+    unverifiedChecks.push({
+      code: "REPLACEMENT_CONFIRMED_TIME_OFF",
+      message: `Přiřazení ${assignment.employeeId} na ${assignment.date} zasahuje do schváleného plánovaného volna; změnu nelze potvrdit bez samostatného rozhodnutí.`,
+      employeeId: assignment.employeeId,
+      date: assignment.date,
+      shiftKind: assignment.shiftKind,
+    });
+  }
+
+  if (input.replacementLimits) {
+    const missingLimits = [
+      input.replacementLimits.maxHoursPerWeek === undefined
+        ? "maxHoursPerWeek"
+        : null,
+      input.replacementLimits.maxShiftsPerWeek === undefined
+        ? "maxShiftsPerWeek"
+        : null,
+    ].filter((value): value is string => value !== null);
+
+    if (missingLimits.length > 0) {
+      unverifiedChecks.push({
+        code: "REPLACEMENT_LIMIT_NOT_CONFIGURED",
+        message: `Profil limitů operativní náhrady nemá nastaveno: ${missingLimits.join(", ")}.`,
+      });
+    }
+
+    const shiftCounts = new Map<string, number>();
+    for (const assignment of assignments) {
+      shiftCounts.set(
+        assignment.employeeId,
+        (shiftCounts.get(assignment.employeeId) ?? 0) + 1,
+      );
+    }
+    if (input.replacementLimits.maxShiftsPerWeek !== undefined) {
+      for (const [employeeId, count] of shiftCounts) {
+        if (count > input.replacementLimits.maxShiftsPerWeek) {
+          problems.push({
+            code: "REPLACEMENT_LIMIT_EXCEEDED",
+            severity: "error",
+            message: `Zaměstnanec ${employeeId} má ${count} směn, což překračuje konfigurovaný limit ${input.replacementLimits.maxShiftsPerWeek}.`,
+            employeeId,
+          });
+        }
+      }
+    }
+  }
+
+  return {
+    ...validation,
+    status:
+      problems.length > 0
+        ? "invalid"
+        : unverifiedChecks.length > 0
+          ? "not_verified"
+          : validation.status,
+    problems,
+    unverifiedChecks,
+  };
+}
+
+function timeOffChangeFor(
+  input: PlanningInput,
+  assignment: ProposedAssignment,
+): readonly [ReplacementImpact["timeOffChanges"][number]] | readonly [] {
+  const absence = input.absences.find(
+    (candidate) =>
+      candidate.employeeId === assignment.employeeId &&
+      candidate.status === "approved" &&
+      candidate.from <= assignment.date &&
+      candidate.to >= assignment.date,
+  );
+  if (absence) {
+    return [
+      {
+        employeeId: assignment.employeeId,
+        kind: absence.type === "vacation" ? "approved_vacation" : "unknown",
+        originalDate: assignment.date,
+        newDate: null,
+        verified: false,
+      },
+    ];
+  }
+
+  const plannedDayOff = input.requests.find(
+    (request) =>
+      request.employeeId === assignment.employeeId &&
+      request.date === assignment.date &&
+      request.kind === "day_off" &&
+      request.status === "approved",
+  );
+  if (plannedDayOff) {
+    return [
+      {
+        employeeId: assignment.employeeId,
+        kind: "planned_day_off",
+        originalDate: assignment.date,
+        newDate: null,
+        verified: false,
+      },
+    ];
+  }
+
+  return [];
 }
 
 function deduplicateDrafts(

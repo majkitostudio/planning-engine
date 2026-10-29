@@ -30,10 +30,10 @@ produkční aplikaci.
   v kódu ponechané jako `PLANNED` budoucí autentizační brána.
 - Potvrzení manažera a auditní zápis jsou `IMPLEMENTED`; aplikace používá
   explicitní `PLANNING_PERSISTENCE=prisma`. `memory` je pouze testovací režim.
-- **Operativní náhrady směn jsou `PLANNED`.** Schválený další řez řeší výpadek
-  na jedné celé směně, tři AI varianty, výběr managerem, deterministickou
-  validaci a nové potvrzení týdne. Incidenty, výběr variant a jejich API zatím
-  v kódu nejsou.
+- **Operativní náhrady směn jsou `IMPLEMENTED` / `SIMULATED`.** Syntetický řez
+  řeší výpadek na jedné celé směně, tři varianty, deterministický dopad, výběr
+  managerem, potvrzení nové verze týdne a minimální audit. Gemini, provozní
+  limity a produkční workflow zůstávají `NOT VERIFIED`.
 - Prisma obsahuje provozní modely identity, snapshotu běhu a auditu. Migrace a zápis
   potvrzení byly ověřeny v izolované lokální Docker PostgreSQL; produkční DB zůstává
   `NOT VERIFIED`.

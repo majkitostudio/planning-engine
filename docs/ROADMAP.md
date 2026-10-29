@@ -30,12 +30,13 @@ jsou `NOT VERIFIED` nebo `PLANNED`; lokální Docker PostgreSQL běh je `VERIFIE
 | Budoucí Entra brána | ponechaný provider-neutral základ pro pozdější rekonstrukci | `lib/auth/config.ts`; `PLANNED` |
 | Perzistence a audit | snapshot běhu, potvrzený plán, auditní událost | `lib/planning/persistence.ts`, `prisma/schema.prisma`; lokální Docker DB `VERIFIED`, produkční DB `NOT VERIFIED` |
 | Čtecí auditní pohled | historie `planning.confirmed` pro managera | `app/(app)/audit/page.tsx`, `lib/planning/audit-service.ts`; logika přístupu ověřená unit testy |
+| Operativní náhrada | incident, tři simulované varianty, deterministické změny/pokrytí/validace, výběr a nová potvrzená verze | `lib/planning/replacement-service.ts`, `app/api/planning/replacement/`; cílené unit/route testy prošly |
 | Prisma základ | PostgreSQL datasource, provozní modely a připravená migrace bez doménových modelů | `prisma/schema.prisma`, `prisma/migrations/` |
 | CI | lint, typecheck, testy, build a validace Prisma | `.github/workflows/ci.yml` |
 
-Aktuální ověření pracovního stromu (28. 10. 2026):
+Aktuální ověření pracovního stromu (29. 10. 2026):
 
-- `npm run test` — 173 prošlo, 1 přeskočen (integrační Gemini test bez explicitního spuštění).
+- `npm run test` — 209 prošlo, 1 přeskočen (integrační Gemini test bez explicitního spuštění).
 - `npm run test -- lib/ai/gemini-planning-provider.integration.test.ts` s lokálním
   `.env.local` — 1 integrační test prošel; skutečné volání Gemini bylo ověřeno.
 - `npm run typecheck` — prošlo.
@@ -53,7 +54,7 @@ Aktuální ověření pracovního stromu (28. 10. 2026):
 | OQ23 | částečně neúplný návrh lze zobrazit, ale potvrzení je blokované | `VERIFIED`; potvrdit lze jen kompletní návrh |
 | Význam stavů | `ready_for_review` znamená „validace nic nenašla“, ne schválení | UI to zobrazuje jako „Připraveno ke kontrole“ s tlačítkem potvrzení |
 | Plnění `explanations` a `alternatives` | typ je hotový, kvalita výstupu modelu není ověřená | manažer nemusí dostat použitelné vysvětlení |
-| Operativní náhrady | návrh a kontrakt jsou připravené, implementace neexistuje | výpadek směny zatím nelze zadat, vybrat variantu ani potvrdit |
+| Operativní náhrady | syntetický vertikální řez je implementovaný a testovaný | provozní limity OQ10, skutečná data a produkční workflow zůstávají `NOT VERIFIED` |
 
 ## 4. Hotové (Fáze 2 – napojení UI na orchestrátor)
 
@@ -186,9 +187,10 @@ Podrobnosti a místo pro odpovědi: [`DOMAIN_DECISIONS.md`](DOMAIN_DECISIONS.md)
   `memory` zůstává pouze testovací režim.
 - **Čtecí audit** v tomto kroku ukazuje jen události `planning.confirmed` a je
   dostupný pouze managerovi. Nejde o historii všech změn ani o rozhodnutí OQ20.
-- **Operativní náhrada** zatím není v kódu. Existuje schválený design a
-  implementační plán, ale žádný incident, výběr varianty ani nová verze týdne
-  se zatím nedá v aplikaci vytvořit.
+- **Operativní náhrada** je implementovaná pouze jako syntetický pilot. Umí
+  vytvořit pracovní snapshot, zobrazit varianty a potvrdit novou verzi přes
+  existující persistence API; bez lokálního `DATABASE_URL` aplikační route
+  správně odmítne běh, protože `memory` je pouze testovací režim.
 - **Reálné volání Gemini** je `VERIFIED` integračním testem. Kvalita výstupu pro
   produkční provoz a práce s reálnými daty zůstávají `NOT VERIFIED`.
 - **OQ24** je potvrzené pouze jako výklad pro plánovací engine: validace
@@ -227,6 +229,10 @@ Podrobnosti a místo pro odpovědi: [`DOMAIN_DECISIONS.md`](DOMAIN_DECISIONS.md)
 - **28. 10. 2026:** přidán čtecí pohled `/audit` pro managera nad uloženými
   událostmi `planning.confirmed`; viewer k nim nemá přístup. Nejde o plný audit
   změn a produkční databáze zůstává `NOT VERIFIED`.
+- **29. 10. 2026:** implementován syntetický tok operativní náhrady: doménový
+  kontrakt, simulovaný provider se třemi variantami, deterministické změny/
+  pokrytí/validace, snapshot, manager-only potvrzení nové verze a auditní událost
+  `planning.replacement_confirmed`; plná sada má 209 průchozích testů a 1 přeskočený.
 
 ## 10. Odkazy
 

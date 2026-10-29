@@ -38,7 +38,7 @@ jiných dokumentů neopakuje.
 | Potvrzení manažera | `IMPLEMENTED` | `POST /api/planning/confirm`, manager-only, blokace částečných/neověřených návrhů |
 | Ukládání běhů a potvrzení | `IMPLEMENTED` / `VERIFIED` (lokální Docker smoke) | Prisma snapshot a `ConfirmedPlan`; migrace a zápis potvrzení byly ověřeny v izolované lokální PostgreSQL |
 | Audit potvrzení | `IMPLEMENTED` / `VERIFIED` (lokální Docker smoke) | Zápis `planning.confirmed` byl ověřen; čtecí pohled je `IMPLEMENTED` pro managera a ukazuje pouze tato potvrzení |
-| Operativní náhrada směny | `PLANNED` | Schválený další řez: výpadek konkrétní směny → tři AI varianty → výběr → validace → potvrzení; kód zatím neexistuje |
+| Operativní náhrada směny | `IMPLEMENTED` / `SIMULATED` | Syntetický řez: výpadek celé směny → tři varianty → deterministický dopad → výběr → manager-only potvrzení; Gemini a provozní kvalita `NOT VERIFIED` |
 | Testy | `IMPLEMENTED` / `VERIFIED` | Jádro, služby a route handlery mají testy; plný UI/E2E test není součástí dema |
 | Kvalitní brána (CI) | `IMPLEMENTED` | Lint, typecheck, testy, build a Prisma validace procházejí |
 | Produkční připravenost | `NOT VERIFIED` | Není produkční aplikace |
@@ -101,12 +101,14 @@ Následující kroky zachycují aktuální target a jeho ověření; položky oz
    syntetický týdenní řez: výpadek na celé směně, tři varianty, výběr,
    deterministická validace a potvrzení bez automatické aplikace.
 
-8. **Uzavřít rozhodovací brány pro operativní řez.** Před rozšířením typů je
-   potřeba potvrdit zejména OQ10, OQ22 a rozsah auditu OQ20. Dokud nejsou
-   dodány hodnoty limitů, systém je nesmí vydávat za ověřené.
-
-9. **Implementovat první vertikální řez operativní náhrady.** Pořadí a
-   akceptační kontroly jsou v [implementačním plánu](superpowers/plans/2026-10-29-operativni-nahrady.md).
+8. ✅ **Implementovat první syntetický vertikální řez operativní náhrady.**
+   Kód obsahuje kontrakt, simulované varianty, deterministický výpočet dopadu,
+   API, manager-only potvrzení, novou verzi týdne a minimální audit. UI je
+   napojené v `ReplacementPanel`; bez potvrzení se uložený plán nemění.
+9. **Doplnit rozhodovací brány operativního řezu.** Zůstává otevřené zejména
+   OQ10, přesné rozlišení dovolené/plánovaného volna/náhradního volna a rozsah
+   auditu OQ20. Dokud nejsou dodány hodnoty limitů, systém je nesmí vydávat za
+   ověřené.
 
 Produkční autentizace, produkční PostgreSQL, Entra, Outlook, CRM a přenos do
 rosteru zůstávají `DEFERRED` a nejsou součástí tohoto targetu.

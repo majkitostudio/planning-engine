@@ -13,8 +13,10 @@ sítě. Volání AI je schované za rozhraním; konkrétní poskytovatel je v `l
   `ready_for_review`. `confirmed` je vždy `false`.
 - **Mimo zodpovědnost čistého jádra:** databázové připojení a autentizace.
   HTTP API, potvrzení a perzistenční adaptér jsou serverové vrstvy nad jádrem.
-- **Operativní náhrady:** jsou další plánovaný kontrakt nad potvrzeným týdnem;
-  výpadek, tři varianty a nová verze týdne zatím nejsou implementované.
+- **Operativní náhrady:** jsou implementovaný syntetický kontrakt nad potvrzeným
+  týdnem; podporují výpadek celé směny, tři simulované varianty, deterministický
+  dopad, výběr a manager-only novou verzi. Produkční limity a provider zůstávají
+  mimo ověřený rozsah.
 
 ## Co je v adresáři
 
@@ -54,7 +56,10 @@ sítě. Volání AI je schované za rozhraním; konkrétní poskytovatel je v `l
 | `confirm-service.ts` | `confirmRun()` — testovatelná logika potvrzení manažera. |
 | `confirm-service.test.ts` | Testy potvrzení pro všechny stavy. |
 | `api-types.ts` | Sdílené typy odpovědí HTTP API (`PlanningRunApiResponse`, `PlanningConfirmApiResponse`). |
-| `replacement-service.ts` | `PLANNED`: vytvoří varianty náhrady a deterministicky vyhodnotí jejich dopad. |
+| `replacement-service.ts` | `IMPLEMENTED`: vytvoří varianty náhrady a deterministicky vyhodnotí jejich dopad. |
+| `simulated/replacement-scenarios.ts` | `SIMULATED`: syntetický výpadek a tři varianty. |
+| `app/api/planning/replacement/` | `IMPLEMENTED`: vytvoření pracovního snapshotu a manager-only potvrzení. |
+| `components/plan/replacement-panel.tsx` | `IMPLEMENTED` / `DEMO`: zadání výpadku, karty variant a potvrzení. |
 
 ## Tok
 
@@ -68,7 +73,7 @@ PlanningInput
   → PlanningRunResult k posouzení manažerem
 ```
 
-Plánovaný operativní tok bude navazovat až na potvrzený plán:
+Syntetický operativní tok navazuje na potvrzený plán:
 
 ```text
 ConfirmedPlan

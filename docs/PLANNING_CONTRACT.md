@@ -345,7 +345,7 @@ interface ConfirmedPlan {
 `ConfirmedPlan` nevzniká v AI ani ve validačním jádru. Kdo potvrzení provedl a
 jak se to zaznamená, je otevřená otázka (OQ20).
 
-### 6.6 Operativní náhrada (`PLANNED`)
+### 6.6 Operativní náhrada (`IMPLEMENTED` / `SIMULATED`)
 
 Operativní náhrada je další kontrakt nad potvrzeným týdenním plánem. V prvním
 syntetickém řezu platí tento schválený tok:
@@ -359,26 +359,33 @@ ConfirmedPlan
   → nové potvrzení
 ```
 
-Navrhované typy jsou zatím `PROPOSAL`, nikoli implementovaný TypeScript:
+Implementovaný syntetický kontrakt je v `lib/planning/domain/types.ts` a
+service/API vrstvě. Zjednodušený tvar pro orientaci je:
 
 ```ts
 interface ReplacementRequest {
+  id: string;
   baseProposalId: string;
-  absentEmployeeId: string;
-  date: IsoDate;
-  shiftKind: ShiftKind;
+  weekStart: IsoDate;
+  incident: ShiftIncident;
 }
 
 interface ReplacementOption {
   id: string;
-  rank: 1 | 2 | 3;
-  candidateEmployeeId: string;
-  assignments: ProposedAssignment[];
-  summary: string;
-  impact: string;
-  tradeOffs: string[];
+  requestId: string;
+  draft: ReplacementDraft;
+  changes: AssignmentChange[];
+  coverage: CoverageLine[];
+  impact: ReplacementImpact;
+  validation: PlanValidationResult;
+  status: "valid" | "invalid" | "not_verified";
 }
 ```
+
+Implementace navíc odděluje AI návrh `ReplacementDraft` od deterministicky
+dopočtených `changes`, `coverage`, `impact` a `validation`. Uložený snapshot
+je pracovní; potvrzení managerem vytvoří novou verzi celého týdne a auditní
+událost `planning.replacement_confirmed`.
 
 `changes`, `coverage` a `validation` se počítají deterministicky nad každou
 variantou. Pro potvrzení se znovu vyhodnotí vybraná varianta. Pokud nejsou
@@ -407,9 +414,11 @@ aplikovat automaticky. Právní baseline pro profil limitů je `SOURCE EVIDENCE`
 nikoli hotové validační pravidlo.
 
 Maximální hodiny, maximální počet směn, role/dovednosti a další dosud
-nepotvrzené limity nejsou v prvním kontraktu nastavené jako univerzální čísla.
-Jejich zahrnutí závisí na konfigurovatelném profilu, právní kontrole a OQ9–OQ11
-a OQ10.
+nepotvrzené limity nejsou v prvním pilotu nastavené jako univerzální čísla.
+Volitelný `replacementLimits` profil při chybějící hodnotě vrací
+`REPLACEMENT_LIMIT_NOT_CONFIGURED` a stav `not_verified`; implementace nesmí
+limit domýšlet. Schválený plánovaný den volna je explicitně zobrazen jako
+vysoce dopadový `NOT VERIFIED` zásah a nelze jej potvrdit bez dalšího rozhodnutí.
 
 ## 7. Nezávislá validace — co je implementované
 

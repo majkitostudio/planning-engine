@@ -151,6 +151,17 @@ export interface PlanningHistory {
   readonly complete: boolean;
 }
 
+/**
+ * Volitelný profil limitů pro operativní náhrady.
+ *
+ * Hodnoty nejsou doménovým výchozím nastavením. Pokud je profil předán bez
+ * konkrétní hodnoty, kontrola zůstává `not_verified` místo domýšlení limitu.
+ */
+export interface ReplacementLimitsProfile {
+  readonly maxHoursPerWeek?: number;
+  readonly maxShiftsPerWeek?: number;
+}
+
 /** Stav výsledku deterministické validace. */
 export type PlanValidationStatus = "valid" | "invalid" | "not_verified";
 
@@ -188,7 +199,10 @@ export type PlanValidationCode =
   | "REST_INTERVAL_UNAVAILABLE"
   | "OVERLAP_INTERVAL_UNAVAILABLE"
   | "WEEKEND_TWO_DAYS_OFF"
-  | "WEEKEND_DAYS_OFF_INTERPRETATION";
+  | "WEEKEND_DAYS_OFF_INTERPRETATION"
+  | "REPLACEMENT_CONFIRMED_TIME_OFF"
+  | "REPLACEMENT_LIMIT_NOT_CONFIGURED"
+  | "REPLACEMENT_LIMIT_EXCEEDED";
 
 /**
  * Nález validace.
@@ -252,6 +266,8 @@ export interface PlanningInput {
   readonly rules: PlanningRules;
   /** Volitelná historie před `weekStart`; bez ní nelze některé kontroly ověřit. */
   readonly history?: PlanningHistory;
+  /** Volitelný explicitní profil limitů operativní náhrady. */
+  readonly replacementLimits?: ReplacementLimitsProfile;
 }
 
 /**

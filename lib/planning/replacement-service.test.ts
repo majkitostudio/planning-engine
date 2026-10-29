@@ -107,6 +107,92 @@ describe("replacement-service", () => {
     );
   });
 
+  it("zablokuje variantu, která mění schválený plánovaný den volna", () => {
+    const { input, basePlan, request } = makeScenario({
+      requests: [
+        {
+          id: "request-day-off",
+          employeeId: FREE_EMPLOYEE,
+          date: TARGET_DATE,
+          kind: "day_off",
+          status: "approved",
+        },
+      ],
+    });
+
+    const option = evaluateReplacementOption(
+      input,
+      basePlan,
+      request,
+      makeDraft("option-planned-day-off", replaceAbsentWith(FREE_EMPLOYEE)),
+    );
+
+    expect(option.validation.status).toBe("not_verified");
+    expect(option.impact.kind).toBe("confirmed_time_off_change");
+    expect(option.impact.timeOffChanges).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          employeeId: FREE_EMPLOYEE,
+          kind: "planned_day_off",
+          verified: false,
+        }),
+      ]),
+    );
+  });
+
+  it("rozliší neznámý typ schválené absence a nepovažuje ho za bezpečné volno", () => {
+    const { input, basePlan, request } = makeScenario({
+      absences: [
+        {
+          id: "absence-unknown",
+          employeeId: FREE_EMPLOYEE,
+          from: TARGET_DATE,
+          to: TARGET_DATE,
+          type: "other",
+          status: "approved",
+        },
+      ],
+    });
+
+    const option = evaluateReplacementOption(
+      input,
+      basePlan,
+      request,
+      makeDraft("option-unknown-leave", replaceAbsentWith(FREE_EMPLOYEE)),
+    );
+
+    expect(option.validation.status).toBe("invalid");
+    expect(option.impact.timeOffChanges).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          employeeId: FREE_EMPLOYEE,
+          kind: "unknown",
+          verified: false,
+        }),
+      ]),
+    );
+  });
+
+  it("označí chybějící hodnotu konfigurovatelného limitu jako not_verified", () => {
+    const { input, basePlan, request } = makeScenario({
+      replacementLimits: { maxShiftsPerWeek: 5 },
+    });
+
+    const option = evaluateReplacementOption(
+      input,
+      basePlan,
+      request,
+      makeDraft("option-missing-limit", replaceAbsentWith(FREE_EMPLOYEE)),
+    );
+
+    expect(option.validation.status).toBe("not_verified");
+    expect(option.validation.unverifiedChecks).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ code: "REPLACEMENT_LIMIT_NOT_CONFIGURED" }),
+      ]),
+    );
+  });
+
   it("odmítne kandidáta s překryvem a kontroluje celý týden", () => {
     const { input, basePlan, request } = makeScenario({
       existingAssignments: [
@@ -197,8 +283,10 @@ describe("replacement-service", () => {
 
 function makeScenario(overrides: {
   absences?: PlanningInput["absences"];
+  requests?: PlanningInput["requests"];
   existingAssignments?: PlanningInput["existingAssignments"];
   baseAssignments?: ConfirmedPlan["assignments"];
+  replacementLimits?: PlanningInput["replacementLimits"];
 } = {}) {
   const baseAssignments = overrides.baseAssignments ?? makeBaseAssignments();
   const basePlan: ConfirmedPlan = {
@@ -227,10 +315,11 @@ function makeScenario(overrides: {
       ),
     ],
     absences: overrides.absences ?? [],
-    requests: [],
+    requests: overrides.requests ?? [],
     existingAssignments: overrides.existingAssignments ?? baseAssignments,
     rules: CONFIRMED_PLANNING_RULES,
     history: { assignments: [], complete: true },
+    replacementLimits: overrides.replacementLimits,
   };
 
   return { input, basePlan, request: makeRequest() };

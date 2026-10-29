@@ -239,7 +239,7 @@ jsou pojistka, která musí fungovat i tehdy, když AI pravidlo nepochopí nebo
 ho ignoruje. Výsledek validace není schválení; schválení je vždy krok
 manažera.
 
-### 1.5 Další implementační řez: operativní náhrada (`PLANNED`)
+### 1.5 Další implementační řez: operativní náhrada (`IMPLEMENTED` / `SIMULATED`)
 
 Další práce navazuje na hotový týdenní návrh, ale není jeho součástí. Cílem je
 workflow:
@@ -253,9 +253,10 @@ potvrzený týdenní plán
   → potvrzení a nová verze týdne
 ```
 
-Pojmy `ShiftIncident`, `ReplacementRequest` a `ReplacementOption` jsou zatím
-`PROPOSAL`. Přesný tvar se uzavře v `PLANNING_CONTRACT.md` až po rozhodnutí
-OQ2–OQ4, OQ9–OQ11, OQ20 a OQ22.
+Pojmy `ShiftIncident`, `ReplacementRequest` a `ReplacementOption` jsou
+implementované pro syntetický pilot v `lib/planning/domain/types.ts`. Nejsou
+produkční doménovou specifikací; jejich rozšíření zůstává závislé na OQ2–OQ4,
+OQ9–OQ11, OQ20 a OQ22.
 
 ## 2. Co má plánovací nástroj plánovat
 
@@ -299,9 +300,9 @@ definice kontraktu.
 | `ExistingAssignment` | Již existující směna, vůči které se počítají změny | `VERIFIED` (vstup) |
 | `PlanningRules` | Potvrzená pravidla odpočinku a víkendových dnů volna | `VERIFIED` |
 | `PlanDraft` | Návrh AI: přiřazení, změny, nedostatky, vysvětlení, alternativy | `IMPLEMENTED` (typ) |
-| `ShiftIncident` | Provozní výpadek zaměstnance na konkrétní směně | `PROPOSAL` / `PLANNED` |
-| `ReplacementRequest` | Požadavek na náhradu nad konkrétní verzí potvrzeného týdne | `PROPOSAL` / `PLANNED` |
-| `ReplacementOption` | Jedna konkrétní varianta náhrady s dopočítaným dopadem | `PROPOSAL` / `PLANNED` |
+| `ShiftIncident` | Provozní výpadek zaměstnance na konkrétní směně | `IMPLEMENTED` / `SIMULATED` |
+| `ReplacementRequest` | Požadavek na náhradu nad konkrétní verzí potvrzeného týdne | `IMPLEMENTED` / `SIMULATED` |
+| `ReplacementOption` | Jedna konkrétní varianta náhrady s dopočítaným dopadem | `IMPLEMENTED` / `SIMULATED` |
 | `ControlResult` | Výsledek nezávislé validace | `IMPLEMENTED` (jádro) |
 | `ConfirmedPlan` | Až manažerem potvrzený výsledek; nevzniká automaticky | `IMPLEMENTED` (typ) / `PLANNED` (vznik potvrzením) |
 
@@ -351,9 +352,9 @@ doplnit jako „rozumný default“.
 | Výsledek validace | Nálezy nezávislých pravidel se závažností | `IMPLEMENTED` (jádro) |
 | Vysvětlení | Proč AI zvolila dané přiřazení a co omezuje | `IMPLEMENTED` (typ; plnění AI `NOT VERIFIED`) |
 | Alternativy | Konkrétní náhradní řešení při konfliktu | `IMPLEMENTED` (typ; plnění AI `NOT VERIFIED`) |
-| Varianty náhrady | Tři odlišné celé varianty s kandidátem, dopadem a kompromisy | `PLANNED`; deterministický dopad je podmínka |
+| Varianty náhrady | Tři odlišné celé varianty s kandidátem, dopadem a kompromisy | `IMPLEMENTED` / `SIMULATED`; kvalita AI výstupu `NOT VERIFIED` |
 | Stav návrhu | Návrh / ověřený návrh / čeká na potvrzení | `IMPLEMENTED` (typy stavů) |
-| Potvrzené změny | Samostatný výsledek až po rozhodnutí manažera | `PLANNED` |
+| Potvrzené změny | Samostatný výsledek až po rozhodnutí manažera | `IMPLEMENTED` / `SIMULATED`; produkční DB `NOT VERIFIED` |
 
 `OPEN QUESTION`:
 
@@ -517,8 +518,9 @@ podřízený tomuto dokumentu — autoritativní seznam je tento.
 
 - **OQ2** (S2) Je plán statický nebo průběžně upravovaný? Pro operativní řez je
   potvrzeno průběžné vytváření nové verze týdne; širší pravidla historie zůstávají otevřená.
-- **OQ3** (S3) Které entity jsou skutečně potřeba a které nadbytečné? Pro operativní
-  řez jsou `ShiftIncident`, `ReplacementRequest` a `ReplacementOption` zatím návrh.
+- **OQ3** (S3) Které entity jsou skutečně potřeba a které nadbytečné? Syntetický
+  pilot používá `ShiftIncident`, `ReplacementRequest` a `ReplacementOption`; jejich
+  produkční rozšíření zůstává otevřené.
   *(minimální kontrakt první verze je navržený v `PLANNING_CONTRACT.md`)*
 - **OQ4** (S3) Které atributy entit jsou povinné? Výpadek musí nejméně odkazovat
   na zaměstnance, datum, celou směnu a výchozí verzi plánu; přesný kontrakt je otevřený.

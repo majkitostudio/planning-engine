@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { EmptyState } from "@/components/ui/empty-state";
 import { StatCard } from "@/components/ui/stat-card";
 import { PlanningResult } from "@/components/plan/planning-result";
+import { ReplacementPanel } from "@/components/plan/replacement-panel";
 import type { PlanningRunView, PlanningFailureView } from "@/lib/planning/view-model";
 import {
   DEMO_ABSENCES,
@@ -279,6 +280,8 @@ export function PlanWorkspace({ runtime }: PlanWorkspaceProps) {
         }
         providerMode={runtime.configured ? runtime.mode : "simulated"}
       />
+
+      <ReplacementPanel enabled={runtime.configured && runtime.mode === "simulated"} />
 
       <div className="stat-grid">
         {DEMO_STATS.map((stat) => (
