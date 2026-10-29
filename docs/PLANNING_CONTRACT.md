@@ -390,9 +390,21 @@ dalších celých přiřazení v týdnu, ale všechny musí být viditelné v do
 Operativní výpadek se před potvrzením neukládá jako změna rozpisu. Po potvrzení
 vzniká nová verze celého týdne.
 
+Každá řešená směna má interní provozní minimum 7 lidí. Pořadí cíle varianty je
+nejprve splnit toto minimum, potom neporušit ověřená tvrdá pravidla a potom
+změnit co nejméně dalších lidí. Pokud změna jednoho volna vyvolá další změny,
+variantní dopad musí zobrazit celý řetězec.
+
+Skutečná dovolená, plánovaný den volna a náhradní volno po víkendové práci se
+nesmí bez informace ze vstupu zaměnit. Potvrzené volno je blokátor. Varianta,
+která ho mění, je vysoce dopadový návrh s výslovným označením a nesmí se
+aplikovat automaticky. Právní baseline pro profil limitů je `SOURCE EVIDENCE`,
+nikoli hotové validační pravidlo.
+
 Maximální hodiny, maximální počet směn, role/dovednosti a další dosud
-nepotvrzené limity nejsou součástí tohoto kontraktu. Jejich zahrnutí závisí na
-OQ9–OQ11 a OQ10.
+nepotvrzené limity nejsou v prvním kontraktu nastavené jako univerzální čísla.
+Jejich zahrnutí závisí na konfigurovatelném profilu, právní kontrole a OQ9–OQ11
+a OQ10.
 
 ## 7. Nezávislá validace — co je implementované
 

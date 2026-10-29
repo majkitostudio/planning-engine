@@ -23,10 +23,21 @@ Manager schválil následující rozsah přípravy:
 - AI nabídne tři odlišné varianty, pokud jsou dostupné; nedostatek se přizná,
 - dopad všech variant se dopočítá deterministicky a vybraná varianta se před
   potvrzením znovu validuje,
+- každá řešená směna musí mít alespoň 7 lidí; jde o interní provozní minimum,
+  nikoli o zákonný limit,
+- priorita návrhu je: zachovat minimum obsazení, neporušit ověřená tvrdá
+  pravidla, změnit co nejméně dalších lidí a zobrazit celý řetězec následků,
+  pokud se mu nelze vyhnout,
+- změna potvrzeného volna je vysoce dopadová varianta; AI ji může navrhnout,
+  ale nesmí ji sama aplikovat,
 - první řez používá simulovaný provider a syntetická data,
 - první audit obsahuje potvrzenou změnu, původní a nový rozpis, incident,
   vybranou variantu, výchozí verzi a identitu managera,
-- maximální hodiny/směny se nebudou domýšlet a bez OQ10 zůstávají `NOT VERIFIED`.
+- limity budou připravené jako konfigurovatelný profil; právní baseline slouží
+  jako zdroj evidence, ale bez interního a právního potvrzení zůstává
+  vyhodnocení `NOT VERIFIED`,
+- pojem „dovolená“ se v provozním vstupu nesmí automaticky zaměnit za
+  plánovaný den volna nebo náhradní volno po víkendu.
 
 ## Cíl prvního funkčního řezu
 
@@ -88,12 +99,17 @@ Před rozšířením doménových typů musí manager rozhodnout alespoň:
 - **OQ3–OQ4:** které entity a povinné atributy jsou pro výpadek nutné,
 - **OQ6–OQ7:** jak se výpadek zadává a jak vypadá výsledek v UI,
 - **OQ9–OQ11:** která pravidla jsou tvrdá, zejména dostupnost, role a limity,
-- **OQ10:** konkrétní hodnoty maximálních hodin/směn a dalších limitů,
-- **OQ12–OQ14 a OQ17:** co znamená „nejméně destruktivní“ varianta,
+- **OQ10:** konkrétní konfigurační profil limitů a jeho právní/interní
+  potvrzení,
+- **OQ12–OQ14 a OQ17:** v prvním řezu je priorita pokrytí, ověřená tvrdá
+  pravidla a nejmenší dopad na další lidi; další preference zůstávají mimo
+  rozsah,
 - **OQ20:** rozsah auditu operativní změny,
-- **OQ22:** rozdíl mezi nahlášeným výpadkem, schválenou absencí a přáním.
+- **OQ22:** rozdíl mezi nahlášeným výpadkem, skutečnou dovolenou, plánovaným
+  dnem volna, náhradním volnem a přáním.
 
 Do rozhodnutí se nesmí doplňovat žádné pracovní nebo personální limity.
+Právní baseline je zdroj evidence, nikoli automaticky schválené pravidlo.
 Potvrzené zůstávají pouze současná pravidla a výklady OQ21, OQ23 a OQ24.
 
 ## Přístupy

@@ -18,7 +18,14 @@
 - AI ani validace samy neschvalují a před potvrzením se nesmí změnit potvrzený rozpis.
 - Každá varianta musí mít viditelný dopad na změny a pokrytí.
 - Vybraná varianta se potvrdí pouze jako kompletní a `ready_for_review`.
-- Maximální hodiny/směny, role, dovednosti a další limity se nesmí domýšlet; OQ10/OQ9/OQ11 zůstávají blokátorem příslušné kontroly.
+- Limity se připraví jako konfigurovatelný profil. Právní baseline je pouze
+  zdroj evidence; bez právního a interního potvrzení se výsledek označí jako
+  `NOT VERIFIED`. Role, dovednosti a další limity se nesmí domýšlet.
+- Každá řešená směna musí dosáhnout interního minima 7 lidí. Priorita návrhu je
+  nejprve pokrytí, potom ověřená tvrdá pravidla, potom nejmenší počet dalších
+  dotčených lidí; celý řetěz dopadů musí být viditelný.
+- Změna schváleného volna je vysoce dopadová varianta. Systém ji může navrhnout,
+  ale nesmí ji automaticky převést ani tvrdit, že nahradí právní/HR postup.
 - První implementace používá simulovaný provider; Gemini se připojí až po stabilizaci kontraktu.
 - Nepřidávat Outlook, CRM, roster, produkční autentizaci, produkční PostgreSQL ani částečné úvazky.
 
@@ -43,9 +50,15 @@
 - Consumes: schválené volby v design dokumentu a odpovědi managera.
 - Produces: `VERIFIED`/`OPEN QUESTION` stav pro OQ2, OQ9–OQ11, OQ20 a OQ22 a konkrétní hodnoty OQ10, které mohou vstoupit do typů a testů.
 
-- [ ] **Step 1: Zapsat odpovědi managera** k maximálním hodinám/směnám, přesnému stavu incidentu, rozsahu auditu a případným dalším tvrdým pravidlům.
-- [ ] **Step 2: Zkontrolovat, že žádná hodnota v odpovědích není odvozena z pracovního práva nebo z historického emailu bez výslovného potvrzení.**
-- [ ] **Step 3: Spustit `git diff --check`** a ověřit, že dokumentace rozlišuje `VERIFIED`, `PROPOSAL`, `OPEN QUESTION`, `PLANNED` a `NOT VERIFIED`.
+- [ ] **Step 1: Zapsat konfigurační profil** podle právního baseline a interních
+      pravidel: maximální hodiny/směny, odpočinky, přesčasy a další tvrdá pravidla.
+- [ ] **Step 2: Zapsat odpovědi managera** k přesnému stavu incidentu, rozlišení
+      dovolené/plánovaného volna/náhradního volna a rozsahu auditu.
+- [ ] **Step 3: Zkontrolovat, že žádná hodnota v profilu není odvozena pouze z
+      pracovního práva nebo historického emailu bez právního a interního potvrzení.**
+- [ ] **Step 4: Spustit `git diff --check`** a ověřit, že dokumentace rozlišuje
+      `VERIFIED`, `SOURCE EVIDENCE`, `PROPOSAL`, `OPEN QUESTION`, `PLANNED` a
+      `NOT VERIFIED`.
 
 Implementace doménových limitů je `BLOCKED`, dokud tento krok nedodá konkrétní hodnoty; ostatní syntetická příprava může pokračovat pouze bez tvrzení, že tyto limity jsou ověřené.
 

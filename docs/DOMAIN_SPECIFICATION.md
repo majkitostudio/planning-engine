@@ -118,12 +118,42 @@ Nejsou schválením dosud otevřených pracovněprávních nebo personálních p
   není dost, systém to přizná.
 - Dopad variant se počítá deterministicky. Po výběru manažerem se vybraná
   varianta znovu ověří stejnou validací jako běžný týdenní návrh.
+- Každá řešená směna musí mít alespoň 7 lidí. Jde o interní provozní minimum,
+  nikoli o zákonný limit.
+- Priorita návrhu je: zachovat minimální obsazení, neporušit ověřená tvrdá
+  pravidla, změnit co nejméně dalších lidí a zobrazit celý řetězec následků,
+  pokud se mu nelze vyhnout.
+- Změna potvrzeného volna je vysoce dopadová varianta. AI ji může navrhnout,
+  ale nesmí ji sama aplikovat.
 - První řez používá syntetická data a simulovaný provider. Gemini se zapojí až
   po stabilizaci kontraktu operativní náhrady.
 - V prvním řezu se audit zaměřuje na potvrzenou změnu, původní a nový rozpis,
   incident, vybranou variantu, výchozí verzi a identitu managera.
-- Maximální hodiny, maximální počet směn a další dosud nepotvrzené limity se
-  nesmí domýšlet. Dokud není uzavřen OQ10, jde o `NOT VERIFIED` omezení.
+- Limity budou připravené jako konfigurovatelný profil. Právní baseline je
+  pouze `SOURCE EVIDENCE`; bez interního a právního potvrzení zůstává jejich
+  vyhodnocení `NOT VERIFIED`.
+- V provozním vstupu se nesmí automaticky zaměnit skutečná dovolená, plánovaný
+  den volna a náhradní volno po víkendové práci. Pokud jejich přesné rozlišení
+  není dostupné, návrh musí tuto nejistotu přiznat.
+
+### 0.5 Právní baseline (`SOURCE EVIDENCE`, 29. 10. 2026)
+
+Pro nastavitelný profil limitů byly zkontrolovány příslušné části aktuálního
+znění zákoníku práce v příručce MPSV. Tento přehled není právní posudek ani
+automaticky schválené pravidlo aplikace:
+
+- § 79 a § 80: standardní týdenní pracovní doba a písemně sjednaná kratší
+  pracovní doba,
+- § 83: maximální délka směny 12 hodin,
+- § 84: standardní oznámení rozvrhu nebo jeho změny nejpozději 2 týdny předem,
+- § 88: přestávka nejméně 30 minut po nejvýše 6 hodinách nepřetržité práce,
+- § 90 a § 92: denní a týdenní nepřetržitý odpočinek,
+- § 93: podmínky a limity práce přesčas,
+- § 217: určování, změna a odvolání z dovolené včetně možných nákladů.
+
+Odkazy na zdroje: [MPSV — pracovní doba a odpočinek](https://ppropo.mpsv.cz/VIIIPracovnidobaadobaodpocinku),
+[MPSV — úplné znění zákoníku práce](https://ppropo.mpsv.cz/zakon_262_2006),
+[MPSV — dovolená](https://ppropo.mpsv.cz/XDovolena).
 
 ### 0.4 Evidence z původního emailu managera (`SOURCE EVIDENCE`, 28. 10. 2026)
 
@@ -337,7 +367,7 @@ musí být vynuceno deterministickou validací, ne jen instrukcí pro AI.
 | H2 | Zaměstnanec nesmí být ve dvou směnách, které se překrývají | `VERIFIED` (integrita) | Základní invariant návrhu. |
 | H3 | Schválená absence blokuje přiřazení | `VERIFIED` | Jiná omezení dostupnosti jsou `OPEN QUESTION`. |
 | H4 | Směnu smí obsadit jen zaměstnanec s požadovanou rolí/dovedností | `ASSUMPTION` | Role nejsou potvrzené. |
-| H5 | Maximální počet hodin nebo směn za týden | `OPEN QUESTION` | Číslo není potvrzené. |
+| H5 | Maximální počet hodin nebo směn za období | `OPEN QUESTION` | Právní baseline je zdroj evidence; konkrétní profil není potvrzený. |
 | H6 | Po šesti po sobě jdoucích pracovních dnech alespoň 35 h nepřetržitého odpočinku | `VERIFIED` | Pracovní den je kalendářní den s alespoň jednou směnou (OQ21). |
 | H7 | Uzamčené přiřazení nelze přepsat | `OPEN QUESTION` | První řez nemá potvrzené zamykání. |
 | H8 | Zaměstnanec pracující o víkendu má v témže týdnu dva dny volna | `VERIFIED` | Výklad „během týdne“ = pondělí–nedělí je `ASSUMPTION`. |
@@ -364,8 +394,10 @@ více směn v jednom dni se započítá jednou.
 | S5 | Vyvažovat složitost/obtížnost směn | `ASSUMPTION` |
 
 Požadavky na volno a preference směn jsou vstupem, ale jejich váha a způsob
-vyhodnocení nejsou potvrzené. AI je může zohlednit jako vodítko; deterministická
-validace je nesmí vydávat za splněný nárok.
+vyhodnocení nejsou potvrzené. U operativní náhrady má přednost pokrytí nejméně
+7 lidí, ověřená tvrdá pravidla a co nejmenší dopad na další lidi; AI musí
+zobrazit i řetězové změny. Deterministická validace nesmí žádnou měkkou
+preferenci vydávat za splněný nárok.
 
 `OPEN QUESTION`:
 

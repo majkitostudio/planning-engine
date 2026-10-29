@@ -118,9 +118,12 @@ integrace s CRM zůstává mimo rozsah.
 
 ### Nejbližší aktivní kroky
 
-1. **Uzavřít rozhodovací brány pro operativní řez.** Prioritně OQ10 (konkrétní
-   limity), OQ22 (stav incidentu), OQ9/OQ11 (další tvrdá pravidla), OQ12–OQ14 a
-   OQ17 (co znamená nejméně destruktivní varianta) a rozsah auditu OQ20.
+1. **Dokončit rozhodovací brány pro operativní řez.** Právní baseline OQ10 je
+   zmapovaný, ale konkrétní konfigurovatelný profil a jeho interní/právní
+   potvrzení ještě chybí. OQ22 má jednoduchý incidentní životní cyklus;
+   zbývá rozlišení dovolené, plánovaného volna a náhradního volna. OQ9/OQ11,
+   rozsah auditu OQ20 a preference mimo pokrytí/tvrdá pravidla zůstávají
+   omezené nebo otevřené.
 2. **Zmrazit operativní kontrakt.** Navrhnout a otestovat `ShiftIncident`,
    `ReplacementRequest` a `ReplacementOption` bez ukládání doménových modelů do
    produkční databáze.
@@ -156,13 +159,14 @@ Outlook, CRM, roster ani podpora částečných úvazků.
 ## 7. Otevřené otázky
 
 - Zda musí být dva dny volna po víkendu po sobě jdoucí.
-- Role, maximální hodiny, zamykání přiřazení (OQ9–OQ11).
-- Zpracování požadavků a preferencí (OQ12–OQ14, OQ22).
+- Konfigurovatelný profil limitů, role a zamykání přiřazení (OQ9–OQ11).
+- Zpracování požadavků a preferencí mimo pokrytí a nejmenší dopad
+  (OQ12–OQ14, OQ17).
 - Statický vs. průběžně upravovaný plán (OQ2).
 - Způsob zadávání vstupů a tvar výstupu (OQ6–OQ8).
 - Role, schvalovací tok a audit (OQ18–OQ20).
-- Přesný životní cyklus provozního incidentu a jeho vztah ke schválené absenci
-  (OQ22).
+- Přesné rozlišení skutečné dovolené, plánovaného dne volna a náhradního volna
+  a jejich provozní/HR postup při změně (OQ22).
 - Vizuální detaily demo UI (barva odpolední směny, avatary, ikona
   „Nesplněné požadavky“) — `OPEN QUESTION`; zdrojem pravdy je
   `app/globals.css`.
