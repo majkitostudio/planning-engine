@@ -17,7 +17,7 @@ jiných dokumentů neopakuje.
 | [`DOMAIN_DECISIONS.md`](DOMAIN_DECISIONS.md) | Otevřené otázky a odpovědi managera | `PARTIALLY ANSWERED` |
 | [`adr/`](adr/README.md) | Proč jsou technická rozhodnutí taková | `IMPLEMENTED` |
 | [`superpowers/specs/2026-10-29-operativni-nahrady-design.md`](superpowers/specs/2026-10-29-operativni-nahrady-design.md) | Schválený záměr další fáze operativních náhrad | `VERIFIED` / `PROPOSAL` |
-| [`superpowers/plans/2026-10-29-operativni-nahrady.md`](superpowers/plans/2026-10-29-operativni-nahrady.md) | Implementační pořadí operativních náhrad | `PLANNED` |
+| [`superpowers/plans/2026-10-29-operativni-nahrady.md`](superpowers/plans/2026-10-29-operativni-nahrady.md) | Historický implementační plán; aktuální stav je v roadmapě | `SUPERSEDED` |
 | [`../lib/planning/README.md`](../lib/planning/README.md) | Co skutečně obsahuje plánovací jádro | `IMPLEMENTED` |
 | [`../prisma/schema.prisma`](../prisma/schema.prisma) | Provozní modely identity, běhu a auditu; doménové modely stále chybí | `IMPLEMENTED` (lokální migrace `VERIFIED`, produkční DB `NOT VERIFIED`) |
 

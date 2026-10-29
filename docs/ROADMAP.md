@@ -1,6 +1,6 @@
 # Roadmapa — Plánovací Engine
 
-> Stav zkontrolovaný 29. 10. 2026 proti kódu a schválenému směru další práce.
+> Stav zkontrolovaný 30. 10. 2026 proti kódu, spuštěným kontrolám a schválenému směru další práce.
 > Význam popisků vysvětluje
 > [`docs/README.md`](README.md#stavové-popisky).
 
@@ -35,16 +35,17 @@ jsou `NOT VERIFIED` nebo `PLANNED`; lokální Docker PostgreSQL běh je `VERIFIE
 | Prisma základ | PostgreSQL datasource, provozní modely a připravená migrace bez doménových modelů | `prisma/schema.prisma`, `prisma/migrations/` |
 | CI | lint, typecheck, testy, build a validace Prisma | `.github/workflows/ci.yml` |
 
-Aktuální ověření pracovního stromu (29. 10. 2026):
+Aktuální ověření pracovního stromu (30. 10. 2026):
 
-- `npm run test -- --run` — 222 prošlo, 1 přeskočen (integrační Gemini test bez explicitního spuštění).
-- `npm run test -- lib/ai/gemini-planning-provider.integration.test.ts` s lokálním
-  `.env.local` — 1 integrační test prošel; skutečné volání Gemini bylo ověřeno.
-- `npm run typecheck` — prošlo.
-- `npm run build` — prošlo.
-- `npm run db:validate` — schéma je validní; staffing migrace byla aplikována na
-  existující lokální Docker kontejner `planning-engine-postgres`.
 - `npm run lint` — prošlo bez warningů.
+- `npm run typecheck` — prošlo.
+- `npm test -- --run` — 222 prošlo, 1 přeskočen (Gemini integrační test nebyl
+  součástí běžné sady).
+- `npm run build` — prošlo.
+- `npm run db:validate` — schéma je validní.
+- Oddělený Gemini integrační test a manuální Docker/browser smoke nejsou součástí
+  této kontroly; jejich dříve zaznamenané výsledky zůstávají omezené na lokální
+  konfiguraci a syntetický pilot.
 - Cílený staffing test `npm test -- --run lib/planning/staffing-settings.test.ts tests/staffing-settings-routes.test.ts` — 10 testů prošlo.
 - Manuální staffing browser smoke — manager načetl výchozí hodnoty 15/7, uložil
   změny a po reloadu je znovu načetl; viewer hodnoty pouze zobrazil a POST API
@@ -231,6 +232,12 @@ Podrobnosti a místo pro odpovědi: [`DOMAIN_DECISIONS.md`](DOMAIN_DECISIONS.md)
   kontrakt, simulovaný provider se třemi variantami, deterministické změny/
   pokrytí/validace, snapshot, manager-only potvrzení nové verze a auditní událost
   `planning.replacement_confirmed`; plná sada má 209 průchozích testů a 1 přeskočený.
+- **29. 10. 2026:** přidáno manager-only nastavení potřebného obsazení s Prisma
+  persistencí; staffing migrace a manuální lokální DB/browser smoke ověřily uložení,
+  načtení, viewer přístup a použití hodnoty v syntetické operativní náhradě.
+- **30. 10. 2026:** údržbová kontrola potvrdila čistý pracovní strom; lint,
+  typecheck, 222 testů (1 Gemini integrační test přeskočen), build a Prisma
+  validace prošly.
 
 ## 10. Odkazy
 
