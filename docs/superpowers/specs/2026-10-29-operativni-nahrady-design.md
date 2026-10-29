@@ -25,6 +25,8 @@ Manager schválil následující rozsah přípravy:
   potvrzením znovu validuje,
 - každá řešená směna musí mít alespoň 7 lidí; jde o interní provozní minimum,
   nikoli o zákonný limit,
+- směna má pevně danou délku a náhrada ji nesmí prodloužit, zkrátit ani dělit,
+- přesčasy se v provozu nepoužívají; práce mimo pevnou směnu je neplatná varianta,
 - priorita návrhu je: zachovat minimum obsazení, neporušit ověřená tvrdá
   pravidla, změnit co nejméně dalších lidí a zobrazit celý řetězec následků,
   pokud se mu nelze vyhnout,

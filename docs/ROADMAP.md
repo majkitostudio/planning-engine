@@ -120,7 +120,8 @@ integrace s CRM zůstává mimo rozsah.
 
 1. **Dokončit rozhodovací brány pro operativní řez.** Právní baseline OQ10 je
    zmapovaný, ale konkrétní konfigurovatelný profil a jeho interní/právní
-   potvrzení ještě chybí. OQ22 má jednoduchý incidentní životní cyklus;
+   potvrzení ještě chybí. Pevná délka směny a zákaz přesčasů jsou pro projekt
+   potvrzené interní mantinely. OQ22 má jednoduchý incidentní životní cyklus;
    zbývá rozlišení dovolené, plánovaného volna a náhradního volna. OQ9/OQ11,
    rozsah auditu OQ20 a preference mimo pokrytí/tvrdá pravidla zůstávají
    omezené nebo otevřené.

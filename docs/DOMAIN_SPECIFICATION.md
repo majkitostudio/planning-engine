@@ -120,6 +120,10 @@ Nejsou schválením dosud otevřených pracovněprávních nebo personálních p
   varianta znovu ověří stejnou validací jako běžný týdenní návrh.
 - Každá řešená směna musí mít alespoň 7 lidí. Jde o interní provozní minimum,
   nikoli o zákonný limit.
+- Délka směny je pevně daná definicí směny. Operativní náhrada nesmí směnu
+  prodlužovat, zkracovat ani dělit.
+- Přesčasy se v tomto provozu nepoužívají. Varianta vyžadující práci mimo
+  pevnou směnu je neplatná.
 - Priorita návrhu je: zachovat minimální obsazení, neporušit ověřená tvrdá
   pravidla, změnit co nejméně dalších lidí a zobrazit celý řetězec následků,
   pokud se mu nelze vyhnout.
@@ -374,12 +378,13 @@ musí být vynuceno deterministickou validací, ne jen instrukcí pro AI.
 | H9 | První verze pouze plné úvazky | `VERIFIED` (rozsah) | Není pravidlo pro plánování, ale omezení rozsahu. |
 | H10 | Potřebné obsazení je splněno, nebo je nedostatek přiznán | `VERIFIED` (cíl) | Zda je nedostatek tvrdá chyba, je `OPEN QUESTION`. |
 | H11 | Bez potvrzení manažera se nic neukládá | `VERIFIED` (proces) | Netýká se obsahu plánu. |
+| H12 | Operativní náhrada nesmí prodlužovat, zkracovat ani dělit pevnou směnu; přesčas se nepoužívá | `VERIFIED` (interní) | Náhrada se vybírá pouze z celých existujících směn. |
 
 `OPEN QUESTION`:
 
 9. Která z kandidátních pravidel (H4, H5, H7) jsou skutečně tvrdá?
 10. Jaké jsou konkrétní limity (max. hodiny, jiný odpočinek než 35 h po 6 dnech)?
-11. Existují pravidla mimo seznam (svátky, jazyky, kontinuita týmu, přesčasy)?
+11. Existují další pravidla mimo seznam (svátky, jazyky, kontinuita týmu)?
 OQ21 je uzavřena: pracovní den je kalendářní den s alespoň jednou směnou;
 více směn v jednom dni se započítá jednou.
 
@@ -389,7 +394,7 @@ více směn v jednom dni se započítá jednou.
 | --- | --- | --- |
 | S1 | Rovnoměrné rozložení směn mezi zaměstnance | `ASSUMPTION` |
 | S2 | Respektovat preference zaměstnanců (obliba směn/časů) | `ASSUMPTION` |
-| S3 | Minimalizovat přesčasy | `ASSUMPTION` |
+| S3 | Práce mimo pevnou směnu | `VERIFIED` (interní zákaz; viz H12) |
 | S4 | Preferovat kontinuitu (stejný tým/kampaň v rámci období) | `ASSUMPTION` |
 | S5 | Vyvažovat složitost/obtížnost směn | `ASSUMPTION` |
 

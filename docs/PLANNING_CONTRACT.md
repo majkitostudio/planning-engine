@@ -395,6 +395,11 @@ nejprve splnit toto minimum, potom neporušit ověřená tvrdá pravidla a potom
 změnit co nejméně dalších lidí. Pokud změna jednoho volna vyvolá další změny,
 variantní dopad musí zobrazit celý řetězec.
 
+Délka směny se bere z existující `ShiftDefinition` a je pevná. Operativní
+náhrada pracuje pouze s celou směnou; nesmí ji prodloužit, zkrátit ani rozdělit.
+Přesčasy se v tomto provozu nepoužívají, takže varianta vyžadující práci mimo
+pevně definovanou směnu je neplatná.
+
 Skutečná dovolená, plánovaný den volna a náhradní volno po víkendové práci se
 nesmí bez informace ze vstupu zaměnit. Potvrzené volno je blokátor. Varianta,
 která ho mění, je vysoce dopadový návrh s výslovným označením a nesmí se

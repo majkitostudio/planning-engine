@@ -88,6 +88,10 @@ dosud neznámé pracovní limity ani preference.
   znovu validuje před potvrzením.
 - Každá řešená směna musí mít alespoň 7 lidí. Jde o interní provozní požadavek,
   nikoli o zákonný limit.
+- Délka směny je pevně daná existující definicí směny. Operativní náhrada nesmí
+  směnu prodlužovat, zkracovat ani dělit na části.
+- Přesčasy se v tomto provozu nepoužívají. Varianta, která by vyžadovala práci
+  mimo pevně definovanou směnu, není platná náhrada.
 - Pořadí cíle operativní náhrady je: zachovat minimální obsazení, neporušit
   ověřená tvrdá pravidla, změnit co nejméně dalších lidí a pokud změna volna
   vytvoří další povinnost odpočinku, navrhnout i její náhradu. Když bez řetězové
@@ -137,6 +141,10 @@ Zdrojem je aktuální příručka MPSV s úplným zněním zákona č. 262/2006 
 [úplné znění zákoníku práce](https://ppropo.mpsv.cz/zakon_262_2006) a
 [část o dovolené](https://ppropo.mpsv.cz/XDovolena). Před použitím jako
 tvrdých pravidel musí konkrétní profil projít právní a interní kontrolou.
+
+Pro tento projekt je interní rozhodnutí přísnější: přesčasy se nepoužívají.
+Zákonný rámec pro přesčasy proto není povolením, aby je AI navrhovala; slouží
+jen jako zdroj evidence pro budoucí právní kontrolu.
 
 V provozním scénáři se proto nesmí bez dalšího zaměnit **skutečná dovolená**,
 **plánovaný den volna** a **náhradní volno po víkendové práci**. První řez
@@ -350,8 +358,9 @@ zatím pouze:
 
 Pro implementaci profilu je třeba potvrdit, která zákonná pravidla a která
 interní pravidla se v tomto provozu skutečně použijí. Ostatní limity (maximum
-hodin za určené období, maximum směn v řadě, přesčasy, jiný odpočinek) zůstávají
-`OPEN QUESTION` nebo `NOT VERIFIED`. Čísla se nesmí domýšlet.
+hodin za určené období, maximum směn v řadě, jiný odpočinek) zůstávají
+`OPEN QUESTION` nebo `NOT VERIFIED`. Přesčas je pro tento provoz výslovně
+zakázaný projektový výstup, nikoli otevřená optimalizační možnost.
 
 ### OQ11 — Existují pravidla mimo uvedený seznam?
 
@@ -363,7 +372,11 @@ Pro každé další pravidlo prosím: **co** se nesmí / má, **kdy** to platí 
 
 **Návrh k diskusi (`PROPOSAL`):** žádný — pravidla musí vyjmenovat manager.
 
-**Odpověď:**
+**Odpověď:** `PARTIALLY ANSWERED` (29. 10. 2026) — pro první operativní řez
+nepřidáváme další tvrdá pravidla nad potvrzený základ, interní minimum 7 lidí,
+pevnou délku směny a zákaz přesčasů. Další pravidla (např. svátky, jazyky,
+role/dovednosti nebo kontinuita týmu) zůstávají `OPEN QUESTION`, dokud je
+manager výslovně nepotvrdí.
 
 ---
 

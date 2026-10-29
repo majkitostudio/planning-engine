@@ -24,6 +24,8 @@
 - Každá řešená směna musí dosáhnout interního minima 7 lidí. Priorita návrhu je
   nejprve pokrytí, potom ověřená tvrdá pravidla, potom nejmenší počet dalších
   dotčených lidí; celý řetěz dopadů musí být viditelný.
+- Délka směny je pevná a náhrada pracuje pouze s celou existující směnou.
+  Přesčas ani práce mimo pevně definovanou směnu se nenavrhují.
 - Změna schváleného volna je vysoce dopadová varianta. Systém ji může navrhnout,
   ale nesmí ji automaticky převést ani tvrdit, že nahradí právní/HR postup.
 - První implementace používá simulovaný provider; Gemini se připojí až po stabilizaci kontraktu.
@@ -51,7 +53,8 @@
 - Produces: `VERIFIED`/`OPEN QUESTION` stav pro OQ2, OQ9–OQ11, OQ20 a OQ22 a konkrétní hodnoty OQ10, které mohou vstoupit do typů a testů.
 
 - [ ] **Step 1: Zapsat konfigurační profil** podle právního baseline a interních
-      pravidel: maximální hodiny/směny, odpočinky, přesčasy a další tvrdá pravidla.
+      pravidel: maximální hodiny/směny, odpočinky a další tvrdá pravidla;
+      přesčasy jsou v tomto provozu vypnuté.
 - [ ] **Step 2: Zapsat odpovědi managera** k přesnému stavu incidentu, rozlišení
       dovolené/plánovaného volna/náhradního volna a rozsahu auditu.
 - [ ] **Step 3: Zkontrolovat, že žádná hodnota v profilu není odvozena pouze z
