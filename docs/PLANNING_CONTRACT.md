@@ -257,9 +257,11 @@ interface Alternative {
 }
 ```
 
-Alternativa je opět jen návrh. Musí projít stejnou validací jako hlavní návrh
-a nikdy se neaplikuje bez potvrzení. Pokud nelze splnit všechny požadavky, musí
-být alternativa konkrétní, ne obecné „zkuste přidat lidi“.
+Alternativa je opět jen návrh. Cílový kontrakt vyžaduje, aby její dopad prošel
+stejnou validací jako hlavní návrh, a nikdy se neaplikuje bez potvrzení. V
+aktuálním kódu se však validuje pouze hlavní návrh; validace alternativ je
+`PLANNED` a je součástí dalšího implementačního řezu. Pokud nelze splnit
+všechny požadavky, musí být alternativa konkrétní, ne obecné „zkuste přidat lidi“.
 
 ## 6. Výsledek běhu (`PlanningRunResult`)
 
@@ -342,6 +344,55 @@ interface ConfirmedPlan {
 
 `ConfirmedPlan` nevzniká v AI ani ve validačním jádru. Kdo potvrzení provedl a
 jak se to zaznamená, je otevřená otázka (OQ20).
+
+### 6.6 Operativní náhrada (`PLANNED`)
+
+Operativní náhrada je další kontrakt nad potvrzeným týdenním plánem. V prvním
+syntetickém řezu platí tento schválený tok:
+
+```text
+ConfirmedPlan
+  → výpadek zaměstnance na jedné celé směně
+  → tři konkrétní varianty AI
+  → výběr managerem
+  → validace celé vybrané verze týdne
+  → nové potvrzení
+```
+
+Navrhované typy jsou zatím `PROPOSAL`, nikoli implementovaný TypeScript:
+
+```ts
+interface ReplacementRequest {
+  baseProposalId: string;
+  absentEmployeeId: string;
+  date: IsoDate;
+  shiftKind: ShiftKind;
+}
+
+interface ReplacementOption {
+  id: string;
+  rank: 1 | 2 | 3;
+  candidateEmployeeId: string;
+  assignments: ProposedAssignment[];
+  summary: string;
+  impact: string;
+  tradeOffs: string[];
+}
+```
+
+`changes`, `coverage` a `validation` se počítají deterministicky nad každou
+variantou. Pro potvrzení se znovu vyhodnotí vybraná varianta. Pokud nejsou
+dostupné tři odlišné varianty, systém to přizná; nedoplňuje fiktivního člověka
+ani neoznačí neověřenou variantu za bezpečnou.
+
+První řez nepodporuje dílčí nástup uprostřed směny. AI smí navrhnout i změny
+dalších celých přiřazení v týdnu, ale všechny musí být viditelné v dopadu.
+Operativní výpadek se před potvrzením neukládá jako změna rozpisu. Po potvrzení
+vzniká nová verze celého týdne.
+
+Maximální hodiny, maximální počet směn, role/dovednosti a další dosud
+nepotvrzené limity nejsou součástí tohoto kontraktu. Jejich zahrnutí závisí na
+OQ9–OQ11 a OQ10.
 
 ## 7. Nezávislá validace — co je implementované
 
@@ -457,6 +508,7 @@ plánovacího výstupu a jeho použití s reálnými daty zůstávají `NOT VERI
 - databázové modely a migrace,
 - autentizaci, role a audit,
 - zamykání přiřazení a historii ručních úprav,
+- operativní incidenty a náhrady konkrétní směny,
 - váhy preferencí a optimalizační funkci.
 
 Tyto věci se doplní až po potvrzení příslušných rozhodnutí. Kontrakt je

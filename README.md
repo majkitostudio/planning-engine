@@ -30,14 +30,19 @@ produkční aplikaci.
   v kódu ponechané jako `PLANNED` budoucí autentizační brána.
 - Potvrzení manažera a auditní zápis jsou `IMPLEMENTED`; aplikace používá
   explicitní `PLANNING_PERSISTENCE=prisma`. `memory` je pouze testovací režim.
+- **Operativní náhrady směn jsou `PLANNED`.** Schválený další řez řeší výpadek
+  na jedné celé směně, tři AI varianty, výběr managerem, deterministickou
+  validaci a nové potvrzení týdne. Incidenty, výběr variant a jejich API zatím
+  v kódu nejsou.
 - Prisma obsahuje provozní modely identity, snapshotu běhu a auditu. Migrace a zápis
   potvrzení byly ověřeny v izolované lokální Docker PostgreSQL; produkční DB zůstává
   `NOT VERIFIED`.
 - Potvrzené jsou časy směn, pravidlo 35 h odpočinku po šesti dnech a dva dny
   volna po práci o víkendu.
 - Projekt neobsahuje skutečná osobní ani zaměstnanecká data a není připraven
-  k produkčnímu provozu. Aktuální pracovní strom prochází lintem, typecheckem,
-  testy i buildem (viz [`docs/ROADMAP.md`](docs/ROADMAP.md)).
+  k produkčnímu provozu. Produkční autentizace, produkční databáze a integrace
+  zůstávají odložené; aktuální implementační target je popsán v
+  [`docs/ROADMAP.md`](docs/ROADMAP.md).
 
 ## Technologický stack
 
@@ -89,6 +94,8 @@ nutné potvrdit cílovou lokální databázi.
 - Minimální datový kontrakt: [`docs/PLANNING_CONTRACT.md`](docs/PLANNING_CONTRACT.md)
 - Rozhodovací list pro managera: [`docs/DOMAIN_DECISIONS.md`](docs/DOMAIN_DECISIONS.md)
 - Roadmapa a stav: [`docs/ROADMAP.md`](docs/ROADMAP.md)
+- Schválený design operativních náhrad: [`docs/superpowers/specs/2026-10-29-operativni-nahrady-design.md`](docs/superpowers/specs/2026-10-29-operativni-nahrady-design.md)
+- Implementační plán operativních náhrad: [`docs/superpowers/plans/2026-10-29-operativni-nahrady.md`](docs/superpowers/plans/2026-10-29-operativni-nahrady.md)
 - Instrukce pro agenty: [`AGENTS.md`](AGENTS.md)
 
 ## Bezpečnost a hranice

@@ -13,7 +13,7 @@
 > ho jen překládá do praxe a zaznamenává odpovědi.
 
 Datum vytvoření: 22. 10. 2026
-Poslední aktualizace: 28. 10. 2026
+Poslední aktualizace: 29. 10. 2026
 Vyplnil: uživatel / zadání projektu (částečně)
 
 ## Evidence z původního emailu managera (`SOURCE EVIDENCE`, 28. 10. 2026)
@@ -69,6 +69,30 @@ mění zadání:
 - **Obsazení směn:** konfigurovatelný vstup, ne historická konstanta.
 - **Countdown CRM:** budoucí architektonický směr, nyní žádná integrace.
 
+## Potvrzený směr operativních náhrad (`VERIFIED`, 29. 10. 2026)
+
+Tato rozhodnutí určují rozsah přípravy dalšího implementačního řezu. Neuzavírají
+dosud neznámé pracovní limity ani preference.
+
+- Náhrada začíná nad posledním potvrzeným plánem a po potvrzení vytváří novou
+  verzi celého týdne.
+- První řez řeší jednu celou směnu. Dílčí nástup uprostřed směny je mimo
+  rozsah.
+- AI smí navrhnout změny dalších celých přiřazení v týdnu, ale každá změna
+  musí být viditelná v dopadu varianty.
+- Výpadek je samostatný incident na konkrétní směně. Před potvrzením se
+  neukládá jako změna rozpisu; při opuštění procesu zůstává původní rozpis.
+- AI má dodat tři odlišné varianty, pokud jsou dostupné. Každá varianta musí
+  mít konkrétního kandidáta a celý výsledný návrh. Nedostatek variant se přizná.
+- Dopad každé varianty se dopočítává deterministicky; po výběru se varianta
+  znovu validuje před potvrzením.
+- První řez používá syntetická data a simulovaný provider. Gemini se zapojí až
+  po stabilizaci kontraktu náhrady.
+- Základní audit prvního řezu obsahuje potvrzenou změnu, původní a nový rozpis,
+  incident, vybranou variantu, výchozí verzi a identitu managera.
+- Maximální hodiny, maximální počet směn a další neuzavřené limity se nesmí
+  domýšlet. Dokud není OQ10 zodpovězena, zůstávají `NOT VERIFIED`.
+
 ## Jak list použít
 
 - U každé otázky jsou **varianty** a sloupec **dopad na kód** — aby bylo vidět,
@@ -104,7 +128,7 @@ první řez stát.
 
 | # | Otázka | Co odblokuje | Stav |
 | --- | --- | --- | --- |
-| OQ2 | Statický, nebo průběžně upravovaný plán? | chování kontroly po ručních úpravách | `OPEN QUESTION` |
+| OQ2 | Statický, nebo průběžně upravovaný plán? | chování kontroly po ručních úpravách | `PARTIALLY ANSWERED` — operativní řez vytváří novou verzi potvrzeného týdne |
 | OQ3 | Které entity skutečně potřebujeme? | doménové typy | `PARTIALLY ANSWERED` — minimální kontrakt navržen |
 | OQ4 | Které atributy jsou povinné? | doménové typy a formuláře | `PARTIALLY ANSWERED` — kontrakt navržen |
 | OQ5 | Pobočka / umístění call centra? | datový model, filtry | `OPEN QUESTION` — první řez předpokládá plochý seznam |
@@ -116,9 +140,9 @@ první řez stát.
 | OQ17 | Pořadí obětování preferencí? | navazuje na OQ12–OQ14 | `OPEN QUESTION` |
 | OQ18 | Jaké další role? | později, až s přihlášením | `OPEN QUESTION` |
 | OQ19 | Plánovač vs. schvalovatel? | schvalovací tok | `OPEN QUESTION` |
-| OQ20 | Potřebujeme audit změn? | historie a odpovědnost | `OPEN QUESTION` |
+| OQ20 | Potřebujeme audit změn? | historie a odpovědnost | `PARTIALLY ANSWERED` — základní audit potvrzené operativní změny |
 | OQ21 | Co je „pracovní den“ pro 6 dnů v řadě? | výklad pravidla odpočinku | `VERIFIED` |
-| OQ22 | Schválený požadavek vs. přání? | zpracování preferencí | `OPEN QUESTION` |
+| OQ22 | Schválený požadavek vs. přání? | zpracování incidentů a preferencí | `PARTIALLY ANSWERED` — provozní výpadek je samostatný incident; přesný životní cyklus zůstává otevřený |
 | OQ23 | Lze potvrdit částečně neúplný návrh? | schvalovací tok | `VERIFIED` |
 | OQ24 | Jak se započítávají přestávky? | pracovní doba a validace | `VERIFIED` |
 
@@ -140,7 +164,10 @@ nebo musí znovu zkontrolovat plán po každé ruční změně.
 **Návrh k diskusi (`PROPOSAL`):** C — protože se v kandidátech už objevuje
 zamčené přiřazení (H7), které bez ručních úprav nedává smysl.
 
-**Odpověď:**
+**Odpověď:** `PARTIALLY ANSWERED` (29. 10. 2026) — pro operativní náhrady je
+potvrzená varianta C v omezeném rozsahu: změna vzniká nad potvrzeným týdnem,
+každá potvrzená náhrada vytvoří novou verzi a před potvrzením se znovu ověří.
+Historie verzí, souběžné změny a zamykání přiřazení zůstávají otevřené.
 
 ---
 
@@ -378,7 +405,10 @@ funkcionalitu nad rámec prvního řezu.
 **Návrh k diskusi (`PROPOSAL`):** pro první verzi A (nemáme přihlašování),
 s přípravou na B, až přihlášení vznikne.
 
-**Odpověď:**
+**Odpověď:** `PARTIALLY ANSWERED` (29. 10. 2026) — první operativní řez
+zaznamená potvrzenou změnu, původní a nový rozpis, incident, vybranou variantu,
+výchozí verzi a identitu managera. Opuštěné nebo odmítnuté varianty se zatím
+neukládají. Plný audit zůstává `OPEN QUESTION`.
 
 ---
 
@@ -405,7 +435,11 @@ výklad se vztahuje k datu přiřazení.
 přání na volno nebo preference směny blokovat nemá; AI ho může zohlednit.
 Pokud se to nepotvrdí, hrozí, že se přání změní na nárok nebo naopak ignoruje.
 
-**Odpověď:**
+**Odpověď:** `PARTIALLY ANSWERED` (29. 10. 2026) — provozní výpadek na konkrétní
+směně se v návrhu chápe jako samostatný incident. Blokuje původní přiřazení
+v pracovním návrhu, ale změna se uloží až společně s potvrzenou náhradou.
+Přesný životní cyklus stavů incidentu a vztah k celodenní schválené absenci
+zůstává `OPEN QUESTION`.
 
 ### OQ23 — Může manažer potvrdit částečně neúplný návrh?
 

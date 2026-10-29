@@ -13,6 +13,8 @@ sítě. Volání AI je schované za rozhraním; konkrétní poskytovatel je v `l
   `ready_for_review`. `confirmed` je vždy `false`.
 - **Mimo zodpovědnost čistého jádra:** databázové připojení a autentizace.
   HTTP API, potvrzení a perzistenční adaptér jsou serverové vrstvy nad jádrem.
+- **Operativní náhrady:** jsou další plánovaný kontrakt nad potvrzeným týdnem;
+  výpadek, tři varianty a nová verze týdne zatím nejsou implementované.
 
 ## Co je v adresáři
 
@@ -52,6 +54,7 @@ sítě. Volání AI je schované za rozhraním; konkrétní poskytovatel je v `l
 | `confirm-service.ts` | `confirmRun()` — testovatelná logika potvrzení manažera. |
 | `confirm-service.test.ts` | Testy potvrzení pro všechny stavy. |
 | `api-types.ts` | Sdílené typy odpovědí HTTP API (`PlanningRunApiResponse`, `PlanningConfirmApiResponse`). |
+| `replacement-service.ts` | `PLANNED`: vytvoří varianty náhrady a deterministicky vyhodnotí jejich dopad. |
 
 ## Tok
 
@@ -63,6 +66,17 @@ PlanningInput
   → validatePlan() s doménovými pravidly
   → změny a pokrytí
   → PlanningRunResult k posouzení manažerem
+```
+
+Plánovaný operativní tok bude navazovat až na potvrzený plán:
+
+```text
+ConfirmedPlan
+  → výpadek jedné celé směny
+  → tři AI varianty
+  → výběr managerem
+  → validace vybrané varianty
+  → nové potvrzení
 ```
 
 Poslední krok je záměrně **mimo jádro**: `runPlanning()` nic neukládá a
@@ -84,6 +98,10 @@ nenašla“, ne schválení.
 
 Chybějící AI je `ai_not_configured`, ne prázdný plán. Selhání poskytovatele
 je `PlanningFailure`, ne tichý `not_verified`.
+
+Validace alternativ je v současném kódu pouze cílový kontrakt: orchestrátor
+validuje hlavní návrh, nikoli každou alternativu. Operativní řez musí tento
+rozdíl odstranit nebo jej v UI výslovně přiznat.
 
 ## Fáze 2 — API a UI napojení
 
@@ -132,3 +150,5 @@ Tyto otázky nebrání prvnímu řezu, ale nesmí se z nich stát tichý předpo
 
 1. Zda musí být dva dny volna po víkendu po sobě jdoucí.
 2. Role, maximální hodiny, zamykání a váhy preferencí (OQ9–OQ14).
+3. Provozní incident, verze potvrzeného týdne a rozsah auditu náhrady
+   (OQ2, OQ20, OQ22).

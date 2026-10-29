@@ -101,7 +101,31 @@ plánovacího engine; nejde o pracovněprávní posudek ani výpočet placené d
 - **Potvrzení neúplného návrhu:** neúplný návrh se smí zobrazit k posouzení,
   ale nesmí být potvrzen. `VERIFIED` (OQ23)
 
-### 0.3 Evidence z původního emailu managera (`SOURCE EVIDENCE`, 28. 10. 2026)
+### 0.3 Potvrzený směr operativních náhrad (29. 10. 2026)
+
+Následující rozhodnutí potvrzují rozsah přípravy dalšího implementačního řezu.
+Nejsou schválením dosud otevřených pracovněprávních nebo personálních pravidel.
+
+- Náhrada začíná nad posledním manažerem potvrzeným plánem týdne a po potvrzení
+  vytváří novou verzi celého týdne.
+- První řez řeší jednu celou směnu. Dílčí nástup uprostřed směny se zatím
+  nepodporuje.
+- AI smí navrhnout změny i u dalších celých přiřazení v týdnu, pokud je každá
+  změna viditelná v dopadu návrhu.
+- Výpadek je samostatný provozní incident na konkrétní směně; před potvrzením
+  zůstává pouze v rozpracovaném návrhu.
+- AI má dodat tři odlišné konkrétní varianty, pokud jsou dostupné. Pokud jich
+  není dost, systém to přizná.
+- Dopad variant se počítá deterministicky. Po výběru manažerem se vybraná
+  varianta znovu ověří stejnou validací jako běžný týdenní návrh.
+- První řez používá syntetická data a simulovaný provider. Gemini se zapojí až
+  po stabilizaci kontraktu operativní náhrady.
+- V prvním řezu se audit zaměřuje na potvrzenou změnu, původní a nový rozpis,
+  incident, vybranou variantu, výchozí verzi a identitu managera.
+- Maximální hodiny, maximální počet směn a další dosud nepotvrzené limity se
+  nesmí domýšlet. Dokud není uzavřen OQ10, jde o `NOT VERIFIED` omezení.
+
+### 0.4 Evidence z původního emailu managera (`SOURCE EVIDENCE`, 28. 10. 2026)
 
 Původní email s odpověďmi managera potvrzuje současný pracovní postup:
 čtvrteční plánování na další týden, nejprve zadání absencí, následné obsazení
@@ -177,6 +201,24 @@ jsou pojistka, která musí fungovat i tehdy, když AI pravidlo nepochopí nebo
 ho ignoruje. Výsledek validace není schválení; schválení je vždy krok
 manažera.
 
+### 1.5 Další implementační řez: operativní náhrada (`PLANNED`)
+
+Další práce navazuje na hotový týdenní návrh, ale není jeho součástí. Cílem je
+workflow:
+
+```text
+potvrzený týdenní plán
+  → výpadek konkrétního člověka na konkrétní směně
+  → tři AI varianty náhrady
+  → výběr managerem
+  → deterministická validace vybrané varianty
+  → potvrzení a nová verze týdne
+```
+
+Pojmy `ShiftIncident`, `ReplacementRequest` a `ReplacementOption` jsou zatím
+`PROPOSAL`. Přesný tvar se uzavře v `PLANNING_CONTRACT.md` až po rozhodnutí
+OQ2–OQ4, OQ9–OQ11, OQ20 a OQ22.
+
 ## 2. Co má plánovací nástroj plánovat
 
 `VERIFIED` — předmětem plánování jsou **směny zaměstnanců call centra** (§0.1).
@@ -219,6 +261,9 @@ definice kontraktu.
 | `ExistingAssignment` | Již existující směna, vůči které se počítají změny | `VERIFIED` (vstup) |
 | `PlanningRules` | Potvrzená pravidla odpočinku a víkendových dnů volna | `VERIFIED` |
 | `PlanDraft` | Návrh AI: přiřazení, změny, nedostatky, vysvětlení, alternativy | `IMPLEMENTED` (typ) |
+| `ShiftIncident` | Provozní výpadek zaměstnance na konkrétní směně | `PROPOSAL` / `PLANNED` |
+| `ReplacementRequest` | Požadavek na náhradu nad konkrétní verzí potvrzeného týdne | `PROPOSAL` / `PLANNED` |
+| `ReplacementOption` | Jedna konkrétní varianta náhrady s dopočítaným dopadem | `PROPOSAL` / `PLANNED` |
 | `ControlResult` | Výsledek nezávislé validace | `IMPLEMENTED` (jádro) |
 | `ConfirmedPlan` | Až manažerem potvrzený výsledek; nevzniká automaticky | `IMPLEMENTED` (typ) / `PLANNED` (vznik potvrzením) |
 
@@ -245,6 +290,7 @@ Zde je obsahový přehled.
 | Schválené absence | Dovolená, nemoc, jiná absence; blokují přiřazení | `VERIFIED` (význam), `ASSUMPTION` (stav) |
 | Požadavky a preference | Volno, preference ranní/odpolední | `ASSUMPTION` (zpracování) |
 | Existující směny | Výchozí stav, vůči kterému se počítají změny | `VERIFIED` (vstup) |
+| Výpadek směny | Konkrétní zaměstnanec, datum, směna a výchozí verze plánu | `PROPOSAL` pro operativní řez |
 | Pravidla | Odpočinek po 6 dnech, víkendové dny volna | `VERIFIED` |
 | Časy směn | Potvrzené ranní/odpolední časy | `VERIFIED` |
 | Role/dovednosti | Volitelný atribut, bez potvrzeného pravidla | `OPEN QUESTION` |
@@ -267,6 +313,7 @@ doplnit jako „rozumný default“.
 | Výsledek validace | Nálezy nezávislých pravidel se závažností | `IMPLEMENTED` (jádro) |
 | Vysvětlení | Proč AI zvolila dané přiřazení a co omezuje | `IMPLEMENTED` (typ; plnění AI `NOT VERIFIED`) |
 | Alternativy | Konkrétní náhradní řešení při konfliktu | `IMPLEMENTED` (typ; plnění AI `NOT VERIFIED`) |
+| Varianty náhrady | Tři odlišné celé varianty s kandidátem, dopadem a kompromisy | `PLANNED`; deterministický dopad je podmínka |
 | Stav návrhu | Návrh / ověřený návrh / čeká na potvrzení | `IMPLEMENTED` (typy stavů) |
 | Potvrzené změny | Samostatný výsledek až po rozhodnutí manažera | `PLANNED` |
 
@@ -303,7 +350,8 @@ musí být vynuceno deterministickou validací, ne jen instrukcí pro AI.
 9. Která z kandidátních pravidel (H4, H5, H7) jsou skutečně tvrdá?
 10. Jaké jsou konkrétní limity (max. hodiny, jiný odpočinek než 35 h po 6 dnech)?
 11. Existují pravidla mimo seznam (svátky, jazyky, kontinuita týmu, přesčasy)?
-21. Co přesně znamená „pracovní den“ pro počítání šesti dnů v řadě?
+OQ21 je uzavřena: pracovní den je kalendářní den s alespoň jednou směnou;
+více směn v jednom dni se započítá jednou.
 
 ## 6. Měkké preference (kandidáti, `ASSUMPTION`)
 
@@ -426,10 +474,13 @@ podřízený tomuto dokumentu — autoritativní seznam je tento.
 
 ### Blokující pro úplnou definici domény
 
-- **OQ2** (S2) Je plán statický nebo průběžně upravovaný?
-- **OQ3** (S3) Které entity jsou skutečně potřeba a které nadbytečné?
+- **OQ2** (S2) Je plán statický nebo průběžně upravovaný? Pro operativní řez je
+  potvrzeno průběžné vytváření nové verze týdne; širší pravidla historie zůstávají otevřená.
+- **OQ3** (S3) Které entity jsou skutečně potřeba a které nadbytečné? Pro operativní
+  řez jsou `ShiftIncident`, `ReplacementRequest` a `ReplacementOption` zatím návrh.
   *(minimální kontrakt první verze je navržený v `PLANNING_CONTRACT.md`)*
-- **OQ4** (S3) Jaké atributy entit jsou povinné?
+- **OQ4** (S3) Které atributy entit jsou povinné? Výpadek musí nejméně odkazovat
+  na zaměstnance, datum, celou směnu a výchozí verzi plánu; přesný kontrakt je otevřený.
 - **OQ5** (S3) Existuje pojem pobočky/umístění call centra?
 - **OQ9** (S5) Která pravidla jsou skutečně tvrdá (H4, H5, H7)?
 - **OQ10** (S5) Konkrétní limity tvrdých pravidel (max. hodiny, jiný odpočinek)?
@@ -437,8 +488,10 @@ podřízený tomuto dokumentu — autoritativní seznam je tento.
 
 ### Blokující pro chování výstupu
 
-- **OQ6** (S4) Jak se vstupy zadávají (ručně / soubor / budoucí integrace)?
-- **OQ7** (S4) Jaký je požadovaný tvar výstupu?
+- **OQ6** (S4) Jak se vstupy zadávají (ručně / soubor / budoucí integrace)? Pro první
+  operativní řez je zvolen ruční vstup v UI; Outlook a import zůstávají mimo rozsah.
+- **OQ7** (S4) Jaký je požadovaný tvar výstupu? Pro první řez jsou cílem tři karty
+  variant s kandidátem, změnami, pokrytím, validací a kompromisy.
 - **OQ8** (S4) Kdy se preference vyhodnocují?
 
 ### Blokující pro preference a optimalizaci
@@ -453,7 +506,8 @@ podřízený tomuto dokumentu — autoritativní seznam je tento.
 
 - **OQ18** (S8) Jaké další role mimo managera telemarketingového oddělení?
 - **OQ19** (S8) Rozdíl mezi plánovačem a schvalovatelem?
-- **OQ20** (S8) Je potřeba audit (kdo plán vytvořil/upravil)?
+- **OQ20** (S8) Je potřeba audit (kdo plán vytvořil/upravil)? Pro první řez je
+  potvrzen základní audit potvrzené změny; rozsah odmítnutých variant je otevřený.
 
 ## 11. Souvislost s aktuálním stavem projektu
 

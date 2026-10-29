@@ -1,6 +1,7 @@
 # Roadmapa — Plánovací Engine
 
-> Stav zkontrolovaný 28. 10. 2026 proti kódu. Význam popisků vysvětluje
+> Stav zkontrolovaný 29. 10. 2026 proti kódu a schválenému směru další práce.
+> Význam popisků vysvětluje
 > [`docs/README.md`](README.md#stavové-popisky).
 
 ## 1. Stav jednou větou
@@ -52,6 +53,7 @@ Aktuální ověření pracovního stromu (28. 10. 2026):
 | OQ23 | částečně neúplný návrh lze zobrazit, ale potvrzení je blokované | `VERIFIED`; potvrdit lze jen kompletní návrh |
 | Význam stavů | `ready_for_review` znamená „validace nic nenašla“, ne schválení | UI to zobrazuje jako „Připraveno ke kontrole“ s tlačítkem potvrzení |
 | Plnění `explanations` a `alternatives` | typ je hotový, kvalita výstupu modelu není ověřená | manažer nemusí dostat použitelné vysvětlení |
+| Operativní náhrady | návrh a kontrakt jsou připravené, implementace neexistuje | výpadek směny zatím nelze zadat, vybrat variantu ani potvrdit |
 
 ## 4. Hotové (Fáze 2 – napojení UI na orchestrátor)
 
@@ -114,13 +116,30 @@ a schválení jeho implementace jako firemního nástroje. Entra rekonstrukce,
 produkční databáze, širší audit a další role proto nejsou aktuálním úkolem;
 integrace s CRM zůstává mimo rozsah.
 
-### Nejbližší aktivní krok
+### Nejbližší aktivní kroky
 
-Připravit současné demo k představení vedení: ověřit, že srozumitelně ukazuje
-čtvrteční plánování dalšího týdne, návrh AI, nezávislou kontrolu, omezení
-syntetických dat a nutnost potvrzení managerem. Do této přípravy nepatří
-produkční přihlášení, napojení na Outlook, podpora částečných úvazků ani
-automatický přenos do rosteru.
+1. **Uzavřít rozhodovací brány pro operativní řez.** Prioritně OQ10 (konkrétní
+   limity), OQ22 (stav incidentu), OQ9/OQ11 (další tvrdá pravidla), OQ12–OQ14 a
+   OQ17 (co znamená nejméně destruktivní varianta) a rozsah auditu OQ20.
+2. **Zmrazit operativní kontrakt.** Navrhnout a otestovat `ShiftIncident`,
+   `ReplacementRequest` a `ReplacementOption` bez ukládání doménových modelů do
+   produkční databáze.
+3. **Implementovat doménovou službu náhrady.** Vstupem je potvrzený týden a
+   výpadek jedné celé směny; výstupem jsou tři varianty, deterministické dopady
+   a validace vybrané varianty.
+4. **Přidat simulované API a UI.** Manažer zadá výpadek, uvidí tři varianty,
+   vybere jednu a může ji potvrdit pouze při `ready_for_review` a úplnosti.
+5. **Přidat audit minimální potvrzené změny.** Zapsat incident, výchozí verzi,
+   původní a nový rozpis, variantu a identitu managera.
+6. **Ověřit celý řez testy.** Pokrýt výpadek, překryv, schválenou absenci,
+   nedostatek variant, neověřený limit, blokaci neúplného návrhu a idempotentní
+   potvrzení.
+
+Detailní pořadí souborů a testů je v
+[`docs/superpowers/plans/2026-10-29-operativni-nahrady.md`](superpowers/plans/2026-10-29-operativni-nahrady.md).
+
+Do tohoto kroku stále nepatří produkční autentizace, produkční PostgreSQL,
+Outlook, CRM, roster ani podpora částečných úvazků.
 
 ## 6. Pozdější rozšíření
 
@@ -131,6 +150,8 @@ automatický přenos do rosteru.
 - Import/export a integrace (Countdown CRM je jen budoucí směr).
 - Širší audit a rozšířená správa rolí.
 - Ukládání historie a zamykání přiřazení.
+- Dílčí nástup uprostřed již probíhající směny.
+- Plný audit odmítnutých variant a opuštěných rozpracovaných incidentů.
 
 ## 7. Otevřené otázky
 
@@ -140,6 +161,8 @@ automatický přenos do rosteru.
 - Statický vs. průběžně upravovaný plán (OQ2).
 - Způsob zadávání vstupů a tvar výstupu (OQ6–OQ8).
 - Role, schvalovací tok a audit (OQ18–OQ20).
+- Přesný životní cyklus provozního incidentu a jeho vztah ke schválené absenci
+  (OQ22).
 - Vizuální detaily demo UI (barva odpolední směny, avatary, ikona
   „Nesplněné požadavky“) — `OPEN QUESTION`; zdrojem pravdy je
   `app/globals.css`.
@@ -158,6 +181,9 @@ Podrobnosti a místo pro odpovědi: [`DOMAIN_DECISIONS.md`](DOMAIN_DECISIONS.md)
   `memory` zůstává pouze testovací režim.
 - **Čtecí audit** v tomto kroku ukazuje jen události `planning.confirmed` a je
   dostupný pouze managerovi. Nejde o historii všech změn ani o rozhodnutí OQ20.
+- **Operativní náhrada** zatím není v kódu. Existuje schválený design a
+  implementační plán, ale žádný incident, výběr varianty ani nová verze týdne
+  se zatím nedá v aplikaci vytvořit.
 - **Reálné volání Gemini** je `VERIFIED` integračním testem. Kvalita výstupu pro
   produkční provoz a práce s reálnými daty zůstávají `NOT VERIFIED`.
 - **OQ24** je potvrzené pouze jako výklad pro plánovací engine: validace
