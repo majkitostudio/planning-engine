@@ -2,7 +2,9 @@ import { NextResponse } from "next/server";
 
 import { requirePlanningActor } from "@/lib/auth/route-access";
 import type { PlanningReplacementApiResponse } from "@/lib/planning/api-types";
+import type { PlanningInput } from "@/lib/planning/domain/types";
 import { getPlanningPersistenceRuntime } from "@/lib/planning/persistence-runtime";
+import { applyStaffingSettings } from "@/lib/planning/staffing-settings";
 import { createPlanningProvider } from "@/lib/planning/provider-factory";
 import { createReplacementOptions } from "@/lib/planning/replacement-service";
 import { getPlanningRuntime } from "@/lib/planning/server-config";
@@ -107,6 +109,18 @@ export async function POST(request: Request) {
     );
   }
 
+  let input: PlanningInput;
+  try {
+    const savedSettings = await persistenceRuntime.persistence.getStaffingSettings();
+    input = applyStaffingSettings(scenario.input, savedSettings);
+  } catch {
+    return rejection(
+      "persistence_failed",
+      "Nastavení potřebného obsazení se nepodařilo načíst.",
+      503,
+    );
+  }
+
   let drafts;
   try {
     const provider = createPlanningProvider({
@@ -121,7 +135,7 @@ export async function POST(request: Request) {
       );
     }
     drafts = await provider.generateReplacements(
-      scenario.input,
+      input,
       replacementRequest,
     );
   } catch (error) {
@@ -133,7 +147,7 @@ export async function POST(request: Request) {
   }
 
   const result = createReplacementOptions(
-    scenario.input,
+    input,
     scenario.basePlan,
     replacementRequest,
     drafts,
@@ -144,7 +158,7 @@ export async function POST(request: Request) {
     scenarioLabel: scenario.label,
     providerName: "simulated-fixture/single-absence",
     mode: "simulated" as const,
-    input: scenario.input,
+    input,
     basePlan: scenario.basePlan,
     result,
     confirmedPlan: null,

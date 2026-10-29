@@ -68,3 +68,15 @@ model AuditEvent {
   @@index([entityType, entityId])
   @@index([actorId, createdAt])
 }
+
+model StaffingRequirementSetting {
+  id               String   @id @default(cuid())
+  dayOfWeek        Int
+  shiftKind        String
+  requiredEmployees Int
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  @@unique([dayOfWeek, shiftKind])
+  @@index([dayOfWeek])
+}

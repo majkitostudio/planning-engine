@@ -5,6 +5,7 @@ import type {
   ProposedAssignment,
   ReplacementRunResult,
 } from "./domain/types";
+import type { StaffingSetting } from "./staffing-settings";
 import type { PlanningActor } from "../auth/actor";
 import { prisma as defaultPrisma } from "../db";
 import { Prisma, type PlanningRunRecord, type PrismaClient } from "@/prisma/generated/client";
@@ -50,6 +51,7 @@ export interface PlanningAuditEvent {
 export interface PlanningPersistenceState {
   readonly runs: Map<string, PlanningRunSnapshot>;
   readonly replacementRuns: Map<string, ReplacementRunSnapshot>;
+  readonly staffingSettings: Map<string, StaffingSetting>;
   readonly auditEvents: PlanningAuditEvent[];
 }
 
@@ -85,12 +87,15 @@ export interface PlanningPersistence {
     actor: PlanningActor,
     confirmedAt: Date,
   ): Promise<PersistedReplacementConfirmation | null>;
+  getStaffingSettings(): Promise<readonly StaffingSetting[]>;
+  saveStaffingSettings(settings: readonly StaffingSetting[]): Promise<void>;
 }
 
 export function createInMemoryPersistenceState(): PlanningPersistenceState {
   return {
     runs: new Map(),
     replacementRuns: new Map(),
+    staffingSettings: new Map(),
     auditEvents: [],
   };
 }
@@ -125,6 +130,24 @@ export class InMemoryPlanningPersistence implements PlanningPersistence {
     replacementId: string,
   ): Promise<ReplacementRunSnapshot | null> {
     return this.state.replacementRuns.get(replacementId) ?? null;
+  }
+
+  async getStaffingSettings(): Promise<readonly StaffingSetting[]> {
+    return [...this.state.staffingSettings.values()].sort(
+      (left, right) =>
+        left.dayOfWeek - right.dayOfWeek ||
+        shiftKindOrder(left.shiftKind) - shiftKindOrder(right.shiftKind),
+    );
+  }
+
+  async saveStaffingSettings(settings: readonly StaffingSetting[]): Promise<void> {
+    this.state.staffingSettings.clear();
+    for (const setting of settings) {
+      this.state.staffingSettings.set(
+        `${setting.dayOfWeek}|${setting.shiftKind}`,
+        setting,
+      );
+    }
   }
 
   async listAuditEvents(): Promise<readonly PlanningAuditEvent[]> {
@@ -232,6 +255,10 @@ export class InMemoryPlanningPersistence implements PlanningPersistence {
   }
 }
 
+function shiftKindOrder(shiftKind: StaffingSetting["shiftKind"]): number {
+  return shiftKind === "morning" ? 0 : 1;
+}
+
 export class PrismaPlanningPersistence implements PlanningPersistence {
   constructor(private readonly db: PrismaClient = defaultPrisma) {}
 
@@ -331,6 +358,38 @@ export class PrismaPlanningPersistence implements PlanningPersistence {
     return row && isReplacementRecord(row)
       ? replacementSnapshotFromRecord(row)
       : null;
+  }
+
+  async getStaffingSettings(): Promise<readonly StaffingSetting[]> {
+    const rows = await this.db.staffingRequirementSetting.findMany({
+      orderBy: [{ dayOfWeek: "asc" }, { shiftKind: "asc" }],
+    });
+    return rows.map((row) => ({
+      dayOfWeek: row.dayOfWeek,
+      shiftKind: row.shiftKind as StaffingSetting["shiftKind"],
+      requiredEmployees: row.requiredEmployees,
+    }));
+  }
+
+  async saveStaffingSettings(settings: readonly StaffingSetting[]): Promise<void> {
+    await this.db.$transaction(
+      settings.map((setting) =>
+        this.db.staffingRequirementSetting.upsert({
+          where: {
+            dayOfWeek_shiftKind: {
+              dayOfWeek: setting.dayOfWeek,
+              shiftKind: setting.shiftKind,
+            },
+          },
+          create: {
+            dayOfWeek: setting.dayOfWeek,
+            shiftKind: setting.shiftKind,
+            requiredEmployees: setting.requiredEmployees,
+          },
+          update: { requiredEmployees: setting.requiredEmployees },
+        }),
+      ),
+    );
   }
 
   async listAuditEvents(): Promise<readonly PlanningAuditEvent[]> {

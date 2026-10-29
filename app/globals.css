@@ -1119,6 +1119,76 @@ textarea {
   contain: paint;
 }
 
+.settings-form {
+  overflow: hidden;
+}
+
+.settings-form__role {
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+}
+
+.settings-form__notice {
+  margin: 16px 0 0;
+  padding: 12px 14px;
+  border: 1px solid var(--amber-border);
+  border-radius: var(--radius-sm);
+  background: var(--amber-soft);
+  color: var(--ink-2);
+  font-size: 13px;
+}
+
+.settings-form__field {
+  display: block;
+  min-width: 96px;
+}
+
+.settings-form__input {
+  min-width: 84px;
+  text-align: right;
+}
+
+.settings-form__actions {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+  padding: 16px;
+  border-top: 1px solid var(--border);
+}
+
+.staffing-settings-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.staffing-settings-table th,
+.staffing-settings-table td {
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border);
+  text-align: left;
+}
+
+.staffing-settings-table thead th {
+  background: var(--surface-2);
+  color: var(--ink-2);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.staffing-settings-table tbody th {
+  color: var(--ink-2);
+  font-weight: 600;
+}
+
+.staffing-settings-table tbody td:not(:first-child),
+.staffing-settings-table thead th:not(:first-child) {
+  text-align: right;
+}
+
 .roster {
   width: 100%;
   border-collapse: separate;
