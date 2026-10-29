@@ -87,8 +87,10 @@ dosud neznámé pracovní limity ani preference.
   mít konkrétního kandidáta a celý výsledný návrh. Nedostatek variant se přizná.
 - Dopad každé varianty se dopočítává deterministicky; po výběru se varianta
   znovu validuje před potvrzením.
-- Každá řešená směna musí mít alespoň 7 lidí. Jde o interní provozní požadavek,
-  nikoli o zákonný limit.
+- Minimální obsazení je konfigurovatelné podle konkrétního dne a směny.
+  Aktuálně potvrzený výchozí profil je nejméně 15 lidí na ranní směně a
+  nejméně 7 lidí na odpolední směně. Jde o interní provozní požadavek, nikoli o
+  zákonný limit.
 - Délka směny je pevně daná existující definicí směny. Operativní náhrada nesmí
   směnu prodlužovat, zkracovat ani dělit na části.
 - Přesčasy se v tomto provozu nepoužívají. Varianta, která by vyžadovala práci

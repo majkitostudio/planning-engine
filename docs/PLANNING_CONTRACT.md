@@ -397,10 +397,12 @@ dalších celých přiřazení v týdnu, ale všechny musí být viditelné v do
 Operativní výpadek se před potvrzením neukládá jako změna rozpisu. Po potvrzení
 vzniká nová verze celého týdne.
 
-Každá řešená směna má interní provozní minimum 7 lidí. Pořadí cíle varianty je
-nejprve splnit toto minimum, potom neporušit ověřená tvrdá pravidla a potom
-změnit co nejméně dalších lidí. Pokud změna jednoho volna vyvolá další změny,
-variantní dopad musí zobrazit celý řetězec.
+Minimální obsazení je konfigurovatelný vstup podle konkrétního dne a směny.
+Aktuálně potvrzený výchozí profil je nejméně 15 lidí na ranní směně a nejméně
+7 lidí na odpolední směně. Pořadí cíle varianty je nejprve splnit tento vstup,
+potom neporušit ověřená tvrdá pravidla a potom změnit co nejméně dalších lidí.
+Pokud změna jednoho volna vyvolá další změny, variantní dopad musí zobrazit celý
+řetězec.
 
 Délka směny se bere z existující `ShiftDefinition` a je pevná. Operativní
 náhrada pracuje pouze s celou směnou; nesmí ji prodloužit, zkrátit ani rozdělit.

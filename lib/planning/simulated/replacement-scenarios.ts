@@ -34,7 +34,23 @@ const BASE_ASSIGNMENTS: readonly ProposedAssignment[] = [
     date: TARGET_DATE,
     shiftKind: TARGET_SHIFT,
   })),
-  ...["e1", "e3", "e4", "e5", "e6", "e7", "e9"].map((employeeId) => ({
+  ...[
+    "e1",
+    "e3",
+    "e4",
+    "e5",
+    "e6",
+    "e7",
+    "e9",
+    "e10",
+    "e11",
+    "e12",
+    "e13",
+    "e14",
+    "e15",
+    "e16",
+    "e17",
+  ].map((employeeId) => ({
     employeeId,
     date: WEEK_START,
     shiftKind: "morning" as const,
@@ -42,13 +58,29 @@ const BASE_ASSIGNMENTS: readonly ProposedAssignment[] = [
 ];
 
 const EMPLOYEES: readonly Employee[] = [
-  ...["e1", "e2", "e3", "e4", "e5", "e6", "e7", "e8", "e9"].map(
-    (id) => ({
-      id,
-      displayName: `Syntetický zaměstnanec ${id}`,
-      employmentType: "full_time" as const,
-    }),
-  ),
+  ...[
+    "e1",
+    "e2",
+    "e3",
+    "e4",
+    "e5",
+    "e6",
+    "e7",
+    "e8",
+    "e9",
+    "e10",
+    "e11",
+    "e12",
+    "e13",
+    "e14",
+    "e15",
+    "e16",
+    "e17",
+  ].map((id) => ({
+    id,
+    displayName: `Syntetický zaměstnanec ${id}`,
+    employmentType: "full_time" as const,
+  })),
 ];
 
 const BASE_PLAN: ConfirmedPlan = {
@@ -110,7 +142,9 @@ export const SIMULATED_REPLACEMENT_SCENARIO: SimulatedReplacementScenario = {
           requiredEmployees:
             (date === TARGET_DATE && shiftKind === TARGET_SHIFT) ||
             (date === WEEK_START && shiftKind === "morning")
-              ? 7
+              ? date === WEEK_START && shiftKind === "morning"
+                ? 15
+                : 7
               : 0,
         })),
       ),

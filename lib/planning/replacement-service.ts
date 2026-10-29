@@ -13,9 +13,13 @@ import {
   type ReplacementOption,
   type ReplacementRequest,
   type ReplacementRunResult,
+  type ShiftKind,
 } from "./domain";
 
-const REPLACEMENT_MINIMUM_STAFFING = 7;
+const REPLACEMENT_MINIMUM_STAFFING: Record<ShiftKind, number> = {
+  morning: 15,
+  afternoon: 7,
+};
 
 /**
  * Připraví všechny AI varianty a jejich deterministicky dopočítaný výsledek.
@@ -128,7 +132,7 @@ function withReplacementMinimum(
     date: request.incident.date,
     shiftKind: request.incident.shiftKind,
     requiredEmployees: Math.max(
-      REPLACEMENT_MINIMUM_STAFFING,
+      REPLACEMENT_MINIMUM_STAFFING[request.incident.shiftKind],
       targetRequirement?.requiredEmployees ?? 0,
     ),
   };

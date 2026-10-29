@@ -105,7 +105,7 @@ describe("replacement-service", () => {
     ]);
   });
 
-  it("má v ukázkovém základu sedm lidí i na pondělní ranní směně", async () => {
+  it("má v ukázkovém základu patnáct lidí na ranní směně a sedm na odpolední", async () => {
     const { getSimulatedReplacementScenario } = await import(
       "./simulated/replacement-scenarios"
     );
@@ -133,8 +133,8 @@ describe("replacement-service", () => {
       scenario!.drafts[1]!,
     );
 
-    expect(mondayMorning?.requiredEmployees).toBe(7);
-    expect(mondayMorningAssignments).toHaveLength(7);
+    expect(mondayMorning?.requiredEmployees).toBe(15);
+    expect(mondayMorningAssignments).toHaveLength(15);
     expect(direct.validation.status).toBe("valid");
     expect(domino.validation.status).toBe("valid");
     expect(domino.coverage).toEqual(
@@ -142,8 +142,67 @@ describe("replacement-service", () => {
         expect.objectContaining({
           date: WEEK_START,
           shiftKind: "morning",
-          requiredEmployees: 7,
-          assignedEmployees: 7,
+          requiredEmployees: 15,
+          assignedEmployees: 15,
+          missingEmployees: 0,
+        }),
+      ]),
+    );
+  });
+
+  it("pro ranní náhradu použije minimum patnácti lidí i bez hodnoty ve vstupu", async () => {
+    const { getSimulatedReplacementScenario } = await import(
+      "./simulated/replacement-scenarios"
+    );
+    const scenario = getSimulatedReplacementScenario("single-absence");
+
+    expect(scenario).toBeDefined();
+    const inputWithoutMorningRequirement = {
+      ...scenario!.input,
+      staffingRequirements: scenario!.input.staffingRequirements.map(
+        (requirement) =>
+          requirement.date === WEEK_START && requirement.shiftKind === "morning"
+            ? { ...requirement, requiredEmployees: 0 }
+            : requirement,
+      ),
+    };
+    const request: ReplacementRequest = {
+      ...scenario!.request,
+      id: "replacement-morning-request",
+      incident: {
+        ...scenario!.request.incident,
+        date: WEEK_START,
+        shiftKind: "morning",
+      },
+    };
+    const assignments = scenario!.basePlan.assignments
+      .filter(
+        (assignment) =>
+          !(
+            assignment.employeeId === "e1" &&
+            assignment.date === WEEK_START &&
+            assignment.shiftKind === "morning"
+          ),
+      )
+      .concat({ employeeId: "e8", date: WEEK_START, shiftKind: "morning" });
+    const option = evaluateReplacementOption(
+      inputWithoutMorningRequirement,
+      scenario!.basePlan,
+      request,
+      {
+        ...scenario!.drafts[0]!,
+        id: "replacement-morning",
+        assignments,
+      },
+    );
+
+    expect(option.coverage).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          date: WEEK_START,
+          shiftKind: "morning",
+          requiredEmployees: 15,
+          assignedEmployees: 15,
           missingEmployees: 0,
         }),
       ]),
