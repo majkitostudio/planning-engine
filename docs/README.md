@@ -39,6 +39,7 @@ jiných dokumentů neopakuje.
 | Ukládání běhů a potvrzení | `IMPLEMENTED` / `VERIFIED` (lokální Docker smoke) | Prisma snapshot a `ConfirmedPlan`; migrace a zápis potvrzení byly ověřeny v izolované lokální PostgreSQL |
 | Audit potvrzení | `IMPLEMENTED` / `VERIFIED` (lokální Docker smoke) | Zápis `planning.confirmed` byl ověřen; čtecí pohled je `IMPLEMENTED` pro managera a ukazuje pouze tato potvrzení |
 | Operativní náhrada směny | `IMPLEMENTED` / `SIMULATED` | Syntetický řez: výpadek celé směny → tři varianty → deterministický dopad → výběr → manager-only potvrzení; Gemini a provozní kvalita `NOT VERIFIED` |
+| Nastavení potřebného obsazení | `IMPLEMENTED` / `BLOCKED` | `/nastaveni`, manager-only zápis přes API, Prisma model a použití v operativních náhradách; živý DB/browser smoke čeká na lokální PostgreSQL cíl |
 | Testy | `IMPLEMENTED` / `VERIFIED` | Jádro, služby a route handlery mají testy; plný UI/E2E test není součástí dema |
 | Kvalitní brána (CI) | `IMPLEMENTED` | Lint, typecheck, testy, build a Prisma validace procházejí |
 | Produkční připravenost | `NOT VERIFIED` | Není produkční aplikace |
@@ -105,10 +106,33 @@ Následující kroky zachycují aktuální target a jeho ověření; položky oz
    Kód obsahuje kontrakt, simulované varianty, deterministický výpočet dopadu,
    API, manager-only potvrzení, novou verzi týdne a minimální audit. UI je
    napojené v `ReplacementPanel`; bez potvrzení se uložený plán nemění.
-9. **Doplnit rozhodovací brány operativního řezu.** Zůstává otevřené zejména
-   OQ10, přesné rozlišení dovolené/plánovaného volna/náhradního volna a rozsah
-   auditu OQ20. Dokud nejsou dodány hodnoty limitů, systém je nesmí vydávat za
-   ověřené.
+9. ✅ **Přidat konfiguraci potřebného obsazení.** Týdenní tabulka pondělí–neděle
+   má ranní a odpolední minimum, manager ji může uložit přes serverové API a
+   operativní náhrada používá hodnotu pro konkrétní kalendářní den; chybějící
+   hodnota používá fallback 15/7. Živý DB/browser smoke test je blokovaný
+   chybějící lokální PostgreSQL konfigurací.
+
+## Doporučený postup po staffing pilotu
+
+Následující pořadí je pracovní plán, nikoli tvrzení o již ověřeném výsledku:
+
+1. **Ověřit lokální pilot.** V izolované lokální databázi aplikovat migraci,
+   projít `/nastaveni` jako manager i viewer, obnovit stránku a ověřit, že
+   operativní náhrada používá uložené minimum. Cílené unit/route testy prošly
+   (10/10) a Prisma schéma je validní; živý DB/browser průchod je nyní
+   `BLOCKED`, protože v pracovním prostředí chybí `DATABASE_URL`, PostgreSQL a
+   dostupný Docker.
+2. **Po odblokování testu dokumentaci znovu ověřit.** Doplnit skutečný příkaz,
+   použitý lokální cíl a výsledek průchodu; stav se označí jako `VERIFIED` pouze
+   podle skutečně provedené kontroly.
+3. **Přejít k doménovým rozhodnutím.** Zastavit další technické rozšiřování a
+   rozhodnout zejména limity náhrad (OQ9–OQ11), rozlišení dovolené/plánovaného a
+   náhradního volna (OQ22), rozsah auditu (OQ20) a zda je staffing nastavení
+   týdenní šablona, nebo nastavení pro konkrétní kalendářní týden.
+
+Do tohoto pořadí nepatří produkční Entra autentizace, produkční PostgreSQL,
+CRM, Outlook ani skutečná zaměstnanecká data. Projekt zůstává technickým
+demonstrátorem, dokud nebude produktový tok ověřený managerem.
 
 Produkční autentizace, produkční PostgreSQL, Entra, Outlook, CRM a přenos do
 rosteru zůstávají `DEFERRED` a nejsou součástí tohoto targetu.

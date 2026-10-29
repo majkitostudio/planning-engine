@@ -31,12 +31,13 @@ jsou `NOT VERIFIED` nebo `PLANNED`; lokální Docker PostgreSQL běh je `VERIFIE
 | Perzistence a audit | snapshot běhu, potvrzený plán, auditní událost | `lib/planning/persistence.ts`, `prisma/schema.prisma`; lokální Docker DB `VERIFIED`, produkční DB `NOT VERIFIED` |
 | Čtecí auditní pohled | historie `planning.confirmed` pro managera | `app/(app)/audit/page.tsx`, `lib/planning/audit-service.ts`; logika přístupu ověřená unit testy |
 | Operativní náhrada | incident, tři simulované varianty, deterministické změny/pokrytí/validace, výběr a nová potvrzená verze | `lib/planning/replacement-service.ts`, `app/api/planning/replacement/`; cílené unit/route testy prošly |
+| Nastavení potřebného obsazení | týdenní tabulka 7 × 2, manager-only API zápis, Prisma persistence a použití při operativní náhradě | `app/(app)/nastaveni/`, `app/api/settings/staffing/`, `lib/planning/staffing-settings.ts`; implementace prošla unit/route testy, živý DB/browser smoke je `BLOCKED` |
 | Prisma základ | PostgreSQL datasource, provozní modely a připravená migrace bez doménových modelů | `prisma/schema.prisma`, `prisma/migrations/` |
 | CI | lint, typecheck, testy, build a validace Prisma | `.github/workflows/ci.yml` |
 
 Aktuální ověření pracovního stromu (29. 10. 2026):
 
-- `npm run test` — 209 prošlo, 1 přeskočen (integrační Gemini test bez explicitního spuštění).
+- `npm run test -- --run` — 222 prošlo, 1 přeskočen (integrační Gemini test bez explicitního spuštění).
 - `npm run test -- lib/ai/gemini-planning-provider.integration.test.ts` s lokálním
   `.env.local` — 1 integrační test prošel; skutečné volání Gemini bylo ověřeno.
 - `npm run typecheck` — prošlo.
@@ -44,6 +45,10 @@ Aktuální ověření pracovního stromu (29. 10. 2026):
 - `npm run db:validate` — schéma je validní; migrace byla aplikována na izolovanou
   lokální Docker PostgreSQL a browser smoke test zapsal potvrzený běh i auditní událost.
 - `npm run lint` — prošlo bez warningů.
+- Cílený staffing test `npm test -- --run lib/planning/staffing-settings.test.ts tests/staffing-settings-routes.test.ts` — 10 testů prošlo.
+- Pokus o živý staffing smoke test — `BLOCKED`: v pracovním prostředí nebylo
+  dostupné `DATABASE_URL`, PostgreSQL ani Docker; migrace ani browser průchod
+  proto nebyly spuštěny.
 
 ## 3. Implementováno, ale potřebuje ověření nebo potvrzení
 
@@ -119,26 +124,18 @@ integrace s CRM zůstává mimo rozsah.
 
 ### Nejbližší aktivní kroky
 
-1. **Dokončit rozhodovací brány pro operativní řez.** Právní baseline OQ10 je
-   zmapovaný, ale konkrétní konfigurovatelný profil a jeho interní/právní
-   potvrzení ještě chybí. Pevná délka směny a zákaz přesčasů jsou pro projekt
-   potvrzené interní mantinely. OQ22 má jednoduchý incidentní životní cyklus;
-   zbývá rozlišení dovolené, plánovaného volna a náhradního volna. OQ9/OQ11,
-   rozsah auditu OQ20 a preference mimo pokrytí/tvrdá pravidla zůstávají
-   omezené nebo otevřené.
-2. **Zmrazit operativní kontrakt.** Navrhnout a otestovat `ShiftIncident`,
-   `ReplacementRequest` a `ReplacementOption` bez ukládání doménových modelů do
-   produkční databáze.
-3. **Implementovat doménovou službu náhrady.** Vstupem je potvrzený týden a
-   výpadek jedné celé směny; výstupem jsou tři varianty, deterministické dopady
-   a validace vybrané varianty.
-4. **Přidat simulované API a UI.** Manažer zadá výpadek, uvidí tři varianty,
-   vybere jednu a může ji potvrdit pouze při `ready_for_review` a úplnosti.
-5. **Přidat audit minimální potvrzené změny.** Zapsat incident, výchozí verzi,
-   původní a nový rozpis, variantu a identitu managera.
-6. **Ověřit celý řez testy.** Pokrýt výpadek, překryv, schválenou absenci,
-   nedostatek variant, neověřený limit, blokaci neúplného návrhu a idempotentní
-   potvrzení.
+1. **Ověřit lokální staffing pilot.** V izolované lokální databázi aplikovat
+   migraci, projít `/nastaveni` jako manager i viewer, obnovit stránku a ověřit
+   použití uložené hodnoty při operativní náhradě. Stav je nyní `BLOCKED`, protože
+   aktuální pracovní prostředí nemá dostupný Docker, PostgreSQL ani potvrzený
+   lokální DB cíl. Unit/route testy a Prisma validace prošly.
+2. **Po odblokování testu dokumentaci znovu ověřit.** Zapsat skutečný příkaz,
+   lokální DB cíl a výsledek průchodu. `VERIFIED` se použije až podle skutečně
+   provedeného smoke testu.
+3. **Rozhodnout doménové brány před další implementací.** Zůstávají otevřené
+   zejména limity náhrad OQ9–OQ11, rozlišení dovolené/plánovaného volna/
+   náhradního volna OQ22, rozsah auditu OQ20 a výklad staffing nastavení jako
+   týdenní šablony versus konkrétního kalendářního týdne.
 
 Detailní pořadí souborů a testů je v
 [`docs/superpowers/plans/2026-10-29-operativni-nahrady.md`](superpowers/plans/2026-10-29-operativni-nahrady.md).
