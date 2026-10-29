@@ -91,7 +91,12 @@ export function evaluateReplacementOption(
   const baseValidation = validatePlan(validationInput, proposal);
   const changes = computeChanges(basePlan.assignments, assignments);
   const coverage = computeCoverage(validationInput, assignments);
-  const impact = computeImpact(changes, request, input);
+  const impact = computeImpact(
+    changes,
+    request,
+    input,
+    draft.candidateEmployeeId,
+  );
   const validation = applyReplacementChecks(
     baseValidation,
     validationInput,
@@ -207,22 +212,29 @@ function computeImpact(
   changes: readonly AssignmentChange[],
   request: ReplacementRequest,
   input: PlanningInput,
+  candidateEmployeeId: string,
 ): ReplacementImpact {
   const changed = changes.filter((change) => change.type !== "unchanged");
+  const secondaryChanges = changed.filter(
+    (change) =>
+      change.assignment.employeeId !== request.incident.absentEmployeeId &&
+      change.assignment.employeeId !== candidateEmployeeId,
+  );
   const affectedEmployeeIds = [
     ...new Set(
-      changed
+      secondaryChanges
         .map((change) => change.assignment.employeeId)
-        .filter((employeeId) => employeeId !== request.incident.absentEmployeeId),
     ),
   ];
-  const dominoChain = changed
-    .map((change) => change.assignment)
-    .filter(
-      (assignment) =>
-        assignment.employeeId !== request.incident.absentEmployeeId &&
-        assignment.employeeId !== affectedEmployeeIds[0],
-    );
+  const dominoChain: ProposedAssignment[] = [];
+  const chainEmployeeIds = new Set<string>();
+  for (const change of secondaryChanges) {
+    const employeeId = change.assignment.employeeId;
+    if (!chainEmployeeIds.has(employeeId)) {
+      chainEmployeeIds.add(employeeId);
+      dominoChain.push(change.assignment);
+    }
+  }
   const changedDates = [
     ...new Set(changed.map((change) => change.assignment.date)),
   ];

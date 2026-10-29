@@ -37,6 +37,9 @@ describe("replacement-service", () => {
     const option = result.options[0];
 
     expect(option?.validation.status).toBe("valid");
+    expect(option?.impact.kind).toBe("none");
+    expect(option?.impact.affectedEmployeeIds).toEqual([]);
+    expect(option?.impact.dominoChain).toEqual([]);
     expect(option?.changes).toEqual(
       expect.arrayContaining([
         {
@@ -73,6 +76,33 @@ describe("replacement-service", () => {
       date: TARGET_DATE,
       shiftKind: TARGET_SHIFT,
     });
+  });
+
+  it("u řetězové varianty uvede každého dalšího zaměstnance právě jednou", async () => {
+    const { getSimulatedReplacementScenario } = await import(
+      "./simulated/replacement-scenarios"
+    );
+    const scenario = getSimulatedReplacementScenario("single-absence");
+    const draft = scenario?.drafts.find(
+      (candidate) => candidate.id === "replacement-domino",
+    );
+
+    expect(scenario).toBeDefined();
+    expect(draft).toBeDefined();
+
+    const option = evaluateReplacementOption(
+      scenario!.input,
+      scenario!.basePlan,
+      scenario!.request,
+      draft!,
+    );
+
+    expect(option.impact.kind).toBe("domino");
+    expect(option.impact.affectedEmployeeIds).toEqual(["e9", "e2"]);
+    expect(option.impact.dominoChain.map((assignment) => assignment.employeeId)).toEqual([
+      "e9",
+      "e2",
+    ]);
   });
 
   it("odmítne kandidáta se schválenou absencí", () => {
