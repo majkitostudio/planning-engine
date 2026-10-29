@@ -57,11 +57,11 @@ mimo AI i validační jádro. Aplikace nesmí návrh uložit nebo aplikovat jen 
 | `afternoon` | všední | 13:15 | 21:00 | 7 h 45 min |
 | `afternoon` | víkend | 12:45 | 21:00 | 8 h 15 min |
 
-**Přestávky (`VERIFIED`, OQ24):** zadání uvádí 30minutovou přestávku a zároveň
-tvrdí, že víkendová odpolední směna 12:45–21:00 při ní dává osm odpracovaných
-hodin. Aritmeticky vychází 7 h 45 min. První verze proto pracuje s hrubými
-časy začátku a konce; odpracovaná ani placená doba nejsou tvrdým pravidlem.
-Nejde o pracovněprávní posudek.
+**Přestávky (`VERIFIED`, OQ24):** víkendová odpolední směna 12:45–21:00 je
+pevně daná proto, aby se do ní vešla půlhodinová obědová přestávka. Nejde o
+přesčas ani o operativní prodloužení směny. První verze přesto pracuje s
+hrubými časy začátku a konce; odpracovaná ani placená doba nejsou tvrdým
+validačním pravidlem. Nejde o pracovněprávní posudek.
 
 ## 4. Vstup (`PlanningInput`)
 

@@ -49,7 +49,7 @@ Aktuální ověření pracovního stromu (28. 10. 2026):
 | Oblast | Co chybí | Dopad |
 | --- | --- | --- |
 | Výklad OQ21 | „pracovní den“ = kalendářní den s alespoň jednou směnou je `VERIFIED` | platí pro první řez; více směn v dni se počítá jednou |
-| Výklad OQ24 | přestávky se nezapočítávají, používají se hrubé časy začátku a konce | není to pracovněprávní posudek ani výpočet placené doby |
+| Výklad OQ24 | víkendová odpolední směna 12:45–21:00 je pevně daná kvůli půlhodinové pauze; validace používá hrubé časy | není to pracovněprávní posudek ani výpočet placené doby |
 | OQ23 | částečně neúplný návrh lze zobrazit, ale potvrzení je blokované | `VERIFIED`; potvrdit lze jen kompletní návrh |
 | Význam stavů | `ready_for_review` znamená „validace nic nenašla“, ne schválení | UI to zobrazuje jako „Připraveno ke kontrole“ s tlačítkem potvrzení |
 | Plnění `explanations` a `alternatives` | typ je hotový, kvalita výstupu modelu není ověřená | manažer nemusí dostat použitelné vysvětlení |

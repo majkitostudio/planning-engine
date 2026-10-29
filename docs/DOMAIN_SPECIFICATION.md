@@ -80,6 +80,10 @@ Jsou závazná pro další implementaci:
 Víkendová ranní směna se řídí ranním časem výše, protože dokumentace ani
 potvrzené rozhodnutí neříká jiný čas.
 
+Víkendová odpolední směna začíná ve 12:45 záměrně, aby se do pevného času
+12:45–21:00 vešla půlhodinová obědová přestávka. Nejde o přesčas ani o
+operativní prodloužení směny.
+
 `VERIFIED` **(OQ24) — přestávky a výpočet odpracované doby:** první verze
 validace používá hrubý interval začátku a konce směny. Přestávka ani odpracovaná
 doba nejsou tvrdým validačním pravidlem. Toto rozhodnutí popisuje chování

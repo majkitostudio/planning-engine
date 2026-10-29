@@ -62,7 +62,8 @@ mění zadání:
   neaplikuje.
 - **První funkční verze:** jeden týden, zaměstnanci na plný úvazek.
 - **Potvrzené časy směn:** ranní 7:45–16:30 (i víkend), odpolední ve všední den
-  13:15–21:00, víkendová odpolední 12:45–21:00.
+  13:15–21:00, víkendová odpolední 12:45–21:00. Víkendový začátek 12:45 je
+  záměrný kvůli půlhodinové obědové přestávce.
 - **Po šesti po sobě jdoucích pracovních dnech:** alespoň 35 h nepřetržitého
   odpočinku.
 - **Práce o víkendu:** dva dny volna během téhož týdne.
@@ -531,12 +532,12 @@ kompletního návrhu, který je `ready_for_review`.
 
 ### OQ24 — Jak se započítávají přestávky?
 
-**Proč to potřebujeme:** zadání uvádí 30minutovou přestávku, ale časy
-víkendové odpolední směny 12:45–21:00 při ní nedávají osm odpracovaných hodin
-(vychází 7 h 45 min). Rozpor je potřeba vyřešit, jinak by se z něj stal tichý
-předpoklad. Do potvrzení se odpracovaná doba nepoužívá jako tvrdé pravidlo.
+**Proč to potřebujeme:** víkendová odpolední směna začíná ve 12:45 záměrně,
+aby se do pevného času 12:45–21:00 vešla půlhodinová obědová přestávka. Nejde
+o přesčas ani o operativní prodloužení směny. Čistá nebo placená odpracovaná
+doba se ale v prvním řezu samostatně nepočítá.
 
-**Odpověď:** `VERIFIED` (28. 10. 2026) — validace v první verzi používá hrubý
+**Odpověď:** `VERIFIED` (29. 10. 2026) — validace v první verzi používá hrubý
 interval začátku a konce směny. Přestávka ani odpracovaná doba nejsou tvrdým
 validačním pravidlem. Toto rozhodnutí popisuje chování plánovacího engine;
 není pracovněprávním posudkem ani výpočtem placené doby.
