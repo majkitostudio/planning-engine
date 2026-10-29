@@ -7,7 +7,12 @@
  * rozhraním a nikdy nevolá síť přímo.
  */
 
-import type { PlanningInput, PlanDraft } from "./domain";
+import type {
+  PlanDraft,
+  PlanningInput,
+  ReplacementDraft,
+  ReplacementRequest,
+} from "./domain";
 import { isIsoDate } from "./domain/time";
 
 /** Strukturovaná chyba poskytovatele modelu. */
@@ -46,6 +51,16 @@ export interface PlanningModelProvider {
     input: PlanningInput,
     options?: { readonly signal?: AbortSignal },
   ): Promise<PlanDraft>;
+
+  /**
+   * Samostatný návrh operativních náhrad. Výsledek je pouze AI vstup pro
+   * deterministické vyhodnocení; provider netvrdí platnost ani dopad variant.
+   */
+  generateReplacements?(
+    input: PlanningInput,
+    request: ReplacementRequest,
+    options?: { readonly signal?: AbortSignal },
+  ): Promise<readonly ReplacementDraft[]>;
 }
 
 /**

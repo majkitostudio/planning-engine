@@ -13,9 +13,17 @@ import {
   getSimulatedScenario,
   type SimulatedScenarioId,
 } from "./simulated/scenarios";
+import {
+  getSimulatedReplacementScenario,
+  type SimulatedReplacementScenarioId,
+} from "./simulated/replacement-scenarios";
 
 export type PlanningProviderSelection =
   | { readonly mode: "simulated"; readonly scenario: SimulatedScenarioId }
+  | {
+      readonly mode: "simulated_replacement";
+      readonly scenario: SimulatedReplacementScenarioId;
+    }
   | { readonly mode: "gemini" };
 
 export function createPlanningProvider(
@@ -27,6 +35,17 @@ export function createPlanningProvider(
       throw new AiProviderError(
         "invalid_output",
         `Neznámý simulovaný scénář "${selection.scenario}".`,
+      );
+    }
+    return new SimulatedPlanningProvider(scenario);
+  }
+
+  if (selection.mode === "simulated_replacement") {
+    const scenario = getSimulatedReplacementScenario(selection.scenario);
+    if (!scenario) {
+      throw new AiProviderError(
+        "invalid_output",
+        `Neznámý simulovaný scénář operativní náhrady "${selection.scenario}".`,
       );
     }
     return new SimulatedPlanningProvider(scenario);
