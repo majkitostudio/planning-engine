@@ -395,3 +395,123 @@ export interface ConfirmedPlan {
   readonly assignments: readonly ProposedAssignment[];
   readonly confirmedAt: string;
 }
+
+/** Životní cyklus incidentu s výpadkem celé směny. */
+export type ReplacementIncidentStatus =
+  | "open"
+  | "options_generated"
+  | "option_selected"
+  | "confirmed"
+  | "abandoned"
+  | "cancelled";
+
+/** Výpadek konkrétního zaměstnance na jedné celé existující směně. */
+export interface ShiftIncident {
+  readonly id: string;
+  readonly status: ReplacementIncidentStatus;
+  readonly date: IsoDate;
+  readonly shiftKind: ShiftKind;
+  readonly absentEmployeeId: string;
+  readonly reportedAt?: string;
+}
+
+/** Požadavek na náhradu nad konkrétní potvrzenou verzí týdne. */
+export interface ReplacementRequest {
+  readonly id: string;
+  readonly baseProposalId: string;
+  readonly weekStart: IsoDate;
+  readonly incident: ShiftIncident;
+}
+
+/** AI část návrhu varianty; autoritativní dopad se doplňuje až deterministicky. */
+export interface ReplacementDraft {
+  readonly id: string;
+  readonly candidateEmployeeId: string;
+  readonly assignments: readonly ProposedAssignment[];
+  readonly summary: string;
+  readonly rationale: string;
+  readonly tradeOffs?: readonly string[];
+}
+
+export type ReplacementImpactKind =
+  | "none"
+  | "secondary_changes"
+  | "domino"
+  | "confirmed_time_off_change";
+
+/** Deterministicky dopočítaný dopad varianty na zaměstnance a jejich volno. */
+export interface ReplacementImpact {
+  readonly kind: ReplacementImpactKind;
+  readonly affectedEmployeeIds: readonly string[];
+  readonly changedDates: readonly IsoDate[];
+  readonly dominoChain: readonly ProposedAssignment[];
+  readonly timeOffChanges: readonly ReplacementTimeOffChange[];
+  readonly unverifiedReasons: readonly string[];
+}
+
+export type ReplacementTimeOffKind =
+  | "approved_vacation"
+  | "planned_day_off"
+  | "replacement_day_off"
+  | "unknown";
+
+/** Popis změny dne volna; systém ji sám neaplikuje. */
+export interface ReplacementTimeOffChange {
+  readonly employeeId: string;
+  readonly kind: ReplacementTimeOffKind;
+  readonly originalDate: IsoDate;
+  readonly newDate: IsoDate | null;
+  readonly verified: boolean;
+}
+
+/** Jedna varianta po deterministickém vyhodnocení celého týdne. */
+export interface ReplacementOption {
+  readonly id: string;
+  readonly requestId: string;
+  readonly draft: ReplacementDraft;
+  readonly changes: readonly AssignmentChange[];
+  readonly coverage: readonly CoverageLine[];
+  readonly impact: ReplacementImpact;
+  readonly validation: PlanValidationResult;
+  readonly status: PlanValidationStatus;
+}
+
+export type ReplacementRunStatus =
+  | "not_verified"
+  | "needs_changes"
+  | "ready_for_review";
+
+/** Výsledek běhu operativní náhrady; před potvrzením nemění uložený plán. */
+export interface ReplacementRunResult {
+  readonly request: ReplacementRequest;
+  readonly basePlan: ConfirmedPlan;
+  readonly options: readonly ReplacementOption[];
+  readonly selectedOptionId: string | null;
+  readonly completeness: "complete" | "partial";
+  readonly status: ReplacementRunStatus;
+  readonly confirmed: false;
+}
+
+export type ReplacementValidationCode =
+  | "REPLACEMENT_REQUEST_INVALID"
+  | "REPLACEMENT_WEEK_MISMATCH"
+  | "REPLACEMENT_BASE_NOT_FOUND"
+  | "REPLACEMENT_BASE_MISMATCH"
+  | "REPLACEMENT_INCIDENT_INVALID"
+  | "REPLACEMENT_INCIDENT_OUTSIDE_WEEK"
+  | "REPLACEMENT_INCIDENT_UNKNOWN_EMPLOYEE"
+  | "REPLACEMENT_INCIDENT_UNKNOWN_SHIFT"
+  | "REPLACEMENT_INCIDENT_ASSIGNMENT_NOT_FOUND";
+
+export interface ReplacementValidationProblem {
+  readonly code: ReplacementValidationCode;
+  readonly message: string;
+  readonly employeeId?: string;
+  readonly date?: IsoDate;
+  readonly shiftKind?: ShiftKind;
+}
+
+export interface ReplacementRequestValidationResult {
+  readonly status: "valid" | "invalid";
+  readonly problems: readonly ReplacementValidationProblem[];
+}

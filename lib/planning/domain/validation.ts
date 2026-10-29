@@ -13,6 +13,7 @@ import {
 } from "./time";
 import type {
   Absence,
+  ConfirmedPlan,
   Employee,
   ExistingAssignment,
   IsoDate,
@@ -22,6 +23,9 @@ import type {
   PlanValidationUnverifiedCheck,
   PlanningInput,
   ProposedAssignment,
+  ReplacementRequest,
+  ReplacementRequestValidationResult,
+  ReplacementValidationProblem,
   ShiftDefinition,
   ShiftKind,
   ShiftWindow,
@@ -184,6 +188,115 @@ export function validatePlan(
   }
 
   return finalize(state, proposalId, input.weekStart);
+}
+
+/**
+ * Ověří incident ještě před hledáním náhrady.
+ *
+ * Kontrola je čistá: pouze čte potvrzený plán a vstup a nikdy neupravuje
+ * `ConfirmedPlan`. Výsledný pracovní návrh vzniká až v replacement service.
+ */
+export function validateReplacementRequest(
+  input: PlanningInput,
+  basePlan: ConfirmedPlan | null,
+  request: ReplacementRequest,
+): ReplacementRequestValidationResult {
+  const problems: ReplacementValidationProblem[] = [];
+
+  if (!isRecord(input) || !isRecord(request)) {
+    return {
+      status: "invalid",
+      problems: [
+        {
+          code: "REPLACEMENT_REQUEST_INVALID",
+          message: "Požadavek operativní náhrady nemá platný tvar.",
+        },
+      ],
+    };
+  }
+
+  if (!basePlan) {
+    problems.push({
+      code: "REPLACEMENT_BASE_NOT_FOUND",
+      message: "Výchozí potvrzená verze týdne neexistuje.",
+    });
+  } else if (request.baseProposalId !== basePlan.proposalId) {
+    problems.push({
+      code: "REPLACEMENT_BASE_MISMATCH",
+      message: `Požadavek odkazuje na základ "${request.baseProposalId}", ale aktuální základ je "${basePlan.proposalId}".`,
+    });
+  }
+
+  if (request.weekStart !== input.weekStart) {
+    problems.push({
+      code: "REPLACEMENT_WEEK_MISMATCH",
+      message: `Požadavek je pro týden "${request.weekStart}", ale vstup pro "${input.weekStart}".`,
+    });
+  }
+
+  const incident = request.incident;
+  if (!isRecord(incident)) {
+    problems.push({
+      code: "REPLACEMENT_INCIDENT_INVALID",
+      message: "Incident výpadku nemá platný tvar.",
+    });
+    return { status: "invalid", problems };
+  }
+
+  const date = incident.date;
+  const shiftKind = incident.shiftKind;
+  const employeeId = incident.absentEmployeeId;
+  const isKnownShift = shiftKind === "morning" || shiftKind === "afternoon";
+
+  if (
+    typeof date !== "string" ||
+    !isIsoDate(date) ||
+    date < input.weekStart ||
+    date > addDays(input.weekStart, 6)
+  ) {
+    problems.push({
+      code: "REPLACEMENT_INCIDENT_OUTSIDE_WEEK",
+      message: `Incident ${String(date)} nepatří do plánovaného týdne.`,
+      ...(typeof date === "string" ? { date } : {}),
+    });
+  }
+
+  if (typeof employeeId !== "string" || !input.employees.some((employee) => employee.id === employeeId)) {
+    problems.push({
+      code: "REPLACEMENT_INCIDENT_UNKNOWN_EMPLOYEE",
+      message: `Incident odkazuje na neznámého zaměstnance "${String(employeeId)}".`,
+      ...(typeof employeeId === "string" ? { employeeId } : {}),
+    });
+  }
+
+  if (!isKnownShift) {
+    problems.push({
+      code: "REPLACEMENT_INCIDENT_UNKNOWN_SHIFT",
+      message: `Incident odkazuje na neznámý druh směny "${String(shiftKind)}".`,
+      ...(typeof shiftKind === "string" ? { shiftKind: shiftKind as never } : {}),
+    });
+  }
+
+  if (
+    basePlan &&
+    problems.length === 0 &&
+    !basePlan.assignments.some(
+      (assignment) =>
+        assignment.employeeId === employeeId &&
+        assignment.date === date &&
+        assignment.shiftKind === shiftKind,
+    )
+  ) {
+    problems.push({
+      code: "REPLACEMENT_INCIDENT_ASSIGNMENT_NOT_FOUND",
+      message: `Absentující zaměstnanec "${employeeId}" není na základu přiřazen na směnu ${date} "${shiftKind}".`,
+      employeeId,
+      date,
+      shiftKind: shiftKind as "morning" | "afternoon",
+    });
+  }
+
+  return { status: problems.length === 0 ? "valid" : "invalid", problems };
 }
 
 function createState(): ValidationState {
