@@ -105,6 +105,51 @@ describe("replacement-service", () => {
     ]);
   });
 
+  it("má v ukázkovém základu sedm lidí i na pondělní ranní směně", async () => {
+    const { getSimulatedReplacementScenario } = await import(
+      "./simulated/replacement-scenarios"
+    );
+    const scenario = getSimulatedReplacementScenario("single-absence");
+
+    expect(scenario).toBeDefined();
+    const mondayMorning = scenario!.input.staffingRequirements.find(
+      (requirement) =>
+        requirement.date === WEEK_START && requirement.shiftKind === "morning",
+    );
+    const mondayMorningAssignments = scenario!.basePlan.assignments.filter(
+      (assignment) =>
+        assignment.date === WEEK_START && assignment.shiftKind === "morning",
+    );
+    const direct = evaluateReplacementOption(
+      scenario!.input,
+      scenario!.basePlan,
+      scenario!.request,
+      scenario!.drafts[0]!,
+    );
+    const domino = evaluateReplacementOption(
+      scenario!.input,
+      scenario!.basePlan,
+      scenario!.request,
+      scenario!.drafts[1]!,
+    );
+
+    expect(mondayMorning?.requiredEmployees).toBe(7);
+    expect(mondayMorningAssignments).toHaveLength(7);
+    expect(direct.validation.status).toBe("valid");
+    expect(domino.validation.status).toBe("valid");
+    expect(domino.coverage).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          date: WEEK_START,
+          shiftKind: "morning",
+          requiredEmployees: 7,
+          assignedEmployees: 7,
+          missingEmployees: 0,
+        }),
+      ]),
+    );
+  });
+
   it("odmítne kandidáta se schválenou absencí", () => {
     const { input, basePlan, request } = makeScenario({
       absences: [

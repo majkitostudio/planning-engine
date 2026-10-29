@@ -158,8 +158,8 @@ describe("replacement route handlers", () => {
 
     expect(response.status).toBe(200);
     expect(snapshot?.confirmedPlan).toBeNull();
-    expect(snapshot?.basePlan.assignments).toHaveLength(7);
-    expect(body.result.basePlan.assignments).toHaveLength(7);
+    expect(snapshot?.basePlan.assignments).toHaveLength(14);
+    expect(body.result.basePlan.assignments).toHaveLength(14);
   });
 
   it("potvrdí vybranou validní variantu a opakování je idempotentní", async () => {

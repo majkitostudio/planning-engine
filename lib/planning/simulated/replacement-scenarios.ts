@@ -34,6 +34,11 @@ const BASE_ASSIGNMENTS: readonly ProposedAssignment[] = [
     date: TARGET_DATE,
     shiftKind: TARGET_SHIFT,
   })),
+  ...["e1", "e3", "e4", "e5", "e6", "e7", "e9"].map((employeeId) => ({
+    employeeId,
+    date: WEEK_START,
+    shiftKind: "morning" as const,
+  })),
 ];
 
 const EMPLOYEES: readonly Employee[] = [
@@ -70,7 +75,16 @@ const DIRECT_ASSIGNMENTS = replaceAbsent("e8");
 const DOMINO_ASSIGNMENTS = [
   ...BASE_ASSIGNMENTS.filter(
     (assignment) =>
-      assignment.employeeId !== "e1" && assignment.employeeId !== "e2",
+      !(
+        assignment.date === TARGET_DATE &&
+        assignment.shiftKind === TARGET_SHIFT &&
+        (assignment.employeeId === "e1" || assignment.employeeId === "e2")
+      ) &&
+      !(
+        assignment.date === WEEK_START &&
+        assignment.shiftKind === "morning" &&
+        assignment.employeeId === "e9"
+      ),
   ),
   { employeeId: "e8", date: TARGET_DATE, shiftKind: TARGET_SHIFT },
   { employeeId: "e9", date: TARGET_DATE, shiftKind: TARGET_SHIFT },
@@ -94,7 +108,10 @@ export const SIMULATED_REPLACEMENT_SCENARIO: SimulatedReplacementScenario = {
           date,
           shiftKind,
           requiredEmployees:
-            date === TARGET_DATE && shiftKind === TARGET_SHIFT ? 7 : 0,
+            (date === TARGET_DATE && shiftKind === TARGET_SHIFT) ||
+            (date === WEEK_START && shiftKind === "morning")
+              ? 7
+              : 0,
         })),
       ),
     ],
@@ -119,8 +136,9 @@ export const SIMULATED_REPLACEMENT_SCENARIO: SimulatedReplacementScenario = {
       candidateEmployeeId: "e8",
       assignments: DOMINO_ASSIGNMENTS,
       summary: "Náhrada s přesunem dalšího zaměstnance",
-      rationale: "e8 nahradí výpadek a e2 se přesune na ranní směnu.",
-      tradeOffs: ["Varianta mění přiřazení e2 mimo řešenou směnu."],
+      rationale:
+        "e8 nahradí výpadek, e9 uvolní místo a e2 se přesune na ranní směnu.",
+      tradeOffs: ["Varianta mění přiřazení e2 a e9 mimo řešenou směnu."],
     },
     {
       id: "replacement-understaffed",
@@ -143,7 +161,14 @@ export function getSimulatedReplacementScenario(
 
 function replaceAbsent(candidateEmployeeId: string): ProposedAssignment[] {
   return [
-    ...BASE_ASSIGNMENTS.filter((assignment) => assignment.employeeId !== "e1"),
+    ...BASE_ASSIGNMENTS.filter(
+      (assignment) =>
+        !(
+          assignment.employeeId === "e1" &&
+          assignment.date === TARGET_DATE &&
+          assignment.shiftKind === TARGET_SHIFT
+        ),
+    ),
     { employeeId: candidateEmployeeId, date: TARGET_DATE, shiftKind: TARGET_SHIFT },
   ];
 }

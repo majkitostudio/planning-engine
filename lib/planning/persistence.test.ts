@@ -174,7 +174,7 @@ describe("replacement persistence", () => {
     await expect(
       persistence.getReplacementRun(snapshot.replacementId),
     ).resolves.toEqual(snapshot);
-    expect(snapshot.basePlan.assignments).toHaveLength(7);
+    expect(snapshot.basePlan.assignments).toHaveLength(14);
     expect(snapshot.confirmedPlan).toBeNull();
   });
 
