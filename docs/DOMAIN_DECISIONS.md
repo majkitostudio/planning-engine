@@ -283,7 +283,7 @@ nesmím. Tohle je čistě vstup managera.
 
 | Veličina | Otázka | Odpověď |
 | --- | --- | --- |
-| Maximum hodin za měsíc | Kolik hodin? Platí stejně pro všechny, nebo podle úvazku? | |
+| Maximum hodin za období | Jaké období se posuzuje a kolik hodin? Platí stejně pro všechny, nebo podle úvazku? | |
 | Minimum odpočinku mezi směnami | Kolik hodin mezi koncem a začátkem další směny? | |
 | Maximum směn v řadě | Kolik dní v kuse nejvýš? | |
 | Maximum směn za měsíc | Kolik směn nejvýš? | |
@@ -295,7 +295,7 @@ nesmím. Tohle je čistě vstup managera.
 - 6 po sobě jdoucích pracovních dnů → alespoň 35 h nepřetržitého odpočinku.
 - Práce o víkendu → 2 dny volna v témže týdnu.
 
-Ostatní limity (maximum hodin za týden, maximum směn v řadě, jiný odpočinek)
+Ostatní limity (maximum hodin za určené období, maximum směn v řadě, jiný odpočinek)
 zůstávají `OPEN QUESTION`. Čísla se nesmí domýšlet.
 
 ### OQ11 — Existují pravidla mimo uvedený seznam?
