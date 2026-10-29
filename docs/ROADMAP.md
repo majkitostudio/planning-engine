@@ -31,7 +31,7 @@ jsou `NOT VERIFIED` nebo `PLANNED`; lokální Docker PostgreSQL běh je `VERIFIE
 | Perzistence a audit | snapshot běhu, potvrzený plán, auditní událost | `lib/planning/persistence.ts`, `prisma/schema.prisma`; lokální Docker DB `VERIFIED`, produkční DB `NOT VERIFIED` |
 | Čtecí auditní pohled | historie `planning.confirmed` pro managera | `app/(app)/audit/page.tsx`, `lib/planning/audit-service.ts`; logika přístupu ověřená unit testy |
 | Operativní náhrada | incident, tři simulované varianty, deterministické změny/pokrytí/validace, výběr a nová potvrzená verze | `lib/planning/replacement-service.ts`, `app/api/planning/replacement/`; cílené unit/route testy prošly |
-| Nastavení potřebného obsazení | týdenní tabulka 7 × 2, manager-only API zápis, Prisma persistence a použití při operativní náhradě | `app/(app)/nastaveni/`, `app/api/settings/staffing/`, `lib/planning/staffing-settings.ts`; implementace prošla unit/route testy, živý DB/browser smoke je `BLOCKED` |
+| Nastavení potřebného obsazení | týdenní tabulka 7 × 2, manager-only API zápis, Prisma persistence a použití při operativní náhradě | `app/(app)/nastaveni/`, `app/api/settings/staffing/`, `lib/planning/staffing-settings.ts`; implementace, lokální migrace a manuální DB/browser smoke jsou `VERIFIED` v syntetickém pilotu |
 | Prisma základ | PostgreSQL datasource, provozní modely a připravená migrace bez doménových modelů | `prisma/schema.prisma`, `prisma/migrations/` |
 | CI | lint, typecheck, testy, build a validace Prisma | `.github/workflows/ci.yml` |
 
@@ -42,13 +42,14 @@ Aktuální ověření pracovního stromu (29. 10. 2026):
   `.env.local` — 1 integrační test prošel; skutečné volání Gemini bylo ověřeno.
 - `npm run typecheck` — prošlo.
 - `npm run build` — prošlo.
-- `npm run db:validate` — schéma je validní; migrace byla aplikována na izolovanou
-  lokální Docker PostgreSQL a browser smoke test zapsal potvrzený běh i auditní událost.
+- `npm run db:validate` — schéma je validní; staffing migrace byla aplikována na
+  existující lokální Docker kontejner `planning-engine-postgres`.
 - `npm run lint` — prošlo bez warningů.
 - Cílený staffing test `npm test -- --run lib/planning/staffing-settings.test.ts tests/staffing-settings-routes.test.ts` — 10 testů prošlo.
-- Pokus o živý staffing smoke test — `BLOCKED`: v pracovním prostředí nebylo
-  dostupné `DATABASE_URL`, PostgreSQL ani Docker; migrace ani browser průchod
-  proto nebyly spuštěny.
+- Manuální staffing browser smoke — manager načetl výchozí hodnoty 15/7, uložil
+  změny a po reloadu je znovu načetl; viewer hodnoty pouze zobrazil a POST API
+  odmítlo zápis stavem `403`. Operativní náhrada použila uložené úterní
+  odpolední minimum 5 a zobrazila pokrytí `7/5`; žádná změna nebyla potvrzena.
 
 ## 3. Implementováno, ale potřebuje ověření nebo potvrzení
 
@@ -124,14 +125,14 @@ integrace s CRM zůstává mimo rozsah.
 
 ### Nejbližší aktivní kroky
 
-1. **Ověřit lokální staffing pilot.** V izolované lokální databázi aplikovat
-   migraci, projít `/nastaveni` jako manager i viewer, obnovit stránku a ověřit
-   použití uložené hodnoty při operativní náhradě. Stav je nyní `BLOCKED`, protože
-   aktuální pracovní prostředí nemá dostupný Docker, PostgreSQL ani potvrzený
-   lokální DB cíl. Unit/route testy a Prisma validace prošly.
-2. **Po odblokování testu dokumentaci znovu ověřit.** Zapsat skutečný příkaz,
-   lokální DB cíl a výsledek průchodu. `VERIFIED` se použije až podle skutečně
-   provedeného smoke testu.
+1. ✅ **Ověřit lokální staffing pilot.** V existujícím lokálním kontejneru
+   `planning-engine-postgres` byla aplikována migrace; `/nastaveni` prošlo jako
+   manager i viewer, reload zachoval hodnoty a operativní náhrada použila uložené
+   minimum pro konkrétní den a směnu. Unit/route testy, Prisma validace a manuální
+   browser smoke jsou `VERIFIED` v rozsahu syntetického pilotu.
+2. ✅ **Aktualizovat dokumentaci po ověření.** Tento záznam obsahuje skutečný
+   lokální cíl a skutečný výsledek průchodu. Produkční databáze, produkční role a
+   kvalita plánování zůstávají mimo toto ověření.
 3. **Rozhodnout doménové brány před další implementací.** Zůstávají otevřené
    zejména limity náhrad OQ9–OQ11, rozlišení dovolené/plánovaného volna/
    náhradního volna OQ22, rozsah auditu OQ20 a výklad staffing nastavení jako

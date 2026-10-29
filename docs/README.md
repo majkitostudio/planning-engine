@@ -39,7 +39,7 @@ jiných dokumentů neopakuje.
 | Ukládání běhů a potvrzení | `IMPLEMENTED` / `VERIFIED` (lokální Docker smoke) | Prisma snapshot a `ConfirmedPlan`; migrace a zápis potvrzení byly ověřeny v izolované lokální PostgreSQL |
 | Audit potvrzení | `IMPLEMENTED` / `VERIFIED` (lokální Docker smoke) | Zápis `planning.confirmed` byl ověřen; čtecí pohled je `IMPLEMENTED` pro managera a ukazuje pouze tato potvrzení |
 | Operativní náhrada směny | `IMPLEMENTED` / `SIMULATED` | Syntetický řez: výpadek celé směny → tři varianty → deterministický dopad → výběr → manager-only potvrzení; Gemini a provozní kvalita `NOT VERIFIED` |
-| Nastavení potřebného obsazení | `IMPLEMENTED` / `BLOCKED` | `/nastaveni`, manager-only zápis přes API, Prisma model a použití v operativních náhradách; živý DB/browser smoke čeká na lokální PostgreSQL cíl |
+| Nastavení potřebného obsazení | `IMPLEMENTED` / `VERIFIED` (lokální smoke) | `/nastaveni`, manager-only zápis přes API, Prisma persistence a použití v operativních náhradách; migrace a manuální browser smoke proběhly v lokálním Docker PostgreSQL |
 | Testy | `IMPLEMENTED` / `VERIFIED` | Jádro, služby a route handlery mají testy; plný UI/E2E test není součástí dema |
 | Kvalitní brána (CI) | `IMPLEMENTED` | Lint, typecheck, testy, build a Prisma validace procházejí |
 | Produkční připravenost | `NOT VERIFIED` | Není produkční aplikace |
@@ -109,22 +109,23 @@ Následující kroky zachycují aktuální target a jeho ověření; položky oz
 9. ✅ **Přidat konfiguraci potřebného obsazení.** Týdenní tabulka pondělí–neděle
    má ranní a odpolední minimum, manager ji může uložit přes serverové API a
    operativní náhrada používá hodnotu pro konkrétní kalendářní den; chybějící
-   hodnota používá fallback 15/7. Živý DB/browser smoke test je blokovaný
-   chybějící lokální PostgreSQL konfigurací.
+   hodnota používá fallback 15/7. Implementace i lokální DB/browser smoke jsou
+   `VERIFIED` v rozsahu syntetického pilotu.
 
 ## Doporučený postup po staffing pilotu
 
 Následující pořadí je pracovní plán, nikoli tvrzení o již ověřeném výsledku:
 
-1. **Ověřit lokální pilot.** V izolované lokální databázi aplikovat migraci,
-   projít `/nastaveni` jako manager i viewer, obnovit stránku a ověřit, že
-   operativní náhrada používá uložené minimum. Cílené unit/route testy prošly
-   (10/10) a Prisma schéma je validní; živý DB/browser průchod je nyní
-   `BLOCKED`, protože v pracovním prostředí chybí `DATABASE_URL`, PostgreSQL a
-   dostupný Docker.
-2. **Po odblokování testu dokumentaci znovu ověřit.** Doplnit skutečný příkaz,
-   použitý lokální cíl a výsledek průchodu; stav se označí jako `VERIFIED` pouze
-   podle skutečně provedené kontroly.
+1. ✅ **Ověřit lokální pilot.** V existujícím lokálním kontejneru
+   `planning-engine-postgres` byla aplikována staffing migrace. Manuální browser
+   průchod ověřil manager zápis, zachování hodnot po reloadu, viewer-only přístup
+   a serverový zákaz zápisu vieweru (`403`). Operativní náhrada načetla uložené
+   minimum pro cílové úterní odpoledne (`5`) a zobrazila pokrytí `7/5`; návrh
+   zůstal nepotvrzený.
+2. ✅ **Aktualizovat dokumentaci po ověření.** Tento checkpoint zapisuje skutečný
+   lokální cíl, provedenou migraci, role i výsledek browser smoke. Stav
+   `VERIFIED` se vztahuje pouze na lokální syntetický pilot, nikoli na produkční
+   provoz.
 3. **Přejít k doménovým rozhodnutím.** Zastavit další technické rozšiřování a
    rozhodnout zejména limity náhrad (OQ9–OQ11), rozlišení dovolené/plánovaného a
    náhradního volna (OQ22), rozsah auditu (OQ20) a zda je staffing nastavení
