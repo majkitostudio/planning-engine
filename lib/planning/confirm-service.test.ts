@@ -1,9 +1,17 @@
 import { describe, expect, it } from "vitest";
 
 import { confirmRun } from "./confirm-service";
+import { confirmPersistedReplacementRun } from "./confirm-service";
 import { executePlanningRun } from "./run-service";
 import { PlanningRunRegistry } from "./run-registry";
 import { SIMULATED_WEEK_START } from "./simulated/scenarios";
+import { getSimulatedReplacementScenario } from "./simulated/replacement-scenarios";
+import { createReplacementOptions } from "./replacement-service";
+import {
+  InMemoryPlanningPersistence,
+  type ReplacementRunSnapshot,
+} from "./persistence";
+import { toPlanningActor } from "../auth/actor";
 
 async function runScenario(
   scenarioId: "complete" | "partial" | "unverified",
@@ -89,5 +97,142 @@ describe("confirmRun", () => {
     if (result.ok) return;
     expect(result.code).toBe("unknown_proposal");
     expect(result.blockers).toEqual([]);
+  });
+});
+
+const replacementActor = toPlanningActor({
+  user: {
+    id: "replacement-manager",
+    email: "manager@aaauto.cz",
+    name: "Manažer",
+    role: "manager",
+  },
+});
+if (!replacementActor) throw new Error("Replacement actor se nepodařilo vytvořit.");
+
+function makeReplacementSnapshot(
+  overrides: {
+    drafts?: number;
+    incompleteHistory?: boolean;
+    staleBase?: boolean;
+    tamperSelectedOption?: boolean;
+  } = {},
+): ReplacementRunSnapshot {
+  const scenario = getSimulatedReplacementScenario("single-absence");
+  if (!scenario) throw new Error("Replacement scenario se nepodařilo načíst.");
+  const runRequest = {
+    ...scenario.request,
+    id: "replacement-confirmation-test",
+  };
+  const input = overrides.incompleteHistory
+    ? { ...scenario.input, history: { assignments: [], complete: false } }
+    : scenario.input;
+  const result = createReplacementOptions(
+    input,
+    scenario.basePlan,
+    runRequest,
+    scenario.drafts.slice(0, overrides.drafts ?? scenario.drafts.length),
+  );
+
+  const request = overrides.staleBase
+    ? { ...runRequest, baseProposalId: "stale-base" }
+    : runRequest;
+  const tamperedResult = overrides.staleBase || overrides.tamperSelectedOption
+    ? {
+        ...result,
+        request,
+        ...(overrides.tamperSelectedOption
+          ? {
+              options: result.options.map((option, index) =>
+                index === 0
+                  ? {
+                      ...option,
+                      draft: {
+                        ...option.draft,
+                        assignments: [
+                          {
+                            employeeId: "unknown",
+                            date: scenario.request.incident.date,
+                            shiftKind: "afternoon" as const,
+                          },
+                        ],
+                      },
+                    }
+                  : option,
+              ),
+            }
+          : {}),
+      }
+    : result;
+
+  return {
+    replacementId: request.id,
+    scenarioId: scenario.id,
+    scenarioLabel: scenario.label,
+    providerName: "simulated-fixture/single-absence",
+    mode: "simulated",
+    input,
+    basePlan: scenario.basePlan,
+    result: tamperedResult,
+    confirmedPlan: null,
+    confirmedAt: null,
+    confirmedById: null,
+  };
+}
+
+describe("confirmPersistedReplacementRun", () => {
+  it("potvrdí validní úplnou variantu a opakování je idempotentní", async () => {
+    const persistence = new InMemoryPlanningPersistence();
+    const snapshot = makeReplacementSnapshot();
+    const option = snapshot.result.options[0]!;
+    await persistence.saveReplacementRun(snapshot, replacementActor);
+
+    const first = await confirmPersistedReplacementRun(
+      persistence,
+      snapshot.replacementId,
+      option.id,
+      replacementActor,
+      Date.UTC(2026, 9, 29, 8),
+    );
+    const second = await confirmPersistedReplacementRun(
+      persistence,
+      snapshot.replacementId,
+      option.id,
+      replacementActor,
+      Date.UTC(2026, 9, 29, 9),
+    );
+
+    expect(first).toMatchObject({ ok: true, alreadyConfirmed: false });
+    expect(second).toMatchObject({ ok: true, alreadyConfirmed: true });
+  });
+
+  it.each([
+    ["neplatnou variantu", {}, "replacement_needs_changes"],
+    ["neověřenou variantu", { incompleteHistory: true }, "replacement_not_verified"],
+    ["neúplný běh", { drafts: 1 }, "replacement_partial_blocked"],
+    ["zastaralý základ", { staleBase: true }, "replacement_base_stale"],
+    ["změněný snapshot", { tamperSelectedOption: true }, "replacement_revalidation_failed"],
+  ] as const)("zablokuje %s", async (_label, overrides, expectedCode) => {
+    const persistence = new InMemoryPlanningPersistence();
+    const snapshot = makeReplacementSnapshot(overrides);
+    const option = snapshot.result.options[
+      expectedCode === "replacement_needs_changes" ? 2 : 0
+    ];
+    if (!option) throw new Error("Test snapshot nemá vybranou variantu.");
+    await persistence.saveReplacementRun(snapshot, replacementActor);
+
+    const result = await confirmPersistedReplacementRun(
+      persistence,
+      snapshot.replacementId,
+      option.id,
+      replacementActor,
+    );
+
+    expect(result).toMatchObject({
+      ok: false,
+      code: "replacement_confirmation_blocked",
+      blockers: expect.arrayContaining([expect.objectContaining({ code: expectedCode })]),
+    });
+    expect((await persistence.getReplacementRun(snapshot.replacementId))?.confirmedPlan).toBeNull();
   });
 });

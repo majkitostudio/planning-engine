@@ -12,7 +12,13 @@ export type ConfirmationBlockerCode =
   | "run_not_verified"
   | "run_needs_changes"
   | "partial_blocked_by_oq23"
-  | "not_ready_for_review";
+  | "not_ready_for_review"
+  | "replacement_not_verified"
+  | "replacement_needs_changes"
+  | "replacement_partial_blocked"
+  | "replacement_option_missing"
+  | "replacement_base_stale"
+  | "replacement_revalidation_failed";
 
 export interface ConfirmationBlocker {
   readonly code: ConfirmationBlockerCode;

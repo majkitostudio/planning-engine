@@ -3,6 +3,7 @@ import type {
   PlanningInput,
   PlanningRunResult,
   ProposedAssignment,
+  ReplacementRunResult,
 } from "./domain/types";
 import type { PlanningActor } from "../auth/actor";
 import { prisma as defaultPrisma } from "../db";
@@ -22,10 +23,24 @@ export interface PlanningRunSnapshot {
   readonly confirmedById: string | null;
 }
 
+export interface ReplacementRunSnapshot {
+  readonly replacementId: string;
+  readonly scenarioId: string;
+  readonly scenarioLabel: string;
+  readonly providerName: string;
+  readonly mode: PlanningProviderMode;
+  readonly input: PlanningInput;
+  readonly basePlan: ConfirmedPlan;
+  readonly result: ReplacementRunResult;
+  readonly confirmedPlan: ConfirmedPlan | null;
+  readonly confirmedAt: string | null;
+  readonly confirmedById: string | null;
+}
+
 export interface PlanningAuditEvent {
   readonly id: string;
-  readonly action: "planning.confirmed";
-  readonly entityType: "planning_run";
+  readonly action: "planning.confirmed" | "planning.replacement_confirmed";
+  readonly entityType: "planning_run" | "replacement_run";
   readonly entityId: string;
   readonly actorId: string | null;
   readonly createdAt: string;
@@ -34,11 +49,17 @@ export interface PlanningAuditEvent {
 
 export interface PlanningPersistenceState {
   readonly runs: Map<string, PlanningRunSnapshot>;
+  readonly replacementRuns: Map<string, ReplacementRunSnapshot>;
   readonly auditEvents: PlanningAuditEvent[];
 }
 
 export interface PersistedConfirmation {
   readonly snapshot: PlanningRunSnapshot;
+  readonly alreadyConfirmed: boolean;
+}
+
+export interface PersistedReplacementConfirmation {
+  readonly snapshot: ReplacementRunSnapshot;
   readonly alreadyConfirmed: boolean;
 }
 
@@ -52,11 +73,24 @@ export interface PlanningPersistence {
     actor: PlanningActor,
     confirmedAt: Date,
   ): Promise<PersistedConfirmation | null>;
+  saveReplacementRun(
+    snapshot: ReplacementRunSnapshot,
+    actor?: PlanningActor,
+  ): Promise<void>;
+  getReplacementRun(replacementId: string): Promise<ReplacementRunSnapshot | null>;
+  confirmReplacementRun(
+    replacementId: string,
+    selectedOptionId: string,
+    assignments: readonly ProposedAssignment[],
+    actor: PlanningActor,
+    confirmedAt: Date,
+  ): Promise<PersistedReplacementConfirmation | null>;
 }
 
 export function createInMemoryPersistenceState(): PlanningPersistenceState {
   return {
     runs: new Map(),
+    replacementRuns: new Map(),
     auditEvents: [],
   };
 }
@@ -77,6 +111,20 @@ export class InMemoryPlanningPersistence implements PlanningPersistence {
 
   async getRun(proposalId: string): Promise<PlanningRunSnapshot | null> {
     return this.state.runs.get(proposalId) ?? null;
+  }
+
+  async saveReplacementRun(
+    snapshot: ReplacementRunSnapshot,
+    actor?: PlanningActor,
+  ): Promise<void> {
+    void actor;
+    this.state.replacementRuns.set(snapshot.replacementId, snapshot);
+  }
+
+  async getReplacementRun(
+    replacementId: string,
+  ): Promise<ReplacementRunSnapshot | null> {
+    return this.state.replacementRuns.get(replacementId) ?? null;
   }
 
   async listAuditEvents(): Promise<readonly PlanningAuditEvent[]> {
@@ -123,6 +171,57 @@ export class InMemoryPlanningPersistence implements PlanningPersistence {
         weekStart: current.result.weekStart,
         email: actor.email,
       },
+    });
+
+    return { snapshot: updated, alreadyConfirmed: false };
+  }
+
+  async confirmReplacementRun(
+    replacementId: string,
+    selectedOptionId: string,
+    assignments: readonly ProposedAssignment[],
+    actor: PlanningActor,
+    confirmedAt: Date,
+  ): Promise<PersistedReplacementConfirmation | null> {
+    const current = this.state.replacementRuns.get(replacementId);
+    if (!current) return null;
+    if (current.confirmedPlan) {
+      return { snapshot: current, alreadyConfirmed: true };
+    }
+
+    const confirmedPlan: ConfirmedPlan = {
+      proposalId: replacementId,
+      weekStart: current.result.request.weekStart,
+      assignments,
+      confirmedAt: confirmedAt.toISOString(),
+    };
+    const updated: ReplacementRunSnapshot = {
+      ...current,
+      result: {
+        ...current.result,
+        selectedOptionId,
+        request: {
+          ...current.result.request,
+          incident: {
+            ...current.result.request.incident,
+            status: "confirmed",
+          },
+        },
+      },
+      confirmedPlan,
+      confirmedAt: confirmedPlan.confirmedAt,
+      confirmedById: actor.userId,
+    };
+
+    this.state.replacementRuns.set(replacementId, updated);
+    this.state.auditEvents.push({
+      id: `audit-${this.state.auditEvents.length + 1}`,
+      action: "planning.replacement_confirmed",
+      entityType: "replacement_run",
+      entityId: replacementId,
+      actorId: actor.userId,
+      createdAt: confirmedAt.toISOString(),
+      details: replacementAuditDetails(current, selectedOptionId, assignments),
     });
 
     return { snapshot: updated, alreadyConfirmed: false };
@@ -179,22 +278,74 @@ export class PrismaPlanningPersistence implements PlanningPersistence {
     const row = await this.db.planningRunRecord.findUnique({
       where: { proposalId },
     });
-    return row ? snapshotFromRecord(row) : null;
+    return row && !isReplacementRecord(row)
+      ? planningSnapshotFromRecord(row)
+      : null;
+  }
+
+  async saveReplacementRun(
+    snapshot: ReplacementRunSnapshot,
+    actor?: PlanningActor,
+  ): Promise<void> {
+    await this.db.$transaction(async (tx) => {
+      if (actor) await ensureActor(tx, actor);
+
+      await tx.planningRunRecord.upsert({
+        where: { proposalId: snapshot.replacementId },
+        create: {
+          proposalId: snapshot.replacementId,
+          scenarioId: snapshot.scenarioId,
+          scenarioLabel: snapshot.scenarioLabel,
+          providerName: snapshot.providerName,
+          mode: snapshot.mode,
+          weekStart: snapshot.result.request.weekStart,
+          input: toInputJson(snapshot.input),
+          result: toInputJson(replacementEnvelope(snapshot)),
+          confirmedPlan: snapshot.confirmedPlan
+            ? toInputJson(snapshot.confirmedPlan)
+            : Prisma.JsonNull,
+          confirmedAt: snapshot.confirmedAt
+            ? new Date(snapshot.confirmedAt)
+            : null,
+          confirmedById: snapshot.confirmedById,
+        },
+        update: {
+          scenarioId: snapshot.scenarioId,
+          scenarioLabel: snapshot.scenarioLabel,
+          providerName: snapshot.providerName,
+          mode: snapshot.mode,
+          weekStart: snapshot.result.request.weekStart,
+          input: toInputJson(snapshot.input),
+          result: toInputJson(replacementEnvelope(snapshot)),
+        },
+      });
+    });
+  }
+
+  async getReplacementRun(
+    replacementId: string,
+  ): Promise<ReplacementRunSnapshot | null> {
+    const row = await this.db.planningRunRecord.findUnique({
+      where: { proposalId: replacementId },
+    });
+    return row && isReplacementRecord(row)
+      ? replacementSnapshotFromRecord(row)
+      : null;
   }
 
   async listAuditEvents(): Promise<readonly PlanningAuditEvent[]> {
     const rows = await this.db.auditEvent.findMany({
       where: {
-        action: "planning.confirmed",
-        entityType: "planning_run",
+        action: { in: ["planning.confirmed", "planning.replacement_confirmed"] },
+        entityType: { in: ["planning_run", "replacement_run"] },
       },
       orderBy: { createdAt: "desc" },
     });
 
     return rows.map((row) => ({
       id: row.id,
-      action: "planning.confirmed",
-      entityType: "planning_run",
+      action: row.action as PlanningAuditEvent["action"],
+      entityType: row.entityType as PlanningAuditEvent["entityType"],
       entityId: row.entityId,
       actorId: row.actorId,
       createdAt: row.createdAt.toISOString(),
@@ -215,7 +366,7 @@ export class PrismaPlanningPersistence implements PlanningPersistence {
       if (!row) return null;
 
       if (row.confirmedPlan !== null) {
-        return { snapshot: snapshotFromRecord(row), alreadyConfirmed: true };
+        return { snapshot: planningSnapshotFromRecord(row), alreadyConfirmed: true };
       }
 
       const actorRecord = await ensureActor(tx, actor);
@@ -248,7 +399,80 @@ export class PrismaPlanningPersistence implements PlanningPersistence {
         },
       });
 
-      return { snapshot: snapshotFromRecord(updated), alreadyConfirmed: false };
+      return { snapshot: planningSnapshotFromRecord(updated), alreadyConfirmed: false };
+    });
+  }
+
+  async confirmReplacementRun(
+    replacementId: string,
+    selectedOptionId: string,
+    assignments: readonly ProposedAssignment[],
+    actor: PlanningActor,
+    confirmedAt: Date,
+  ): Promise<PersistedReplacementConfirmation | null> {
+    return this.db.$transaction(async (tx) => {
+      const row = await tx.planningRunRecord.findUnique({
+        where: { proposalId: replacementId },
+      });
+      if (!row || !isReplacementRecord(row)) return null;
+
+      if (row.confirmedPlan !== null) {
+        return {
+          snapshot: replacementSnapshotFromRecord(row),
+          alreadyConfirmed: true,
+        };
+      }
+
+      const actorRecord = await ensureActor(tx, actor);
+      const current = replacementSnapshotFromRecord(row);
+      const confirmedPlan: ConfirmedPlan = {
+        proposalId: replacementId,
+        weekStart: current.result.request.weekStart,
+        assignments,
+        confirmedAt: confirmedAt.toISOString(),
+      };
+      const updated = await tx.planningRunRecord.update({
+        where: { proposalId: replacementId },
+        data: {
+          result: toInputJson({
+            ...replacementEnvelope(current),
+            result: {
+              ...current.result,
+              selectedOptionId,
+              request: {
+                ...current.result.request,
+                incident: {
+                  ...current.result.request.incident,
+                  status: "confirmed",
+                },
+              },
+            },
+          }),
+          confirmedPlan: toInputJson(confirmedPlan),
+          confirmedAt,
+          confirmedById: actorRecord.id,
+        },
+      });
+
+      await tx.auditEvent.create({
+        data: {
+          action: "planning.replacement_confirmed",
+          entityType: "replacement_run",
+          entityId: replacementId,
+          actorId: actorRecord.id,
+          createdAt: confirmedAt,
+          details: replacementAuditDetails(
+            current,
+            selectedOptionId,
+            assignments,
+          ),
+        },
+      });
+
+      return {
+        snapshot: replacementSnapshotFromRecord(updated),
+        alreadyConfirmed: false,
+      };
     });
   }
 }
@@ -289,7 +513,7 @@ function auditDetailsFromJson(
   );
 }
 
-function snapshotFromRecord(row: PlanningRunRecord): PlanningRunSnapshot {
+function planningSnapshotFromRecord(row: PlanningRunRecord): PlanningRunSnapshot {
   return {
     proposalId: row.proposalId,
     scenarioId: row.scenarioId,
@@ -303,5 +527,63 @@ function snapshotFromRecord(row: PlanningRunRecord): PlanningRunSnapshot {
       : null,
     confirmedAt: row.confirmedAt?.toISOString() ?? null,
     confirmedById: row.confirmedById,
+  };
+}
+
+function replacementEnvelope(snapshot: ReplacementRunSnapshot) {
+  return {
+    kind: "replacement" as const,
+    basePlan: snapshot.basePlan,
+    result: snapshot.result,
+  };
+}
+
+function isReplacementRecord(row: PlanningRunRecord): boolean {
+  const result = row.result;
+  return (
+    typeof result === "object" &&
+    result !== null &&
+    !Array.isArray(result) &&
+    (result as { kind?: unknown }).kind === "replacement"
+  );
+}
+
+function replacementSnapshotFromRecord(
+  row: PlanningRunRecord,
+): ReplacementRunSnapshot {
+  const envelope = row.result as unknown as {
+    kind: "replacement";
+    basePlan: ConfirmedPlan;
+    result: ReplacementRunResult;
+  };
+  return {
+    replacementId: row.proposalId,
+    scenarioId: row.scenarioId,
+    scenarioLabel: row.scenarioLabel,
+    providerName: row.providerName,
+    mode: row.mode as PlanningProviderMode,
+    input: row.input as unknown as PlanningInput,
+    basePlan: envelope.basePlan,
+    result: envelope.result,
+    confirmedPlan: row.confirmedPlan
+      ? (row.confirmedPlan as unknown as ConfirmedPlan)
+      : null,
+    confirmedAt: row.confirmedAt?.toISOString() ?? null,
+    confirmedById: row.confirmedById,
+  };
+}
+
+function replacementAuditDetails(
+  snapshot: ReplacementRunSnapshot,
+  selectedOptionId: string,
+  assignments: readonly ProposedAssignment[],
+): Readonly<Record<string, string>> {
+  return {
+    weekStart: snapshot.result.request.weekStart,
+    baseProposalId: snapshot.basePlan.proposalId,
+    incident: JSON.stringify(snapshot.result.request.incident),
+    selectedOptionId,
+    originalAssignments: JSON.stringify(snapshot.basePlan.assignments),
+    newAssignments: JSON.stringify(assignments),
   };
 }
