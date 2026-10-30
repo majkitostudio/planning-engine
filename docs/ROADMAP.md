@@ -149,13 +149,13 @@ integrace s CRM zůstává mimo rozsah.
 2. ✅ **Aktualizovat dokumentaci po ověření.** Tento záznam obsahuje skutečný
    lokální cíl a skutečný výsledek průchodu. Produkční databáze, produkční role a
    kvalita plánování zůstávají mimo toto ověření.
-3. **Uzavřít zbývající doménové brány před další implementací.** Odpověď
-   managera z 30. 10. 2026 částečně uzavřela OQ22: manager rozhoduje o přijetí
-   požadavku, vidí dopad a při náhradě musí výslovně přijmout změnu dovolené;
-   35hodinový odpočinek zůstává tvrdou podmínkou. Otevřené zůstávají konkrétní
-   limity náhrad OQ9–OQ11, úplný rozsah auditu OQ20, přesné datum náhradního
-   volna a zda staffing nastavení platí jako týdenní šablona, nebo pro konkrétní
-   kalendářní týden.
+3. ✅ **Uzavřít doménové hranice aktuálního pilotu.** Manager potvrdil, že se
+   nepřidávají další číselné limity ani pravidla; platí týdenní minimum obsazení
+   jako opakující se profil, auditují se pouze potvrzené změny a náhradní volno
+   zůstává návrhem bez data. Potvrzená pravidla 35hodinového odpočinku a dvou
+   dnů volna po práci o víkendu zůstávají beze změny. Detailní limity pro budoucí
+   rozšíření, širší audit a skutečné datum čerpání náhradního volna zůstávají
+   otevřené mimo tento pilot.
 
 Detailní pořadí souborů a testů je v
 [`docs/superpowers/plans/2026-10-29-operativni-nahrady.md`](superpowers/plans/2026-10-29-operativni-nahrady.md).

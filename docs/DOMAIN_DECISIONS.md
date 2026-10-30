@@ -170,6 +170,9 @@ otázka zůstává otevřená.
   jsou pondělí–pátek ráno 23 a odpoledne 8; sobota–neděle ráno 12 a odpoledne
   9. Jde o provozní minimum, nikoli pracovněprávní limit. Hodnoty 15/7 z
   předchozího syntetického pilotu už nejsou zdrojem pravdy.
+- **Platnost minima obsazení:** manager potvrdil opakující se týdenní profil.
+  Uložená hodnota pro den a směnu platí pro každý odpovídající den v týdnu,
+  dokud ji manager nezmění; nejde o nastavení navázané na jeden kalendářní týden.
 - **Tvrdá pravidla MVP:** platí pouze již potvrzená pravidla. Další limity
   hodin či směn se nesmějí domýšlet.
 - **Požadavky zaměstnanců:** o schválení či odmítnutí rozhoduje manager.
@@ -217,7 +220,7 @@ odpověď — otázka zůstane `OPEN QUESTION` a nic se nedomýšlí.
 | # | Otázka | Stav | Proč na první schůzku |
 | --- | --- | --- | --- |
 | OQ9 | Která pravidla jsou tvrdá? | `PARTIALLY ANSWERED` | určuje, co se kontroluje a jaká data potřebujeme |
-| OQ10 | Jaké jsou konkrétní limity? | `PARTIALLY ANSWERED` | zákonný baseline je zmapovaný, konkrétní profil provozu ještě ne |
+| OQ10 | Jaké jsou konkrétní limity? | `VERIFIED` pro pilot | další číselné limity jsou mimo pilot; budoucí profil zůstává otevřený |
 | OQ3 | Které entity potřebujeme? | `PARTIALLY ANSWERED` | rozsah typů, formulářů a testů |
 | OQ4 | Které údaje jsou povinné? | `PARTIALLY ANSWERED` | bez nich pravidla nelze vyhodnotit |
 | OQ2 | Statický, nebo průběžně upravovaný plán? | `OPEN QUESTION` | určuje historii změn a zamykání |
@@ -236,16 +239,16 @@ první řez stát.
 | OQ4 | Které atributy jsou povinné? | doménové typy a formuláře | `PARTIALLY ANSWERED` — kontrakt navržen |
 | OQ5 | Pobočka / umístění call centra? | datový model, filtry | `OPEN QUESTION` — první řez předpokládá plochý seznam |
 | OQ9 | Která pravidla jsou tvrdá? | první pravidla v jádře | `PARTIALLY ANSWERED` — odpočet 6 dnů a víkend potvrzeny |
-| OQ10 | Jaké konkrétní limity? | implementace limitů (H5, H6) | `PARTIALLY ANSWERED` — 35 h potvrzeno, ostatní ne |
-| OQ11 | Existují pravidla mimo seznam? | rozsah prvního řezu | `OPEN QUESTION` |
+| OQ10 | Jaké konkrétní limity? | implementace limitů (H5, H6) | `VERIFIED` pro pilot — žádné další číselné limity; budoucí profil zůstává otevřený |
+| OQ11 | Existují pravidla mimo seznam? | rozsah prvního řezu | `PARTIALLY ANSWERED` — v pilotu žádná další pravidla; budoucí rozsah otevřený |
 | OQ15 | Kdo rozhoduje při konfliktu? | tok po nálezu problému | `VERIFIED` — AI navrhne, validace zkontroluje, manažer potvrdí |
 | OQ16 | Neúplný plán, nebo chyba? | stav úplnosti plánu | `VERIFIED` — neúplný návrh se přizná a nabídnou se alternativy |
 | OQ17 | Pořadí obětování preferencí? | navazuje na OQ12–OQ14 | `PARTIALLY ANSWERED` — nejprve pokrytí, potom tvrdá pravidla, potom nejmenší dopad |
 | OQ18 | Jaké další role? | později, až s přihlášením | `OPEN QUESTION` |
 | OQ19 | Plánovač vs. schvalovatel? | schvalovací tok | `OPEN QUESTION` |
-| OQ20 | Potřebujeme audit změn? | historie a odpovědnost | `PARTIALLY ANSWERED` — základní audit potvrzené operativní změny |
+| OQ20 | Potřebujeme audit změn? | historie a odpovědnost | `VERIFIED` pro pilot — audit potvrzených změn; odmítnuté a opuštěné varianty se neevidují |
 | OQ21 | Co je „pracovní den“ pro 6 dnů v řadě? | výklad pravidla odpočinku | `VERIFIED` |
-| OQ22 | Schválený požadavek vs. přání? | zpracování incidentů a preferencí | `PARTIALLY ANSWERED` — manager rozhoduje a vidí dopad; přesné datum náhradního volna zůstává otevřené |
+| OQ22 | Schválený požadavek vs. přání? | zpracování incidentů a preferencí | `VERIFIED` pro pilot — manager rozhoduje a vidí dopad; náhradní volno zůstává návrhem bez data |
 | OQ23 | Lze potvrdit částečně neúplný návrh? | schvalovací tok | `VERIFIED` |
 | OQ24 | Jak se započítávají přestávky? | pracovní doba a validace | `VERIFIED` |
 
@@ -394,17 +397,19 @@ nesmím. Tohle je čistě vstup managera.
 
 **Návrh k diskusi (`PROPOSAL`):** žádný — čísla musí dodat manager.
 
-**Odpověď:** `PARTIALLY ANSWERED` (29. 10. 2026) — právní baseline je
-zmapovaný, ale konkrétní profil provozu ještě není schválený. Potvrzeno je
-zatím pouze:
+**Odpověď:** `VERIFIED` pro rozsah pilotu (30. 10. 2026) — manager potvrdil,
+že se kromě již stanovených pravidel v pilotu jednoho týdne a plných úvazků
+neaktivují další číselné limity. Nezadávají se proto limity maximálních hodin,
+minimálního odpočinku mezi směnami ani maximálního počtu směn v řadě či za
+období. Tato odpověď neurčuje budoucí profil pro širší rozsah.
+
+Již potvrzená pravidla zůstávají:
 - 6 po sobě jdoucích pracovních dnů → alespoň 35 h nepřetržitého odpočinku.
 - Práce o víkendu → 2 dny volna v témže týdnu.
 
-Pro implementaci profilu je třeba potvrdit, která zákonná pravidla a která
-interní pravidla se v tomto provozu skutečně použijí. Ostatní limity (maximum
-hodin za určené období, maximum směn v řadě, jiný odpočinek) zůstávají
-`OPEN QUESTION` nebo `NOT VERIFIED`. Přesčas je pro tento provoz výslovně
-zakázaný projektový výstup, nikoli otevřená optimalizační možnost.
+Přesčasy jsou pro tento provoz výslovně zakázaný projektový výstup. Další
+limity a jejich právní či interní profil zůstávají `OPEN QUESTION` pro případné
+rozšíření mimo schválený pilot.
 
 ### OQ11 — Existují pravidla mimo uvedený seznam?
 
@@ -518,10 +523,10 @@ funkcionalitu nad rámec prvního řezu.
 **Návrh k diskusi (`PROPOSAL`):** pro první verzi A (nemáme přihlašování),
 s přípravou na B, až přihlášení vznikne.
 
-**Odpověď:** `PARTIALLY ANSWERED` (29. 10. 2026) — první operativní řez
-zaznamená potvrzenou změnu, původní a nový rozpis, incident, vybranou variantu,
-výchozí verzi a identitu managera. Opuštěné nebo odmítnuté varianty se zatím
-neukládají. Plný audit zůstává `OPEN QUESTION`.
+**Odpověď:** `VERIFIED` pro pilot (30. 10. 2026) — audit zaznamenává
+potvrzenou změnu, původní a nový rozpis, incident, vybranou variantu, výchozí
+verzi a identitu managera. Odmítnuté a opuštěné varianty se neevidují. Rozšířený
+audit mimo tento rozsah zůstává `OPEN QUESTION`.
 
 ---
 
