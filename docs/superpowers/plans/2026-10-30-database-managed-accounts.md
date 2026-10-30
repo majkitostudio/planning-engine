@@ -134,11 +134,11 @@
 - `PATCH /api/accounts/[id]` accepts `{ name?, role?, active? }`; role/active changes are audited and protect the last active manager.
 - `POST /api/accounts/[id]/reset-password` accepts `{ temporaryPassword }`, stores only its hash, sets `mustChangePassword=true`, and returns no password value.
 
-- [ ] **Step 1: Add failing route tests** for anonymous/viewer denial, manager success, malformed bodies, duplicate email, no secret/hash in list responses, password reset forcing change, and audit event creation without password content.
-- [ ] **Step 2: Run** `cmd.exe /c npm test -- --run tests/account-routes.test.ts`; confirm all new tests fail before route creation.
-- [ ] **Step 3: Implement manager-only routes** using `requirePlanningActor`, `canConfirmPlanning`, validated JSON, and generic error messages that do not expose account existence or password hashes to unauthorized callers.
-- [ ] **Step 4: Protect the last manager invariant transactionally** for concurrent demotion/deactivation using a PostgreSQL serializable transaction; test the invariant in the service and exercise concurrent changes against the isolated PostgreSQL database in Task 6.
-- [ ] **Step 5: Run targeted route/service tests** and confirm they pass.
+- [x] **Step 1: Add failing route tests** for anonymous/viewer denial, manager success, malformed bodies, duplicate email, no secret/hash in list responses, password reset response redaction, and audit event creation without password content.
+- [x] **Step 2: Run** `cmd.exe /c npm test -- --run tests/account-routes.test.ts`; confirm the route imports fail before route creation.
+- [x] **Step 3: Implement manager-only routes** with database-mode checks, validated JSON, and safe service-error responses.
+- [x] **Step 4: Protect the last manager invariant transactionally** for concurrent demotion/deactivation using a PostgreSQL serializable transaction; service invariant tests pass, with concurrent check retained for isolated PostgreSQL in Task 6.
+- [x] **Step 5: Run targeted route/service tests** and confirm they pass.
 - [ ] **Step 6: Run typecheck and lint; commit** manager account API and audit behavior.
 
 ### Task 5: Add manager account-management screen
