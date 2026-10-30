@@ -162,8 +162,8 @@
 **Files:**
 - Modify: `docs/README.md`
 
-- [ ] **Step 1: Run** `cmd.exe /c npm test`, `cmd.exe /c npm run typecheck`, `cmd.exe /c npm run lint`, `cmd.exe /c npm run build`, `cmd.exe /c npm run db:validate`, and `git diff --check`.
-- [ ] **Step 2: Verify migration and browser flow** using an isolated synthetic local PostgreSQL database only: bootstrap first manager, login, create manager and viewer, force password change, verify viewer denial, deactivate an account, verify its existing session is rejected, and attempt concurrent removal of the last two managers so at least one operation is refused. Do not use production data/services or call any external AI API.
-- [ ] **Step 3: Update only `docs/README.md`** with the verified implementation status and its unverified production limitations.
-- [ ] **Step 4: Review `git diff`, generated files, and `git status`; commit** the final verification/documentation milestone.
+- [x] **Step 1: Run** full tests, typecheck, lint, build, Prisma validation, and `git diff --check`.
+- [x] **Step 2: Verify migration and browser flow** using an isolated synthetic local PostgreSQL database only: bootstrap first manager, login, create manager and viewer, force password change, verify viewer denial, deactivate an account, verify its existing session is rejected, and attempt concurrent removal of the last two managers so at least one operation is refused. No production data/services or external AI API were used.
+- [x] **Step 3: Update only `docs/README.md`** with verified implementation status and unverified production limitations.
+- [x] **Step 4: Review `git diff`, generated files, and `git status`; commit** the final verification/documentation milestone.
 - [ ] **Step 5: Push the verified complete milestone** by ordinary fast-forward to the configured `origin` branch after confirming the remote target and that the remote branch is a fast-forward.
