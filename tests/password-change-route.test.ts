@@ -59,6 +59,34 @@ describe("POST /api/auth/change-password", () => {
     );
   });
 
+  it("rejects reusing the current password with a client error", async () => {
+    changePasswordMock.mockRejectedValue(
+      new AccountServiceError("password_unchanged", "same password"),
+    );
+
+    const response = await POST(request({
+      currentPassword: "temporary synthetic password",
+      newPassword: "temporary synthetic password",
+    }));
+
+    expect(response.status).toBe(400);
+    expect(await response.json()).toMatchObject({ error: "password_unchanged" });
+  });
+
+  it("returns a conflict when an account changed during the password update", async () => {
+    changePasswordMock.mockRejectedValue(
+      new AccountServiceError("account_changed", "account changed"),
+    );
+
+    const response = await POST(request({
+      currentPassword: "temporary synthetic password",
+      newPassword: "new synthetic password",
+    }));
+
+    expect(response.status).toBe(409);
+    expect(await response.json()).toMatchObject({ error: "account_changed" });
+  });
+
   it("rejects new passwords outside the confirmed length bounds", async () => {
     for (const newPassword of ["short", "x".repeat(129)]) {
       const response = await POST(request({

@@ -55,6 +55,7 @@ export function accountServiceErrorResponse(error: unknown): NextResponse {
     "email_in_use",
     "last_active_manager",
     "bootstrap_already_completed",
+    "account_changed",
   ]);
   const notFoundCodes = new Set(["account_not_found"]);
   const status = conflictCodes.has(error.code)

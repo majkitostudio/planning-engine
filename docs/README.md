@@ -42,7 +42,7 @@ jiných dokumentů neopakuje.
 | Operativní náhrada směny | `IMPLEMENTED` / `SIMULATED` | Syntetický řez: výpadek celé směny → tři varianty → deterministický dopad → výběr → manager-only potvrzení; Gemini a provozní kvalita `NOT VERIFIED` |
 | Nastavení potřebného obsazení | `IMPLEMENTED` / `VERIFIED` (lokální smoke) | `/nastaveni`, manager-only zápis přes API, Prisma persistence a použití v operativních náhradách; migrace a manuální browser smoke proběhly v lokálním Docker PostgreSQL |
 | Rozhodování o požadavcích | `IMPLEMENTED` / `SIMULATED` | `/pozadavky` ukazuje dopad dvou syntetických požadavků, dostupné kandidáty a manager-only schválení/zamítnutí; rozhodnutí se ukládá přes Prisma a samo neupraví rozpis |
-| Testy | `IMPLEMENTED` / `VERIFIED` | `npm test`: 266 prošlých, 1 přeskočený externí Gemini integrační test; databázový UI průchod byl ručně proveden pouze se syntetickými účty |
+| Testy | `IMPLEMENTED` / `VERIFIED` | `npm test`: 271 prošlých, 1 přeskočený externí Gemini integrační test; databázový UI průchod byl ručně proveden pouze se syntetickými účty |
 | Kvalitní brána (CI) | `IMPLEMENTED` / `VERIFIED` (lokální běh) | Testy, typecheck, lint, build a `db:validate` prošly; úplná provozní/produkční brána z toho nevyplývá |
 | Produkční připravenost | `NOT VERIFIED` | Není produkční aplikace |
 

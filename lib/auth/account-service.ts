@@ -22,6 +22,8 @@ export type AccountServiceErrorCode =
   | "invalid_input"
   | "invalid_password"
   | "invalid_credentials"
+  | "password_unchanged"
+  | "account_changed"
   | "email_in_use"
   | "account_not_found"
   | "last_active_manager"
@@ -218,13 +220,18 @@ export async function updateAccount(
         throw new AccountServiceError("account_not_found", "Účet nebyl nalezen.");
       }
 
-      const removesLastManager =
+      const removesLastCredentialedManager =
         current.role === "manager" &&
         current.active &&
+        current.passwordHash !== null &&
         ((data.role !== undefined && data.role !== "manager") || data.active === false);
-      if (removesLastManager) {
+      if (removesLastCredentialedManager) {
         const activeManagers = await tx.appUser.count({
-          where: { role: "manager", active: true },
+          where: {
+            role: "manager",
+            active: true,
+            passwordHash: { not: null },
+          },
         });
         if (activeManagers <= 1) {
           throw new AccountServiceError(
@@ -292,18 +299,30 @@ export async function changeAccountPassword(
         "Aktuální přihlašovací údaje nejsou platné.",
       );
     }
+    if (await verifyPassword(newPassword, current.passwordHash)) {
+      throw new AccountServiceError(
+        "password_unchanged",
+        "Nové heslo se musí lišit od současného hesla.",
+      );
+    }
 
-    const account = await tx.appUser.update({
-      where: { id },
+    const result = await tx.appUser.updateMany({
+      where: { id, passwordHash: current.passwordHash, active: true },
       data: { passwordHash: newPasswordHash, mustChangePassword: false },
     });
+    if (result.count !== 1) {
+      throw new AccountServiceError(
+        "account_changed",
+        "Účet se během změny změnil. Přihlaste se znovu.",
+      );
+    }
     await tx.auditEvent.create({
       data: {
         action: "account.password_changed",
         entityType: "AppUser",
-        entityId: account.id,
-        actorId: account.id,
-        details: { email: account.email },
+        entityId: current.id,
+        actorId: current.id,
+        details: { email: current.email },
       },
     });
   });

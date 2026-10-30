@@ -60,10 +60,25 @@ export async function POST(request: Request) {
     await changeAccountPassword(accountId, currentPassword, newPassword, prisma);
     return NextResponse.json({ ok: true });
   } catch (error) {
-    if (error instanceof AccountServiceError && error.code === "invalid_credentials") {
+    if (
+      error instanceof AccountServiceError &&
+      (error.code === "invalid_credentials" || error.code === "password_unchanged")
+    ) {
       return NextResponse.json(
-        { ok: false, error: "invalid_credentials", message: "Současné heslo není správné." },
+        {
+          ok: false,
+          error: error.code,
+          message: error.code === "invalid_credentials"
+            ? "Současné heslo není správné."
+            : error.message,
+        },
         { status: 400 },
+      );
+    }
+    if (error instanceof AccountServiceError && error.code === "account_changed") {
+      return NextResponse.json(
+        { ok: false, error: error.code, message: error.message },
+        { status: 409 },
       );
     }
     return NextResponse.json(

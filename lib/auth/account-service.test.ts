@@ -3,8 +3,10 @@ import type { PrismaClient } from "@/prisma/generated/client";
 
 import {
   bootstrapFirstManager,
+  changeAccountPassword,
   createAccount,
   listAccounts,
+  resetAccountPassword,
   updateAccount,
 } from "./account-service";
 import { hashPassword, verifyPassword } from "./password";
@@ -177,11 +179,102 @@ describe("database account service", () => {
         passwordHash: "manager-hash",
       }),
     );
+    users.push(makeUser({
+      id: "legacy-manager",
+      email: "legacy@example.test",
+      role: "manager",
+      passwordHash: null,
+    }));
 
     await expect(
       updateAccount(actor.userId, { role: "viewer" }, actor, db),
     ).rejects.toMatchObject({ code: "last_active_manager" });
     expect(users[0].role).toBe("manager");
+  });
+
+  it("does not allow a temporary password to satisfy forced change unchanged", async () => {
+    const temporaryPassword = "Synthetic Temporary Password";
+    users[0] = makeUser({
+      id: actor.userId,
+      email: actor.email,
+      role: "manager",
+      passwordHash: await hashPassword(temporaryPassword),
+      mustChangePassword: true,
+    });
+
+    await expect(
+      changeAccountPassword(actor.userId, temporaryPassword, temporaryPassword, db),
+    ).rejects.toMatchObject({ code: "password_unchanged" });
+    expect(users[0].mustChangePassword).toBe(true);
+    expect(auditEvents).toHaveLength(0);
+  });
+
+  it("resets an account to a hashed temporary password and audits without the secret", async () => {
+    const temporaryPassword = "Synthetic Reset Temporary Password";
+    users.push(makeUser({ id: "viewer-reset", email: "viewer@example.test" }));
+
+    const summary = await resetAccountPassword("viewer-reset", temporaryPassword, actor, db);
+
+    expect(summary.mustChangePassword).toBe(true);
+    expect(summary).not.toHaveProperty("passwordHash");
+    expect(users[1]?.mustChangePassword).toBe(true);
+    await expect(verifyPassword(temporaryPassword, users[1]?.passwordHash ?? ""))
+      .resolves.toBe(true);
+    expect(JSON.stringify(auditEvents)).not.toContain(temporaryPassword);
+    expect(auditEvents).toMatchObject([
+      { action: "account.password_reset", entityId: "viewer-reset" },
+    ]);
+  });
+
+  it("does not overwrite a manager password reset racing with a self-service change", async () => {
+    const currentPassword = "Synthetic Current Password";
+    const account = makeUser({
+      id: actor.userId,
+      email: actor.email,
+      role: "manager",
+      passwordHash: await hashPassword(currentPassword),
+      mustChangePassword: true,
+    });
+    const managerResetHash = await hashPassword("Synthetic Manager Reset Password");
+    const events: Array<Record<string, unknown>> = [];
+    const raceDatabase = {
+      $transaction: async (callback: (tx: unknown) => Promise<void>) => callback({
+        appUser: {
+          findUnique: async () => ({ ...account }),
+          update: async ({ data }: { data: Partial<TestUser> }) => {
+            Object.assign(account, data);
+            return account;
+          },
+          updateMany: async ({ where, data }: {
+            where: { id: string; passwordHash: string; active: boolean };
+            data: Partial<TestUser>;
+          }) => {
+            Object.assign(account, {
+              passwordHash: managerResetHash,
+              mustChangePassword: true,
+            });
+            if (account.id !== where.id || account.passwordHash !== where.passwordHash || account.active !== where.active) {
+              return { count: 0 };
+            }
+            Object.assign(account, data);
+            return { count: 1 };
+          },
+        },
+        auditEvent: {
+          create: async ({ data }: { data: Record<string, unknown> }) => {
+            events.push(data);
+            return data;
+          },
+        },
+      }),
+    } as unknown as PrismaClient;
+
+    await expect(
+      changeAccountPassword(actor.userId, currentPassword, "Synthetic New Password", raceDatabase),
+    ).rejects.toMatchObject({ code: "account_changed" });
+    expect(account.passwordHash).toBe(managerResetHash);
+    expect(account.mustChangePassword).toBe(true);
+    expect(events).toHaveLength(0);
   });
 });
 
@@ -258,7 +351,7 @@ function createTestDatabase(
           (record) =>
             (where?.active === undefined || record.active === where.active) &&
             (where?.role === undefined || record.role === where.role) &&
-            (where?.passwordHash?.not !== null || record.passwordHash !== null),
+            (where?.passwordHash?.not !== null || where.passwordHash?.not === null && record.passwordHash !== null),
         ).length,
     },
     auditEvent: {
