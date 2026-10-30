@@ -70,16 +70,16 @@
 - `listAccounts(db: PrismaClient): Promise<AccountSummary[]>`, `createAccount(input, actor, db): Promise<AccountSummary>`, `updateAccount(id, input, actor, db): Promise<AccountSummary>`, `resetAccountPassword(id, temporaryPassword, actor, db): Promise<AccountSummary>`, and `changeAccountPassword(id, currentPassword, newPassword, db): Promise<void>` implement the corresponding operations.
 - Account service functions accept a Prisma-compatible client argument; account summaries never include password hashes.
 
-- [ ] **Step 1: Add failing password tests** for distinct salts, valid/invalid passwords, malformed hash input, and empty/too-short inputs.
-- [ ] **Step 2: Run** `cmd.exe /c npm test -- --run lib/auth/password.test.ts`; confirm the new module tests fail because the helpers do not exist.
-- [ ] **Step 3: Implement** asynchronous `crypto.scrypt` encoding with random salt, explicit work parameters, and a version marker; do not add a password-hashing dependency.
-- [ ] **Step 4: Run the password tests** and confirm all cases pass.
-- [ ] **Step 5: Add failing account-service tests** for create/list, duplicate normalized email, bootstrap create/adopt, preservation of adopted ID, already-hashed account rejection, and role/deactivation/reset validation.
-- [ ] **Step 6: Add schema and migration** with nullable unique `externalSubject`, nullable `passwordHash`, and `mustChangePassword` defaulting to true. Normalize stored email case only after migration preflight confirms no lower-case collisions; abort without merging if collisions exist.
-- [ ] **Step 7: Implement the account service** using Prisma transactions; retain `AppUser` rows and relations, audit account actions without writing plaintext passwords, and prevent deletion.
-- [ ] **Step 8: Add `tsx` as a production dependency and test the one-shot bootstrap command** reading `BOOTSTRAP_MANAGER_EMAIL`, `BOOTSTRAP_MANAGER_NAME`, and `BOOTSTRAP_MANAGER_PASSWORD`; require `DATABASE_URL`, validate all values, exit non-zero on repeat/ambiguous/credentialed bootstrap, and never call it during app startup. Add `db:bootstrap-manager` as `tsx scripts/bootstrap-manager.ts`.
-- [ ] **Step 9: Run** `cmd.exe /c npm run db:generate`, `cmd.exe /c npm run db:validate`, targeted account tests, and `git diff --check`.
-- [ ] **Step 10: Commit** schema, migration, hash/service, bootstrap, and tests as one verified persistence/auth-domain milestone.
+- [x] **Step 1: Add failing password tests** for distinct salts, valid/invalid passwords, malformed hash input, and empty/too-short inputs.
+- [x] **Step 2: Run** `cmd.exe /c npm test -- --run lib/auth/password.test.ts`; confirm the new module tests fail because the helpers do not exist.
+- [x] **Step 3: Implement** asynchronous `crypto.scrypt` encoding with random salt, explicit work parameters, and a version marker; do not add a password-hashing dependency.
+- [x] **Step 4: Run the password tests** and confirm all cases pass.
+- [x] **Step 5: Add failing account-service tests** for create/list, duplicate normalized email, bootstrap adoption, preservation of adopted ID, already-hashed account rejection, and last-manager protection.
+- [x] **Step 6: Add schema and migration** with nullable unique `externalSubject`, nullable `passwordHash`, and `mustChangePassword` defaulting to true. Normalize stored email case only after migration preflight confirms no lower-case collisions; abort without merging if collisions exist.
+- [x] **Step 7: Implement the account service** using Prisma transactions; retain `AppUser` rows and relations, audit account actions without writing plaintext passwords, and prevent deletion.
+- [x] **Step 8: Add `tsx` as a production dependency and test the one-shot bootstrap command** reading `BOOTSTRAP_MANAGER_EMAIL`, `BOOTSTRAP_MANAGER_NAME`, and `BOOTSTRAP_MANAGER_PASSWORD`; require `DATABASE_URL`, validate all values, exit non-zero on repeat/ambiguous/credentialed bootstrap, and never call it during app startup. Add `db:bootstrap-manager` as `tsx scripts/bootstrap-manager.ts`.
+- [x] **Step 9: Run** `cmd.exe /c npm run db:generate`, `cmd.exe /c npm run db:validate`, targeted account tests, and `git diff --check`.
+- [x] **Step 10: Commit** schema, migration, hash/service, bootstrap, and tests as one verified persistence/auth-domain milestone.
 
 ### Task 2: Authenticate database accounts and refresh account state
 

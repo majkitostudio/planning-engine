@@ -28,11 +28,13 @@ enum EmployeeRequestDecisionStatus {
 
 model AppUser {
   id              String              @id @default(cuid())
-  externalSubject String              @unique
+  externalSubject String?             @unique
   email           String              @unique
   displayName     String
   role            AppUserRole         @default(viewer)
   active          Boolean             @default(true)
+  passwordHash    String?
+  mustChangePassword Boolean           @default(true)
   createdAt       DateTime            @default(now())
   updatedAt       DateTime            @updatedAt
   confirmedRuns   PlanningRunRecord[] @relation("PlanningRunConfirmedBy")
