@@ -33,10 +33,17 @@ Tento soubor obsahuje projektové instrukce pro agenty pracující na projektu
 
 ## GitHub a externí operace
 
-- Operace na GitHubu považuj za externí změny.
-- Před vytvořením nebo změnou vzdáleného repozitáře ověř `git`, `gh`, `gh auth status`,
-  aktivní účet, oprávnění a existenci cílového repozitáře.
-- Zobraz přesný cíl, viditelnost a plánované operace a vyžádej potvrzení.
+- Před pushnutím ověř aktuální stav vzdálené větve, cílový repozitář, viditelnost
+  a dostupné oprávnění k zápisu. Použij dostupné připojení GitHub nebo Git; samotná
+  nedostupnost příkazu `gh` neznamená, že GitHub není přístupný.
+- Projektový inženýr rozhoduje o načasování pushů. Ověřený a ucelený milník pushni
+  na odpovídající nakonfigurovanou větev `origin` bez dalšího potvrzení uživatele,
+  pokud jde o běžný fast-forward. Nepushuj dílčí nebo neověřenou práci. Pokud by
+  push měnil jiný repozitář či větev, vyžadoval force push nebo jinak měnil historii,
+  nejdřív si vyžádej výslovné potvrzení.
+- Pull requesty a jiné vzdálené změny než běžný push jsou externí operace a vyžadují
+  výslovné potvrzení uživatele. Po pushi stručně uveď přesný cíl, rozsah commitů
+  a výsledek kontroly vzdálené větve.
 - Nepoužívej `git reset --hard`, `git checkout --`, force push ani hromadné mazání
   bez výslovného pokynu.
 - Nikdy nevypisuj token (`gh auth token` apod.).
@@ -49,8 +56,9 @@ Tento soubor obsahuje projektové instrukce pro agenty pracující na projektu
 - Commit dělej účelově, ne „aby se něco dělo“: jeden srozumitelný celek,
   ověřený podle typu změny (typecheck/test/build) a s popisem, který říká,
   co a proč se změnilo.
-- Push, pull request a jakákoli změna vzdáleného repozitáře zůstávají **externí
-  operace** — před nimi ověř stav a potvrď cíl s uživatelem (viz výše).
+- Push ověřeného milníku na nakonfigurovanou větev `origin` může projektový
+  inženýr provést samostatně podle pravidel výše. Pull request a jiné změny
+  vzdáleného repozitáře vyžadují výslovné potvrzení.
 
 ## Technologický stack
 
