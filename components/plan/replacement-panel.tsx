@@ -14,6 +14,7 @@ import type {
   PlanningReplacementApiResponse,
   PlanningReplacementConfirmApiResponse,
 } from "@/lib/planning/api-types";
+import type { ReplacementTargetSummary } from "@/lib/planning/replacement-service";
 
 const WEEK_START = "2026-10-05";
 const INCIDENT_DATE = "2026-10-06";
@@ -70,7 +71,13 @@ function timeOffChangeId(employeeId: string, date: string): string {
   return `${employeeId}|${date}`;
 }
 
-export function ReplacementPanel({ enabled }: { enabled: boolean }) {
+export function ReplacementPanel({
+  enabled,
+  targetSummary,
+}: {
+  readonly enabled: boolean;
+  readonly targetSummary: ReplacementTargetSummary | null;
+}) {
   const [absentEmployeeId, setAbsentEmployeeId] = useState("e1");
   const [shiftKind, setShiftKind] = useState<ShiftKind>("afternoon");
   const [result, setResult] = useState<ReplacementRunResult | null>(null);
@@ -188,8 +195,12 @@ export function ReplacementPanel({ enabled }: { enabled: boolean }) {
 
           <div className="defs" style={{ marginBottom: "16px" }}>
             <div className="def">
-              <span className="def__label">Aktuální cílová směna</span>
-              <span className="def__value">7/7 · 6 po výpadku</span>
+              <span className="def__label">Obsazení cílové směny</span>
+              <span className="def__value">
+                {targetSummary
+                  ? `${targetSummary.assignedEmployees}/${targetSummary.requiredEmployees} · ${targetSummary.afterIncidentEmployees} po výpadku`
+                  : "Pokrytí zatím nelze načíst"}
+              </span>
             </div>
             <div className="def">
               <span className="def__label">Základní verze</span>

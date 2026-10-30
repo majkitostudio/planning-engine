@@ -3,8 +3,14 @@ import { describe, expect, it } from "vitest";
 import { toPlanningActor } from "../auth/actor";
 import { makeRunResult } from "../../tests/planning/fixtures";
 import { readPlanningAudit } from "./audit-service";
-import { InMemoryPlanningPersistence, type PlanningRunSnapshot } from "./persistence";
+import {
+  InMemoryPlanningPersistence,
+  type PlanningRunSnapshot,
+  type ReplacementRunSnapshot,
+} from "./persistence";
+import { createReplacementOptions } from "./replacement-service";
 import { getSimulatedScenario } from "./simulated/scenarios";
+import { getSimulatedReplacementScenario } from "./simulated/replacement-scenarios";
 
 const manager = toPlanningActor({
   user: {
@@ -65,6 +71,58 @@ describe("planning audit service", () => {
           weekStart: "2026-10-05",
           confirmedByEmail: "manager@aaauto.cz",
           confirmedAt: "2026-10-28T13:00:00.000Z",
+        },
+      ],
+    });
+  });
+
+  it("zobrazí identitu managera, který potvrdil operativní náhradu", async () => {
+    const persistence = new InMemoryPlanningPersistence();
+    const scenario = getSimulatedReplacementScenario("single-absence");
+    if (!scenario) throw new Error("Replacement fixture chybí.");
+
+    const result = createReplacementOptions(
+      scenario.input,
+      scenario.basePlan,
+      scenario.request,
+      scenario.drafts,
+    );
+    const snapshot: ReplacementRunSnapshot = {
+      replacementId: "replacement-audit",
+      scenarioId: scenario.id,
+      scenarioLabel: scenario.label,
+      providerName: "simulated-fixture/single-absence",
+      mode: "simulated",
+      input: scenario.input,
+      basePlan: scenario.basePlan,
+      result: { ...result, request: { ...result.request, id: "replacement-audit" } },
+      confirmedPlan: null,
+      confirmedAt: null,
+      confirmedById: null,
+    };
+    await persistence.saveReplacementRun(snapshot, manager);
+    await expect(readPlanningAudit(persistence, manager)).resolves.toEqual({
+      ok: true,
+      entries: [],
+    });
+    const option = result.options.find((candidate) => candidate.validation.status === "valid");
+    if (!option) throw new Error("Fixture nemá validní variantu.");
+
+    await persistence.confirmReplacementRun(
+      snapshot.replacementId,
+      option.id,
+      option.draft.assignments,
+      manager,
+      new Date("2026-10-28T13:00:00.000Z"),
+    );
+
+    await expect(readPlanningAudit(persistence, manager)).resolves.toMatchObject({
+      ok: true,
+      entries: [
+        {
+          proposalId: "replacement-audit",
+          weekStart: "2026-10-05",
+          confirmedByEmail: "manager@aaauto.cz",
         },
       ],
     });

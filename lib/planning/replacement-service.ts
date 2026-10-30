@@ -16,6 +16,41 @@ import {
 } from "./domain";
 import { getStaffingRequirement } from "./staffing-settings";
 
+export interface ReplacementTargetSummary {
+  readonly assignedEmployees: number;
+  readonly requiredEmployees: number;
+  readonly afterIncidentEmployees: number;
+}
+
+/** Vrátí skutečné obsazení základu, minimum pro směnu a stav po incidentu. */
+export function getReplacementTargetSummary(
+  input: PlanningInput,
+  basePlan: ConfirmedPlan,
+  request: ReplacementRequest,
+): ReplacementTargetSummary {
+  const validationInput = withReplacementMinimum(input, request);
+  const { date, shiftKind, absentEmployeeId } = request.incident;
+  const assignedEmployees = basePlan.assignments.filter(
+    (assignment) =>
+      assignment.date === date && assignment.shiftKind === shiftKind,
+  ).length;
+  const requiredEmployees = validationInput.staffingRequirements.find(
+    (requirement) => requirement.date === date && requirement.shiftKind === shiftKind,
+  )?.requiredEmployees ?? 0;
+  const absentEmployeeWasAssigned = basePlan.assignments.some(
+    (assignment) =>
+      assignment.employeeId === absentEmployeeId &&
+      assignment.date === date &&
+      assignment.shiftKind === shiftKind,
+  );
+
+  return {
+    assignedEmployees,
+    requiredEmployees,
+    afterIncidentEmployees: assignedEmployees - Number(absentEmployeeWasAssigned),
+  };
+}
+
 /**
  * Připraví všechny AI varianty a jejich deterministicky dopočítaný výsledek.
  *

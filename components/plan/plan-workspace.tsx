@@ -32,6 +32,7 @@ import {
 } from "@/lib/demo-data";
 import type { PlanningRuntime } from "@/lib/planning/server-config";
 import type { SimulatedScenarioSummary } from "@/lib/planning/simulated/scenarios";
+import type { ReplacementTargetSummary } from "@/lib/planning/replacement-service";
 
 const TABS = [
   { key: "smeny", label: "Směny" },
@@ -50,9 +51,13 @@ const STATUS_LABEL = {
 
 interface PlanWorkspaceProps {
   runtime: PlanningRuntime;
+  replacementTargetSummary: ReplacementTargetSummary | null;
 }
 
-export function PlanWorkspace({ runtime }: PlanWorkspaceProps) {
+export function PlanWorkspace({
+  runtime,
+  replacementTargetSummary,
+}: PlanWorkspaceProps) {
   const [weekStart, setWeekStart] = useState<Date>(() => DEMO_WEEK_START);
   const [tab, setTab] = useState<TabKey>("smeny");
   const [query, setQuery] = useState("");
@@ -281,7 +286,10 @@ export function PlanWorkspace({ runtime }: PlanWorkspaceProps) {
         providerMode={runtime.configured ? runtime.mode : "simulated"}
       />
 
-      <ReplacementPanel enabled={runtime.configured && runtime.mode === "simulated"} />
+      <ReplacementPanel
+        enabled={runtime.configured && runtime.mode === "simulated"}
+        targetSummary={replacementTargetSummary}
+      />
 
       <div className="stat-grid">
         {DEMO_STATS.map((stat) => (

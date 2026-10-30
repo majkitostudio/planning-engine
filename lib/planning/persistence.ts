@@ -295,6 +295,7 @@ export class InMemoryPlanningPersistence implements PlanningPersistence {
         selectedOptionId,
         assignments,
         acceptedTimeOffChangeIds,
+        actor.email,
       ),
     });
 
@@ -622,6 +623,7 @@ export class PrismaPlanningPersistence implements PlanningPersistence {
             selectedOptionId,
             assignments,
             acceptedTimeOffChangeIds,
+            actor.email,
           ),
         },
       });
@@ -735,9 +737,11 @@ function replacementAuditDetails(
   selectedOptionId: string,
   assignments: readonly ProposedAssignment[],
   acceptedTimeOffChangeIds: readonly string[],
+  actorEmail: string,
 ): Readonly<Record<string, string>> {
   return {
     weekStart: snapshot.result.request.weekStart,
+    email: actorEmail,
     baseProposalId: snapshot.basePlan.proposalId,
     incident: JSON.stringify(snapshot.result.request.incident),
     selectedOptionId,

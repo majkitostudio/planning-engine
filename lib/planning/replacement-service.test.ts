@@ -4,7 +4,10 @@ import { CONFIRMED_PLANNING_RULES, CONFIRMED_SHIFT_DEFINITIONS } from "./domain"
 import {
   createReplacementOptions,
   evaluateReplacementOption,
+  getReplacementTargetSummary,
 } from "./replacement-service";
+import { applyStaffingSettings } from "./staffing-settings";
+import { getSimulatedReplacementScenario } from "./simulated/replacement-scenarios";
 import type {
   ConfirmedPlan,
   PlanningInput,
@@ -29,6 +32,34 @@ const TARGET_EMPLOYEES = [
 const FREE_EMPLOYEE = "employee-8";
 
 describe("replacement-service", () => {
+  it("odvozuje souhrn cílové směny ze základu a uloženého minima", () => {
+    const scenario = getSimulatedReplacementScenario("single-absence");
+    if (!scenario) throw new Error("Replacement fixture chybí.");
+
+    expect(
+      getReplacementTargetSummary(
+        scenario.input,
+        scenario.basePlan,
+        scenario.request,
+      ),
+    ).toEqual({ assignedEmployees: 8, requiredEmployees: 8, afterIncidentEmployees: 7 });
+
+    const inputWithCustomMinimum = applyStaffingSettings(scenario.input, [
+      {
+        dayOfWeek: 1,
+        shiftKind: "afternoon",
+        requiredEmployees: 10,
+      },
+    ]);
+    expect(
+      getReplacementTargetSummary(
+        inputWithCustomMinimum,
+        scenario.basePlan,
+        scenario.request,
+      ),
+    ).toEqual({ assignedEmployees: 8, requiredEmployees: 10, afterIncidentEmployees: 7 });
+  });
+
   it("nepovažuje překročení uloženého minima za důvod k odmítnutí varianty", () => {
     const { input, basePlan, request } = makeScenario();
     const withLowerMinimum: PlanningInput = {
