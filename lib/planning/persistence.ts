@@ -319,7 +319,7 @@ export class PrismaPlanningPersistence implements PlanningPersistence {
     actor?: PlanningActor,
   ): Promise<void> {
     await this.db.$transaction(async (tx) => {
-      if (actor) await ensureActor(tx, actor);
+      if (actor) await ensurePlanningActorRecord(tx, actor);
 
       await tx.planningRunRecord.upsert({
         where: { proposalId: snapshot.proposalId },
@@ -367,7 +367,7 @@ export class PrismaPlanningPersistence implements PlanningPersistence {
     actor?: PlanningActor,
   ): Promise<void> {
     await this.db.$transaction(async (tx) => {
-      if (actor) await ensureActor(tx, actor);
+      if (actor) await ensurePlanningActorRecord(tx, actor);
 
       await tx.planningRunRecord.upsert({
         where: { proposalId: snapshot.replacementId },
@@ -463,7 +463,7 @@ export class PrismaPlanningPersistence implements PlanningPersistence {
     decidedAt: Date,
   ): Promise<EmployeeRequestDecision> {
     return this.db.$transaction(async (tx) => {
-      const actorRecord = await ensureActor(tx, actor);
+      const actorRecord = await ensurePlanningActorRecord(tx, actor);
       const row = await tx.employeeRequestDecision.upsert({
         where: { requestId },
         create: {
@@ -519,7 +519,7 @@ export class PrismaPlanningPersistence implements PlanningPersistence {
         return { snapshot: planningSnapshotFromRecord(row), alreadyConfirmed: true };
       }
 
-      const actorRecord = await ensureActor(tx, actor);
+      const actorRecord = await ensurePlanningActorRecord(tx, actor);
       const confirmedPlan: ConfirmedPlan = {
         proposalId,
         weekStart: row.weekStart,
@@ -575,7 +575,7 @@ export class PrismaPlanningPersistence implements PlanningPersistence {
         };
       }
 
-      const actorRecord = await ensureActor(tx, actor);
+      const actorRecord = await ensurePlanningActorRecord(tx, actor);
       const current = replacementSnapshotFromRecord(row);
       const confirmedPlan: ConfirmedPlan = {
         proposalId: replacementId,
@@ -636,10 +636,18 @@ export class PrismaPlanningPersistence implements PlanningPersistence {
   }
 }
 
-async function ensureActor(
+export async function ensurePlanningActorRecord(
   db: Prisma.TransactionClient,
   actor: PlanningActor,
 ) {
+  const byId = await db.appUser.findUnique({ where: { id: actor.userId } });
+  if (byId) {
+    return db.appUser.update({
+      where: { id: actor.userId },
+      data: { email: actor.email, displayName: actor.displayName },
+    });
+  }
+
   return db.appUser.upsert({
     where: { externalSubject: actor.userId },
     create: {

@@ -84,20 +84,20 @@
 ### Task 2: Authenticate database accounts and refresh account state
 
 **Files:**
-- Modify: `lib/auth/local.ts`, `auth.ts`, `lib/auth/route-access.ts`, `lib/auth/actor.ts`
-- Modify: `lib/auth/local.test.ts`, `lib/auth/actor.test.ts`, `tests/planning-authenticated-flow.test.ts`
+- Modify: `lib/auth/local.ts`, `auth.ts`, `lib/auth/route-access.ts`, `lib/auth/actor.ts`, `lib/planning/persistence.ts`
+- Modify: `lib/auth/local.test.ts`, `lib/auth/actor.test.ts`, `lib/planning/persistence.test.ts`, `tests/planning-authenticated-flow.test.ts`
 
 **Interfaces:**
 - Add `database` to `AuthMode`; configuration requires `AUTH_SECRET`, `PLANNING_PERSISTENCE=prisma`, and `DATABASE_URL`.
 - Credentials authorization queries by normalized email, verifies the stored hash, and rejects missing, inactive, or uncredentialed users with the same public login error.
 - On session resolution, database mode re-reads the active account and replaces role/name/email from the row; missing or inactive accounts invalidate the session.
 
-- [ ] **Step 1: Add failing tests** for database mode configuration, valid/invalid credentials, inactive account rejection, changed role reflected in existing session, and disabled account session invalidation.
-- [ ] **Step 2: Run** `cmd.exe /c npm test -- --run lib/auth/local.test.ts lib/auth/actor.test.ts tests/planning-authenticated-flow.test.ts`; confirm failures on the missing database mode and refresh behavior.
-- [ ] **Step 3: Implement database credentials authorization** using Task 1 services while preserving the existing local-only provider for development and tests.
-- [ ] **Step 4: Refresh current account state from PostgreSQL** during Auth.js session resolution; ensure planning actor persistence resolves the existing `AppUser` by its database identity or normalized email so it never creates a duplicate row for a bootstrapped account.
-- [ ] **Step 5: Run targeted auth and authenticated-flow tests** and confirm old local test behavior still passes.
-- [ ] **Step 6: Run** `cmd.exe /c npm run typecheck` and `cmd.exe /c npm run lint`.
+- [x] **Step 1: Add failing tests** for database mode configuration, valid/invalid credentials, inactive account rejection, changed role reflected in existing session, disabled account invalidation, and persistence by database account ID.
+- [x] **Step 2: Run** targeted auth, authenticated-flow, and persistence tests; confirm missing database mode and ID-based actor resolution failures before implementation.
+- [x] **Step 3: Implement database credentials authorization** using Task 1 services while preserving the existing local-only provider for development and tests.
+- [x] **Step 4: Refresh current account state from PostgreSQL** during Auth.js session resolution; resolve the existing `AppUser` by ID before external subject upsert.
+- [x] **Step 5: Run targeted auth and authenticated-flow tests** and confirm old local test behavior still passes.
+- [x] **Step 6: Run** `cmd.exe /c npm run typecheck` and `cmd.exe /c npm run lint`.
 - [ ] **Step 7: Commit** database-mode authentication and session refresh.
 
 ### Task 3: Enforce first-login password change
