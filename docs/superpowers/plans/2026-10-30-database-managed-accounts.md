@@ -146,15 +146,15 @@
 **Files:**
 - Create: `app/(app)/uzivatele/page.tsx`
 - Create: `components/accounts/account-management.tsx`
-- Modify: `components/app-shell.tsx`
+- Modify: `components/app-shell.tsx`, `app/globals.css`
 
 **Interfaces:**
 - Page loads account summaries server-side only for managers.
 - Client panel lists name, email, role, active state, and actions to create, change role/name, deactivate/reactivate, and reset temporary password.
 - The page shows the temporary password only once on successful creation; after dismissal/reload it cannot be recovered.
 
-- [ ] **Step 1: Implement the page/panel** using existing app-shell and form patterns; do not put credentials in URLs, logs, or persisted browser storage. Keep a newly entered temporary password in component memory only until the manager dismisses it.
-- [ ] **Step 2: Run targeted account route tests** and inspect the rendered manager/viewer navigation states.
+- [x] **Step 1: Implement the page/panel** using existing app-shell and form patterns; do not put credentials in URLs, logs, or persisted browser storage. Keep generated temporary passwords in component memory only until the manager dismisses them.
+- [x] **Step 2: Run targeted account route tests** and inspect manager-only navigation and route rendering in the production build.
 - [ ] **Step 3: Run typecheck and lint; commit** the account-management UI.
 
 ### Task 6: Full verification and authoritative status update
