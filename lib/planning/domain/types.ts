@@ -93,8 +93,8 @@ export type RequestKind = "day_off" | "shift_preference";
 /**
  * Požadavek zaměstnance na volno nebo preference směny.
  *
- * Požadavek není automaticky nárok. Zpracování `pending` požadavků je
- * `OPEN QUESTION` (OQ22).
+ * Požadavek není automaticky nárok. Manager rozhoduje ručně; návrh ukazuje
+ * dopad na pokrytí a rozhodnutí samo nemění potvrzený rozpis (OQ22).
  */
 export interface EmployeeRequest {
   readonly id: string;

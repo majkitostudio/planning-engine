@@ -3,9 +3,8 @@ import { defineConfig } from "prisma/config";
 
 // Konfigurace Prisma CLI pro Prisma ORM 7.
 //
-// Databázové modely zatím nejsou definovány (čeká na schválení domény), proto
-// obsahuje konfigurace pouze technický základ. `prisma generate` nevyžaduje
-// běžící databázový server.
+// Prisma schema obsahuje perzistenci plánovacích snapshotů a syntetického
+// pilotu. `prisma generate` nevyžaduje běžící databázový server.
 export default defineConfig({
   schema: "prisma/schema.prisma",
   migrations: {

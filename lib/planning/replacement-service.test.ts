@@ -29,6 +29,67 @@ const TARGET_EMPLOYEES = [
 const FREE_EMPLOYEE = "employee-8";
 
 describe("replacement-service", () => {
+  it("nepovažuje překročení uloženého minima za důvod k odmítnutí varianty", () => {
+    const { input, basePlan, request } = makeScenario();
+    const withLowerMinimum: PlanningInput = {
+      ...input,
+      staffingRequirements: input.staffingRequirements.map((requirement) =>
+        requirement.date === TARGET_DATE && requirement.shiftKind === TARGET_SHIFT
+          ? { ...requirement, requiredEmployees: 5 }
+          : requirement,
+      ),
+    };
+
+    const option = evaluateReplacementOption(
+      withLowerMinimum,
+      basePlan,
+      request,
+      makeDraft("option-above-minimum", replaceAbsentWith(FREE_EMPLOYEE)),
+    );
+
+    expect(option.coverage).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          date: TARGET_DATE,
+          shiftKind: TARGET_SHIFT,
+          requiredEmployees: 5,
+          assignedEmployees: 7,
+          missingEmployees: 0,
+        }),
+      ]),
+    );
+    expect(option.validation.status).toBe("valid");
+  });
+
+  it("zachová nulu jako platné uložené minimum místo použití výchozí hodnoty", () => {
+    const { input, basePlan, request } = makeScenario();
+    const withZeroMinimum: PlanningInput = {
+      ...input,
+      staffingRequirements: input.staffingRequirements.map((requirement) =>
+        requirement.date === TARGET_DATE && requirement.shiftKind === TARGET_SHIFT
+          ? { ...requirement, requiredEmployees: 0 }
+          : requirement,
+      ),
+    };
+
+    const option = evaluateReplacementOption(
+      withZeroMinimum,
+      basePlan,
+      request,
+      makeDraft("option-zero-minimum", replaceAbsentWith(FREE_EMPLOYEE)),
+    );
+
+    expect(option.coverage).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          date: TARGET_DATE,
+          shiftKind: TARGET_SHIFT,
+          requiredEmployees: 0,
+        }),
+      ]),
+    );
+  });
+
   it("vymění absentujícího za kandidáta s volným časem a spočítá změny i pokrytí", () => {
     const { input, basePlan, request } = makeScenario();
     const draft = makeDraft("option-free", replaceAbsentWith(FREE_EMPLOYEE));
@@ -105,7 +166,7 @@ describe("replacement-service", () => {
     ]);
   });
 
-  it("má v ukázkovém základu patnáct lidí na ranní směně a sedm na odpolední", async () => {
+  it("má v ukázkovém základu nové minimum 23 lidí na ranní směně a 8 na odpolední", async () => {
     const { getSimulatedReplacementScenario } = await import(
       "./simulated/replacement-scenarios"
     );
@@ -133,8 +194,8 @@ describe("replacement-service", () => {
       scenario!.drafts[1]!,
     );
 
-    expect(mondayMorning?.requiredEmployees).toBe(15);
-    expect(mondayMorningAssignments).toHaveLength(15);
+    expect(mondayMorning?.requiredEmployees).toBe(23);
+    expect(mondayMorningAssignments).toHaveLength(23);
     expect(direct.validation.status).toBe("valid");
     expect(domino.validation.status).toBe("valid");
     expect(domino.coverage).toEqual(
@@ -142,15 +203,15 @@ describe("replacement-service", () => {
         expect.objectContaining({
           date: WEEK_START,
           shiftKind: "morning",
-          requiredEmployees: 15,
-          assignedEmployees: 15,
+          requiredEmployees: 23,
+          assignedEmployees: 23,
           missingEmployees: 0,
         }),
       ]),
     );
   });
 
-  it("pro ranní náhradu použije minimum patnácti lidí i bez hodnoty ve vstupu", async () => {
+  it("pro ranní náhradu použije nové minimum všedního dne i bez hodnoty ve vstupu", async () => {
     const { getSimulatedReplacementScenario } = await import(
       "./simulated/replacement-scenarios"
     );
@@ -159,11 +220,9 @@ describe("replacement-service", () => {
     expect(scenario).toBeDefined();
     const inputWithoutMorningRequirement = {
       ...scenario!.input,
-      staffingRequirements: scenario!.input.staffingRequirements.map(
+      staffingRequirements: scenario!.input.staffingRequirements.filter(
         (requirement) =>
-          requirement.date === WEEK_START && requirement.shiftKind === "morning"
-            ? { ...requirement, requiredEmployees: 0 }
-            : requirement,
+          requirement.date !== WEEK_START || requirement.shiftKind !== "morning",
       ),
     };
     const request: ReplacementRequest = {
@@ -201,8 +260,8 @@ describe("replacement-service", () => {
         expect.objectContaining({
           date: WEEK_START,
           shiftKind: "morning",
-          requiredEmployees: 15,
-          assignedEmployees: 15,
+          requiredEmployees: 23,
+          assignedEmployees: 23,
           missingEmployees: 0,
         }),
       ]),
@@ -230,7 +289,6 @@ describe("replacement-service", () => {
       makeDraft("option-approved-absence", replaceAbsentWith(FREE_EMPLOYEE)),
     );
 
-    expect(option.validation.status).toBe("invalid");
     expect(option.validation.problems).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
@@ -239,6 +297,99 @@ describe("replacement-service", () => {
         }),
       ]),
     );
+    expect(option.validation.status).toBe("invalid");
+  });
+
+  it("umožní managerem výslovně přijatou dovolenou a ponechá náhradní volno bez data", () => {
+    const { input, basePlan, request } = makeScenario({
+      absences: [
+        {
+          id: "vacation-1",
+          employeeId: FREE_EMPLOYEE,
+          from: TARGET_DATE,
+          to: TARGET_DATE,
+          type: "vacation",
+          status: "approved",
+        },
+      ],
+    });
+    const changeId = `${FREE_EMPLOYEE}|${TARGET_DATE}`;
+
+    const option = evaluateReplacementOption(
+      input,
+      basePlan,
+      request,
+      makeDraft("option-vacation-accepted", replaceAbsentWith(FREE_EMPLOYEE)),
+      [changeId],
+    );
+
+    expect(option.validation.status).toBe("valid");
+    expect(option.impact.timeOffChanges).toEqual([
+      {
+        employeeId: FREE_EMPLOYEE,
+        kind: "approved_vacation",
+        originalDate: TARGET_DATE,
+        newDate: null,
+        verified: false,
+      },
+    ]);
+  });
+
+  it("nepovolí přijatou dovolenou, pokud by náhrada porušila 35hodinový odpočinek", () => {
+    const historyDates = [
+      "2026-09-30",
+      "2026-10-01",
+      "2026-10-02",
+      "2026-10-03",
+      "2026-10-04",
+    ];
+    const { input, basePlan, request } = makeScenario({
+      absences: [
+        {
+          id: "vacation-1",
+          employeeId: FREE_EMPLOYEE,
+          from: TARGET_DATE,
+          to: TARGET_DATE,
+          type: "vacation",
+          status: "approved",
+        },
+      ],
+    });
+    const inputWithHistory: PlanningInput = {
+      ...input,
+      history: {
+        complete: true,
+        assignments: historyDates.map((date) => ({
+          employeeId: FREE_EMPLOYEE,
+          date,
+          shiftKind: "afternoon",
+        })),
+      },
+    };
+
+    const option = evaluateReplacementOption(
+      inputWithHistory,
+      basePlan,
+      request,
+      makeDraft("option-vacation-rest-conflict", [
+        ...makeBaseAssignments().filter(
+          (assignment) => assignment.employeeId !== ABSENT_EMPLOYEE,
+        ),
+        { employeeId: FREE_EMPLOYEE, date: "2026-10-05", shiftKind: "afternoon" },
+        { employeeId: FREE_EMPLOYEE, date: TARGET_DATE, shiftKind: TARGET_SHIFT },
+      ]),
+      [`${FREE_EMPLOYEE}|${TARGET_DATE}`],
+    );
+
+    expect(option.validation.problems).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          code: "REST_AFTER_SIX_DAYS",
+          employeeId: FREE_EMPLOYEE,
+        }),
+      ]),
+    );
+    expect(option.validation.status).toBe("invalid");
   });
 
   it("zablokuje variantu, která mění schválený plánovaný den volna", () => {

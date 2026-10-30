@@ -17,6 +17,7 @@ export type ConfirmationBlockerCode =
   | "replacement_needs_changes"
   | "replacement_partial_blocked"
   | "replacement_option_missing"
+  | "replacement_time_off_acceptance_required"
   | "replacement_base_stale"
   | "replacement_revalidation_failed";
 

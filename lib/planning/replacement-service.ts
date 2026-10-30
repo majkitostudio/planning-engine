@@ -14,7 +14,7 @@ import {
   type ReplacementRequest,
   type ReplacementRunResult,
 } from "./domain";
-import { DEFAULT_STAFFING_MINIMUMS } from "./staffing-settings";
+import { getStaffingRequirement } from "./staffing-settings";
 
 /**
  * Připraví všechny AI varianty a jejich deterministicky dopočítaný výsledek.
@@ -65,9 +65,14 @@ export function evaluateReplacementOption(
   basePlan: ConfirmedPlan,
   request: ReplacementRequest,
   draft: ReplacementDraft,
+  acceptedTimeOffChangeIds: readonly string[] = [],
 ): ReplacementOption {
   const assignments = removeIncidentAssignment(draft.assignments, request);
-  const validationInput = withReplacementMinimum(input, request);
+  const validationInput = withAcceptedVacationChanges(
+    withReplacementMinimum(input, request),
+    assignments,
+    new Set(acceptedTimeOffChangeIds),
+  );
   const proposal: PlanProposal<PlanDraft> = {
     id: `replacement-${draft.id}`,
     source: { kind: "ai", note: "replacement-simulated" },
@@ -114,6 +119,36 @@ export function evaluateReplacementOption(
   };
 }
 
+function withAcceptedVacationChanges(
+  input: PlanningInput,
+  assignments: readonly ProposedAssignment[],
+  acceptedTimeOffChangeIds: ReadonlySet<string>,
+): PlanningInput {
+  if (acceptedTimeOffChangeIds.size === 0) return input;
+
+  return {
+    ...input,
+    absences: input.absences.filter((absence) => {
+      if (absence.status !== "approved" || absence.type !== "vacation") {
+        return true;
+      }
+      return !assignments.some(
+        (assignment) =>
+          assignment.employeeId === absence.employeeId &&
+          assignment.date >= absence.from &&
+          assignment.date <= absence.to &&
+          acceptedTimeOffChangeIds.has(
+            timeOffChangeId(assignment.employeeId, assignment.date),
+          ),
+      );
+    }),
+  };
+}
+
+export function timeOffChangeId(employeeId: string, date: string): string {
+  return `${employeeId}|${date}`;
+}
+
 function withReplacementMinimum(
   input: PlanningInput,
   request: ReplacementRequest,
@@ -127,8 +162,8 @@ function withReplacementMinimum(
     date: request.incident.date,
     shiftKind: request.incident.shiftKind,
     requiredEmployees:
-      targetRequirement?.requiredEmployees ||
-      DEFAULT_STAFFING_MINIMUMS[request.incident.shiftKind],
+      targetRequirement?.requiredEmployees ??
+      getStaffingRequirement([], request.incident.date, request.incident.shiftKind),
   };
 
   const staffingRequirements = targetRequirement
@@ -331,7 +366,7 @@ function applyReplacementChecks(
   return {
     ...validation,
     status:
-      problems.length > 0
+      problems.some((problem) => problem.severity === "error")
         ? "invalid"
         : unverifiedChecks.length > 0
           ? "not_verified"

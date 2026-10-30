@@ -116,6 +116,7 @@ function makeReplacementSnapshot(
     incompleteHistory?: boolean;
     staleBase?: boolean;
     tamperSelectedOption?: boolean;
+    candidateOnVacation?: boolean;
   } = {},
 ): ReplacementRunSnapshot {
   const scenario = getSimulatedReplacementScenario("single-absence");
@@ -124,9 +125,26 @@ function makeReplacementSnapshot(
     ...scenario.request,
     id: "replacement-confirmation-test",
   };
-  const input = overrides.incompleteHistory
-    ? { ...scenario.input, history: { assignments: [], complete: false } }
-    : scenario.input;
+  const input = {
+    ...scenario.input,
+    ...(overrides.incompleteHistory
+      ? { history: { assignments: [], complete: false } }
+      : {}),
+    ...(overrides.candidateOnVacation
+      ? {
+          absences: [
+            {
+              id: "synthetic-vacation",
+              employeeId: "e8",
+              from: scenario.request.incident.date,
+              to: scenario.request.incident.date,
+              type: "vacation" as const,
+              status: "approved" as const,
+            },
+          ],
+        }
+      : {}),
+  };
   const result = createReplacementOptions(
     input,
     scenario.basePlan,
@@ -204,6 +222,49 @@ describe("confirmPersistedReplacementRun", () => {
 
     expect(first).toMatchObject({ ok: true, alreadyConfirmed: false });
     expect(second).toMatchObject({ ok: true, alreadyConfirmed: true });
+  });
+
+  it("vyžaduje výslovné přijetí změny dovolené a zapíše ji do auditu", async () => {
+    const persistence = new InMemoryPlanningPersistence();
+    const snapshot = makeReplacementSnapshot({ candidateOnVacation: true });
+    const option = snapshot.result.options[0]!;
+    await persistence.saveReplacementRun(snapshot, replacementActor);
+
+    const withoutAcceptance = await confirmPersistedReplacementRun(
+      persistence,
+      snapshot.replacementId,
+      option.id,
+      replacementActor,
+    );
+    expect(withoutAcceptance).toMatchObject({
+      ok: false,
+      blockers: expect.arrayContaining([
+        expect.objectContaining({ code: "replacement_time_off_acceptance_required" }),
+      ]),
+    });
+
+    const accepted = await confirmPersistedReplacementRun(
+      persistence,
+      snapshot.replacementId,
+      option.id,
+      replacementActor,
+      Date.UTC(2026, 9, 29, 8),
+      ["e8|2026-10-06"],
+    );
+
+    expect(accepted).toMatchObject({ ok: true, alreadyConfirmed: false });
+    expect(persistence.getAuditEvents()[0]?.details.acceptedTimeOffChangeIds).toBe(
+      '["e8|2026-10-06"]',
+    );
+    expect(accepted.ok && accepted.snapshot.result.options[0]?.impact.timeOffChanges).toEqual([
+      {
+        employeeId: "e8",
+        kind: "approved_vacation",
+        originalDate: "2026-10-06",
+        newDate: null,
+        verified: false,
+      },
+    ]);
   });
 
   it.each([

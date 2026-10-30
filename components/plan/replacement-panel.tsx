@@ -32,12 +32,14 @@ function assignmentLabel(change: AssignmentChange): string {
 
 function validationLabel(option: ReplacementOption): string {
   if (option.status === "valid") return "VALID — připraveno ke kontrole";
+  if (isVacationDecisionOnly(option)) return "ČEKÁ NA ROZHODNUTÍ MANAGERA";
   if (option.status === "not_verified") return "NOT VERIFIED — nelze potvrdit";
   return "NEEDS CHANGES — nelze potvrdit";
 }
 
 function statusVariant(option: ReplacementOption): "success" | "warning" | "danger" {
   if (option.status === "valid") return "success";
+  if (isVacationDecisionOnly(option)) return "warning";
   return option.status === "not_verified" ? "warning" : "danger";
 }
 
@@ -54,6 +56,20 @@ function optionSummary(option: ReplacementOption): string {
   return `${target.assignedEmployees}/${target.requiredEmployees} lidí na řešené směně`;
 }
 
+function isVacationDecisionOnly(option: ReplacementOption): boolean {
+  return (
+    option.impact.timeOffChanges.length > 0 &&
+    option.impact.timeOffChanges.every((change) => change.kind === "approved_vacation") &&
+    option.validation.problems.length > 0 &&
+    option.validation.problems.every((problem) => problem.code === "ABSENCE_APPROVED") &&
+    option.validation.unverifiedChecks.length === 0
+  );
+}
+
+function timeOffChangeId(employeeId: string, date: string): string {
+  return `${employeeId}|${date}`;
+}
+
 export function ReplacementPanel({ enabled }: { enabled: boolean }) {
   const [absentEmployeeId, setAbsentEmployeeId] = useState("e1");
   const [shiftKind, setShiftKind] = useState<ShiftKind>("afternoon");
@@ -62,12 +78,19 @@ export function ReplacementPanel({ enabled }: { enabled: boolean }) {
   const [message, setMessage] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isConfirmed, setIsConfirmed] = useState(false);
+  const [acceptedVacationChange, setAcceptedVacationChange] = useState(false);
+  const selectedOption = result?.options.find((option) => option.id === selectedOptionId);
+  const selectedVacationChanges = selectedOption?.impact.timeOffChanges.filter(
+    (change) => change.kind === "approved_vacation",
+  ) ?? [];
+  const requiresVacationAcceptance = selectedVacationChanges.length > 0;
 
   async function generateOptions() {
     setIsLoading(true);
     setMessage(null);
     setResult(null);
     setSelectedOptionId(null);
+    setAcceptedVacationChange(false);
     setIsConfirmed(false);
 
     try {
@@ -108,7 +131,15 @@ export function ReplacementPanel({ enabled }: { enabled: boolean }) {
       const response = await fetch("/api/planning/replacement/confirm", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ replacementId: result.request.id, optionId: selectedOptionId }),
+        body: JSON.stringify({
+          replacementId: result.request.id,
+          optionId: selectedOptionId,
+          acceptedTimeOffChangeIds: acceptedVacationChange
+            ? selectedVacationChanges.map((change) =>
+                timeOffChangeId(change.employeeId, change.originalDate),
+              )
+            : [],
+        }),
       });
       const data = (await response.json()) as PlanningReplacementConfirmApiResponse;
       if (!data.ok) {
@@ -222,13 +253,32 @@ export function ReplacementPanel({ enabled }: { enabled: boolean }) {
                     option={option}
                     selected={selectedOptionId === option.id}
                     disabled={isConfirmed}
-                    onSelect={() => setSelectedOptionId(option.id)}
+                    onSelect={() => {
+                      setSelectedOptionId(option.id);
+                      setAcceptedVacationChange(false);
+                    }}
                   />
                 ))}
               </div>
 
+              {requiresVacationAcceptance ? (
+                <label className="check" style={{ display: "flex", gap: "10px", alignItems: "start" }}>
+                  <input
+                    type="checkbox"
+                    checked={acceptedVacationChange}
+                    onChange={(event) => setAcceptedVacationChange(event.target.checked)}
+                    disabled={isLoading || isConfirmed}
+                  />
+                  <span>
+                    Jako manager potvrzuji, že zaměstnance kontaktuji a výslovně
+                    přijímám změnu schválené dovolené. Náhradní volno zatím nemá
+                    přiřazené datum a musí se domluvit samostatně.
+                  </span>
+                </label>
+              ) : null}
+
               <div className="row" style={{ gap: "10px", alignItems: "center", flexWrap: "wrap" }}>
-                <button type="button" className="btn btn--primary" onClick={confirmOption} disabled={!selectedOptionId || isLoading || isConfirmed || result.completeness !== "complete"}>
+                <button type="button" className="btn btn--primary" onClick={confirmOption} disabled={!selectedOptionId || isLoading || isConfirmed || result.completeness !== "complete" || (requiresVacationAcceptance && !acceptedVacationChange)}>
                   {isLoading ? <span className="spinner" aria-hidden="true" /> : <Icon name="checkCircle" width={17} height={17} />}
                   Potvrdit vybranou variantu jako manager
                 </button>
@@ -255,7 +305,7 @@ function ReplacementOptionCard({
 }) {
   return (
     <label className="replacement-option" data-selected={selected ? "true" : "false"}>
-      <input type="radio" name="replacement-option" checked={selected} onChange={onSelect} disabled={disabled || option.status !== "valid"} />
+      <input type="radio" name="replacement-option" checked={selected} onChange={onSelect} disabled={disabled || (option.status !== "valid" && !isVacationDecisionOnly(option))} />
       <span className="replacement-option__body">
         <span className="row" style={{ justifyContent: "space-between", gap: "8px", alignItems: "start" }}>
           <span>
@@ -289,6 +339,13 @@ function ReplacementOptionCard({
         {option.impact.dominoChain.length > 0 ? (
           <span className="small muted">Domino řetězec: {option.impact.dominoChain.map((assignment) => assignment.employeeId).join(" → ")}</span>
         ) : null}
+
+        {option.impact.timeOffChanges.map((change) => (
+          <span className="small muted" key={`${change.employeeId}-${change.originalDate}`}>
+            Změna volna: {EMPLOYEE_LABELS[change.employeeId] ?? change.employeeId} · {change.originalDate} · schválená dovolená;
+            náhradní volno zatím bez přiřazeného data.
+          </span>
+        ))}
 
         {option.draft.tradeOffs?.map((tradeOff) => <span className="small muted" key={tradeOff}>Kompromis: {tradeOff}</span>)}
         {option.impact.unverifiedReasons.map((reason) => <span className="small muted" key={reason}>NOT VERIFIED: {reason}</span>)}

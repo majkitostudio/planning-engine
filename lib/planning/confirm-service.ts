@@ -15,6 +15,7 @@ import type { PlanningPersistence } from "./persistence";
 import type { ReplacementRunSnapshot } from "./persistence";
 import type { PlanningRunRegistry, StoredPlanningRun } from "./run-registry";
 import { evaluateReplacementOption } from "./replacement-service";
+import { timeOffChangeId } from "./replacement-service";
 import { toPlanningRunView, type PlanningRunView } from "./view-model";
 
 export type ConfirmRunResult =
@@ -167,6 +168,7 @@ export async function confirmPersistedReplacementRun(
   selectedOptionId: string,
   actor: PlanningActor,
   confirmedAtMs: number = Date.now(),
+  acceptedTimeOffChangeIds: readonly string[] = [],
 ): Promise<ConfirmReplacementResult> {
   const snapshot = await persistence.getReplacementRun(replacementId);
   if (!snapshot) {
@@ -207,26 +209,45 @@ export async function confirmPersistedReplacementRun(
     });
   }
 
-  if (option?.validation.status === "not_verified") {
+  const requiredTimeOffAcceptances = option?.impact.timeOffChanges
+    .filter((change) => change.kind === "approved_vacation")
+    .map((change) => timeOffChangeId(change.employeeId, change.originalDate)) ?? [];
+  const suppliedAcceptances = [...new Set(acceptedTimeOffChangeIds)].sort();
+  const expectedAcceptances = [...new Set(requiredTimeOffAcceptances)].sort();
+  if (
+    option &&
+    (suppliedAcceptances.length !== expectedAcceptances.length ||
+      suppliedAcceptances.some((id, index) => id !== expectedAcceptances[index]))
+  ) {
     blockers.push({
-      code: "replacement_not_verified",
-      message: "Vybraná varianta náhrady obsahuje neověřenou kontrolu.",
-    });
-  } else if (option && option.validation.status !== "valid") {
-    blockers.push({
-      code: "replacement_needs_changes",
-      message: "Vybraná varianta náhrady porušuje pravidla nebo pokrytí.",
+      code: "replacement_time_off_acceptance_required",
+      message:
+        "Každou změnu schválené dovolené musí manager výslovně přijmout. Datum náhradního volna zůstává nevyplněné a musí být domluveno samostatně.",
     });
   }
 
+  let confirmedOption = option;
   if (option && blockers.length === 0) {
     const revalidated = evaluateReplacementOption(
       snapshot.input,
       snapshot.basePlan,
       snapshot.result.request,
       option.draft,
+      suppliedAcceptances,
     );
-    if (revalidated.validation.status !== "valid") {
+    confirmedOption = revalidated;
+    if (revalidated.validation.status === "not_verified") {
+      blockers.push({
+        code: "replacement_not_verified",
+        message: "Vybraná varianta náhrady obsahuje neověřenou kontrolu.",
+      });
+    } else if (revalidated.validation.status !== "valid") {
+      blockers.push({
+        code: "replacement_needs_changes",
+        message: "Vybraná varianta náhrady porušuje pravidla nebo pokrytí.",
+      });
+    }
+    if (blockers.length > 0) {
       blockers.push({
         code: "replacement_revalidation_failed",
         message: "Vybranou variantu se před potvrzením nepodařilo znovu ověřit.",
@@ -246,9 +267,11 @@ export async function confirmPersistedReplacementRun(
   const persisted = await persistence.confirmReplacementRun(
     replacementId,
     selectedOptionId,
-    option.draft.assignments,
+    confirmedOption?.draft.assignments ?? option.draft.assignments,
     actor,
     new Date(confirmedAtMs),
+    suppliedAcceptances,
+    confirmedOption,
   );
   if (!persisted) {
     return {

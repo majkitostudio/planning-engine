@@ -1,10 +1,15 @@
 import { isIsoDate, weekdayIndex } from "./domain/time";
 import type { PlanningInput, ShiftKind } from "./domain/types";
 
-export const DEFAULT_STAFFING_MINIMUMS: Readonly<Record<ShiftKind, number>> = {
-  morning: 15,
-  afternoon: 7,
+export const DEFAULT_STAFFING_MINIMUMS = {
+  weekday: { morning: 23, afternoon: 8 },
+  weekend: { morning: 12, afternoon: 9 },
 };
+
+export function getDefaultStaffingRequirement(dayOfWeek: number, shiftKind: ShiftKind): number {
+  const profile = dayOfWeek >= 5 ? "weekend" : "weekday";
+  return DEFAULT_STAFFING_MINIMUMS[profile][shiftKind];
+}
 
 export const STAFFING_SHIFT_KINDS: readonly ShiftKind[] = ["morning", "afternoon"];
 export const STAFFING_DAY_COUNT = 7;
@@ -32,7 +37,7 @@ export function getCompleteStaffingSettings(
       savedByKey.get(settingKey(dayOfWeek, shiftKind)) ?? {
         dayOfWeek,
         shiftKind,
-        requiredEmployees: DEFAULT_STAFFING_MINIMUMS[shiftKind],
+        requiredEmployees: getDefaultStaffingRequirement(dayOfWeek, shiftKind),
       },
     ),
   ).flat();
@@ -44,13 +49,13 @@ export function getStaffingRequirement(
   date: string,
   shiftKind: ShiftKind,
 ): number {
-  if (!isIsoDate(date)) return DEFAULT_STAFFING_MINIMUMS[shiftKind];
+  if (!isIsoDate(date)) return DEFAULT_STAFFING_MINIMUMS.weekday[shiftKind];
 
   return (
     settings.find(
       (setting) =>
         setting.dayOfWeek === weekdayIndex(date) && setting.shiftKind === shiftKind,
-    )?.requiredEmployees ?? DEFAULT_STAFFING_MINIMUMS[shiftKind]
+    )?.requiredEmployees ?? getDefaultStaffingRequirement(weekdayIndex(date), shiftKind)
   );
 }
 

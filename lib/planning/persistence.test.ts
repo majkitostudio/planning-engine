@@ -42,6 +42,29 @@ function makeSnapshot(proposalId = "plan-persisted"): PlanningRunSnapshot {
 }
 
 describe("planning persistence", () => {
+  it("zachová rozhodnutí managera o požadavku i po vytvoření nové instance", async () => {
+    const state = createInMemoryPersistenceState();
+    const first = new InMemoryPlanningPersistence(state);
+    const decidedAt = new Date("2026-10-30T08:00:00.000Z");
+
+    await first.saveEmployeeRequestDecision(
+      "request-e3-2026-10-07",
+      "approved",
+      actor,
+      decidedAt,
+    );
+
+    const restarted = new InMemoryPlanningPersistence(state);
+    await expect(restarted.getEmployeeRequestDecisions()).resolves.toEqual([
+      {
+        requestId: "request-e3-2026-10-07",
+        status: "approved",
+        decidedAt: decidedAt.toISOString(),
+        decidedById: actor.userId,
+      },
+    ]);
+  });
+
   it("načte uložený snapshot i z nové instance repository", async () => {
     const state = createInMemoryPersistenceState();
     const first = new InMemoryPlanningPersistence(state);
@@ -174,7 +197,7 @@ describe("replacement persistence", () => {
     await expect(
       persistence.getReplacementRun(snapshot.replacementId),
     ).resolves.toEqual(snapshot);
-    expect(snapshot.basePlan.assignments).toHaveLength(22);
+    expect(snapshot.basePlan.assignments).toHaveLength(31);
     expect(snapshot.confirmedPlan).toBeNull();
   });
 

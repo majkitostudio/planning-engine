@@ -16,10 +16,10 @@ jiných dokumentů neopakuje.
 | [`DOMAIN_SPECIFICATION.md`](DOMAIN_SPECIFICATION.md) | Doménový model a pravidla s mírou potvrzení | `PARTIALLY VERIFIED PROPOSAL` |
 | [`DOMAIN_DECISIONS.md`](DOMAIN_DECISIONS.md) | Otevřené otázky a odpovědi managera | `PARTIALLY ANSWERED` |
 | [`adr/`](adr/README.md) | Proč jsou technická rozhodnutí taková | `IMPLEMENTED` |
-| [`superpowers/specs/2026-10-29-operativni-nahrady-design.md`](superpowers/specs/2026-10-29-operativni-nahrady-design.md) | Schválený záměr další fáze operativních náhrad | `VERIFIED` / `PROPOSAL` |
+| [`superpowers/specs/2026-10-29-operativni-nahrady-design.md`](superpowers/specs/2026-10-29-operativni-nahrady-design.md) | Historický návrh operativních náhrad; novější odpovědi managera z 30. 10. 2026 mají přednost | `SUPERSEDED` |
 | [`superpowers/plans/2026-10-29-operativni-nahrady.md`](superpowers/plans/2026-10-29-operativni-nahrady.md) | Historický implementační plán; aktuální stav je v roadmapě | `SUPERSEDED` |
 | [`../lib/planning/README.md`](../lib/planning/README.md) | Co skutečně obsahuje plánovací jádro | `IMPLEMENTED` |
-| [`../prisma/schema.prisma`](../prisma/schema.prisma) | Provozní modely identity, běhu a auditu; doménové modely stále chybí | `IMPLEMENTED` (lokální migrace `VERIFIED`, produkční DB `NOT VERIFIED`) |
+| [`../prisma/schema.prisma`](../prisma/schema.prisma) | Identita, běhy, staffing nastavení a rozhodnutí nad syntetickými požadavky; zaměstnanecké tabulky chybí | `IMPLEMENTED` (lokální migrace `VERIFIED`, produkční DB `NOT VERIFIED`) |
 
 ## Aktuální stav
 
@@ -40,6 +40,7 @@ jiných dokumentů neopakuje.
 | Audit potvrzení | `IMPLEMENTED` / `VERIFIED` (lokální Docker smoke) | Zápis `planning.confirmed` byl ověřen; čtecí pohled je `IMPLEMENTED` pro managera a ukazuje pouze tato potvrzení |
 | Operativní náhrada směny | `IMPLEMENTED` / `SIMULATED` | Syntetický řez: výpadek celé směny → tři varianty → deterministický dopad → výběr → manager-only potvrzení; Gemini a provozní kvalita `NOT VERIFIED` |
 | Nastavení potřebného obsazení | `IMPLEMENTED` / `VERIFIED` (lokální smoke) | `/nastaveni`, manager-only zápis přes API, Prisma persistence a použití v operativních náhradách; migrace a manuální browser smoke proběhly v lokálním Docker PostgreSQL |
+| Rozhodování o požadavcích | `IMPLEMENTED` / `SIMULATED` | `/pozadavky` ukazuje dopad dvou syntetických požadavků, dostupné kandidáty a manager-only schválení/zamítnutí; rozhodnutí se ukládá přes Prisma a samo neupraví rozpis |
 | Testy | `IMPLEMENTED` / `VERIFIED` | Jádro, služby a route handlery mají testy; plný UI/E2E test není součástí dema |
 | Kvalitní brána (CI) | `IMPLEMENTED` | Lint, typecheck, testy, build a Prisma validace procházejí |
 | Produkční připravenost | `NOT VERIFIED` | Není produkční aplikace |
@@ -68,7 +69,7 @@ odpovědi a varianty sbírá [`DOMAIN_DECISIONS.md`](DOMAIN_DECISIONS.md). OQ21,
 OQ23 a OQ24 jsou pro první řez uzavřené. Pro operativní náhrady jsou nejdůležitější:
 
 1. Která další pravidla a limity platí (OQ9–OQ11), zejména maximum hodin/směn?
-2. Jak se rozlišuje provozní výpadek, schválená absence a přání (OQ22)?
+2. Jaké přesné datum má mít náhradní volno po záskoku během schválené dovolené (OQ22)?
 3. Jak se mají vážit a porovnávat varianty náhrady (OQ12–OQ14, OQ17)?
 4. Jak podrobný má být audit operativní změny (OQ20)?
 
@@ -109,8 +110,8 @@ Následující kroky zachycují aktuální target a jeho ověření; položky oz
 9. ✅ **Přidat konfiguraci potřebného obsazení.** Týdenní tabulka pondělí–neděle
    má ranní a odpolední minimum, manager ji může uložit přes serverové API a
    operativní náhrada používá hodnotu pro konkrétní kalendářní den; chybějící
-   hodnota používá fallback 15/7. Implementace i lokální DB/browser smoke jsou
-   `VERIFIED` v rozsahu syntetického pilotu.
+   hodnota používá aktuální profil Po–Pá 23/8, So–Ne 12/9. Implementace i
+   lokální DB/browser smoke jsou `VERIFIED` v rozsahu syntetického pilotu.
 
 ## Doporučený postup po staffing pilotu
 
@@ -120,16 +121,16 @@ Následující pořadí je pracovní plán, nikoli tvrzení o již ověřeném v
    `planning-engine-postgres` byla aplikována staffing migrace. Manuální browser
    průchod ověřil manager zápis, zachování hodnot po reloadu, viewer-only přístup
    a serverový zákaz zápisu vieweru (`403`). Operativní náhrada načetla uložené
-   minimum pro cílové úterní odpoledne (`5`) a zobrazila pokrytí `7/5`; návrh
+   minimum pro cílové úterní odpoledne (`5`) a zobrazila pokrytí `8/5`; návrh
    zůstal nepotvrzený.
 2. ✅ **Aktualizovat dokumentaci po ověření.** Tento checkpoint zapisuje skutečný
    lokální cíl, provedenou migraci, role i výsledek browser smoke. Stav
    `VERIFIED` se vztahuje pouze na lokální syntetický pilot, nikoli na produkční
    provoz.
-3. **Přejít k doménovým rozhodnutím.** Zastavit další technické rozšiřování a
-   rozhodnout zejména limity náhrad (OQ9–OQ11), rozlišení dovolené/plánovaného a
-   náhradního volna (OQ22), rozsah auditu (OQ20) a zda je staffing nastavení
-   týdenní šablona, nebo nastavení pro konkrétní kalendářní týden.
+3. **Uzavřít zbývající doménová rozhodnutí před další implementací.** Odpověď
+   managera z 30. 10. 2026 částečně uzavřela OQ22. Zbývají limity náhrad
+   (OQ9–OQ11), úplný rozsah auditu (OQ20), přesný termín náhradního volna a
+   zda staffing nastavení platí jako týdenní šablona, nebo pro konkrétní týden.
 
 Do tohoto pořadí nepatří produkční Entra autentizace, produkční PostgreSQL,
 CRM, Outlook ani skutečná zaměstnanecká data. Projekt zůstává technickým

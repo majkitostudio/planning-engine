@@ -100,6 +100,9 @@ plánovacího engine; nejde o pracovněprávní posudek ani výpočet placené d
   `VERIFIED` jako rozsah, ne jako doménové pravidlo.
 - **Konfigurovatelné obsazení:** počty potřebných zaměstnanců na směnách jsou
   vstup, ne historická konstanta. `VERIFIED`
+- **Provozní minima pro MVP:** Po–Pá ráno 23 a odpoledne 8; So–Ne ráno 12 a
+  odpoledne 9. Jde o výchozí profil konfigurovatelného vstupu, potvrzený
+  managerem 30. 10. 2026. `VERIFIED`
 - **Pracovní den pro pravidlo šesti dnů:** kalendářní den s alespoň jednou
   směnou; více směn v jednom dni se počítá jako jeden pracovní den. `VERIFIED`
 - **Potvrzení neúplného návrhu:** neúplný návrh se smí zobrazit k posouzení,
@@ -123,9 +126,8 @@ Nejsou schválením dosud otevřených pracovněprávních nebo personálních p
 - Dopad variant se počítá deterministicky. Po výběru manažerem se vybraná
   varianta znovu ověří stejnou validací jako běžný týdenní návrh.
 - Minimální obsazení je konfigurovatelný vstup po jednotlivých dnech a směnách.
-  Aktuálně potvrzený výchozí profil je nejméně 15 lidí na ranní směně a
-  nejméně 7 lidí na odpolední směně. Jde o interní provozní minimum, nikoli o
-  zákonný limit.
+  Potvrzený výchozí profil managera je Po–Pá 23 ráno / 8 odpoledne a So–Ne
+  12 ráno / 9 odpoledne. Jde o interní provozní minimum, nikoli zákonný limit.
 - Délka směny je pevně daná definicí směny. Operativní náhrada nesmí směnu
   prodlužovat, zkracovat ani dělit.
 - Přesčasy se v tomto provozu nepoužívají. Varianta vyžadující práci mimo
@@ -133,8 +135,13 @@ Nejsou schválením dosud otevřených pracovněprávních nebo personálních p
 - Priorita návrhu je: zachovat minimální obsazení, neporušit ověřená tvrdá
   pravidla, změnit co nejméně dalších lidí a zobrazit celý řetězec následků,
   pokud se mu nelze vyhnout.
-- Změna potvrzeného volna je vysoce dopadová varianta. AI ji může navrhnout,
-  ale nesmí ji sama aplikovat.
+- Při běžném plánování každé evidované volno blokuje směnu. Při operativní
+  náhradě smí AI navrhnout kandidáta s potvrzeným volnem, pokud tím neporuší
+  pravidlo 35 h odpočinku po šesti pracovních dnech. O kontaktování zaměstnance
+  a změně volna rozhoduje manager. Změna se zaznamená a systém navrhne
+  náhradní volno; jeho datum ani přidělení se nesmí domýšlet či aplikovat bez
+  potvrzení managera. `VERIFIED` jako procesní směr; termín náhradního volna
+  zůstává `OPEN QUESTION`.
 - První řez používá syntetická data a simulovaný provider. Gemini se zapojí až
   po stabilizaci kontraktu operativní náhrady.
 - V prvním řezu se audit zaměřuje na potvrzenou změnu, původní a nový rozpis,
@@ -173,19 +180,20 @@ odpoledních směn a víkendu, požadavky sbírané přes Outlook a ruční pře
 hotového rozpisu do současného rosteru. Automatický přenos proto není
 požadavkem prvního řezu.
 
-Email také uvádí konkrétní provozní minima (23 / 8 ve všední den a 12 / 9 o
-víkendu) a šest částečných úvazků. Obojí je zdrojová informace o dnešní praxi,
-nikoli nové univerzální pravidlo: minima zůstávají konfigurovatelným vstupem a
-částečné úvazky mimo první řez.
+Email také uvádí minima 23 / 8 ve všední den a 12 / 9 o víkendu a šest
+částečných úvazků. Manager 30. 10. 2026 potvrdil tato minima jako nový zdroj
+pravdy pro výchozí konfigurovatelný profil. Částečné úvazky zůstávají mimo MVP,
+ale jsou plánovaným budoucím rozšířením.
 
 Email obsahuje rozpor proti potvrzeným víkendovým časům v §0.2: uvádí ranní
 7:45–18:00 a odpolední 10:45–21:00, zatímco aktuální projektové rozhodnutí
 uvádí 7:45–16:30 a 12:45–21:00. Do vyřešení tohoto rozporu se potvrzené časy
 nemění. Pravidlo 35 hodin po šesti pracovních dnech se naopak shoduje.
 
-Zbývá také rozhodnout, zda „kdo požadavek odešle dříve, má přednost“ je
-pravidlo pro engine, nebo jen popis dnešního ručního postupu. Tato informace
-se proto zatím nepoužívá jako implementované pravidlo.
+Manager potvrdil, že požadavky schvaluje nebo odmítá ručně. Aplikace má ukázat
+mezery vzniklé při vyhovění požadavku a navrhnout jejich pokrytí; nesmí je
+automaticky vyhodnotit. Dřívější odeslání samo o sobě neurčuje automatickou
+prioritu.
 
 ## 1. Účel a hranice první verze
 
@@ -258,7 +266,8 @@ potvrzený týdenní plán
 Pojmy `ShiftIncident`, `ReplacementRequest` a `ReplacementOption` jsou
 implementované pro syntetický pilot v `lib/planning/domain/types.ts`. Nejsou
 produkční doménovou specifikací; jejich rozšíření zůstává závislé na OQ2–OQ4,
-OQ9–OQ11, OQ20 a OQ22.
+OQ9–OQ11 a OQ20. OQ22 je částečně zodpovězená; otevřený zůstává přesný termín
+náhradního volna po záskoku během schválené dovolené.
 
 ## 2. Co má plánovací nástroj plánovat
 
@@ -298,7 +307,7 @@ definice kontraktu.
 | `ShiftDefinition` | Potvrzené časy ranní/odpolední směny ve všední den a o víkendu | `VERIFIED` |
 | `StaffingRequirement` | Kolik zaměstnanců je potřeba na dané směně v daném dni | `VERIFIED` (vstup) |
 | `Absence` | Dovolená, nemoc nebo jiná absence; schválená blokuje přiřazení | `ASSUMPTION` (stav) |
-| `EmployeeRequest` | Požadavek na volno nebo preference směny | `ASSUMPTION` (zpracování) |
+| `EmployeeRequest` | Požadavek na volno nebo preference směny | `IMPLEMENTED` / `SIMULATED` (manager review); skutečný příjem požadavků není implementován |
 | `ExistingAssignment` | Již existující směna, vůči které se počítají změny | `VERIFIED` (vstup) |
 | `PlanningRules` | Potvrzená pravidla odpočinku a víkendových dnů volna | `VERIFIED` |
 | `PlanDraft` | Návrh AI: přiřazení, změny, nedostatky, vysvětlení, alternativy | `IMPLEMENTED` (typ) |
@@ -329,7 +338,7 @@ Zde je obsahový přehled.
 | Zaměstnanci | Identita, plný úvazek; syntetická data | `VERIFIED` (rozsah) |
 | Potřebné obsazení | Počet zaměstnanců na směně v daném dni | `VERIFIED` (vstup) |
 | Schválené absence | Dovolená, nemoc, jiná absence; blokují přiřazení | `VERIFIED` (význam), `ASSUMPTION` (stav) |
-| Požadavky a preference | Volno, preference ranní/odpolední | `ASSUMPTION` (zpracování) |
+| Požadavky a preference | Volno, preference ranní/odpolední | `IMPLEMENTED` / `SIMULATED` (náhled a rozhodnutí nad dvěma fixture požadavky); skutečný příjem a plánovací AI tok `NOT VERIFIED` |
 | Existující směny | Výchozí stav, vůči kterému se počítají změny | `VERIFIED` (vstup) |
 | Výpadek směny | Konkrétní zaměstnanec, datum, směna a výchozí verze plánu | `PROPOSAL` pro operativní řez |
 | Pravidla | Odpočinek po 6 dnech, víkendové dny volna | `VERIFIED` |
@@ -405,11 +414,11 @@ více směn v jednom dni se započítá jednou.
 | S4 | Preferovat kontinuitu (stejný tým/kampaň v rámci období) | `ASSUMPTION` |
 | S5 | Vyvažovat složitost/obtížnost směn | `ASSUMPTION` |
 
-Požadavky na volno a preference směn jsou vstupem, ale jejich váha a způsob
-vyhodnocení nejsou potvrzené. U operativní náhrady má přednost pokrytí nejméně
-7 lidí, ověřená tvrdá pravidla a co nejmenší dopad na další lidi; AI musí
-zobrazit i řetězové změny. Deterministická validace nesmí žádnou měkkou
-preferenci vydávat za splněný nárok.
+Další měkké preference a jejich váhy se do MVP nepřidávají. Manager rozhoduje,
+zda požadavku vyhoví; aplikace pouze ukáže dopad na obsazení a navrhne pokrytí.
+U operativní náhrady platí aktuální minimum nastavené pro konkrétní datum a
+směnu, ověřená tvrdá pravidla a co nejmenší dopad na další lidi. Deterministická
+validace nesmí žádnou měkkou preferenci vydávat za splněný nárok.
 
 `OPEN QUESTION`:
 
@@ -545,7 +554,9 @@ podřízený tomuto dokumentu — autoritativní seznam je tento.
 - **OQ13** (S6) Váha/priorita preferencí?
 - **OQ14** (S6) Co má přednost při vzájemném vyloučení preferencí?
 - **OQ17** (S7) Pořadí obětování preferencí?
-- **OQ22** (S6) Jak se liší „schválený požadavek“ od „přání“?
+- **OQ22** (S6) Manager schvaluje či odmítá ručně a při přijetí vidí dopad;
+  po záskoku během schválené dovolené zůstává otevřené přesné datum náhradního
+  volna.
 
 ### Blokující pro role a data
 

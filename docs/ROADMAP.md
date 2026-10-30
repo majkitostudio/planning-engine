@@ -32,6 +32,7 @@ jsou `NOT VERIFIED` nebo `PLANNED`; lokální Docker PostgreSQL běh je `VERIFIE
 | Čtecí auditní pohled | historie `planning.confirmed` pro managera | `app/(app)/audit/page.tsx`, `lib/planning/audit-service.ts`; logika přístupu ověřená unit testy |
 | Operativní náhrada | incident, tři simulované varianty, deterministické změny/pokrytí/validace, výběr a nová potvrzená verze | `lib/planning/replacement-service.ts`, `app/api/planning/replacement/`; cílené unit/route testy prošly |
 | Nastavení potřebného obsazení | týdenní tabulka 7 × 2, manager-only API zápis, Prisma persistence a použití při operativní náhradě | `app/(app)/nastaveni/`, `app/api/settings/staffing/`, `lib/planning/staffing-settings.ts`; implementace, lokální migrace a manuální DB/browser smoke jsou `VERIFIED` v syntetickém pilotu |
+| Schvalování požadavků | dvě syntetické ukázky, náhled dopadu na směny a dostupných kandidátů, manager-only schválení/zamítnutí; rozhodnutí se ukládá bez změny rozpisu | `/pozadavky`, `app/api/requests/`, `EmployeeRequestDecision`; unit/route testy a izolovaný lokální DB/browser smoke prošly; skutečný příjem požadavků a AI návrh pokrytí jsou `NOT VERIFIED` |
 | Prisma základ | PostgreSQL datasource, provozní modely a připravená migrace bez doménových modelů | `prisma/schema.prisma`, `prisma/migrations/` |
 | CI | lint, typecheck, testy, build a validace Prisma | `.github/workflows/ci.yml` |
 
@@ -39,7 +40,7 @@ Aktuální ověření pracovního stromu (30. 10. 2026):
 
 - `npm run lint` — prošlo bez warningů.
 - `npm run typecheck` — prošlo.
-- `npm test -- --run` — 222 prošlo, 1 přeskočen (Gemini integrační test nebyl
+- `npm test -- --run` — 235 prošlo, 1 přeskočen (Gemini integrační test nebyl
   součástí běžné sady).
 - `npm run build` — prošlo.
 - `npm run db:validate` — schéma je validní.
@@ -47,10 +48,24 @@ Aktuální ověření pracovního stromu (30. 10. 2026):
   této kontroly; jejich dříve zaznamenané výsledky zůstávají omezené na lokální
   konfiguraci a syntetický pilot.
 - Cílený staffing test `npm test -- --run lib/planning/staffing-settings.test.ts tests/staffing-settings-routes.test.ts` — 10 testů prošlo.
-- Manuální staffing browser smoke — manager načetl výchozí hodnoty 15/7, uložil
-  změny a po reloadu je znovu načetl; viewer hodnoty pouze zobrazil a POST API
-  odmítlo zápis stavem `403`. Operativní náhrada použila uložené úterní
-  odpolední minimum 5 a zobrazila pokrytí `7/5`; žádná změna nebyla potvrzena.
+- Manuální staffing browser smoke v izolované dočasné databázi — manager načetl
+  profil 23/8 pro všední dny a 12/9 pro víkend, změnil středeční ráno na 24,
+  po uložení a reloadu se hodnota zachovala a poté byla vrácena na 23.
+  Operativní náhrada převzala uložené úterní odpolední minimum 5, ukázala
+  pokrytí 8/5 a platný návrh; hodnota byla následně vrácena na 8. Návrh nebyl
+  potvrzen. Dočasná databáze byla po průchodu odstraněna; původní lokální pilotní
+  databáze zůstala nedotčená.
+- Po restartu PC byl Docker Desktop znovu spuštěn; `planning-engine-postgres`
+  se zotavil a `pg_isready` potvrdil, že přijímá spojení. Původní staffing
+  browser smoke se neopakoval, protože běžná lokální Auth.js konfigurace nemá
+  `AUTH_SECRET`.
+- Prisma migrace rozhodnutí o požadavcích byla aplikována do existující lokální
+  databáze `planning_engine`. Manager schválil jednu a zamítl druhou ukázkovou
+  žádost v izolované dočasné databázi; obě rozhodnutí zůstala po návratu na
+  stránku zachovaná a rozpis zůstal beze změny. Použita byla syntetická testovací
+  identita; dočasná databáze byla odstraněna.
+- Regresní test operativní náhrady potvrzuje, že výslovné přijetí změny dovolené
+  nepřebije blokující pravidlo 35hodinového odpočinku.
 
 ## 3. Implementováno, ale potřebuje ověření nebo potvrzení
 
@@ -134,10 +149,13 @@ integrace s CRM zůstává mimo rozsah.
 2. ✅ **Aktualizovat dokumentaci po ověření.** Tento záznam obsahuje skutečný
    lokální cíl a skutečný výsledek průchodu. Produkční databáze, produkční role a
    kvalita plánování zůstávají mimo toto ověření.
-3. **Rozhodnout doménové brány před další implementací.** Zůstávají otevřené
-   zejména limity náhrad OQ9–OQ11, rozlišení dovolené/plánovaného volna/
-   náhradního volna OQ22, rozsah auditu OQ20 a výklad staffing nastavení jako
-   týdenní šablony versus konkrétního kalendářního týdne.
+3. **Uzavřít zbývající doménové brány před další implementací.** Odpověď
+   managera z 30. 10. 2026 částečně uzavřela OQ22: manager rozhoduje o přijetí
+   požadavku, vidí dopad a při náhradě musí výslovně přijmout změnu dovolené;
+   35hodinový odpočinek zůstává tvrdou podmínkou. Otevřené zůstávají konkrétní
+   limity náhrad OQ9–OQ11, úplný rozsah auditu OQ20, přesné datum náhradního
+   volna a zda staffing nastavení platí jako týdenní šablona, nebo pro konkrétní
+   kalendářní týden.
 
 Detailní pořadí souborů a testů je v
 [`docs/superpowers/plans/2026-10-29-operativni-nahrady.md`](superpowers/plans/2026-10-29-operativni-nahrady.md).
@@ -237,7 +255,12 @@ Podrobnosti a místo pro odpovědi: [`DOMAIN_DECISIONS.md`](DOMAIN_DECISIONS.md)
   načtení, viewer přístup a použití hodnoty v syntetické operativní náhradě.
 - **30. 10. 2026:** údržbová kontrola potvrdila čistý pracovní strom; lint,
   typecheck, 222 testů (1 Gemini integrační test přeskočen), build a Prisma
-  validace prošly.
+  validace prošly před doplněním schválení dovolené a toku požadavků.
+- **30. 10. 2026:** doplněno výslovné managerovo přijetí změny schválené
+  dovolené při operativní náhradě a syntetický review tok požadavků s uloženým
+  rozhodnutím. Následná sada má 235 úspěšných testů a 1 přeskočený Gemini test;
+  lokální Docker/browser smoke potvrdil zachování obou rozhodnutí bez aplikace
+  změny rozpisu.
 
 ## 10. Odkazy
 

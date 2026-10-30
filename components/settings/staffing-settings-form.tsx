@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { Icon } from "@/components/icons";
 import {
-  DEFAULT_STAFFING_MINIMUMS,
+  getDefaultStaffingRequirement,
   STAFFING_SHIFT_KINDS,
   type StaffingSetting,
 } from "@/lib/planning/staffing-settings";
@@ -131,7 +131,7 @@ export function StaffingSettingsForm({
                           min="0"
                           step="1"
                           inputMode="numeric"
-                          value={settings[settingKey(dayOfWeek, shiftKind)] ?? DEFAULT_STAFFING_MINIMUMS[shiftKind]}
+                          value={settings[settingKey(dayOfWeek, shiftKind)] ?? getDefaultStaffingRequirement(dayOfWeek, shiftKind)}
                           onChange={(event) => updateSetting(dayOfWeek, shiftKind, event.target.value)}
                           disabled={!canEdit || isSaving}
                           required

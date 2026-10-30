@@ -88,9 +88,8 @@ dosud neznámé pracovní limity ani preference.
 - Dopad každé varianty se dopočítává deterministicky; po výběru se varianta
   znovu validuje před potvrzením.
 - Minimální obsazení je konfigurovatelné podle konkrétního dne a směny.
-  Aktuálně potvrzený výchozí profil je nejméně 15 lidí na ranní směně a
-  nejméně 7 lidí na odpolední směně. Jde o interní provozní požadavek, nikoli o
-  zákonný limit.
+  Dosavadní výchozí profil pilotu 15/7 je nahrazen novými potvrzenými hodnotami
+  managera z 30. 10. 2026; viz níže.
 - Délka směny je pevně daná existující definicí směny. Operativní náhrada nesmí
   směnu prodlužovat, zkracovat ani dělit na části.
 - Přesčasy se v tomto provozu nepoužívají. Varianta, která by vyžadovala práci
@@ -99,9 +98,9 @@ dosud neznámé pracovní limity ani preference.
   ověřená tvrdá pravidla, změnit co nejméně dalších lidí a pokud změna volna
   vytvoří další povinnost odpočinku, navrhnout i její náhradu. Když bez řetězové
   změny nelze směnu pokrýt, AI musí řetěz zobrazit celý; manager vybírá variantu.
-- Schválená dovolená nebo jiné potvrzené volno zůstává výchozím blokátorem.
-  Varianta, která je mění, je pouze výslovně označený vysoce dopadový návrh s
-  uvedením dotčeného člověka, nového odpočinku a případného nákladového rizika.
+- Při běžném plánování je schválená dovolená nebo jiné potvrzené volno
+  blokátorem. Pro operativní náhradu platí užší manažerská výjimka popsaná
+  v odpovědích z 30. 10. 2026 níže; datum náhradního volna se nesmí domýšlet.
 - První řez používá syntetická data a simulovaný provider. Gemini se zapojí až
   po stabilizaci kontraktu náhrady.
 - Základní audit prvního řezu obsahuje potvrzenou změnu, původní a nový rozpis,
@@ -149,11 +148,53 @@ Pro tento projekt je interní rozhodnutí přísnější: přesčasy se nepouž�
 Zákonný rámec pro přesčasy proto není povolením, aby je AI navrhovala; slouží
 jen jako zdroj evidence pro budoucí právní kontrolu.
 
-V provozním scénáři se proto nesmí bez dalšího zaměnit **skutečná dovolená**,
-**plánovaný den volna** a **náhradní volno po víkendové práci**. První řez
-je všechny chápe jako potvrzené volno, které náhradník nesmí ignorovat. Návrh,
-který by takové volno měnil, musí být označen jako vysoce dopadový a nesmí se
-aplikovat automaticky.
+V provozním scénáři se nesmí zaměnit **skutečná dovolená**, **plánovaný den
+volna** a **náhradní volno po víkendové práci**. Při běžném plánování každé
+evidované volno blokuje přiřazení. Při operativní náhradě může systém navrhnout
+záskok během schválené dovolené, ale změnu smí manager potvrdit pouze po
+výslovném přijetí tohoto dopadu. Náhradní volno se zaznamená jako návrh bez
+data; termín zůstává `OPEN QUESTION` a nesmí se automaticky určit. Kontrola
+35hodinového odpočinku zůstává tvrdou podmínkou.
+
+## Odpovědi managera a rozsah MVP (`VERIFIED`, 30. 10. 2026)
+
+Následující odpovědi jsou novým zdrojem pravdy pro projekt. Konkrétní
+implementace se musí řídit těmito pravidly; kde odpověď nedodává konkrétní údaj,
+otázka zůstává otevřená.
+
+- **Časy směn:** manager zvolil sjednocení úplné tabulky časů pro jednotlivé
+  dny a směny. Konkrétní časy v této odpovědi nedodal; rozpor mezi dříve
+  potvrzenými časy a časy uvedenými v původním emailu proto zůstává
+  `OPEN QUESTION`.
+- **Minimální obsazení:** konfigurovatelné podle dne a směny. Potvrzené hodnoty
+  jsou pondělí–pátek ráno 23 a odpoledne 8; sobota–neděle ráno 12 a odpoledne
+  9. Jde o provozní minimum, nikoli pracovněprávní limit. Hodnoty 15/7 z
+  předchozího syntetického pilotu už nejsou zdrojem pravdy.
+- **Tvrdá pravidla MVP:** platí pouze již potvrzená pravidla. Další limity
+  hodin či směn se nesmějí domýšlet.
+- **Požadavky zaměstnanců:** o schválení či odmítnutí rozhoduje manager.
+  Aplikace požadavek automaticky nevyhodnocuje; ukáže vzniklé mezery při jeho
+  přijetí a navrhne jejich pokrytí. Čas odeslání sám neurčuje prioritu.
+- **Volno při tvorbě rozpisu:** každé evidované volno blokuje přiřazení.
+- **Volno při operativní náhradě:** AI smí navrhnout i člověka s potvrzeným
+  volnem. Manager rozhoduje, zda ho kontaktuje a požádá o záskok; aplikace
+  zaznamená změnu volna a navrhne jeho náhradu. Takový návrh je zakázán, pokud
+  by porušil potvrzených 35 hodin nepřetržitého odpočinku po šesti po sobě
+  jdoucích pracovních dnech. Přesný termín a způsob poskytnutí náhradního volna
+  zůstává `OPEN QUESTION`; změna se bez potvrzení managera neaplikuje.
+- **Preference:** žádné další preference ani váhy se do MVP nepřidávají.
+- **Vstupy:** MVP používá ruční zadávání; Outlook a automatický přenos do
+  rosteru jsou mimo rozsah.
+- **Úpravy plánu:** manager může návrh upravit. Každá potvrzená změna vytvoří
+  novou verzi týdne; souběžné změny a širší historie zůstávají otevřené.
+- **Audit:** MVP zaznamenává potvrzené změny; odmítnuté a opuštěné varianty
+  neeviduje.
+- **Role:** manager plánuje i potvrzuje, viewer pouze čte. Oddělené role
+  plánovače a schvalovatele nejsou v MVP.
+- **Týmy a pobočky:** MVP používá jeden seznam. Budoucí návrh může počítat s
+  rozšířením o týmy či pobočky, ale nyní se neimplementují.
+- **Částečné úvazky:** mimo MVP, ale s jejich podporou se počítá pro budoucí
+  rozšíření. Pravidla jejich plánování zůstávají `OPEN QUESTION`.
 
 ## Jak list použít
 
@@ -204,7 +245,7 @@ první řez stát.
 | OQ19 | Plánovač vs. schvalovatel? | schvalovací tok | `OPEN QUESTION` |
 | OQ20 | Potřebujeme audit změn? | historie a odpovědnost | `PARTIALLY ANSWERED` — základní audit potvrzené operativní změny |
 | OQ21 | Co je „pracovní den“ pro 6 dnů v řadě? | výklad pravidla odpočinku | `VERIFIED` |
-| OQ22 | Schválený požadavek vs. přání? | zpracování incidentů a preferencí | `PARTIALLY ANSWERED` — jednoduchý životní cyklus incidentu potvrzen, širší vztah k absencím zůstává omezený |
+| OQ22 | Schválený požadavek vs. přání? | zpracování incidentů a preferencí | `PARTIALLY ANSWERED` — manager rozhoduje a vidí dopad; přesné datum náhradního volna zůstává otevřené |
 | OQ23 | Lze potvrdit částečně neúplný návrh? | schvalovací tok | `VERIFIED` |
 | OQ24 | Jak se započítávají přestávky? | pracovní doba a validace | `VERIFIED` |
 
@@ -376,10 +417,11 @@ Pro každé další pravidlo prosím: **co** se nesmí / má, **kdy** to platí 
 **Návrh k diskusi (`PROPOSAL`):** žádný — pravidla musí vyjmenovat manager.
 
 **Odpověď:** `PARTIALLY ANSWERED` (29. 10. 2026) — pro první operativní řez
-nepřidáváme další tvrdá pravidla nad potvrzený základ, interní minimum 7 lidí,
-pevnou délku směny a zákaz přesčasů. Další pravidla (např. svátky, jazyky,
+nepřidáváme další tvrdá pravidla nad potvrzený základ a minimum obsazení
+nastavované podle dne a směny. Další pravidla (např. svátky, jazyky,
 role/dovednosti nebo kontinuita týmu) zůstávají `OPEN QUESTION`, dokud je
-manager výslovně nepotvrdí.
+manager výslovně nepotvrdí. Přesčasy zůstávají zakázaným výstupem projektu;
+nejde o další optimalizační limit.
 
 ---
 
@@ -506,21 +548,19 @@ výklad se vztahuje k datu přiřazení.
 přání na volno nebo preference směny blokovat nemá; AI ho může zohlednit.
 Pokud se to nepotvrdí, hrozí, že se přání změní na nárok nebo naopak ignoruje.
 
-**Odpověď:** `PARTIALLY ANSWERED` (29. 10. 2026) — platí jednoduchý životní
-cyklus: incident je otevřený, má návrhy, může mít vybranou variantu, po
-potvrzení je uzavřený, nebo může být opuštěný. Provozní výpadek na konkrétní
-směně se vede jako samostatný incident a změna se uloží až společně s potvrzenou
-náhradou.
+**Odpověď:** `PARTIALLY ANSWERED` (30. 10. 2026). Manager rozhoduje ručně,
+zda požadavek schválit nebo odmítnout; čas odeslání neurčuje prioritu a aplikace
+nemá požadavek automaticky vyhodnotit. Při schválení musí ukázat dopad na
+obsazení a navrhnout pokrytí. Přijetí požadavku samo nepotvrzuje ani neaplikuje
+změnu rozpisu.
 
-V provozním příkladu se slovem „dovolená“ někdy myslí jen jeden plánovaný den
-volna, například náhradní volno po víkendové práci. Engine proto nesmí
-automaticky předpokládat, že jde o stejný právní institut jako řádná dovolená
-za kalendářní rok. Vstup musí pokud možno rozlišit skutečnou dovolenou,
-plánované volno a náhradní volno. Všechny potvrzené varianty ale zůstávají
-výchozím blokátorem, dokud manager výslovně nepotvrdí návrh, který volno mění.
-
-Přesný interní postup pro změnu nebo nahrazení takového volna zůstává
-`OPEN QUESTION`; AI smí ukázat dopad, nikoli sama volno zrušit nebo přesunout.
+Pro běžné plánování zůstává schválená absence blokátorem. Při operativní náhradě
+může AI navrhnout zaměstnance se schválenou dovolenou; manager musí její změnu
+výslovně přijmout. Návrh nesmí porušit 35hodinový odpočinek po šesti po sobě
+jdoucích pracovních dnech. Zásah a návrh náhradního volna se zaznamenají, ale
+datum náhradního volna zůstává `OPEN QUESTION` a nesmí se domyslet ani přidělit
+automaticky. Samostatné zamítnuté a opuštěné varianty se podle rozhodnutí
+managera neevidují.
 
 ### OQ23 — Může manažer potvrdit částečně neúplný návrh?
 

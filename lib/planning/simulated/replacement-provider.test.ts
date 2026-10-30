@@ -14,6 +14,21 @@ function requireScenario(): SimulatedReplacementScenario {
 }
 
 describe("SimulatedPlanningProvider — replacement", () => {
+  it("má základní scénář obsazený podle aktuálních minim všedního dne", () => {
+    const scenario = requireScenario();
+    const mondayMorning = scenario.basePlan.assignments.filter(
+      (assignment) => assignment.date === "2026-10-05" && assignment.shiftKind === "morning",
+    );
+
+    expect(scenario.input.employees).toHaveLength(26);
+    expect(mondayMorning).toHaveLength(23);
+    expect(scenario.input.staffingRequirements).toContainEqual({
+      date: "2026-10-05",
+      shiftKind: "morning",
+      requiredEmployees: 23,
+    });
+  });
+
   it("vrátí tři odlišné návrhy pro jeden syntetický výpadek", async () => {
     const scenario = requireScenario();
     const provider = new SimulatedPlanningProvider(scenario);

@@ -12,16 +12,15 @@ import { getSimulatedReplacementScenario } from "./simulated/replacement-scenari
 import { evaluateReplacementOption } from "./replacement-service";
 
 describe("staffing settings", () => {
-  it("vrací výchozí minima 15 ráno a 7 odpoledne pro všech sedm dnů", () => {
+  it("vrací minima podle pracovního dne nebo víkendu", () => {
     const settings = getCompleteStaffingSettings([]);
 
     expect(settings).toHaveLength(14);
-    expect(settings.filter((setting) => setting.shiftKind === "morning").every(
-      (setting) => setting.requiredEmployees === DEFAULT_STAFFING_MINIMUMS.morning,
-    )).toBe(true);
-    expect(settings.filter((setting) => setting.shiftKind === "afternoon").every(
-      (setting) => setting.requiredEmployees === DEFAULT_STAFFING_MINIMUMS.afternoon,
-    )).toBe(true);
+    expect(DEFAULT_STAFFING_MINIMUMS).toEqual({ weekday: { morning: 23, afternoon: 8 }, weekend: { morning: 12, afternoon: 9 } });
+    expect(settings.find((setting) => setting.dayOfWeek === 0 && setting.shiftKind === "morning")?.requiredEmployees).toBe(23);
+    expect(settings.find((setting) => setting.dayOfWeek === 1 && setting.shiftKind === "morning")?.requiredEmployees).toBe(23);
+    expect(settings.find((setting) => setting.dayOfWeek === 5 && setting.shiftKind === "afternoon")?.requiredEmployees).toBe(9);
+    expect(settings.find((setting) => setting.dayOfWeek === 4 && setting.shiftKind === "afternoon")?.requiredEmployees).toBe(8);
   });
 
   it("načte uloženou hodnotu pro konkrétní kalendářní den a směnu", () => {
@@ -30,8 +29,8 @@ describe("staffing settings", () => {
     ]);
 
     expect(getStaffingRequirement(settings, "2026-10-07", "morning")).toBe(18);
-    expect(getStaffingRequirement(settings, "2026-10-07", "afternoon")).toBe(7);
-    expect(getStaffingRequirement(settings, "2026-10-08", "morning")).toBe(15);
+    expect(getStaffingRequirement(settings, "2026-10-07", "afternoon")).toBe(8);
+    expect(getStaffingRequirement(settings, "2026-10-08", "morning")).toBe(23);
   });
 
   it("uloží nastavení a po znovu vytvoření persistence ho znovu načte", async () => {

@@ -1,8 +1,8 @@
 // Prisma schema — technický základ.
 //
-// Doménové modely zaměstnanců a směn zatím NEJSOU definovány: čekají na
-// schválení doménové specifikace (viz docs/DOMAIN_SPECIFICATION.md). Níže jsou
-// pouze provozní modely identity, snapshotu plánovacího běhu a auditu.
+// Doménové modely zaměstnanců a směn zatím NEJSOU definovány. Schema obsahuje
+// provozní modely identity, snapshotů běhů, nastavení pilotu a rozhodnutí o
+// syntetických požadavcích.
 //
 // Po schválení dodat modely sem. Soubor lze zformátovat příkazem
 // `npm run db:generate` nevyžaduje běžící databázový server.
@@ -21,6 +21,11 @@ enum AppUserRole {
   viewer
 }
 
+enum EmployeeRequestDecisionStatus {
+  approved
+  rejected
+}
+
 model AppUser {
   id              String              @id @default(cuid())
   externalSubject String              @unique
@@ -32,6 +37,18 @@ model AppUser {
   updatedAt       DateTime            @updatedAt
   confirmedRuns   PlanningRunRecord[] @relation("PlanningRunConfirmedBy")
   auditEvents     AuditEvent[]
+  employeeRequestDecisions EmployeeRequestDecision[]
+}
+
+model EmployeeRequestDecision {
+  id          String                           @id @default(cuid())
+  requestId   String                           @unique
+  status      EmployeeRequestDecisionStatus
+  decidedAt   DateTime                         @default(now())
+  decidedById String
+  decidedBy   AppUser                          @relation(fields: [decidedById], references: [id], onDelete: Restrict)
+
+  @@index([decidedById, decidedAt])
 }
 
 model PlanningRunRecord {

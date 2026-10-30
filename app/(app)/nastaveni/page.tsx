@@ -26,7 +26,7 @@ export default async function SettingsPage() {
         await persistenceRuntime.persistence.getStaffingSettings(),
       );
     } catch {
-      notice = "Nastavení se nepodařilo načíst. Zobrazuji výchozí hodnoty 15/7.";
+      notice = "Nastavení se nepodařilo načíst. Zobrazuji výchozí minima podle dne a směny.";
     }
   }
 

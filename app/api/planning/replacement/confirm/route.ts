@@ -51,6 +51,17 @@ export async function POST(request: Request) {
       400,
     );
   }
+  if (
+    record.acceptedTimeOffChangeIds !== undefined &&
+    (!Array.isArray(record.acceptedTimeOffChangeIds) ||
+      record.acceptedTimeOffChangeIds.some((id) => typeof id !== "string"))
+  ) {
+    return rejection(
+      "invalid_request",
+      "Seznam přijatých změn volna má neplatný tvar.",
+      400,
+    );
+  }
 
   const persistenceRuntime = getPlanningPersistenceRuntime();
   if (!persistenceRuntime.configured) {
@@ -67,6 +78,8 @@ export async function POST(request: Request) {
       record.replacementId,
       record.optionId,
       actorAccess.actor,
+      Date.now(),
+      (record.acceptedTimeOffChangeIds as string[] | undefined) ?? [],
     );
     if (result.ok) {
       return NextResponse.json<PlanningReplacementConfirmApiResponse>(

@@ -151,11 +151,16 @@ interface EmployeeRequest {
 }
 ```
 
-- `approved` absence **blokuje** přiřazení. To je potvrzené pravidlo.
-- `pending` a `rejected` absence jsou jen kontext; nesmí se z nich stát tvrdá
-  překážka bez potvrzení (OQ22).
-- Požadavek na volno nebo preference směny není nárok. AI ho může zohlednit;
-  validace ho nesmí vydávat za splněný nárok.
+- `approved` absence **blokuje** běžné přiřazení. Při operativní náhradě lze
+  změnit pouze schválenou dovolenou po výslovném přijetí managerem; ostatní
+  potvrzené volno zůstává blokátorem.
+- `pending` a `rejected` absence jsou jen kontext. O schválení či odmítnutí
+  požadavku rozhoduje manager a aplikace při přijetí ukazuje dopad na pokrytí;
+  změnu rozpisu nepotvrzuje automaticky. Přesné datum náhradního volna po
+  záskoku zůstává `OPEN QUESTION` (OQ22).
+- Požadavek na volno nebo preference směny není automatický nárok. Manager jej
+  schvaluje či odmítá; náhled ukáže dopad na pokrytí a dostupné syntetické
+  kandidáty. Samotné rozhodnutí rozpis neupravuje ani nepotvrzuje.
 
 ### 4.5 Existující směny
 
@@ -313,8 +318,8 @@ interface PlanValidationResult {
 `problems` obsahují stabilní `code`, `severity`, text a podle možnosti
 `employeeId`, `date`, `shiftKind` a `details`. `unverifiedChecks` nejsou
 porušená pravidla; jen brání tomu, aby byl výsledek označen jako `valid`.
-`assumptions` přiznávají pouze dosud neuzavřené výklady (OQ22 a výklad dvou dnů
-volna). Validace návrh nikdy neopravuje ani nemění.
+`assumptions` přiznávají pouze dosud neuzavřené výklady (termín náhradního volna
+v OQ22 a výklad dvou dnů volna). Validace návrh nikdy neopravuje ani nemění.
 
 ### 6.4 Stav běhu
 
@@ -398,9 +403,10 @@ Operativní výpadek se před potvrzením neukládá jako změna rozpisu. Po pot
 vzniká nová verze celého týdne.
 
 Minimální obsazení je konfigurovatelný vstup podle konkrétního dne a směny.
-Aktuálně potvrzený výchozí profil je nejméně 15 lidí na ranní směně a nejméně
-7 lidí na odpolední směně. Pořadí cíle varianty je nejprve splnit tento vstup,
-potom neporušit ověřená tvrdá pravidla a potom změnit co nejméně dalších lidí.
+Potvrzený výchozí profil od 30. 10. 2026 je Po–Pá 23 ráno / 8 odpoledne a
+So–Ne 12 ráno / 9 odpoledne. Pořadí cíle varianty je nejprve splnit aktuální
+uložený vstup, potom neporušit ověřená tvrdá pravidla a potom změnit co nejméně
+dalších lidí.
 Pokud změna jednoho volna vyvolá další změny, variantní dopad musí zobrazit celý
 řetězec.
 
@@ -409,11 +415,13 @@ náhrada pracuje pouze s celou směnou; nesmí ji prodloužit, zkrátit ani rozd
 Přesčasy se v tomto provozu nepoužívají, takže varianta vyžadující práci mimo
 pevně definovanou směnu je neplatná.
 
-Skutečná dovolená, plánovaný den volna a náhradní volno po víkendové práci se
-nesmí bez informace ze vstupu zaměnit. Potvrzené volno je blokátor. Varianta,
-která ho mění, je vysoce dopadový návrh s výslovným označením a nesmí se
-aplikovat automaticky. Právní baseline pro profil limitů je `SOURCE EVIDENCE`,
-nikoli hotové validační pravidlo.
+Při běžném plánování každé evidované volno blokuje směnu. Při operativní
+náhradě může AI navrhnout člověka s potvrzeným volnem, pokud neporuší
+potvrzených 35 hodin odpočinku po šesti po sobě jdoucích pracovních dnech.
+O kontaktování člověka a změně volna rozhoduje manager. Systém musí zásah
+zaznamenat a navrhnout náhradní volno, ale nesmí je sám přidělit. Přesný termín
+náhradního volna je `OPEN QUESTION`. Právní baseline pro další profil limitů je
+`SOURCE EVIDENCE`, nikoli hotové validační pravidlo.
 
 Maximální hodiny, maximální počet směn, role/dovednosti a další dosud
 nepotvrzené limity nejsou v prvním pilotu nastavené jako univerzální čísla.
@@ -548,7 +556,7 @@ typů.
 | # | Otázka / předpoklad | Stav |
 | --- | --- | --- |
 | OQ21 | Co je „pracovní den“ pro šest dnů v řadě? | `VERIFIED` |
-| OQ22 | Jak se liší schválený požadavek od přání? | `OPEN QUESTION` |
+| OQ22 | Jak se liší schválený požadavek od přání? | `PARTIALLY ANSWERED` — manager rozhoduje a vidí dopad; termín náhradního volna zůstává otevřený |
 | OQ23 | Lze potvrdit částečně neúplný návrh? | `VERIFIED` — potvrzení je blokované |
 | OQ24 | Jak se započítávají přestávky? | `VERIFIED` — používají se hrubé časy |
 | — | Časová zóna `Europe/Prague` | `ASSUMPTION` |

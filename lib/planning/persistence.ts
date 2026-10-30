@@ -4,6 +4,7 @@ import type {
   PlanningRunResult,
   ProposedAssignment,
   ReplacementRunResult,
+  ReplacementOption,
 } from "./domain/types";
 import type { StaffingSetting } from "./staffing-settings";
 import type { PlanningActor } from "../auth/actor";
@@ -48,10 +49,18 @@ export interface PlanningAuditEvent {
   readonly details: Readonly<Record<string, string>>;
 }
 
+export interface EmployeeRequestDecision {
+  readonly requestId: string;
+  readonly status: "approved" | "rejected";
+  readonly decidedAt: string;
+  readonly decidedById: string;
+}
+
 export interface PlanningPersistenceState {
   readonly runs: Map<string, PlanningRunSnapshot>;
   readonly replacementRuns: Map<string, ReplacementRunSnapshot>;
   readonly staffingSettings: Map<string, StaffingSetting>;
+  readonly employeeRequestDecisions: Map<string, EmployeeRequestDecision>;
   readonly auditEvents: PlanningAuditEvent[];
 }
 
@@ -86,9 +95,18 @@ export interface PlanningPersistence {
     assignments: readonly ProposedAssignment[],
     actor: PlanningActor,
     confirmedAt: Date,
+    acceptedTimeOffChangeIds?: readonly string[],
+    confirmedOption?: ReplacementOption,
   ): Promise<PersistedReplacementConfirmation | null>;
   getStaffingSettings(): Promise<readonly StaffingSetting[]>;
   saveStaffingSettings(settings: readonly StaffingSetting[]): Promise<void>;
+  getEmployeeRequestDecisions(): Promise<readonly EmployeeRequestDecision[]>;
+  saveEmployeeRequestDecision(
+    requestId: string,
+    status: EmployeeRequestDecision["status"],
+    actor: PlanningActor,
+    decidedAt: Date,
+  ): Promise<EmployeeRequestDecision>;
 }
 
 export function createInMemoryPersistenceState(): PlanningPersistenceState {
@@ -96,6 +114,7 @@ export function createInMemoryPersistenceState(): PlanningPersistenceState {
     runs: new Map(),
     replacementRuns: new Map(),
     staffingSettings: new Map(),
+    employeeRequestDecisions: new Map(),
     auditEvents: [],
   };
 }
@@ -148,6 +167,28 @@ export class InMemoryPlanningPersistence implements PlanningPersistence {
         setting,
       );
     }
+  }
+
+  async getEmployeeRequestDecisions(): Promise<readonly EmployeeRequestDecision[]> {
+    return [...this.state.employeeRequestDecisions.values()].sort((left, right) =>
+      left.requestId.localeCompare(right.requestId),
+    );
+  }
+
+  async saveEmployeeRequestDecision(
+    requestId: string,
+    status: EmployeeRequestDecision["status"],
+    actor: PlanningActor,
+    decidedAt: Date,
+  ): Promise<EmployeeRequestDecision> {
+    const decision = {
+      requestId,
+      status,
+      decidedAt: decidedAt.toISOString(),
+      decidedById: actor.userId,
+    };
+    this.state.employeeRequestDecisions.set(requestId, decision);
+    return decision;
   }
 
   async listAuditEvents(): Promise<readonly PlanningAuditEvent[]> {
@@ -205,6 +246,8 @@ export class InMemoryPlanningPersistence implements PlanningPersistence {
     assignments: readonly ProposedAssignment[],
     actor: PlanningActor,
     confirmedAt: Date,
+    acceptedTimeOffChangeIds: readonly string[] = [],
+    confirmedOption?: ReplacementOption,
   ): Promise<PersistedReplacementConfirmation | null> {
     const current = this.state.replacementRuns.get(replacementId);
     if (!current) return null;
@@ -223,6 +266,9 @@ export class InMemoryPlanningPersistence implements PlanningPersistence {
       result: {
         ...current.result,
         selectedOptionId,
+        options: current.result.options.map((option) =>
+          option.id === selectedOptionId && confirmedOption ? confirmedOption : option,
+        ),
         request: {
           ...current.result.request,
           incident: {
@@ -244,7 +290,12 @@ export class InMemoryPlanningPersistence implements PlanningPersistence {
       entityId: replacementId,
       actorId: actor.userId,
       createdAt: confirmedAt.toISOString(),
-      details: replacementAuditDetails(current, selectedOptionId, assignments),
+      details: replacementAuditDetails(
+        current,
+        selectedOptionId,
+        assignments,
+        acceptedTimeOffChangeIds,
+      ),
     });
 
     return { snapshot: updated, alreadyConfirmed: false };
@@ -392,6 +443,45 @@ export class PrismaPlanningPersistence implements PlanningPersistence {
     );
   }
 
+  async getEmployeeRequestDecisions(): Promise<readonly EmployeeRequestDecision[]> {
+    const rows = await this.db.employeeRequestDecision.findMany({
+      orderBy: { requestId: "asc" },
+    });
+    return rows.map((row) => ({
+      requestId: row.requestId,
+      status: row.status,
+      decidedAt: row.decidedAt.toISOString(),
+      decidedById: row.decidedById,
+    }));
+  }
+
+  async saveEmployeeRequestDecision(
+    requestId: string,
+    status: EmployeeRequestDecision["status"],
+    actor: PlanningActor,
+    decidedAt: Date,
+  ): Promise<EmployeeRequestDecision> {
+    return this.db.$transaction(async (tx) => {
+      const actorRecord = await ensureActor(tx, actor);
+      const row = await tx.employeeRequestDecision.upsert({
+        where: { requestId },
+        create: {
+          requestId,
+          status,
+          decidedAt,
+          decidedById: actorRecord.id,
+        },
+        update: { status, decidedAt, decidedById: actorRecord.id },
+      });
+      return {
+        requestId: row.requestId,
+        status: row.status,
+        decidedAt: row.decidedAt.toISOString(),
+        decidedById: actor.userId,
+      };
+    });
+  }
+
   async listAuditEvents(): Promise<readonly PlanningAuditEvent[]> {
     const rows = await this.db.auditEvent.findMany({
       where: {
@@ -468,6 +558,8 @@ export class PrismaPlanningPersistence implements PlanningPersistence {
     assignments: readonly ProposedAssignment[],
     actor: PlanningActor,
     confirmedAt: Date,
+    acceptedTimeOffChangeIds: readonly string[] = [],
+    confirmedOption?: ReplacementOption,
   ): Promise<PersistedReplacementConfirmation | null> {
     return this.db.$transaction(async (tx) => {
       const row = await tx.planningRunRecord.findUnique({
@@ -498,6 +590,11 @@ export class PrismaPlanningPersistence implements PlanningPersistence {
             result: {
               ...current.result,
               selectedOptionId,
+              options: current.result.options.map((option) =>
+                option.id === selectedOptionId && confirmedOption
+                  ? confirmedOption
+                  : option,
+              ),
               request: {
                 ...current.result.request,
                 incident: {
@@ -524,6 +621,7 @@ export class PrismaPlanningPersistence implements PlanningPersistence {
             current,
             selectedOptionId,
             assignments,
+            acceptedTimeOffChangeIds,
           ),
         },
       });
@@ -636,6 +734,7 @@ function replacementAuditDetails(
   snapshot: ReplacementRunSnapshot,
   selectedOptionId: string,
   assignments: readonly ProposedAssignment[],
+  acceptedTimeOffChangeIds: readonly string[],
 ): Readonly<Record<string, string>> {
   return {
     weekStart: snapshot.result.request.weekStart,
@@ -644,5 +743,6 @@ function replacementAuditDetails(
     selectedOptionId,
     originalAssignments: JSON.stringify(snapshot.basePlan.assignments),
     newAssignments: JSON.stringify(assignments),
+    acceptedTimeOffChangeIds: JSON.stringify(acceptedTimeOffChangeIds),
   };
 }

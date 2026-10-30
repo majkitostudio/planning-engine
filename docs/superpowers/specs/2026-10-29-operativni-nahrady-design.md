@@ -1,5 +1,10 @@
 # Operativní náhrady směn — návrh řešení
 
+> Historický návrh z 29. 10. 2026. Odpovědi managera z 30. 10. 2026 v
+> [`DOMAIN_DECISIONS.md`](../../DOMAIN_DECISIONS.md) a následná implementace mají
+> přednost, zejména pro minima obsazení, změnu schválené dovolené a kontrolu
+> odpočinku. Tento dokument už není aktuální specifikací.
+
 ## Záměr
 
 Připravit Planning Engine na operativní situaci, kdy zaměstnanec během již
