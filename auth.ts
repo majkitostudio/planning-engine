@@ -1,6 +1,7 @@
 import NextAuth from "next-auth";
 import Credentials from "next-auth/providers/credentials";
 import MicrosoftEntraID from "next-auth/providers/microsoft-entra-id";
+import { NextResponse } from "next/server";
 
 import {
   mapAuthProfile,
@@ -12,7 +13,7 @@ import {
   refreshDatabaseCredentialsUser,
   type ActiveAuthRuntimeConfig,
 } from "./lib/auth/local";
-import { shouldProtectPagePath } from "./lib/auth/protection";
+import { needsForcedPasswordChange, shouldProtectPagePath } from "./lib/auth/protection";
 import { prisma } from "./lib/db";
 
 const runtime = getActiveAuthRuntimeConfig();
@@ -56,10 +57,15 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     strategy: "jwt",
   },
   callbacks: {
-    authorized: ({ auth: session, request }) =>
-      !shouldProtectPagePath(request.nextUrl.pathname) || Boolean(
-        session?.user?.id && session.user.email && session.user.role,
-      ),
+    authorized: ({ auth: session, request }) => {
+      const pathname = request.nextUrl.pathname;
+      if (!shouldProtectPagePath(pathname)) return true;
+      if (!session?.user?.id || !session.user.email || !session.user.role) return false;
+      if (needsForcedPasswordChange(pathname, session.user.mustChangePassword)) {
+        return NextResponse.redirect(new URL("/zmena-hesla", request.url));
+      }
+      return true;
+    },
     jwt: async ({ token, profile, user }) => {
       if (user && typeof user.id === "string") {
         token.sub = user.id;

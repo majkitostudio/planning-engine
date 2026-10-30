@@ -21,9 +21,11 @@ export function LoginForm({
     setError(false);
     try {
       const result = await signIn(
-        authMode === "local" ? "credentials" : "microsoft-entra-id",
+        authMode === "local" || authMode === "database"
+          ? "credentials"
+          : "microsoft-entra-id",
         {
-          ...(authMode === "local" ? { email, password } : {}),
+          ...(authMode === "local" || authMode === "database" ? { email, password } : {}),
           callbackUrl: "/",
           redirect: false,
         },
@@ -38,7 +40,7 @@ export function LoginForm({
   return (
     <div>
       <form onSubmit={(event) => void handleSignIn(event)}>
-        {authMode === "local" ? (
+        {authMode === "local" || authMode === "database" ? (
           <>
             <label className="field__label" htmlFor="login-email">
               E-mail
@@ -76,7 +78,7 @@ export function LoginForm({
           type="submit"
           disabled={!authConfigured}
         >
-          {authMode === "local"
+          {authMode === "local" || authMode === "database"
             ? "Přihlásit se"
             : "Přihlásit přes Microsoft 365"}
         </button>
@@ -84,8 +86,8 @@ export function LoginForm({
 
       {!authConfigured ? (
         <p className="form-notice form-notice--visible" role="alert">
-          <strong>Přihlášení není nakonfigurované.</strong> Doplňte lokální
-          nastavení MVP login gate.
+          <strong>Přihlášení není nakonfigurované.</strong> Zkontrolujte
+          nastavení přihlašovacího režimu.
         </p>
       ) : null}
 

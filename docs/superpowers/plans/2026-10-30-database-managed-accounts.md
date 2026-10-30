@@ -113,10 +113,10 @@
 - `POST /api/auth/change-password` accepts `{ currentPassword, newPassword }`, changes only the authenticated account, and clears `mustChangePassword` after successful verification.
 - Session carries `mustChangePassword`; protected application pages and APIs reject account use while it is true, except sign-out and the password-change route/page.
 
-- [ ] **Step 1: Add failing route and protection tests** for wrong current password, invalid new password (under 12 characters or over 128), successful first change, forced redirect, blocked direct API calls, and access restored after change.
-- [ ] **Step 2: Run targeted tests** and confirm the new route and forced gate are absent.
-- [ ] **Step 3: Implement** change-password service use, session claim, redirect/protection exceptions, and a form that does not persist temporary or entered passwords.
-- [ ] **Step 4: Run targeted route/protection tests** and confirm no planning route remains usable during forced-change state.
+- [x] **Step 1: Add failing route and protection tests** for wrong current password, invalid new password (under 12 characters or over 128), successful first change, forced redirect gating, blocked direct API calls, and access restoration after password update.
+- [x] **Step 2: Run targeted tests** and confirm the new route and forced gate are absent.
+- [x] **Step 3: Implement** change-password service use, session claim, redirect/protection exceptions, login credentials UI, and a form that keeps passwords only in component memory.
+- [x] **Step 4: Run targeted route/protection tests** and confirm planning APIs reject forced-change sessions.
 - [ ] **Step 5: Run typecheck and lint; commit** the forced password-change flow.
 
 ### Task 4: Add manager-only account APIs and security audit events

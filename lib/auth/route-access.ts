@@ -7,9 +7,10 @@ export type PlanningActorAccess =
   | { readonly ok: true; readonly actor: PlanningActor }
   | {
       readonly ok: false;
-      readonly status: 401 | 503;
+      readonly status: 401 | 403 | 503;
       readonly code:
         | "unauthorized"
+        | "password_change_required"
         | "auth_not_configured"
         | "auth_invalid_config"
         | "auth_failed";
@@ -28,7 +29,16 @@ export async function requirePlanningActor(): Promise<PlanningActorAccess> {
   }
 
   try {
-    const actor = toPlanningActor(await auth());
+    const session = await auth();
+    if (session?.user?.mustChangePassword) {
+      return {
+        ok: false,
+        status: 403,
+        code: "password_change_required",
+        message: "Před použitím aplikace změňte dočasné heslo.",
+      };
+    }
+    const actor = toPlanningActor(session);
     if (actor) return { ok: true, actor };
   } catch {
     return {
