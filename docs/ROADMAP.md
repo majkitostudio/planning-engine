@@ -178,14 +178,15 @@ Outlook, CRM, roster ani podpora částečných úvazků.
 ## 7. Otevřené otázky
 
 - Zda musí být dva dny volna po víkendu po sobě jdoucí.
-- Konfigurovatelný profil limitů, role a zamykání přiřazení (OQ9–OQ11).
-- Zpracování požadavků a preferencí mimo pokrytí a nejmenší dopad
-  (OQ12–OQ14, OQ17).
-- Statický vs. průběžně upravovaný plán (OQ2).
-- Způsob zadávání vstupů a tvar výstupu (OQ6–OQ8).
-- Role, schvalovací tok a audit (OQ18–OQ20).
-- Přesné rozlišení skutečné dovolené, plánovaného dne volna a náhradního volna
-  a jejich provozní/HR postup při změně (OQ22).
+- Budoucí rozšíření pravidel nad rámec aktuálního pilotu: další limity, role,
+  dovednosti a zamykání přiřazení (OQ9–OQ11).
+- Budoucí preference a jejich vážení mimo aktuální MVP (OQ12–OQ14, OQ17).
+- Statický vs. průběžně upravovaný plán a úplná historie revizí (OQ2).
+- Budoucí integrace vstupů a další formáty výstupu (OQ6–OQ8).
+- Další role a oddělený schvalovací tok; rozšířený audit mimo potvrzené změny
+  (OQ18–OQ20).
+- Budoucí provozní/HR postup a skutečné datum čerpání náhradního volna (OQ22);
+  v aktuálním pilotu zůstává náhradní volno návrhem bez data.
 - Vizuální detaily demo UI (barva odpolední směny, avatary, ikona
   „Nesplněné požadavky“) — `OPEN QUESTION`; zdrojem pravdy je
   `app/globals.css`.
