@@ -88,8 +88,17 @@ Tato rozhodnutí jsou pro další práci závazná:
   vygenerování návrhu nic nemění v uloženém rozpisu.
 - **Neověřené nebo chybějící informace se nesmí prezentovat jako jistota.**
   Výsledek musí přiznat omezení a nabídnout nejlepší dostupné alternativy.
-- **První funkční verze:** jeden týden (pondělí–nedělí) a zaměstnanci na plný
-  úvazek. Měsíční plánování, částečné úvazky a integrace jsou mimo první řez.
+- **Pilotní verze (`VERIFIED`, rozhodnutí uživatele):** jeden návrh rozpisu pro
+  celý zvolený kalendářní měsíc a zaměstnanci na plný úvazek. Částečné úvazky
+  a integrace zůstávají mimo pilot. Týdenní pravidla se uplatňují i při
+  měsíčním plánování.
+- Manažer pro měsíční návrh zadává období, zaměstnance, absence, dostupnost,
+  potřebné obsazení a případné textové pokyny pro AI. Volný text je pokyn pro
+  AI; sám se nestává deterministicky ověřovaným tvrdým pravidlem.
+- Měsíční návrh se kontroluje jako celek včetně návazností přes týdny a hranice
+  měsíců. Využij dostupnou historii předchozího a navazujícího rozpisu; při
+  chybějících podkladech označ dotčené kontroly jako neověřené. Neúplný návrh
+  nelze potvrdit.
 - **Rozsah zůstává praktický.** Nevytvářej univerzální plánovací framework ani
   integraci s Countdown CRM; to je pouze budoucí architektonický směr.
 
@@ -124,6 +133,9 @@ směny; přestávky ani výpočet odpracované doby nejsou samostatné tvrdé pr
 
 - **Plánovací Engine je rozpracovaný technický základ s demo UI (Next.js +
   TypeScript).** Není to hotová ani produkční aplikace.
+- **Měsíční pilot:** `VERIFIED` jako požadovaný rozsah, `NOT VERIFIED` jako
+  implementace. Současný plánovací tok a simulované scénáře pracují s jedním
+  týdnem; jejich existence nedokazuje funkční měsíční plánování.
 - Plánovací jádro: `IMPLEMENTED` — `lib/planning/` obsahuje doménově
   nezávislé kontrakty, běh pravidel a deterministickou validaci
   (`validatePlan()`).
