@@ -70,34 +70,34 @@
 - `listAccounts(db: PrismaClient): Promise<AccountSummary[]>`, `createAccount(input, actor, db): Promise<AccountSummary>`, `updateAccount(id, input, actor, db): Promise<AccountSummary>`, `resetAccountPassword(id, temporaryPassword, actor, db): Promise<AccountSummary>`, and `changeAccountPassword(id, currentPassword, newPassword, db): Promise<void>` implement the corresponding operations.
 - Account service functions accept a Prisma-compatible client argument; account summaries never include password hashes.
 
-- [ ] **Step 1: Add failing password tests** for distinct salts, valid/invalid passwords, malformed hash input, and empty/too-short inputs.
-- [ ] **Step 2: Run** `cmd.exe /c npm test -- --run lib/auth/password.test.ts`; confirm the new module tests fail because the helpers do not exist.
-- [ ] **Step 3: Implement** asynchronous `crypto.scrypt` encoding with random salt, explicit work parameters, and a version marker; do not add a password-hashing dependency.
-- [ ] **Step 4: Run the password tests** and confirm all cases pass.
-- [ ] **Step 5: Add failing account-service tests** for create/list, duplicate normalized email, bootstrap create/adopt, preservation of adopted ID, already-hashed account rejection, and role/deactivation/reset validation.
-- [ ] **Step 6: Add schema and migration** with nullable unique `externalSubject`, nullable `passwordHash`, and `mustChangePassword` defaulting to true. Normalize stored email case only after migration preflight confirms no lower-case collisions; abort without merging if collisions exist.
-- [ ] **Step 7: Implement the account service** using Prisma transactions; retain `AppUser` rows and relations, audit account actions without writing plaintext passwords, and prevent deletion.
-- [ ] **Step 8: Add `tsx` as a production dependency and test the one-shot bootstrap command** reading `BOOTSTRAP_MANAGER_EMAIL`, `BOOTSTRAP_MANAGER_NAME`, and `BOOTSTRAP_MANAGER_PASSWORD`; require `DATABASE_URL`, validate all values, exit non-zero on repeat/ambiguous/credentialed bootstrap, and never call it during app startup. Add `db:bootstrap-manager` as `tsx scripts/bootstrap-manager.ts`.
-- [ ] **Step 9: Run** `cmd.exe /c npm run db:generate`, `cmd.exe /c npm run db:validate`, targeted account tests, and `git diff --check`.
-- [ ] **Step 10: Commit** schema, migration, hash/service, bootstrap, and tests as one verified persistence/auth-domain milestone.
+- [x] **Step 1: Add failing password tests** for distinct salts, valid/invalid passwords, malformed hash input, and empty/too-short inputs.
+- [x] **Step 2: Run** `cmd.exe /c npm test -- --run lib/auth/password.test.ts`; confirm the new module tests fail because the helpers do not exist.
+- [x] **Step 3: Implement** asynchronous `crypto.scrypt` encoding with random salt, explicit work parameters, and a version marker; do not add a password-hashing dependency.
+- [x] **Step 4: Run the password tests** and confirm all cases pass.
+- [x] **Step 5: Add failing account-service tests** for create/list, duplicate normalized email, bootstrap adoption, preservation of adopted ID, already-hashed account rejection, and last-manager protection.
+- [x] **Step 6: Add schema and migration** with nullable unique `externalSubject`, nullable `passwordHash`, and `mustChangePassword` defaulting to true. Normalize stored email case only after migration preflight confirms no lower-case collisions; abort without merging if collisions exist.
+- [x] **Step 7: Implement the account service** using Prisma transactions; retain `AppUser` rows and relations, audit account actions without writing plaintext passwords, and prevent deletion.
+- [x] **Step 8: Add `tsx` as a production dependency and test the one-shot bootstrap command** reading `BOOTSTRAP_MANAGER_EMAIL`, `BOOTSTRAP_MANAGER_NAME`, and `BOOTSTRAP_MANAGER_PASSWORD`; require `DATABASE_URL`, validate all values, exit non-zero on repeat/ambiguous/credentialed bootstrap, and never call it during app startup. Add `db:bootstrap-manager` as `tsx scripts/bootstrap-manager.ts`.
+- [x] **Step 9: Run** `cmd.exe /c npm run db:generate`, `cmd.exe /c npm run db:validate`, targeted account tests, and `git diff --check`.
+- [x] **Step 10: Commit** schema, migration, hash/service, bootstrap, and tests as one verified persistence/auth-domain milestone.
 
 ### Task 2: Authenticate database accounts and refresh account state
 
 **Files:**
-- Modify: `lib/auth/local.ts`, `auth.ts`, `lib/auth/route-access.ts`, `lib/auth/actor.ts`
-- Modify: `lib/auth/local.test.ts`, `lib/auth/actor.test.ts`, `tests/planning-authenticated-flow.test.ts`
+- Modify: `lib/auth/local.ts`, `auth.ts`, `lib/auth/route-access.ts`, `lib/auth/actor.ts`, `lib/planning/persistence.ts`
+- Modify: `lib/auth/local.test.ts`, `lib/auth/actor.test.ts`, `lib/planning/persistence.test.ts`, `tests/planning-authenticated-flow.test.ts`
 
 **Interfaces:**
 - Add `database` to `AuthMode`; configuration requires `AUTH_SECRET`, `PLANNING_PERSISTENCE=prisma`, and `DATABASE_URL`.
 - Credentials authorization queries by normalized email, verifies the stored hash, and rejects missing, inactive, or uncredentialed users with the same public login error.
 - On session resolution, database mode re-reads the active account and replaces role/name/email from the row; missing or inactive accounts invalidate the session.
 
-- [ ] **Step 1: Add failing tests** for database mode configuration, valid/invalid credentials, inactive account rejection, changed role reflected in existing session, and disabled account session invalidation.
-- [ ] **Step 2: Run** `cmd.exe /c npm test -- --run lib/auth/local.test.ts lib/auth/actor.test.ts tests/planning-authenticated-flow.test.ts`; confirm failures on the missing database mode and refresh behavior.
-- [ ] **Step 3: Implement database credentials authorization** using Task 1 services while preserving the existing local-only provider for development and tests.
-- [ ] **Step 4: Refresh current account state from PostgreSQL** during Auth.js session resolution; ensure planning actor persistence resolves the existing `AppUser` by its database identity or normalized email so it never creates a duplicate row for a bootstrapped account.
-- [ ] **Step 5: Run targeted auth and authenticated-flow tests** and confirm old local test behavior still passes.
-- [ ] **Step 6: Run** `cmd.exe /c npm run typecheck` and `cmd.exe /c npm run lint`.
+- [x] **Step 1: Add failing tests** for database mode configuration, valid/invalid credentials, inactive account rejection, changed role reflected in existing session, disabled account invalidation, and persistence by database account ID.
+- [x] **Step 2: Run** targeted auth, authenticated-flow, and persistence tests; confirm missing database mode and ID-based actor resolution failures before implementation.
+- [x] **Step 3: Implement database credentials authorization** using Task 1 services while preserving the existing local-only provider for development and tests.
+- [x] **Step 4: Refresh current account state from PostgreSQL** during Auth.js session resolution; resolve the existing `AppUser` by ID before external subject upsert.
+- [x] **Step 5: Run targeted auth and authenticated-flow tests** and confirm old local test behavior still passes.
+- [x] **Step 6: Run** `cmd.exe /c npm run typecheck` and `cmd.exe /c npm run lint`.
 - [ ] **Step 7: Commit** database-mode authentication and session refresh.
 
 ### Task 3: Enforce first-login password change
@@ -113,10 +113,10 @@
 - `POST /api/auth/change-password` accepts `{ currentPassword, newPassword }`, changes only the authenticated account, and clears `mustChangePassword` after successful verification.
 - Session carries `mustChangePassword`; protected application pages and APIs reject account use while it is true, except sign-out and the password-change route/page.
 
-- [ ] **Step 1: Add failing route and protection tests** for wrong current password, invalid new password (under 12 characters or over 128), successful first change, forced redirect, blocked direct API calls, and access restored after change.
-- [ ] **Step 2: Run targeted tests** and confirm the new route and forced gate are absent.
-- [ ] **Step 3: Implement** change-password service use, session claim, redirect/protection exceptions, and a form that does not persist temporary or entered passwords.
-- [ ] **Step 4: Run targeted route/protection tests** and confirm no planning route remains usable during forced-change state.
+- [x] **Step 1: Add failing route and protection tests** for wrong current password, invalid new password (under 12 characters or over 128), successful first change, forced redirect gating, blocked direct API calls, and access restoration after password update.
+- [x] **Step 2: Run targeted tests** and confirm the new route and forced gate are absent.
+- [x] **Step 3: Implement** change-password service use, session claim, redirect/protection exceptions, login credentials UI, and a form that keeps passwords only in component memory.
+- [x] **Step 4: Run targeted route/protection tests** and confirm planning APIs reject forced-change sessions.
 - [ ] **Step 5: Run typecheck and lint; commit** the forced password-change flow.
 
 ### Task 4: Add manager-only account APIs and security audit events
@@ -134,11 +134,11 @@
 - `PATCH /api/accounts/[id]` accepts `{ name?, role?, active? }`; role/active changes are audited and protect the last active manager.
 - `POST /api/accounts/[id]/reset-password` accepts `{ temporaryPassword }`, stores only its hash, sets `mustChangePassword=true`, and returns no password value.
 
-- [ ] **Step 1: Add failing route tests** for anonymous/viewer denial, manager success, malformed bodies, duplicate email, no secret/hash in list responses, password reset forcing change, and audit event creation without password content.
-- [ ] **Step 2: Run** `cmd.exe /c npm test -- --run tests/account-routes.test.ts`; confirm all new tests fail before route creation.
-- [ ] **Step 3: Implement manager-only routes** using `requirePlanningActor`, `canConfirmPlanning`, validated JSON, and generic error messages that do not expose account existence or password hashes to unauthorized callers.
-- [ ] **Step 4: Protect the last manager invariant transactionally** for concurrent demotion/deactivation using a PostgreSQL serializable transaction; test the invariant in the service and exercise concurrent changes against the isolated PostgreSQL database in Task 6.
-- [ ] **Step 5: Run targeted route/service tests** and confirm they pass.
+- [x] **Step 1: Add failing route tests** for anonymous/viewer denial, manager success, malformed bodies, duplicate email, no secret/hash in list responses, password reset response redaction, and audit event creation without password content.
+- [x] **Step 2: Run** `cmd.exe /c npm test -- --run tests/account-routes.test.ts`; confirm the route imports fail before route creation.
+- [x] **Step 3: Implement manager-only routes** with database-mode checks, validated JSON, and safe service-error responses.
+- [x] **Step 4: Protect the last manager invariant transactionally** for concurrent demotion/deactivation using a PostgreSQL serializable transaction; service invariant tests pass, with concurrent check retained for isolated PostgreSQL in Task 6.
+- [x] **Step 5: Run targeted route/service tests** and confirm they pass.
 - [ ] **Step 6: Run typecheck and lint; commit** manager account API and audit behavior.
 
 ### Task 5: Add manager account-management screen
@@ -146,15 +146,15 @@
 **Files:**
 - Create: `app/(app)/uzivatele/page.tsx`
 - Create: `components/accounts/account-management.tsx`
-- Modify: `components/app-shell.tsx`
+- Modify: `components/app-shell.tsx`, `app/globals.css`
 
 **Interfaces:**
 - Page loads account summaries server-side only for managers.
 - Client panel lists name, email, role, active state, and actions to create, change role/name, deactivate/reactivate, and reset temporary password.
 - The page shows the temporary password only once on successful creation; after dismissal/reload it cannot be recovered.
 
-- [ ] **Step 1: Implement the page/panel** using existing app-shell and form patterns; do not put credentials in URLs, logs, or persisted browser storage. Keep a newly entered temporary password in component memory only until the manager dismisses it.
-- [ ] **Step 2: Run targeted account route tests** and inspect the rendered manager/viewer navigation states.
+- [x] **Step 1: Implement the page/panel** using existing app-shell and form patterns; do not put credentials in URLs, logs, or persisted browser storage. Keep generated temporary passwords in component memory only until the manager dismisses them.
+- [x] **Step 2: Run targeted account route tests** and inspect manager-only navigation and route rendering in the production build.
 - [ ] **Step 3: Run typecheck and lint; commit** the account-management UI.
 
 ### Task 6: Full verification and authoritative status update
@@ -162,8 +162,8 @@
 **Files:**
 - Modify: `docs/README.md`
 
-- [ ] **Step 1: Run** `cmd.exe /c npm test`, `cmd.exe /c npm run typecheck`, `cmd.exe /c npm run lint`, `cmd.exe /c npm run build`, `cmd.exe /c npm run db:validate`, and `git diff --check`.
-- [ ] **Step 2: Verify migration and browser flow** using an isolated synthetic local PostgreSQL database only: bootstrap first manager, login, create manager and viewer, force password change, verify viewer denial, deactivate an account, verify its existing session is rejected, and attempt concurrent removal of the last two managers so at least one operation is refused. Do not use production data/services or call any external AI API.
-- [ ] **Step 3: Update only `docs/README.md`** with the verified implementation status and its unverified production limitations.
-- [ ] **Step 4: Review `git diff`, generated files, and `git status`; commit** the final verification/documentation milestone.
+- [x] **Step 1: Run** full tests, typecheck, lint, build, Prisma validation, and `git diff --check`.
+- [x] **Step 2: Verify migration and browser flow** using an isolated synthetic local PostgreSQL database only: bootstrap first manager, login, create manager and viewer, force password change, verify viewer denial, deactivate an account, verify its existing session is rejected, and attempt concurrent removal of the last two managers so at least one operation is refused. No production data/services or external AI API were used.
+- [x] **Step 3: Update only `docs/README.md`** with verified implementation status and unverified production limitations.
+- [x] **Step 4: Review `git diff`, generated files, and `git status`; commit** the final verification/documentation milestone.
 - [ ] **Step 5: Push the verified complete milestone** by ordinary fast-forward to the configured `origin` branch after confirming the remote target and that the remote branch is a fast-forward.

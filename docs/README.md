@@ -34,15 +34,16 @@ jiných dokumentů neopakuje.
 | Gemini adaptér | `IMPLEMENTED` / `VERIFIED` | `lib/ai/gemini-planning-provider.ts`; integrační volání prošlo, produkční kvalita výstupu `NOT VERIFIED` |
 | Orchestrace | `IMPLEMENTED` | `runPlanning()` spojuje návrh, validaci a změny |
 | Napojení UI na orchestrátor | `IMPLEMENTED` / `DEMO` | `POST /api/planning/run`, `PlanningResult`; vstupy jsou simulované fixtures |
-| Přihlášení a role | `IMPLEMENTED` / `VERIFIED` (lokální smoke) | Lokální Auth.js credentials gate pro MVP byl ověřen přes browser; produkční úroveň a Entra ID zůstávají `NOT VERIFIED`/`PLANNED` |
+| Přihlášení a role | `IMPLEMENTED` / `VERIFIED` (lokální syntetický smoke) | Auth.js podporuje vývojový local režim a databázové účty v PostgreSQL; vytvoření účtu, změna hesla a zneplatnění deaktivované session prošly lokálním browser průchodem. Produkční úroveň a Entra ID zůstávají `NOT VERIFIED`/`PLANNED` |
+| Správa přihlašovacích účtů | `IMPLEMENTED` / `VERIFIED` (izolovaná lokální PostgreSQL) | `/uzivatele`, manager-only API a jednorázový `db:bootstrap-manager`; migrace, bootstrap, create, role, reset, povinná změna hesla, viewer denial i souběžná ochrana posledního managera byly ověřeny synteticky. Produkce `NOT VERIFIED` |
 | Potvrzení manažera | `IMPLEMENTED` | `POST /api/planning/confirm`, manager-only, blokace částečných/neověřených návrhů |
 | Ukládání běhů a potvrzení | `IMPLEMENTED` / `VERIFIED` (lokální Docker smoke) | Prisma snapshot a `ConfirmedPlan`; migrace a zápis potvrzení byly ověřeny v izolované lokální PostgreSQL |
 | Audit potvrzení | `IMPLEMENTED` / `VERIFIED` (lokální Docker smoke) | Zápis `planning.confirmed` byl ověřen; čtecí pohled je `IMPLEMENTED` pro managera a ukazuje pouze tato potvrzení |
 | Operativní náhrada směny | `IMPLEMENTED` / `SIMULATED` | Syntetický řez: výpadek celé směny → tři varianty → deterministický dopad → výběr → manager-only potvrzení; Gemini a provozní kvalita `NOT VERIFIED` |
 | Nastavení potřebného obsazení | `IMPLEMENTED` / `VERIFIED` (lokální smoke) | `/nastaveni`, manager-only zápis přes API, Prisma persistence a použití v operativních náhradách; migrace a manuální browser smoke proběhly v lokálním Docker PostgreSQL |
 | Rozhodování o požadavcích | `IMPLEMENTED` / `SIMULATED` | `/pozadavky` ukazuje dopad dvou syntetických požadavků, dostupné kandidáty a manager-only schválení/zamítnutí; rozhodnutí se ukládá přes Prisma a samo neupraví rozpis |
-| Testy | `IMPLEMENTED` / `VERIFIED` | Jádro, služby a route handlery mají testy; plný UI/E2E test není součástí dema |
-| Kvalitní brána (CI) | `IMPLEMENTED` | Lint, typecheck, testy, build a Prisma validace procházejí |
+| Testy | `IMPLEMENTED` / `VERIFIED` | `npm test`: 271 prošlých, 1 přeskočený externí Gemini integrační test; databázový UI průchod byl ručně proveden pouze se syntetickými účty |
+| Kvalitní brána (CI) | `IMPLEMENTED` / `VERIFIED` (lokální běh) | Testy, typecheck, lint, build a `db:validate` prošly; úplná provozní/produkční brána z toho nevyplývá |
 | Produkční připravenost | `NOT VERIFIED` | Není produkční aplikace |
 
 ## Stavové popisky
@@ -98,16 +99,21 @@ Následující kroky zachycují aktuální target a jeho ověření; položky oz
    a auditní události mají Prisma adaptér; migrace a živé lokální DB připojení
    jsou `VERIFIED` v izolovaném Docker prostředí. Produkční DB zůstává
    `NOT VERIFIED`.
+7. ✅ **Přidat databázovou správu přístupů.** Migrace zachovává existující
+   `AppUser` ID a vazby; jednorázový bootstrap i správa účtů fungují v izolované
+   syntetické PostgreSQL. Browser průchod ověřil vynucenou změnu hesla, manager
+   a viewer přístup a okamžité odmítnutí deaktivované session. Produkční
+   nasazení a zabezpečení zůstávají `NOT VERIFIED`.
 
-7. ✅ **Připravit návrh operativních náhrad.** Schválený design vymezuje jeden
+8. ✅ **Připravit návrh operativních náhrad.** Schválený design vymezuje jeden
    syntetický týdenní řez: výpadek na celé směně, tři varianty, výběr,
    deterministická validace a potvrzení bez automatické aplikace.
 
-8. ✅ **Implementovat první syntetický vertikální řez operativní náhrady.**
+9. ✅ **Implementovat první syntetický vertikální řez operativní náhrady.**
    Kód obsahuje kontrakt, simulované varianty, deterministický výpočet dopadu,
    API, manager-only potvrzení, novou verzi týdne a minimální audit. UI je
    napojené v `ReplacementPanel`; bez potvrzení se uložený plán nemění.
-9. ✅ **Přidat konfiguraci potřebného obsazení.** Týdenní tabulka pondělí–neděle
+10. ✅ **Přidat konfiguraci potřebného obsazení.** Týdenní tabulka pondělí–neděle
    má ranní a odpolední minimum, manager ji může uložit přes serverové API a
    operativní náhrada používá hodnotu pro konkrétní kalendářní den; chybějící
    hodnota používá aktuální profil Po–Pá 23/8, So–Ne 12/9. Implementace i

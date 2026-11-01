@@ -81,6 +81,27 @@ describe("authenticated planning flow", () => {
     expect(body).toMatchObject({ ok: false, rejected: { code: "unauthorized" } });
   });
 
+  it("účet s dočasným heslem nesmí přímo použít plánovací API", async () => {
+    authMock.mockResolvedValue({
+      ...managerSession,
+      user: { ...managerSession.user, mustChangePassword: true },
+    });
+
+    const response = await runPlanning(
+      jsonRequest("http://localhost/api/planning/run", {
+        scenario: "complete",
+        weekStart: SIMULATED_WEEK_START,
+      }),
+    );
+    const body = await responseJson<{ ok: false; rejected: { code: string } }>(response);
+
+    expect(response.status).toBe(403);
+    expect(body).toMatchObject({
+      ok: false,
+      rejected: { code: "password_change_required" },
+    });
+  });
+
   it("viewer může návrh spustit, ale nesmí jej potvrdit", async () => {
     authMock.mockResolvedValue(viewerSession);
 

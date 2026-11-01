@@ -6,6 +6,11 @@ import {
   type AuthRuntimeConfig,
   type AuthRuntimeConfigFailure,
 } from "./config";
+import {
+  authenticateAccount,
+  refreshAccountSession,
+} from "./account-service";
+import type { PrismaClient } from "@/prisma/generated/client";
 
 export interface LocalAuthRuntimeConfig {
   readonly ok: true;
@@ -16,7 +21,14 @@ export interface LocalAuthRuntimeConfig {
   readonly role: AuthRole;
 }
 
-export type AuthMode = "local" | "entra";
+export interface DatabaseAuthRuntimeConfig {
+  readonly ok: true;
+  readonly mode: "database";
+  readonly secret: string;
+  readonly databaseUrl: string;
+}
+
+export type AuthMode = "local" | "database" | "entra";
 
 export type LocalAuthRuntimeConfigResult =
   | LocalAuthRuntimeConfig
@@ -24,6 +36,7 @@ export type LocalAuthRuntimeConfigResult =
 
 export type ActiveAuthRuntimeConfig =
   | (AuthRuntimeConfig & { readonly mode: "entra" })
+  | DatabaseAuthRuntimeConfig
   | LocalAuthRuntimeConfig;
 
 export type ActiveAuthRuntimeConfigResult =
@@ -40,7 +53,12 @@ export interface LocalAuthenticatedUser {
   readonly email: string;
   readonly name: string;
   readonly role: AuthRole;
+  readonly mustChangePassword?: boolean;
 }
+
+export type DatabaseAuthRuntimeConfigResult =
+  | DatabaseAuthRuntimeConfig
+  | AuthRuntimeConfigFailure;
 
 type AuthEnvironment = Readonly<Record<string, string | undefined>>;
 
@@ -120,12 +138,45 @@ export function getActiveAuthRuntimeConfig(
     return runtime.ok ? { ...runtime, mode: "entra" } : runtime;
   }
 
+  if (mode === "database") return getDatabaseAuthRuntimeConfig(env);
+
   return {
     ok: false,
     code: "auth_invalid_config",
     missing: [],
     message:
-      'PLANNING_AUTH_MODE musí být „local“ pro MVP nebo „entra“ pro budoucí Entra režim.',
+      'PLANNING_AUTH_MODE musí být „local“, „database“ nebo „entra“.',
+  };
+}
+
+export function getDatabaseAuthRuntimeConfig(
+  env: AuthEnvironment = process.env,
+): DatabaseAuthRuntimeConfigResult {
+  const missing = ["AUTH_SECRET", "DATABASE_URL"].filter(
+    (name) => !env[name]?.trim(),
+  );
+  if (missing.length > 0) {
+    return {
+      ok: false,
+      code: "auth_not_configured",
+      missing,
+      message: "Databázové přihlášení vyžaduje AUTH_SECRET a DATABASE_URL.",
+    };
+  }
+  if (env.PLANNING_PERSISTENCE?.trim().toLowerCase() !== "prisma") {
+    return {
+      ok: false,
+      code: "auth_invalid_config",
+      missing: [],
+      message: "Databázové přihlášení vyžaduje PLANNING_PERSISTENCE=prisma.",
+    };
+  }
+
+  return {
+    ok: true,
+    mode: "database",
+    secret: env.AUTH_SECRET!.trim(),
+    databaseUrl: env.DATABASE_URL!.trim(),
   };
 }
 
@@ -149,6 +200,44 @@ export function verifyLocalCredentials(
     email: runtime.email,
     name: runtime.email,
     role: runtime.role,
+  };
+}
+
+export async function verifyDatabaseCredentials(
+  credentials: LocalCredentials,
+  runtime: DatabaseAuthRuntimeConfig,
+  db: PrismaClient,
+): Promise<LocalAuthenticatedUser | null> {
+  void runtime;
+  const email = typeof credentials.email === "string" ? credentials.email : "";
+  const password = typeof credentials.password === "string" ? credentials.password : "";
+  const account = await authenticateAccount(email, password, db);
+  if (!account) return null;
+
+  return {
+    id: account.id,
+    email: account.email,
+    name: account.displayName,
+    role: account.role,
+    mustChangePassword: account.mustChangePassword,
+  };
+}
+
+export async function refreshDatabaseCredentialsUser(
+  id: string,
+  runtime: DatabaseAuthRuntimeConfig,
+  db: PrismaClient,
+): Promise<LocalAuthenticatedUser | null> {
+  void runtime;
+  const account = await refreshAccountSession(id, db);
+  if (!account) return null;
+
+  return {
+    id: account.id,
+    email: account.email,
+    name: account.displayName,
+    role: account.role,
+    mustChangePassword: account.mustChangePassword,
   };
 }
 

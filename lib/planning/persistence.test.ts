@@ -7,6 +7,7 @@ import { createReplacementOptions } from "./replacement-service";
 import { makeRunResult } from "../../tests/planning/fixtures";
 import {
   createInMemoryPersistenceState,
+  ensurePlanningActorRecord,
   InMemoryPlanningPersistence,
   type PlanningRunSnapshot,
   type ReplacementRunSnapshot,
@@ -42,6 +43,38 @@ function makeSnapshot(proposalId = "plan-persisted"): PlanningRunSnapshot {
 }
 
 describe("planning persistence", () => {
+  it("reuses an authenticated database account by id instead of creating an external identity", async () => {
+    const existing = {
+      id: actor.userId,
+      externalSubject: null,
+      email: actor.email,
+      displayName: actor.displayName,
+      role: actor.role,
+      active: true,
+    };
+    const calls: string[] = [];
+    const db = {
+      appUser: {
+        findUnique: async () => {
+          calls.push("findUnique");
+          return existing;
+        },
+        update: async (input: unknown) => {
+          calls.push("update");
+          expect(input).toMatchObject({ where: { id: actor.userId } });
+          return existing;
+        },
+        upsert: async () => {
+          calls.push("upsert");
+          throw new Error("Databázový účet se nesmí duplikovat.");
+        },
+      },
+    } as never;
+
+    await expect(ensurePlanningActorRecord(db, actor)).resolves.toEqual(existing);
+    expect(calls).toEqual(["findUnique", "update"]);
+  });
+
   it("zachová rozhodnutí managera o požadavku i po vytvoření nové instance", async () => {
     const state = createInMemoryPersistenceState();
     const first = new InMemoryPlanningPersistence(state);

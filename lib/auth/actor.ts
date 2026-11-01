@@ -13,6 +13,7 @@ export interface AuthSessionLike {
     readonly email?: string | null;
     readonly name?: string | null;
     readonly role?: AuthRole;
+    readonly mustChangePassword?: boolean;
   } | null;
 }
 

@@ -26,6 +26,7 @@ const NAV_ITEMS: NavItem[] = [
   { href: "/pravidla", label: "Pravidla", icon: "shield" },
   { href: "/analyzy", label: "Analýzy", icon: "chart" },
   { href: "/audit", label: "Audit potvrzení", icon: "clipboard", managerOnly: true },
+  { href: "/uzivatele", label: "Správa účtů", icon: "users", managerOnly: true },
   { href: "/nastaveni", label: "Nastavení", icon: "settings" },
 ];
 

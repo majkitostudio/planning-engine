@@ -1,6 +1,7 @@
 import NextAuth from "next-auth";
 import Credentials from "next-auth/providers/credentials";
 import MicrosoftEntraID from "next-auth/providers/microsoft-entra-id";
+import { NextResponse } from "next/server";
 
 import {
   mapAuthProfile,
@@ -8,13 +9,16 @@ import {
 import {
   getActiveAuthRuntimeConfig,
   verifyLocalCredentials,
+  verifyDatabaseCredentials,
+  refreshDatabaseCredentialsUser,
   type ActiveAuthRuntimeConfig,
 } from "./lib/auth/local";
-import { shouldProtectPagePath } from "./lib/auth/protection";
+import { needsForcedPasswordChange, shouldProtectPagePath } from "./lib/auth/protection";
+import { prisma } from "./lib/db";
 
 const runtime = getActiveAuthRuntimeConfig();
 const providers = runtime.ok
-  ? runtime.mode === "local"
+  ? runtime.mode === "local" || runtime.mode === "database"
     ? [
         Credentials({
           credentials: {
@@ -22,7 +26,9 @@ const providers = runtime.ok
             password: { label: "Heslo", type: "password" },
           },
           authorize: async (credentials) =>
-            verifyLocalCredentials(credentials, runtime),
+            runtime.mode === "local"
+              ? verifyLocalCredentials(credentials, runtime)
+              : verifyDatabaseCredentials(credentials, runtime, prisma),
         }),
       ]
     : [
@@ -51,14 +57,39 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     strategy: "jwt",
   },
   callbacks: {
-    authorized: ({ auth: session, request }) =>
-      !shouldProtectPagePath(request.nextUrl.pathname) || Boolean(session?.user),
-    jwt: ({ token, profile, user }) => {
+    authorized: ({ auth: session, request }) => {
+      const pathname = request.nextUrl.pathname;
+      if (!shouldProtectPagePath(pathname)) return true;
+      if (!session?.user?.id || !session.user.email || !session.user.role) return false;
+      if (needsForcedPasswordChange(pathname, session.user.mustChangePassword)) {
+        return NextResponse.redirect(new URL("/zmena-hesla", request.url));
+      }
+      return true;
+    },
+    jwt: async ({ token, profile, user }) => {
       if (user && typeof user.id === "string") {
         token.sub = user.id;
         if (typeof user.email === "string") token.email = user.email;
         if (typeof user.name === "string") token.name = user.name;
         token.role = user.role === "manager" ? "manager" : "viewer";
+        if (typeof user.mustChangePassword === "boolean") {
+          token.mustChangePassword = user.mustChangePassword;
+        }
+        return token;
+      }
+
+      if (authRuntime?.mode === "database") {
+        if (typeof token.sub !== "string") return {};
+        const current = await refreshDatabaseCredentialsUser(
+          token.sub,
+          authRuntime,
+          prisma,
+        );
+        if (!current) return {};
+        token.email = current.email;
+        token.name = current.name;
+        token.role = current.role;
+        token.mustChangePassword = current.mustChangePassword;
         return token;
       }
 
@@ -71,12 +102,14 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       token.email = mapped.email;
       token.name = mapped.name;
       token.role = mapped.role;
+      token.mustChangePassword = false;
       return token;
     },
     session: ({ session, token }) => {
       if (session.user && typeof token.sub === "string") {
         session.user.id = token.sub;
         session.user.role = token.role === "manager" ? "manager" : "viewer";
+        session.user.mustChangePassword = token.mustChangePassword === true;
       }
       return session;
     },

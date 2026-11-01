@@ -20,9 +20,11 @@ export function LoginForm({
     setError(false);
     try {
       const result = await signIn(
-        authMode === "local" ? "credentials" : "microsoft-entra-id",
+        authMode === "local" || authMode === "database"
+          ? "credentials"
+          : "microsoft-entra-id",
         {
-          ...(authMode === "local" ? { email, password } : {}),
+          ...(authMode === "local" || authMode === "database" ? { email, password } : {}),
           callbackUrl: "/",
           redirect: false,
         },
@@ -37,7 +39,7 @@ export function LoginForm({
   return (
     <div>
       <form className="login__form" onSubmit={(event) => void handleSignIn(event)}>
-        {authMode === "local" ? (
+        {authMode === "local" || authMode === "database" ? (
           <>
             <div className="field">
               <label className="field__label" htmlFor="login-email">
@@ -79,7 +81,7 @@ export function LoginForm({
           type="submit"
           disabled={!authConfigured}
         >
-          {authMode === "local"
+          {authMode === "local" || authMode === "database"
             ? "Přihlásit se"
             : "Přihlásit přes Microsoft 365"}
         </button>
