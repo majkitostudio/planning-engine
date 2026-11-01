@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { signOut } from "next-auth/react";
 import { usePathname } from "next/navigation";
-import { useEffect, useState, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { Icon, type IconName } from "@/components/icons";
 import { Avatar } from "@/components/ui/avatar";
 import { BrandMark } from "@/components/ui/brand-mark";
@@ -19,7 +19,7 @@ type NavItem = {
 
 const NAV_ITEMS: NavItem[] = [
   { href: "/", label: "Přehled", icon: "dashboard" },
-  { href: "/planovani", label: "Plán směn", icon: "calendar" },
+  { href: "/planovani", label: "Rozpis směn", icon: "calendar" },
   { href: "/zamestnanci", label: "Zaměstnanci", icon: "users" },
   { href: "/pozadavky", label: "Požadavky", icon: "clipboard", badge: "12" },
   { href: "/dovolene", label: "Dovolené a absence", icon: "umbrella" },
@@ -56,6 +56,10 @@ export function AppShell({
 }) {
   const pathname = usePathname();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [futureOpen, setFutureOpen] = useState(pathname !== "/planovani");
+  const collapseButtonRef = useRef<HTMLButtonElement>(null);
+  const restoreButtonRef = useRef<HTMLButtonElement>(null);
   const [panel, setPanel] = useState<Panel>(null);
 
   // Zavři navigaci i panely při změně trasy.
@@ -66,6 +70,7 @@ export function AppShell({
   if (syncedPathname !== pathname) {
     setSyncedPathname(pathname);
     setSidebarOpen(false);
+    setFutureOpen(pathname !== "/planovani");
     setPanel(null);
   }
 
@@ -100,9 +105,29 @@ export function AppShell({
   const visibleNavItems = NAV_ITEMS.filter(
     (item) => !item.managerOnly || user?.role === "manager",
   );
+  const renderNavItem = (item: NavItem) => (
+    <li key={item.href}>
+      <Link
+        href={item.href}
+        className="nav-link"
+        aria-current={isActive(item.href) ? "page" : undefined}
+        onClick={() => setSidebarOpen(false)}
+      >
+        <span className="nav-link__icon" aria-hidden="true">
+          <Icon name={item.icon} width={19} height={19} />
+        </span>
+        <span className="nav-link__label">{item.label}</span>
+        {item.badge ? (
+          <span className="nav-link__badge" aria-label={`${item.badge} ukázkových položek`}>
+            {item.badge}
+          </span>
+        ) : null}
+      </Link>
+    </li>
+  );
 
   return (
-    <div className="shell">
+    <div className={`shell${pathname === "/planovani" ? " shell--planning" : ""}${sidebarCollapsed ? " shell--sidebar-collapsed" : ""}`}>
       <a href="#main" className="skip-link">
         Přeskočit na obsah
       </a>
@@ -125,45 +150,32 @@ export function AppShell({
             <BrandMark size={34} />
           </span>
           <span className="brand__text">
-            <span className="brand__name">Plánovací engine</span>
-            <span className="brand__sub">AAAAuto Callcenter</span>
+            <span className="brand__name">PPPlánovací Engine</span>
           </span>
         </div>
 
         <nav className="sidebar__nav" aria-label="Sekce aplikace">
           <ul className="nav-list">
-            {visibleNavItems.map((item) => (
-              <li key={item.href}>
-                <Link
-                  href={item.href}
-                  className="nav-link"
-                  aria-current={isActive(item.href) ? "page" : undefined}
-                  onClick={() => setSidebarOpen(false)}
-                >
-                  <span className="nav-link__icon" aria-hidden="true">
-                    <Icon name={item.icon} width={19} height={19} />
-                  </span>
-                  <span className="nav-link__label">{item.label}</span>
-                  {item.badge ? (
-                    <span className="nav-link__badge" aria-label={`${item.badge} ukázkových položek`}>
-                      {item.badge}
-                    </span>
-                  ) : null}
-                </Link>
-              </li>
-            ))}
+            {visibleNavItems.filter((item) => item.href === "/planovani").map(renderNavItem)}
           </ul>
+          <details
+            className="sidebar__future"
+            open={futureOpen}
+            onToggle={(event) => setFutureOpen(event.currentTarget.open)}
+          >
+            <summary className="nav-link sidebar__future-toggle">
+              <span className="nav-link__icon" aria-hidden="true">
+                <Icon name="chevronRight" width={19} height={19} />
+              </span>
+              <span className="nav-link__label">Budoucí funkce</span>
+            </summary>
+            <ul className="nav-list sidebar__future-list">
+              {visibleNavItems.filter((item) => item.href !== "/planovani").map(renderNavItem)}
+            </ul>
+          </details>
         </nav>
 
         <div className="sidebar__footer">
-          <div className="engine-card">
-            <span className="engine-card__dot" aria-hidden="true" />
-            <div>
-              <p className="engine-card__title">Plánovací engine</p>
-              <p className="engine-card__sub">Demo UI napojené na engine</p>
-            </div>
-          </div>
-
           <div className="user-card">
             <Avatar name={userName} color="stone" size="sm" />
             <div className="user-card__text">
@@ -171,8 +183,38 @@ export function AppShell({
               <p className="user-card__role">{userRole}</p>
             </div>
           </div>
+          <button
+            type="button"
+            ref={collapseButtonRef}
+            className="sidebar__collapse"
+            aria-label="Skrýt navigaci"
+            aria-controls="sidebar-nav"
+            aria-expanded="true"
+            onClick={() => {
+              setSidebarCollapsed(true);
+              requestAnimationFrame(() => restoreButtonRef.current?.focus());
+            }}
+          >
+            <Icon name="chevronLeft" width={20} height={20} />
+          </button>
         </div>
       </aside>
+
+      <div className="sidebar-restore">
+        <button
+          type="button"
+          ref={restoreButtonRef}
+          aria-label="Zobrazit navigaci"
+          aria-controls="sidebar-nav"
+          aria-expanded="false"
+          onClick={() => {
+            setSidebarCollapsed(false);
+            requestAnimationFrame(() => collapseButtonRef.current?.focus());
+          }}
+        >
+          <Icon name="chevronRight" width={20} height={20} />
+        </button>
+      </div>
 
       <div className="main">
         <header className="topbar">

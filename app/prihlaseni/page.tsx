@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { connection } from "next/server";
 import { LoginForm } from "@/components/login-form";
 import { BrandMark } from "@/components/ui/brand-mark";
 import { getActiveAuthRuntimeConfig } from "@/lib/auth/local";
@@ -7,7 +8,8 @@ export const metadata: Metadata = {
   title: "Přihlášení",
 };
 
-export default function LoginPage() {
+export default async function LoginPage() {
+  await connection();
   const authRuntime = getActiveAuthRuntimeConfig();
   const authConfigured = authRuntime.ok;
   const authMode = authRuntime.ok ? authRuntime.mode : "local";
@@ -20,8 +22,7 @@ export default function LoginPage() {
             <BrandMark size={34} />
           </span>
           <span className="brand__text">
-            <span className="brand__name">Plánovací engine</span>
-            <span className="brand__sub">AAAAuto Callcenter</span>
+            <span className="brand__name">PPPlánovací Engine</span>
           </span>
         </div>
 

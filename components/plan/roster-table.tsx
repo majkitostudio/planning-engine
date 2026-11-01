@@ -1,16 +1,9 @@
-import { Avatar } from "@/components/ui/avatar";
 import {
   CZECH_DAYS,
   SHIFT_META,
   formatDayMonth,
   type DemoEmployee,
 } from "@/lib/demo-data";
-
-const STATUS_LABEL: Record<DemoEmployee["status"], string> = {
-  ok: "Bez konfliktu",
-  warning: "Upozornění",
-  conflict: "Konflikt",
-};
 
 export function RosterTable({
   employees,
@@ -41,9 +34,6 @@ export function RosterTable({
                 <span className="roster__day-date">{formatDayMonth(date)}</span>
               </th>
             ))}
-            <th scope="col" className="roster__status-col">
-              <span className="sr-only">Stav</span>
-            </th>
           </tr>
         </thead>
         <tbody>
@@ -51,10 +41,9 @@ export function RosterTable({
             <tr key={employee.id}>
               <th scope="row" className="roster__employee-col">
                 <span className="employee">
-                  <Avatar name={employee.name} color={employee.color} />
                   <span>
                     <span className="employee__name">{employee.name}</span>
-                    <span className="employee__role">{employee.role}</span>
+                    <span className="employee__role">Ukázková data</span>
                   </span>
                 </span>
               </th>
@@ -65,19 +54,24 @@ export function RosterTable({
                     index >= 5 ? "roster__cell roster__cell--weekend" : "roster__cell"
                   }
                 >
-                  <span className={`shift ${SHIFT_META[shift].className}`}>
-                    {SHIFT_META[shift][index >= 5 ? "weekendLabel" : "label"]}
+                  <span
+                    className={`shift ${SHIFT_META[shift].className}`}
+                    aria-label={`${SHIFT_META[shift].option}`}
+                    title={SHIFT_META[shift][index >= 5 ? "weekendLabel" : "label"]}
+                  >
+                    {shift === "off" ? null : (
+                      <>
+                        <span className="shift__code">
+                          {shift === "morning" ? "R" : shift === "afternoon" ? "O" : SHIFT_META[shift].label}
+                        </span>
+                        <span className="shift__time">
+                          {SHIFT_META[shift][index >= 5 ? "weekendLabel" : "label"]}
+                        </span>
+                      </>
+                    )}
                   </span>
                 </td>
               ))}
-              <td className="roster__status-col">
-                <span
-                  className={`status-dot status-dot--${employee.status}`}
-                  role="img"
-                  aria-label={STATUS_LABEL[employee.status]}
-                  title={STATUS_LABEL[employee.status]}
-                />
-              </td>
             </tr>
           ))}
         </tbody>

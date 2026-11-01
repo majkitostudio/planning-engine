@@ -1,67 +1,67 @@
 /* ==========================================================================
-   Plánovací Engine — vizuální systém
-   Směr: klidný profesionální manažerský workbench, tmavý rail + světlé plátno.
+   PPPlánovací Engine — vizuální systém
+   Směr: klidný profesionální manažerský workbench, tmavé plátno a azurový akcent.
    ========================================================================== */
 
 /* --------------------------------------------------------------------------
    1. Tokeny
    -------------------------------------------------------------------------- */
 :root {
-  /* Plátno a povrchy — chladné, světlé neutrální tóny */
-  --bg: #f4f8fd;
-  --surface: #ffffff;
-  --surface-2: #f8fafc;
-  --surface-3: #eef2f8;
+  /* Sdílené tmavé plátno podle pilotního návrhu rozpisu. */
+  --bg: #191d20;
+  --surface: #22272b;
+  --surface-2: #282e32;
+  --surface-3: #30373c;
 
   /* Ohraničení — tenké a decentní */
-  --border: #e4eaf2;
-  --border-strong: #d3ddec;
+  --border: #434d52;
+  --border-strong: #58676d;
 
   /* Text — námořní grafit */
-  --ink: #0f1b2d;
-  --ink-2: #2f3a57;
-  --muted: #64718e;
-  --subtle: #7d8aa4;
+  --ink: #f0f3f5;
+  --ink-2: #d8e0e4;
+  --muted: #a4b1b7;
+  --subtle: #829097;
 
-  /* Jediný primární akcent: tlumená modrá */
-  --accent: #16498c;
-  --accent-strong: #123c73;
-  --accent-soft: #e8f1fc;
-  --accent-border: #c9dcf3;
+  /* Jediný primární akcent: azurová */
+  --accent: #62d5f2;
+  --accent-strong: #40bfdc;
+  --accent-soft: #19343d;
+  --accent-border: #2c899c;
 
   /* Sémantické stavy */
-  --green: #1f7a4d;
-  --green-soft: #e3f4e8;
-  --green-border: #c2e5cd;
+  --green: #6ed296;
+  --green-soft: #1f3a2c;
+  --green-border: #376b4c;
 
-  --red: #b3352f;
-  --red-soft: #fde8e7;
-  --red-border: #f3c9c6;
+  --red: #ff8c85;
+  --red-soft: #402725;
+  --red-border: #78433e;
 
-  --amber: #8a5b13;
-  --amber-soft: #fbf4e6;
-  --amber-border: #e7d5b0;
+  --amber: #f1c268;
+  --amber-soft: #3c3323;
+  --amber-border: #735d32;
 
   /* Odpolední směna — doplňkový tón, ne sémantický stav */
-  --violet: #6b4a9e;
-  --violet-soft: #f1e8fe;
+  --violet: #f3c613;
+  --violet-soft: #3b3421;
 
   /* Tmavý rail — námořní modrá */
-  --rail-900: #121c2a;
-  --rail-700: #1b2a3d;
-  --rail-active: #20365a;
-  --rail-accent: #2b7ce4;
-  --rail-text: #e9eff7;
-  --rail-muted: #93a4bd;
+  --rail-900: #15191c;
+  --rail-700: #202629;
+  --rail-active: #2a3034;
+  --rail-accent: #54cce9;
+  --rail-text: #eef2f4;
+  --rail-muted: #adb8bd;
 
   /* Stíny — decentní, jen pro vrstvení ploch */
-  --shadow-sm: 0 1px 2px rgba(16, 32, 56, 0.04);
-  --shadow-md: 0 1px 2px rgba(16, 32, 56, 0.05),
-    0 10px 24px -20px rgba(16, 32, 56, 0.45);
-  --shadow-pop: 0 12px 32px -16px rgba(16, 32, 56, 0.42);
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.2);
+  --shadow-md: 0 1px 2px rgba(0, 0, 0, 0.24),
+    0 10px 24px -20px rgba(0, 0, 0, 0.8);
+  --shadow-pop: 0 12px 32px -16px rgba(0, 0, 0, 0.72);
 
   /* Rozměry */
-  --sidebar-w: 256px;
+  --sidebar-w: 205px;
   --radius-sm: 6px;
   --radius: 10px;
   --radius-lg: 12px;
@@ -193,8 +193,9 @@ textarea {
 .sidebar__brand {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 22px 20px 20px;
+  gap: 8px;
+  padding: 22px 14px 20px;
+  border-bottom: 1px solid var(--border);
 }
 
 .brand__mark {
@@ -219,15 +220,89 @@ textarea {
   color: #ffffff;
 }
 
-.brand__sub {
-  font-size: 11px;
-  color: var(--rail-muted);
-  margin-top: 3px;
+.sidebar__brand .brand__name {
+  font-size: 13.5px;
 }
 
 .sidebar__nav {
   padding: 10px 12px;
   overflow-y: auto;
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.sidebar__future {
+  margin-top: auto;
+  padding-top: 12px;
+}
+
+.sidebar__future-toggle {
+  cursor: pointer;
+  list-style: none;
+}
+
+.sidebar__future-toggle::-webkit-details-marker {
+  display: none;
+}
+
+.sidebar__future[open] .sidebar__future-toggle .nav-link__icon {
+  transform: rotate(90deg);
+}
+
+.sidebar__future-list {
+  padding-left: 8px;
+}
+
+.sidebar__collapse,
+.sidebar-restore button {
+  width: 40px;
+  height: 40px;
+  place-items: center;
+  color: var(--rail-text);
+  background: transparent;
+  border: 0;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.sidebar__collapse:hover,
+.sidebar-restore button:hover {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.sidebar__collapse,
+.sidebar-restore {
+  display: none;
+}
+
+@media (min-width: 1024px) {
+  .sidebar__collapse {
+    display: grid;
+    align-self: flex-end;
+  }
+
+  .shell--sidebar-collapsed .sidebar {
+    display: none;
+  }
+
+  .shell--sidebar-collapsed .sidebar-restore {
+    display: flex;
+    position: sticky;
+    top: 0;
+    flex: 0 0 48px;
+    height: 100vh;
+    align-items: flex-start;
+    justify-content: center;
+    padding-top: 18px;
+    background: var(--rail-900);
+    border-right: 1px solid rgba(255, 255, 255, 0.06);
+  }
+
+  .sidebar-restore button {
+    display: grid;
+  }
 }
 
 .nav-list {
@@ -303,37 +378,7 @@ textarea {
   display: flex;
   flex-direction: column;
   gap: 10px;
-}
-
-.engine-card {
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  background: rgba(255, 255, 255, 0.04);
-  border-radius: 10px;
-  padding: 11px 12px;
-  display: flex;
-  gap: 10px;
-  align-items: flex-start;
-}
-
-.engine-card__dot {
-  width: 7px;
-  height: 7px;
-  border-radius: 50%;
-  background: #c08a3e;
-  margin-top: 5px;
-  flex: 0 0 7px;
-}
-
-.engine-card__title {
-  font-size: 12.5px;
-  font-weight: 600;
-  color: var(--rail-text);
-}
-
-.engine-card__sub {
-  font-size: 11px;
-  color: var(--rail-muted);
-  margin-top: 2px;
+  border-top: 1px solid var(--border);
 }
 
 .user-card {
@@ -453,7 +498,7 @@ textarea {
   height: 16px;
   padding: 0 4px;
   border-radius: 999px;
-  background: var(--red);
+  background: #a92f2b;
   color: #ffffff;
   font-size: 10px;
   font-weight: 700;
@@ -1378,26 +1423,6 @@ textarea {
   color: var(--red);
 }
 
-/* Stavový bod */
-.status-dot {
-  display: inline-block;
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-}
-
-.status-dot--ok {
-  background: #2f9e6a;
-}
-
-.status-dot--warning {
-  background: #d9a13b;
-}
-
-.status-dot--conflict {
-  background: #d0454b;
-}
-
 /* Seznamy v záložkách */
 .data-list {
   list-style: none;
@@ -1467,28 +1492,10 @@ textarea {
   font-weight: 700;
 }
 
-.cta-card {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-  flex-wrap: wrap;
-  padding: 16px 18px;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-}
-
-.cta-card__title {
-  font-size: 14px;
-  font-weight: 600;
-}
-
-.cta-card__text {
+.dashboard-demo-note {
   font-size: 12.5px;
   color: var(--muted);
-  margin-top: 3px;
-  max-width: 64ch;
+  margin-bottom: 16px;
 }
 
 /* Patička tabulky / stav */
@@ -1990,23 +1997,21 @@ textarea {
 
 .login__card {
   width: 100%;
-  max-width: 404px;
+  max-width: 424px;
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-md);
-  padding: 30px;
+  padding: 32px;
 }
 
 .login__brand {
   display: flex;
   align-items: center;
   gap: 12px;
-  margin-bottom: 22px;
-}
-
-.login__brand .brand__sub {
-  color: var(--muted);
+  margin-bottom: 24px;
+  padding-bottom: 22px;
+  border-bottom: 1px solid var(--border);
 }
 
 .login__brand .brand__name {
@@ -2014,7 +2019,8 @@ textarea {
 }
 
 .login__title {
-  font-size: 20px;
+  margin-bottom: 24px;
+  font-size: 24px;
   letter-spacing: -0.02em;
 }
 
@@ -2028,11 +2034,13 @@ textarea {
   margin-bottom: 18px;
 }
 
-.login__foot {
-  margin-top: 16px;
-  text-align: center;
-  font-size: 13px;
-  color: var(--muted);
+.login__form .field {
+  margin-bottom: 18px;
+}
+
+.login__form .btn {
+  min-height: 44px;
+  margin-top: 6px;
 }
 
 .field {
@@ -2253,6 +2261,113 @@ textarea {
   }
 }
 
+/* Společné povrchy pro všechny sekce včetně přihlášení. */
+.topbar {
+  background: rgba(25, 29, 32, 0.92);
+}
+
+.card,
+.card__head,
+.period,
+.search,
+.select select,
+.btn--ghost,
+.icon-btn--bordered {
+  background: var(--surface);
+  color: var(--ink);
+  border-color: var(--border);
+}
+
+.btn--primary {
+  background: var(--accent);
+  color: #112127;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.28);
+}
+
+.btn--primary:hover {
+  background: var(--accent-strong);
+}
+
+.tab[aria-selected="true"] {
+  background: var(--accent);
+  color: #112127;
+  border-color: var(--accent);
+}
+
+.tab__count {
+  background: var(--surface-3);
+  border-color: var(--border-strong);
+  color: var(--ink-2);
+}
+
+.stat__icon--blue,
+.rail-row__icon--blue {
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+
+.shift--morning {
+  background: #233942;
+  color: #a5eaff;
+}
+
+.shift--afternoon {
+  background: #3b3421;
+  color: #ffe37a;
+}
+
+.shift--off {
+  background: #30363a;
+  color: #c1c9cd;
+}
+
+.card--alert {
+  background: #2b2525;
+  border-color: var(--red-border);
+}
+
+.card--alert .card__head,
+.alert-item {
+  border-bottom-color: #513330;
+}
+
+.ai-card {
+  background: var(--surface-2);
+  border-color: var(--border-strong);
+}
+
+.ai-card__icon {
+  background: var(--surface-3);
+  border-color: var(--border-strong);
+}
+
+.replacement-option[data-selected="true"] .replacement-option__body {
+  background: var(--accent-soft);
+}
+
+.login__card {
+  background: var(--surface);
+  border-color: var(--border);
+  box-shadow: var(--shadow-md);
+}
+
+.login__title,
+.login .field__label {
+  color: var(--ink);
+}
+
+.login .input {
+  background: var(--surface-2);
+  color: var(--ink);
+  border-color: var(--border-strong);
+}
+
+.planning-screen .card,
+.planning-screen .card__head {
+  background: var(--surface);
+  border-color: var(--border);
+}
+
 @media (max-width: 600px) {
   .data-row {
     flex-wrap: wrap;
@@ -2315,4 +2430,486 @@ textarea {
 
 .planning-result__controls {
   border-top: 1px solid var(--border);
+}
+
+/* Pilotský rozpis: tmavé plátno podle docs/design/mvp-final.png. */
+.shell--planning {
+  --bg: #191d20;
+  --surface: #22272b;
+  --surface-2: #282e32;
+  --surface-3: #30373c;
+  --border: #434d52;
+  --border-strong: #58676d;
+  --ink: #f0f3f5;
+  --ink-2: #d8e0e4;
+  --muted: #a4b1b7;
+  --subtle: #829097;
+  --accent: #62d5f2;
+  --accent-strong: #40bfdc;
+  --accent-soft: #19343d;
+  --accent-border: #2c899c;
+  --violet: #f3c613;
+  --violet-soft: #3b3421;
+  --rail-900: #15191c;
+  --rail-700: #202629;
+  --rail-active: #2a3034;
+  --rail-accent: #54cce9;
+  --rail-text: #eef2f4;
+  --rail-muted: #adb8bd;
+  background: var(--bg);
+  color: var(--ink);
+}
+
+.shell--planning .sidebar {
+  --sidebar-w: 205px;
+}
+
+.shell--planning .main,
+.shell--planning .content {
+  background: var(--bg);
+}
+
+.shell--planning .topbar {
+  background: var(--bg);
+  border-bottom-color: var(--border);
+}
+
+.shell--planning .card,
+.shell--planning .card__head,
+.shell--planning .period,
+.shell--planning .search,
+.shell--planning .select select,
+.shell--planning .btn--ghost,
+.shell--planning .icon-btn--bordered {
+  background: var(--surface);
+  color: var(--ink);
+  border-color: var(--border);
+}
+
+.shell--planning .card__head,
+.shell--planning .table-toolbar,
+.shell--planning .planning-disclosure {
+  border-color: var(--border);
+}
+
+.shell--planning .tabs,
+.shell--planning .tab,
+.shell--planning .footer-status,
+.shell--planning .table-note,
+.shell--planning .planning-disclosure__body {
+  color: var(--muted);
+}
+
+.planning-screen {
+  color: var(--ink);
+}
+
+.planning-heading {
+  display: flex;
+  align-items: baseline;
+  gap: 22px;
+  margin: -10px 0 14px;
+}
+
+.planning-heading h1 {
+  color: var(--ink);
+  font-size: clamp(26px, 3vw, 40px);
+  font-weight: 700;
+  letter-spacing: -0.035em;
+}
+
+.planning-heading span {
+  color: var(--accent);
+  font-size: clamp(20px, 2.4vw, 34px);
+  font-weight: 650;
+}
+
+.month-strip {
+  display: flex;
+  align-items: stretch;
+  min-height: 82px;
+  margin-bottom: 16px;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface);
+}
+
+.month-strip__days {
+  display: flex;
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow-x: auto;
+  scrollbar-width: thin;
+  scrollbar-color: var(--border-strong) transparent;
+}
+
+.month-strip__day {
+  display: flex;
+  flex: 1 0 36px;
+  min-width: 32px;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 7px 2px;
+  border: 0;
+  border-right: 1px solid var(--border);
+  background: transparent;
+  color: var(--ink-2);
+  cursor: pointer;
+}
+
+.month-strip__day > span {
+  font-size: 12px;
+}
+
+.month-strip__day > strong {
+  font-size: 15px;
+  font-weight: 500;
+}
+
+.month-strip__day:hover,
+.month-strip__day:focus-visible {
+  background: var(--surface-3);
+}
+
+.month-strip__day--weekend {
+  background: rgba(243, 198, 19, 0.11);
+  color: var(--violet);
+}
+
+.month-strip__day--selected {
+  box-shadow: inset 0 1px var(--accent), inset 0 -1px var(--accent);
+  color: var(--ink);
+}
+
+.month-strip__day--selected-start {
+  box-shadow: inset 1px 0 var(--accent), inset 0 1px var(--accent),
+    inset 0 -1px var(--accent);
+  border-radius: 5px 0 0 5px;
+}
+
+.month-strip__day--selected-end {
+  box-shadow: inset -1px 0 var(--accent), inset 0 1px var(--accent),
+    inset 0 -1px var(--accent);
+  border-radius: 0 5px 5px 0;
+}
+
+.month-strip__day--selected > strong {
+  font-weight: 700;
+}
+
+.month-strip__nav {
+  display: grid;
+  flex: 0 0 34px;
+  place-items: center;
+  border: 0;
+  background: var(--surface);
+  color: var(--muted);
+  cursor: pointer;
+}
+
+.month-strip__nav:hover {
+  background: var(--surface-3);
+  color: var(--ink);
+}
+
+.planning-disclosure {
+  margin-bottom: 15px;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface);
+}
+
+.planning-disclosure > summary {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 58px;
+  padding: 12px 18px;
+  color: var(--ink);
+  font-size: 17px;
+  cursor: pointer;
+  list-style: none;
+}
+
+.planning-disclosure > summary::-webkit-details-marker {
+  display: none;
+}
+
+.planning-disclosure > summary > svg {
+  transition: transform 0.15s ease;
+}
+
+.planning-disclosure[open] > summary > svg {
+  transform: rotate(90deg);
+}
+
+.planning-disclosure__body {
+  padding: 0 16px 16px;
+  border-top: 1px solid var(--border);
+}
+
+.planning-disclosure__body .page-head {
+  padding-top: 16px;
+}
+
+.planning-disclosure .demo-notice {
+  color: var(--ink-2);
+  background: #292d30;
+  border-color: var(--border-strong);
+}
+
+.week-banner {
+  margin: 16px 0 14px;
+  text-align: center;
+}
+
+.week-banner h2 {
+  color: var(--ink);
+  font-size: 26px;
+}
+
+.week-banner p {
+  margin-top: 3px;
+  color: var(--accent);
+  font-size: 18px;
+}
+
+.schedule-card {
+  overflow: hidden;
+  margin-bottom: 14px;
+}
+
+.schedule-details {
+  margin: 14px 0;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface);
+}
+
+.schedule-details > summary {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 50px;
+  padding: 13px 18px;
+  color: var(--ink-2);
+  cursor: pointer;
+  list-style: none;
+}
+
+.schedule-details > summary::-webkit-details-marker {
+  display: none;
+}
+
+.schedule-details > summary > svg {
+  color: var(--muted);
+  transition: transform 0.15s ease;
+}
+
+.schedule-details[open] > summary {
+  border-bottom: 1px solid var(--border);
+}
+
+.schedule-details[open] > summary > svg {
+  transform: rotate(90deg);
+}
+
+.shell--planning .roster {
+  min-width: 940px;
+  border-spacing: 0;
+  border-collapse: separate;
+  color: var(--ink);
+}
+
+.planning-screen .card__head--split {
+  padding-top: 10px;
+  padding-bottom: 10px;
+}
+
+.planning-screen .table-toolbar {
+  padding-top: 8px;
+  padding-bottom: 8px;
+}
+
+.shell--planning .layout-2col {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.shell--planning .roster th,
+.shell--planning .roster td {
+  padding: 5px 6px;
+  border-right: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+}
+
+.shell--planning .roster tr > :last-child {
+  border-right: 0;
+}
+
+.shell--planning .roster tbody tr:last-child > * {
+  border-bottom: 0;
+}
+
+.shell--planning .roster thead th {
+  background: var(--surface);
+  color: var(--ink-2);
+}
+
+.shell--planning .roster thead .roster__employee-col {
+  background: var(--surface);
+}
+
+.shell--planning .roster__day--weekend,
+.shell--planning .roster thead .roster__day--weekend,
+.shell--planning .roster__cell--weekend {
+  background: #302c23;
+}
+
+.shell--planning .roster__employee-col,
+.shell--planning .roster__cell {
+  background: var(--surface);
+}
+
+.shell--planning .roster tbody tr:hover .roster__employee-col,
+.shell--planning .roster tbody tr:hover td {
+  background: var(--surface-3);
+}
+
+.shell--planning .roster tbody tr:hover .roster__cell--weekend {
+  background: #393428;
+}
+
+.shell--planning .roster .employee {
+  gap: 8px;
+}
+
+.shell--planning .employee__name {
+  color: var(--ink);
+  font-size: 14px;
+}
+
+.shell--planning .employee__role {
+  color: var(--muted);
+}
+
+.shell--planning .shift {
+  display: flex;
+  min-height: 50px;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  padding: 5px 2px 5px 8px;
+  border-radius: 0;
+  position: relative;
+  background: transparent;
+  color: var(--ink);
+}
+
+.shell--planning .shift::before {
+  position: absolute;
+  inset: 4px auto 4px 0;
+  width: 5px;
+  border-radius: 5px;
+  background: currentColor;
+  content: "";
+}
+
+.shell--planning .shift--morning {
+  color: var(--accent);
+}
+
+.shell--planning .shift--afternoon {
+  color: var(--violet);
+}
+
+.shell--planning .shift--vacation {
+  color: #6ed296;
+}
+
+.shell--planning .shift--sick {
+  color: #ff8c85;
+}
+
+.shell--planning .shift__code {
+  color: var(--ink);
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.shell--planning .shift__time {
+  color: var(--ink-2);
+  font-size: 11px;
+  font-weight: 400;
+  white-space: nowrap;
+}
+
+.shell--planning .shift--off {
+  min-height: 50px;
+  padding: 0;
+}
+
+.shell--planning .shift--off::before {
+  display: none;
+}
+
+.shell--planning .planning-screen .card,
+.shell--planning .planning-screen .card__head {
+  background: var(--surface);
+  border-color: var(--border);
+}
+
+.shell--planning .planning-screen .tab,
+.shell--planning .planning-screen .table-toolbar__meta,
+.shell--planning .planning-screen .table-note,
+.shell--planning .planning-screen .footer-status {
+  color: var(--muted);
+}
+
+@media (min-width: 1024px) {
+  .shell--planning .topbar {
+    display: none;
+  }
+
+  .shell--planning .content {
+    padding-top: 22px;
+  }
+}
+
+@media (max-width: 1023px) {
+  .planning-heading {
+    flex-wrap: wrap;
+    gap: 4px 14px;
+  }
+
+  .month-strip__day {
+    flex-basis: 42px;
+  }
+}
+
+@media (max-width: 620px) {
+  .planning-heading h1 {
+    font-size: 28px;
+  }
+
+  .planning-heading span {
+    font-size: 21px;
+  }
+
+  .month-strip {
+    min-height: 72px;
+  }
+
+  .week-banner h2 {
+    font-size: 22px;
+  }
+
+  .week-banner p {
+    font-size: 16px;
+  }
 }

@@ -2,7 +2,6 @@
 
 import { signIn } from "next-auth/react";
 import { useState } from "react";
-import Link from "next/link";
 import type { AuthMode } from "@/lib/auth/local";
 
 export function LoginForm({
@@ -37,37 +36,41 @@ export function LoginForm({
 
   return (
     <div>
-      <form onSubmit={(event) => void handleSignIn(event)}>
+      <form className="login__form" onSubmit={(event) => void handleSignIn(event)}>
         {authMode === "local" ? (
           <>
-            <label className="field__label" htmlFor="login-email">
-              E-mail
-            </label>
-            <input
-              className="input"
-              id="login-email"
-              name="email"
-              type="email"
-              autoComplete="username"
-              value={email}
-              onChange={(event) => setEmail(event.target.value)}
-              required
-              disabled={!authConfigured}
-            />
-            <label className="field__label" htmlFor="login-password">
-              Heslo
-            </label>
-            <input
-              className="input"
-              id="login-password"
-              name="password"
-              type="password"
-              autoComplete="current-password"
-              value={password}
-              onChange={(event) => setPassword(event.target.value)}
-              required
-              disabled={!authConfigured}
-            />
+            <div className="field">
+              <label className="field__label" htmlFor="login-email">
+                E-mail
+              </label>
+              <input
+                className="input"
+                id="login-email"
+                name="email"
+                type="email"
+                autoComplete="username"
+                value={email}
+                onChange={(event) => setEmail(event.target.value)}
+                required
+                disabled={!authConfigured}
+              />
+            </div>
+            <div className="field">
+              <label className="field__label" htmlFor="login-password">
+                Heslo
+              </label>
+              <input
+                className="input"
+                id="login-password"
+                name="password"
+                type="password"
+                autoComplete="current-password"
+                value={password}
+                onChange={(event) => setPassword(event.target.value)}
+                required
+                disabled={!authConfigured}
+              />
+            </div>
           </>
         ) : null}
 
@@ -84,8 +87,8 @@ export function LoginForm({
 
       {!authConfigured ? (
         <p className="form-notice form-notice--visible" role="alert">
-          <strong>Přihlášení není nakonfigurované.</strong> Doplňte lokální
-          nastavení MVP login gate.
+          <strong>Přihlášení není nakonfigurované.</strong> Obraťte se na
+          správce aplikace.
         </p>
       ) : null}
 
@@ -95,10 +98,6 @@ export function LoginForm({
           zkuste to znovu.
         </p>
       ) : null}
-
-      <p className="login__foot">
-        <Link href="/">Zpět</Link>
-      </p>
     </div>
   );
 }

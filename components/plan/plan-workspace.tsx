@@ -20,9 +20,9 @@ import {
   DEMO_REQUESTS,
   DEMO_STATS,
   DEMO_WEEK_START,
+  CZECH_DAYS,
   SHIFT_META,
   addDays,
-  formatDayMonth,
   formatIsoDate,
   getWeekDates,
   isSupportedDemoWeek,
@@ -43,11 +43,14 @@ const TABS = [
 
 type TabKey = (typeof TABS)[number]["key"];
 
-const STATUS_LABEL = {
-  ok: "Bez konfliktu",
-  warning: "Upozornění",
-  conflict: "Konflikt",
-} as const;
+function isoWeekNumber(date: Date): number {
+  const thursday = new Date(
+    Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()),
+  );
+  thursday.setUTCDate(thursday.getUTCDate() + 4 - (thursday.getUTCDay() || 7));
+  const yearStart = new Date(Date.UTC(thursday.getUTCFullYear(), 0, 1));
+  return Math.ceil(((thursday.getTime() - yearStart.getTime()) / 86_400_000 + 1) / 7);
+}
 
 interface PlanWorkspaceProps {
   runtime: PlanningRuntime;
@@ -59,6 +62,7 @@ export function PlanWorkspace({
   replacementTargetSummary,
 }: PlanWorkspaceProps) {
   const [weekStart, setWeekStart] = useState<Date>(() => DEMO_WEEK_START);
+  const [visibleMonth, setVisibleMonth] = useState<Date>(() => DEMO_WEEK_START);
   const [tab, setTab] = useState<TabKey>("smeny");
   const [query, setQuery] = useState("");
   const [shiftFilter, setShiftFilter] = useState<"all" | ShiftKind>("all");
@@ -71,6 +75,11 @@ export function PlanWorkspace({
   const [selectedScenario, setSelectedScenario] = useState<string>("complete");
 
   const weekDates = useMemo(() => getWeekDates(weekStart), [weekStart]);
+  const monthTitle = new Intl.DateTimeFormat("cs-CZ", {
+    month: "long",
+    year: "numeric",
+  }).format(visibleMonth);
+  const monthDays = new Date(visibleMonth.getFullYear(), visibleMonth.getMonth() + 1, 0).getDate();
   const isSupportedWeek = isSupportedDemoWeek(weekDates[0]);
   const unsupportedWeekNotice = `DEMO: Simulovaný běh je dostupný jen pro týden ${weekLabel(DEMO_WEEK_START)}. Zvolený týden lze prohlížet, ale nelze ho naplánovat.`;
 
@@ -101,7 +110,29 @@ export function PlanWorkspace({
   );
 
   function moveWeek(delta: number) {
-    setWeekStart((current) => addDays(current, delta * 7));
+    const nextWeek = addDays(weekStart, delta * 7);
+    setWeekStart(nextWeek);
+    setVisibleMonth(nextWeek);
+    setPlanningView(null);
+    setPlanningFailure(null);
+    setNotice(null);
+  }
+
+  function selectCalendarDate(day: number) {
+    const date = new Date(visibleMonth.getFullYear(), visibleMonth.getMonth(), day);
+    const mondayOffset = (date.getDay() + 6) % 7;
+    setWeekStart(addDays(date, -mondayOffset));
+    setPlanningView(null);
+    setPlanningFailure(null);
+    setNotice(null);
+  }
+
+  function moveMonth(delta: number) {
+    const nextMonth = new Date(visibleMonth.getFullYear(), visibleMonth.getMonth() + delta, 1);
+    setVisibleMonth(nextMonth);
+    const firstDay = nextMonth;
+    const mondayOffset = (firstDay.getDay() + 6) % 7;
+    setWeekStart(addDays(firstDay, -mondayOffset));
     setPlanningView(null);
     setPlanningFailure(null);
     setNotice(null);
@@ -197,16 +228,57 @@ export function PlanWorkspace({
     document.getElementById(`tab-${TABS[nextIndex].key}`)?.focus();
   }
 
-  const weekFrom = weekDates[0];
-  const weekTo = weekDates[weekDates.length - 1];
-
   const scenarios: readonly SimulatedScenarioSummary[] = runtime.configured
     ? runtime.scenarios
     : [];
 
   return (
-    <>
-      <div className="page-head">
+    <div className="planning-screen">
+      <div className="planning-heading">
+        <h1>Rozpis směn</h1>
+        <span>{monthTitle}</span>
+      </div>
+
+      <div className="month-strip" role="group" aria-label={`Kalendář, ${monthTitle}`}>
+        <button type="button" className="month-strip__nav" onClick={() => moveMonth(-1)} aria-label="Předchozí měsíc">
+          <Icon name="chevronLeft" width={18} height={18} />
+        </button>
+        <div className="month-strip__days">
+          {Array.from({ length: monthDays }, (_, index) => {
+            const day = index + 1;
+            const date = new Date(visibleMonth.getFullYear(), visibleMonth.getMonth(), day);
+            const weekday = (date.getDay() + 6) % 7;
+            const selected = date >= weekDates[0] && date <= weekDates[6];
+            const selectedStart = selected && date.getTime() === weekDates[0].getTime();
+            const selectedEnd = selected && date.getTime() === weekDates[6].getTime();
+            const weekend = weekday >= 5;
+            return (
+              <button
+                key={day}
+                type="button"
+                className={`month-strip__day${selected ? " month-strip__day--selected" : ""}${selectedStart ? " month-strip__day--selected-start" : ""}${selectedEnd ? " month-strip__day--selected-end" : ""}${weekend ? " month-strip__day--weekend" : ""}`}
+                aria-pressed={selected}
+                aria-label={`${CZECH_DAYS[weekday]} ${day}. ${visibleMonth.getMonth() + 1}. ${visibleMonth.getFullYear()}`}
+                onClick={() => selectCalendarDate(day)}
+              >
+                <span>{CZECH_DAYS[weekday]}</span>
+                <strong>{day}</strong>
+              </button>
+            );
+          })}
+        </div>
+        <button type="button" className="month-strip__nav" onClick={() => moveMonth(1)} aria-label="Následující měsíc">
+          <Icon name="chevronRight" width={18} height={18} />
+        </button>
+      </div>
+
+      <details className="planning-disclosure">
+        <summary>
+          <Icon name="chevronRight" width={18} height={18} />
+          Generace rozpisu směn
+        </summary>
+        <div className="planning-disclosure__body">
+          <div className="page-head">
         <div className="page-head__lead">
           <span className="page-head__icon" aria-hidden="true">
             <Icon name="calendar" width={22} height={22} />
@@ -246,9 +318,9 @@ export function PlanWorkspace({
             </button>
           </div>
         </div>
-      </div>
+          </div>
 
-      <div className="demo-notice" role="note">
+          <div className="demo-notice" role="note">
         <span className="demo-notice__icon" aria-hidden="true">
           <Icon name="info" width={17} height={17} />
         </span>
@@ -256,18 +328,18 @@ export function PlanWorkspace({
           <strong>Demonstrační data.</strong> Jména, počty i přiřazení jsou
           smyšlené ukázky. Výsledek není platný ani schválený rozpis.
         </p>
-      </div>
+          </div>
 
-      {notice ? (
+          {notice ? (
         <div className="notice-block">
           <Alert variant="warning">
             <strong>Upozornění.</strong> {notice}
           </Alert>
         </div>
-      ) : null}
+          ) : null}
 
       {/* Planning Result Section - NEW */}
-      <PlanningResult
+          <PlanningResult
         view={planningView}
         failure={planningFailure}
         onConfirm={confirmPlanning}
@@ -284,28 +356,40 @@ export function PlanWorkspace({
             : unsupportedWeekNotice
         }
         providerMode={runtime.configured ? runtime.mode : "simulated"}
-      />
+          />
 
-      <ReplacementPanel
+          <ReplacementPanel
         enabled={runtime.configured && runtime.mode === "simulated"}
         targetSummary={replacementTargetSummary}
-      />
-
-      <div className="stat-grid">
-        {DEMO_STATS.map((stat) => (
-          <StatCard
-            key={stat.key}
-            icon={stat.icon}
-            tone={stat.tone}
-            label={stat.label}
-            value={stat.value}
-            meta={stat.meta}
-            trend={stat.trend}
-            detailHref={stat.detail ? "#upozorneni" : undefined}
           />
-        ))}
+        </div>
+      </details>
+
+      <div className="week-banner">
+        <h2>Týden {isoWeekNumber(weekStart)}</h2>
+        <p>{weekLabel(weekStart)}</p>
       </div>
 
+      <div className="card schedule-card">
+        {filteredEmployees.length > 0 ? (
+          <RosterTable employees={filteredEmployees} weekDates={weekDates} />
+        ) : (
+          <EmptyState
+            icon="search"
+            title="Nikdo neodpovídá filtru"
+            description="Upravte hledání nebo filtr v části Filtry a další přehledy."
+          />
+        )}
+        <p className="table-note">
+          Ukázková data · přiřazení směn se s volbou týdne nemění.
+        </p>
+      </div>
+
+      <details className="schedule-details">
+        <summary>
+          <Icon name="chevronRight" width={18} height={18} />
+          Filtry, další přehledy a upozornění
+        </summary>
       <div className="layout-2col">
         <div className="plan-main">
           <div className="card">
@@ -391,20 +475,9 @@ export function PlanWorkspace({
 
             {tab === "smeny" ? (
               <div role="tabpanel" id="panel-smeny" aria-labelledby="tab-smeny">
-                {filteredEmployees.length > 0 ? (
-                  <RosterTable employees={filteredEmployees} weekDates={weekDates} />
-                ) : (
-                  <EmptyState
-                    icon="search"
-                    title="Nikdo neodpovídá filtru"
-                    description="Zkuste upravit hledání nebo zrušit filtr typu směny."
-                  />
-                )}
                 <p className="table-note">
-                  Ukázková data · zobrazeno {filteredEmployees.length} z 108
-                  zaměstnanců · týden {formatDayMonth(weekFrom)} –{" "}
-                  {formatDayMonth(weekTo)} · časy odpovídají potvrzeným směnám,
-                  ale přiřazení se s volbou týdne nemění.
+                  Rozpis směn je zobrazen nad touto částí. Hledání a filtr typu
+                  směny upravují jeho řádky.
                 </p>
               </div>
             ) : null}
@@ -505,12 +578,6 @@ export function PlanWorkspace({
                         <span className="data-row__tag">
                           {shiftCount(employee.shifts)} směn
                         </span>
-                        <span
-                          className={`status-dot status-dot--${employee.status}`}
-                          role="img"
-                          aria-label={STATUS_LABEL[employee.status]}
-                          title={STATUS_LABEL[employee.status]}
-                        />
                       </li>
                     ))}
                   </ul>
@@ -664,6 +731,22 @@ export function PlanWorkspace({
           </section>
         </aside>
       </div>
-    </>
+
+      <div className="stat-grid">
+        {DEMO_STATS.map((stat) => (
+          <StatCard
+            key={stat.key}
+            icon={stat.icon}
+            tone={stat.tone}
+            label={stat.label}
+            value={stat.value}
+            meta={stat.meta}
+            trend={stat.trend}
+            detailHref={stat.detail ? "#upozorneni" : undefined}
+          />
+        ))}
+      </div>
+      </details>
+    </div>
   );
 }

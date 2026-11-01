@@ -62,16 +62,9 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      <div className="demo-notice" role="note">
-        <span className="demo-notice__icon" aria-hidden="true">
-          <Icon name="info" width={17} height={17} />
-        </span>
-        <p>
-          <strong>Demonstrační data.</strong> Jména, čísla i směny jsou syntetické
-          ukázky. Tato ukázka nepracuje s Outlookem ani současným rosterem a
-          není produkčním systémem.
-        </p>
-      </div>
+      <p className="dashboard-demo-note" role="note">
+        Ukázková data: jména, počty i směny jsou smyšlené.
+      </p>
 
       <div className="stat-grid">
         {DEMO_STATS.map((stat) => (
@@ -126,19 +119,6 @@ export default function DashboardPage() {
               potvrzené.
             </p>
           </section>
-
-          <div className="cta-card">
-            <div>
-              <p className="cta-card__title">Připraveni ke spuštění plánovacího dema</p>
-              <p className="cta-card__text">
-                Otevřete pracovní plochu plánu směn s ukázkovou tabulkou,
-                výsledkem simulovaného běhu a kontrolou návrhu.
-              </p>
-            </div>
-            <Link className="btn btn--primary" href="/planovani">
-              Otevřít plán směn
-            </Link>
-          </div>
         </div>
 
         <aside className="plan-rail" aria-label="Přehledy a upozornění">
