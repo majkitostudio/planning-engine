@@ -1,16 +1,12 @@
 import type { Metadata } from "next";
-import { SectionPlaceholder } from "@/components/section-placeholder";
+import { auth } from "@/auth";
+import { EmployeesManager } from "@/components/employees-manager";
 
 export const metadata: Metadata = {
   title: "Zaměstnanci",
 };
 
-export default function EmployeesPage() {
-  return (
-    <SectionPlaceholder
-      icon="users"
-      title="Zaměstnanci"
-      description="Přehled zaměstnanců call centra a jejich základní údaje. Data budou doplněna po schválení doménového modelu."
-    />
-  );
+export default async function EmployeesPage() {
+  const session = await auth();
+  return <EmployeesManager canManage={session?.user?.role === "manager"} />;
 }

@@ -45,6 +45,17 @@ export function MonthlyPlanningPanel({ month, canManage, simulated, initialStaff
     setEmployeeId((current) => current || id);
     setName(""); setError("");
   }
+  async function loadEmployeeList() {
+    setBusy(true); setError("");
+    try {
+      const response = await fetch("/api/employees");
+      const result = await response.json();
+      if (!response.ok || !result.ok) { setError(result.message ?? "Seznam zaměstnanců se nepodařilo načíst."); return; }
+      const incoming = result.employees as { id: string; displayName: string }[];
+      if (!incoming.length) { setError("Seznam zaměstnanců je prázdný. Přidejte je nejprve ve správě zaměstnanců."); return; }
+      setEmployees((current) => [...current, ...incoming.filter((employee) => !current.some((item) => item.id === employee.id)).map((employee) => ({ id: employee.id, name: employee.displayName, availableAllMonth: false }))]);
+    } catch { setError("Spojení se serverem selhalo."); } finally { setBusy(false); }
+  }
   async function loadPreviousEmployees() {
     setBusy(true); setError("");
     try {
@@ -108,6 +119,7 @@ export function MonthlyPlanningPanel({ month, canManage, simulated, initialStaff
     <form onClick={(event) => { if (view && event.target instanceof HTMLElement && event.target.closest('button[type="button"]')) { setView(null); setConfirmed(false); onResult(null); } }} onChange={() => { if (view) { setView(null); setConfirmed(false); onResult(null); } }} onSubmit={(event) => void submit(event)}>
       <fieldset disabled={!canManage || busy}>
         <legend>1. Zaměstnanci</legend>
+        <button className="btn" type="button" onClick={() => void loadEmployeeList()}>Načíst zaměstnance ze seznamu</button>{" "}
         <label>Jméno <input className="input" value={name} onChange={(event) => setName(event.target.value)} /></label>{" "}
         <button className="btn" type="button" onClick={addEmployee}>Přidat zaměstnance</button>
         {" "}<button className="btn" type="button" onClick={() => void loadPreviousEmployees()}>Načíst zaměstnance z předchozího potvrzeného měsíce</button>

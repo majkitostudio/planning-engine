@@ -157,7 +157,7 @@ export function AppShell({
 
         <nav className="sidebar__nav" aria-label="Sekce aplikace">
           <ul className="nav-list">
-            {visibleNavItems.filter((item) => item.href === "/planovani").map(renderNavItem)}
+            {visibleNavItems.filter((item) => item.href === "/planovani" || item.href === "/zamestnanci").map(renderNavItem)}
           </ul>
           <details
             className="sidebar__future"
@@ -171,7 +171,7 @@ export function AppShell({
               <span className="nav-link__label">Budoucí funkce</span>
             </summary>
             <ul className="nav-list sidebar__future-list">
-              {visibleNavItems.filter((item) => item.href !== "/planovani").map(renderNavItem)}
+              {visibleNavItems.filter((item) => item.href !== "/planovani" && item.href !== "/zamestnanci").map(renderNavItem)}
             </ul>
           </details>
         </nav>

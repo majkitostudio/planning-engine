@@ -1,8 +1,7 @@
 // Prisma schema — technický základ.
 //
-// Doménové modely zaměstnanců a směn zatím NEJSOU definovány. Schema obsahuje
-// provozní modely identity, snapshotů běhů, nastavení pilotu a rozhodnutí o
-// syntetických požadavcích.
+// Schema obsahuje seznam zaměstnanců pro plánování, provozní modely identity,
+// snapshoty běhů, nastavení pilotu a rozhodnutí o syntetických požadavcích.
 //
 // Po schválení dodat modely sem. Soubor lze zformátovat příkazem
 // `npm run db:generate` nevyžaduje běžící databázový server.
@@ -57,6 +56,13 @@ model MonthlyPlanningRun {
 
   @@index([month])
   @@index([confirmedById])
+}
+
+model PlanningEmployee {
+  id          String   @id @default(cuid())
+  displayName String
+  active      Boolean  @default(true)
+  createdAt   DateTime @default(now())
 }
 
 model EmployeeRequestDecision {
