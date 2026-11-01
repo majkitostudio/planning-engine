@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
 import { toPlanningActor } from "../auth/actor";
 import { makeRunResult } from "../../tests/planning/fixtures";
@@ -51,6 +51,11 @@ function makeSnapshot(): PlanningRunSnapshot {
 }
 
 describe("planning audit service", () => {
+  it("zobrazuje měsíc a identitu u měsíčního potvrzení", async () => {
+    const persistence = new InMemoryPlanningPersistence();
+    vi.spyOn(persistence, "listAuditEvents").mockResolvedValue([{ id: "a", action: "planning.confirmed", entityType: "monthly_planning_run", entityId: "month-1", actorId: "m", createdAt: "2026-11-01T00:00:00.000Z", details: { month: "2026-11", email: "manager@example.test" } }]);
+    expect(await readPlanningAudit(persistence, manager)).toMatchObject({ ok: true, entries: [{ proposalId: "month-1", month: "2026-11", confirmedByEmail: "manager@example.test" }] });
+  });
   it("manager přečte potvrzený návrh v auditním pohledu", async () => {
     const persistence = new InMemoryPlanningPersistence();
     const snapshot = makeSnapshot();

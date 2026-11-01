@@ -38,8 +38,25 @@ model AppUser {
   createdAt       DateTime            @default(now())
   updatedAt       DateTime            @updatedAt
   confirmedRuns   PlanningRunRecord[] @relation("PlanningRunConfirmedBy")
+  confirmedMonthlyRuns MonthlyPlanningRun[] @relation("MonthlyPlanningRunConfirmedBy")
   auditEvents     AuditEvent[]
   employeeRequestDecisions EmployeeRequestDecision[]
+}
+
+model MonthlyPlanningRun {
+  id            String   @id
+  month         String
+  providerName  String
+  mode          String
+  input         Json
+  draft         Json
+  confirmedAt   DateTime?
+  confirmedById String?
+  confirmedBy   AppUser? @relation("MonthlyPlanningRunConfirmedBy", fields: [confirmedById], references: [id], onDelete: SetNull)
+  createdAt     DateTime @default(now())
+
+  @@index([month])
+  @@index([confirmedById])
 }
 
 model EmployeeRequestDecision {

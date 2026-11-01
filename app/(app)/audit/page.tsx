@@ -100,7 +100,7 @@ export default async function PlanningAuditPage() {
                   <Icon name="check" width={15} height={15} />
                 </span>
                 <span className="data-row__main">
-                  <span className="data-row__title">Týden od {entry.weekStart ?? "neuveden"}</span>
+                  <span className="data-row__title">{entry.month !== undefined ? `Měsíc ${entry.month ?? "neuveden"}` : `Týden od ${entry.weekStart ?? "neuveden"}`}</span>
                   <span className="data-row__sub">
                     Potvrdil(a): {entry.confirmedByEmail ?? "neuvedeno"}
                   </span>

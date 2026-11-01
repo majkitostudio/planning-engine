@@ -1,0 +1,92 @@
+import { describe, expect, it } from "vitest";
+import { datesInMonth } from "./month";
+import type { MonthlyPlanningInput } from "./month-input";
+import type { ProposedAssignment } from "./types";
+import { validateMonthlyPlan } from "./month-validation";
+
+const input: MonthlyPlanningInput = {
+  month: "2026-11",
+  employees: [{ id: "e1", displayName: "Test", employmentType: "full_time" }],
+  absences: [], availability: [], instructions: "",
+  staffingRequirements: datesInMonth("2026-11").flatMap((date) => ([
+    { date, shiftKind: "morning" as const, requiredEmployees: 0 },
+    { date, shiftKind: "afternoon" as const, requiredEmployees: 0 },
+  ])),
+};
+const assignment = (date: string): ProposedAssignment => ({ employeeId: "e1", date, shiftKind: "morning" });
+const completeBoundary = { before: { complete: true, assignments: [] }, after: { complete: true, assignments: [] } };
+
+describe("měsíční validace", () => {
+  it("označí chybějící podklady za neověřené a blokuje potvrzení", () => {
+    const result = validateMonthlyPlan(input, [], { before: { complete: false, assignments: [] }, after: { complete: false, assignments: [] } });
+    expect(result.status).toBe("not_verified");
+    expect(result.canConfirm).toBe(false);
+  });
+
+  it("zjistí sedm pracovních dnů přes hranici týdnů", () => {
+    const assignments = ["2026-11-04", "2026-11-05", "2026-11-06", "2026-11-07", "2026-11-08", "2026-11-09", "2026-11-10"].map(assignment);
+    const result = validateMonthlyPlan(input, assignments, completeBoundary);
+    expect(result.problems.some((problem) => problem.code === "REST_AFTER_SIX_DAYS")).toBe(true);
+    expect(result.canConfirm).toBe(false);
+  });
+
+  it("použije navazující směnu při kontrole konce měsíce", () => {
+    const assignments = ["2026-11-25", "2026-11-26", "2026-11-27", "2026-11-28", "2026-11-29", "2026-11-30"].map(assignment);
+    const result = validateMonthlyPlan(input, assignments, { ...completeBoundary, after: { complete: true, assignments: [assignment("2026-12-01")] } });
+    expect(result.problems.some((problem) => problem.code === "REST_AFTER_SIX_DAYS")).toBe(true);
+  });
+
+  it("použije směny předchozího měsíce při kontrole prvního dne", () => {
+    const before = ["2026-10-26", "2026-10-27", "2026-10-28", "2026-10-29", "2026-10-30", "2026-10-31"].map(assignment);
+    const result = validateMonthlyPlan(input, [assignment("2026-11-01")], { ...completeBoundary, before: { complete: true, assignments: before } });
+    expect(result.problems.some((problem) => problem.code === "REST_AFTER_SIX_DAYS")).toBe(true);
+  });
+
+  it("prověří 34 hodin 45 minut odpočinku přes začátek měsíce po jednom dni volna", () => {
+    const before = ["2026-10-25", "2026-10-26", "2026-10-27", "2026-10-28", "2026-10-29", "2026-10-30"].map((date) => ({ ...assignment(date), shiftKind: "afternoon" as const }));
+    const result = validateMonthlyPlan(input, [assignment("2026-11-01")], { ...completeBoundary, before: { complete: true, assignments: before } });
+    expect(result.problems.some((problem) => problem.code === "REST_AFTER_SIX_DAYS")).toBe(true);
+  });
+
+  it("kontroluje šestici začínající v měsíci, i když končí v dalším měsíci", () => {
+    const dates = ["2026-11-29", "2026-11-30", "2026-12-01", "2026-12-02", "2026-12-03", "2026-12-04"];
+    const worked = dates.map((date) => ({ ...assignment(date), shiftKind: "afternoon" as const }));
+    const result = validateMonthlyPlan(input, worked.slice(0, 2), { ...completeBoundary, after: { complete: true, assignments: [...worked.slice(2), assignment("2026-12-06")] } });
+    expect(result.problems.some((problem) => problem.code === "REST_AFTER_SIX_DAYS")).toBe(true);
+  });
+
+  it("počítá víkendové volno z celého týdne přes hranici měsíce", () => {
+    const before = ["2026-10-26", "2026-10-27", "2026-10-28", "2026-10-29", "2026-10-30"].map(assignment);
+    const result = validateMonthlyPlan(input, [assignment("2026-11-01")], { ...completeBoundary, before: { complete: true, assignments: before } });
+    expect(result.problems.some((problem) => problem.code === "WEEKEND_TWO_DAYS_OFF")).toBe(true);
+  });
+
+  it("chybějící dostupnost a obsazení nepovažuje za ověřený návrh", () => {
+    const result = validateMonthlyPlan({ ...input, staffingRequirements: input.staffingRequirements.filter((item) => item.date !== "2026-11-02" || item.shiftKind !== "morning") }, [assignment("2026-11-02")], completeBoundary);
+    expect(result.unverified.map((item) => item.code)).toEqual(expect.arrayContaining(["AVAILABILITY_MISSING", "COVERAGE_REQUIREMENT_MISSING"]));
+    expect(result.canConfirm).toBe(false);
+  });
+
+  it("neblokuje kvůli okolní historii, pokud žádná dotčená kontrola nesahá za celé týdny měsíce", () => {
+    const month = "2021-02"; // Pondělí až neděle, čtyři celé týdny.
+    const middle = "2021-02-15";
+    const monthlyInput: MonthlyPlanningInput = { ...input, month, availability: [{ employeeId: "e1", date: middle, shiftKind: "morning", available: true }], staffingRequirements: datesInMonth(month).flatMap((date) => (["morning", "afternoon"] as const).map((shiftKind) => ({ date, shiftKind, requiredEmployees: 0 }))) };
+    const missing = { before: { complete: false, assignments: [] }, after: { complete: false, assignments: [] } };
+    const result = validateMonthlyPlan(monthlyInput, [assignment(middle)], missing);
+    expect(result.status).toBe("valid");
+    expect(result.canConfirm).toBe(true);
+  });
+
+  it("odmítá směnu v době absence nebo výslovné nedostupnosti a detekuje neúplné obsazení", () => {
+    const date = "2026-11-02";
+    const result = validateMonthlyPlan({ ...input, absences: [{ id: "a", employeeId: "e1", from: date, to: date, type: "vacation", status: "approved" }], availability: [{ employeeId: "e1", date, shiftKind: "morning", available: false }], staffingRequirements: input.staffingRequirements.map((r) => r.date === "2026-11-03" && r.shiftKind === "morning" ? { ...r, requiredEmployees: 1 } : r) }, [assignment(date)], completeBoundary);
+    expect(result.problems.map((problem) => problem.code)).toEqual(expect.arrayContaining(["ABSENCE_APPROVED", "AVAILABILITY_UNAVAILABLE", "COVERAGE_UNDERSTAFFED"]));
+    expect(result.canConfirm).toBe(false);
+  });
+
+  it("při úplných údajích a nulovém obsazení umožní předat návrh manažerovi", () => {
+    const result = validateMonthlyPlan(input, [], completeBoundary);
+    expect(result.status).toBe("valid");
+    expect(result.canConfirm).toBe(true);
+  });
+});

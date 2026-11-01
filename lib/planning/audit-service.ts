@@ -4,6 +4,7 @@ import type { PlanningPersistence } from "./persistence";
 export interface PlanningAuditEntry {
   readonly proposalId: string;
   readonly weekStart: string | null;
+  readonly month?: string | null;
   readonly confirmedByEmail: string | null;
   readonly confirmedAt: string;
 }
@@ -29,6 +30,7 @@ export async function readPlanningAudit(
     entries: events.map((event) => ({
       proposalId: event.entityId,
       weekStart: event.details.weekStart ?? null,
+      ...(event.entityType === "monthly_planning_run" ? { month: event.details.month ?? null } : {}),
       confirmedByEmail: event.details.email ?? null,
       confirmedAt: event.createdAt,
     })),

@@ -1,8 +1,10 @@
 "use client";
 
-import { useMemo, useState, type KeyboardEvent } from "react";
+import { useEffect, useMemo, useState, type KeyboardEvent } from "react";
 import { Icon } from "@/components/icons";
 import { RosterTable } from "@/components/plan/roster-table";
+import { MonthlyPlanningPanel, type MonthlyView } from "@/components/plan/monthly-planning-panel";
+import { MonthlyRosterTable } from "@/components/plan/monthly-roster-table";
 import { Alert } from "@/components/ui/alert";
 import { Avatar } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -15,6 +17,7 @@ import {
   DEMO_ABSENCES,
   DEMO_ALERTS,
   DEMO_EMPLOYEES,
+  demoRosterForWeek,
   DEMO_FREQUENT,
   DEMO_OVERVIEW,
   DEMO_REQUESTS,
@@ -33,6 +36,8 @@ import {
 import type { PlanningRuntime } from "@/lib/planning/server-config";
 import type { SimulatedScenarioSummary } from "@/lib/planning/simulated/scenarios";
 import type { ReplacementTargetSummary } from "@/lib/planning/replacement-service";
+import type { StaffingSetting } from "@/lib/planning/staffing-settings";
+import { selectMonthlyView } from "@/lib/planning/monthly-view";
 
 const TABS = [
   { key: "smeny", label: "Směny" },
@@ -52,14 +57,22 @@ function isoWeekNumber(date: Date): number {
   return Math.ceil(((thursday.getTime() - yearStart.getTime()) / 86_400_000 + 1) / 7);
 }
 
+function monthKey(date: Date): string {
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
+}
+
 interface PlanWorkspaceProps {
   runtime: PlanningRuntime;
   replacementTargetSummary: ReplacementTargetSummary | null;
+  canManage: boolean;
+  initialStaffing: readonly StaffingSetting[] | null;
 }
 
 export function PlanWorkspace({
   runtime,
   replacementTargetSummary,
+  canManage,
+  initialStaffing,
 }: PlanWorkspaceProps) {
   const [weekStart, setWeekStart] = useState<Date>(() => DEMO_WEEK_START);
   const [visibleMonth, setVisibleMonth] = useState<Date>(() => DEMO_WEEK_START);
@@ -67,6 +80,10 @@ export function PlanWorkspace({
   const [query, setQuery] = useState("");
   const [shiftFilter, setShiftFilter] = useState<"all" | ShiftKind>("all");
   const [notice, setNotice] = useState<string | null>(null);
+  const [draftViews, setDraftViews] = useState<Record<string, MonthlyView>>({});
+  const [confirmedViews, setConfirmedViews] = useState<Record<string, MonthlyView | null>>({});
+  const [loadErrors, setLoadErrors] = useState<Record<string, boolean>>({});
+  const [visitedMonths, setVisitedMonths] = useState<string[]>(() => [monthKey(DEMO_WEEK_START)]);
 
   // Planning result state
   const [planningView, setPlanningView] = useState<PlanningRunView | null>(null);
@@ -81,6 +98,21 @@ export function PlanWorkspace({
   }).format(visibleMonth);
   const monthDays = new Date(visibleMonth.getFullYear(), visibleMonth.getMonth() + 1, 0).getDate();
   const isSupportedWeek = isSupportedDemoWeek(weekDates[0]);
+  const visibleMonthValue = monthKey(visibleMonth);
+  const monthlyView = selectMonthlyView(visibleMonthValue, draftViews[visibleMonthValue], confirmedViews[visibleMonthValue]);
+  const showingMonthlyView = monthlyView && weekDates.some((date) => formatIsoDate(date).startsWith(`${monthlyView.input.month}-`));
+  useEffect(() => {
+    const controller = new AbortController();
+    void fetch(`/api/planning/monthly?month=${encodeURIComponent(visibleMonthValue)}`, { signal: controller.signal })
+      .then((response) => { if (!response.ok) throw new Error("Načtení rozpisu selhalo."); return response.json(); })
+      .then((result) => {
+        if (!result?.ok) throw new Error("Načtení rozpisu selhalo.");
+        setConfirmedViews((current) => ({ ...current, [visibleMonthValue]: result.view ?? null }));
+        setLoadErrors((current) => ({ ...current, [visibleMonthValue]: false }));
+      })
+      .catch(() => { if (!controller.signal.aborted) setLoadErrors((current) => ({ ...current, [visibleMonthValue]: true })); });
+    return () => controller.abort();
+  }, [visibleMonthValue]);
   const unsupportedWeekNotice = `DEMO: Simulovaný běh je dostupný jen pro týden ${weekLabel(DEMO_WEEK_START)}. Zvolený týden lze prohlížet, ale nelze ho naplánovat.`;
 
   const normalizedQuery = query.trim().toLowerCase();
@@ -113,6 +145,7 @@ export function PlanWorkspace({
     const nextWeek = addDays(weekStart, delta * 7);
     setWeekStart(nextWeek);
     setVisibleMonth(nextWeek);
+    setVisitedMonths((current) => current.includes(monthKey(nextWeek)) ? current : [...current, monthKey(nextWeek)]);
     setPlanningView(null);
     setPlanningFailure(null);
     setNotice(null);
@@ -130,6 +163,7 @@ export function PlanWorkspace({
   function moveMonth(delta: number) {
     const nextMonth = new Date(visibleMonth.getFullYear(), visibleMonth.getMonth() + delta, 1);
     setVisibleMonth(nextMonth);
+    setVisitedMonths((current) => current.includes(monthKey(nextMonth)) ? current : [...current, monthKey(nextMonth)]);
     const firstDay = nextMonth;
     const mondayOffset = (firstDay.getDay() + 6) % 7;
     setWeekStart(addDays(firstDay, -mondayOffset));
@@ -272,10 +306,16 @@ export function PlanWorkspace({
         </button>
       </div>
 
+      {visitedMonths.map((month) => <div key={month} hidden={month !== visibleMonthValue}><MonthlyPlanningPanel month={month} canManage={canManage} simulated={runtime.configured && runtime.mode === "simulated"} initialStaffing={initialStaffing} onResult={(result) => {
+        setDraftViews((current) => { const next = { ...current }; if (!result || result.confirmed) delete next[month]; else next[month] = result; return next; });
+        if (result?.confirmed) setConfirmedViews((current) => ({ ...current, [month]: result }));
+        if (result) setLoadErrors((current) => ({ ...current, [month]: false }));
+      }} /></div>)}
+
       <details className="planning-disclosure">
         <summary>
           <Icon name="chevronRight" width={18} height={18} />
-          Generace rozpisu směn
+          Starší týdenní ukázka
         </summary>
         <div className="planning-disclosure__body">
           <div className="page-head">
@@ -371,8 +411,14 @@ export function PlanWorkspace({
       </div>
 
       <div className="card schedule-card">
-        {filteredEmployees.length > 0 ? (
-          <RosterTable employees={filteredEmployees} weekDates={weekDates} />
+        {loadErrors[visibleMonthValue] && !draftViews[visibleMonthValue] ? (
+          <EmptyState icon="box" title="Rozpis se nepodařilo načíst" description="Ověřte připojení a zkuste stránku načíst znovu." />
+        ) : showingMonthlyView ? (
+          <MonthlyRosterTable view={monthlyView} weekDates={weekDates} />
+        ) : !isSupportedWeek ? (
+          <EmptyState icon="box" title="Pro tento týden nejsou k dispozici směny" description="Ukázkový rozpis je dostupný pouze pro týden 5.–11. října 2026." />
+        ) : filteredEmployees.length > 0 ? (
+          <RosterTable employees={demoRosterForWeek(weekStart).filter((employee) => filteredEmployees.includes(employee))} weekDates={weekDates} />
         ) : (
           <EmptyState
             icon="search"
@@ -380,9 +426,7 @@ export function PlanWorkspace({
             description="Upravte hledání nebo filtr v části Filtry a další přehledy."
           />
         )}
-        <p className="table-note">
-          Ukázková data · přiřazení směn se s volbou týdne nemění.
-        </p>
+        {!loadErrors[visibleMonthValue] && !showingMonthlyView && isSupportedWeek ? <p className="table-note">Ukázková data · týden 5.–11. října 2026.</p> : null}
       </div>
 
       <details className="schedule-details">

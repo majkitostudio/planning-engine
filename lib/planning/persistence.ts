@@ -42,7 +42,7 @@ export interface ReplacementRunSnapshot {
 export interface PlanningAuditEvent {
   readonly id: string;
   readonly action: "planning.confirmed" | "planning.replacement_confirmed";
-  readonly entityType: "planning_run" | "replacement_run";
+  readonly entityType: "planning_run" | "replacement_run" | "monthly_planning_run";
   readonly entityId: string;
   readonly actorId: string | null;
   readonly createdAt: string;
@@ -487,7 +487,7 @@ export class PrismaPlanningPersistence implements PlanningPersistence {
     const rows = await this.db.auditEvent.findMany({
       where: {
         action: { in: ["planning.confirmed", "planning.replacement_confirmed"] },
-        entityType: { in: ["planning_run", "replacement_run"] },
+        entityType: { in: ["planning_run", "replacement_run", "monthly_planning_run"] },
       },
       orderBy: { createdAt: "desc" },
     });

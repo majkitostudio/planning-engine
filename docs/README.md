@@ -34,6 +34,7 @@ jiných dokumentů neopakuje.
 | Gemini adaptér | `IMPLEMENTED` / `VERIFIED` | `lib/ai/gemini-planning-provider.ts`; integrační volání prošlo, produkční kvalita výstupu `NOT VERIFIED` |
 | Orchestrace | `IMPLEMENTED` | `runPlanning()` spojuje návrh, validaci a změny |
 | Napojení UI na orchestrátor | `IMPLEMENTED` / `DEMO` | `POST /api/planning/run`, `PlanningResult`; vstupy jsou simulované fixtures |
+| Měsíční pilot | `IMPLEMENTED` / `SIMULATED` / `NOT VERIFIED` | Formulář, měsíční návrh a kontrola, zobrazení v tabulce a manager-only potvrzení jsou implementované. Syntetický browser průchod včetně potvrzení a opětovného načtení prošel proti izolované PostgreSQL. Kvalita skutečného měsíčního návrhu Gemini a provozní použitelnost zůstávají `NOT VERIFIED`; chybějící podklady blokují potvrzení. |
 | Přihlášení a role | `IMPLEMENTED` / `VERIFIED` (lokální syntetický smoke) | Auth.js podporuje vývojový local režim a databázové účty v PostgreSQL; vytvoření účtu, změna hesla a zneplatnění deaktivované session prošly lokálním browser průchodem. Produkční úroveň a Entra ID zůstávají `NOT VERIFIED`/`PLANNED` |
 | Správa přihlašovacích účtů | `IMPLEMENTED` / `VERIFIED` (izolovaná lokální PostgreSQL) | `/uzivatele`, manager-only API a jednorázový `db:bootstrap-manager`; migrace, bootstrap, create, role, reset, povinná změna hesla, viewer denial i souběžná ochrana posledního managera byly ověřeny synteticky. Produkce `NOT VERIFIED` |
 | Potvrzení manažera | `IMPLEMENTED` | `POST /api/planning/confirm`, manager-only, blokace částečných/neověřených návrhů |

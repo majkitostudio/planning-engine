@@ -9,6 +9,9 @@
 
 import { AiProviderError, isPlanDraft, type PlanningModelProvider } from "../planning/ai-provider";
 import type { PlanningInput, PlanDraft } from "../planning/domain";
+import type { MonthlyPlanningInput } from "../planning/domain/month-input";
+import type { MonthlyBoundaryData } from "../planning/domain/month-validation";
+import { isMonthlyPlanDraft, type MonthlyPlanDraft } from "../planning/monthly-planning";
 import { buildDomainSystemPrompt } from "./planning-domain-prompt";
 
 const DEFAULT_BASE_URL = "https://generativelanguage.googleapis.com";
@@ -85,6 +88,16 @@ const PLAN_DRAFT_JSON_SCHEMA = {
   required: ["weekStart", "assignments", "explanations", "alternatives", "assumptions"],
 } as const;
 
+const MONTHLY_PLAN_SCHEMA = {
+  ...PLAN_DRAFT_JSON_SCHEMA,
+  properties: {
+    ...PLAN_DRAFT_JSON_SCHEMA.properties,
+    month: { type: "string" },
+    instructionsOutcome: { type: "string" },
+  },
+  required: ["month", "assignments", "explanations", "alternatives", "assumptions", "instructionsOutcome"],
+} as const;
+
 function buildPrompt(input: PlanningInput): string {
   return buildDomainSystemPrompt(input);
 }
@@ -108,6 +121,38 @@ export class GeminiPlanningProvider implements PlanningModelProvider {
     input: PlanningInput,
     options?: { readonly signal?: AbortSignal },
   ): Promise<PlanDraft> {
+    const parsed = await this.requestPlan(buildPrompt(input), PLAN_DRAFT_JSON_SCHEMA, options);
+    if (!isPlanDraft(parsed)) {
+      throw new AiProviderError("invalid_output", "Odpověď modelu neodpovídá kontraktu PlanDraft.");
+    }
+    return parsed;
+  }
+
+  async generateMonthlyPlan(
+    input: MonthlyPlanningInput,
+    boundary: MonthlyBoundaryData,
+    options?: { readonly signal?: AbortSignal },
+  ): Promise<MonthlyPlanDraft> {
+    const prompt = [
+      "Připrav jeden návrh směn pro celý zvolený kalendářní měsíc, včetně návazností na dodané okolní rozpisy.",
+      "Ranní 07:45–16:30, odpolední všední 13:15–21:00, víkendová 12:45–21:00.",
+      "Po šesti po sobě jdoucích pracovních dnech musí následovat 35 hodin odpočinku; při víkendové práci dva dny volna v témže týdnu (pondělí–neděle je předpoklad).",
+      "Respektuj schválené absence, dostupnost a zadané obsazení. Nevymýšlej další pravidla, limity ani zaměstnance.",
+      "Textové instrukce jsou pokyny, nikoli další tvrdá pravidla. V instructionsOutcome popiš, jak jsi s nimi naložil. Uveď chybějící podklady, předpoklady a alternativy. Rozpis neschvaluj.",
+      "Vstup a návaznosti jako JSON:", JSON.stringify({ input, boundary }),
+    ].join("\n");
+    const parsed = await this.requestPlan(prompt, MONTHLY_PLAN_SCHEMA, options);
+    if (!isMonthlyPlanDraft(parsed, input.month)) {
+      throw new AiProviderError("invalid_output", "Odpověď neodpovídá požadovanému měsíci nebo kontraktu.");
+    }
+    return parsed;
+  }
+
+  private async requestPlan(
+    prompt: string,
+    responseSchema: typeof PLAN_DRAFT_JSON_SCHEMA | typeof MONTHLY_PLAN_SCHEMA,
+    options?: { readonly signal?: AbortSignal },
+  ): Promise<unknown> {
     if (!this.apiKey) {
       throw new AiProviderError(
         "not_configured",
@@ -117,10 +162,10 @@ export class GeminiPlanningProvider implements PlanningModelProvider {
 
     const url = `${this.baseUrl}/v1beta/models/${encodeURIComponent(this.model)}:generateContent`;
     const body = {
-      contents: [{ role: "user", parts: [{ text: buildPrompt(input) }] }],
+      contents: [{ role: "user", parts: [{ text: prompt }] }],
       generationConfig: {
         responseMimeType: "application/json",
-        responseSchema: PLAN_DRAFT_JSON_SCHEMA,
+        responseSchema,
         temperature: 0.3,
       },
     };
@@ -193,10 +238,6 @@ export class GeminiPlanningProvider implements PlanningModelProvider {
       parsed = JSON.parse(text);
     } catch {
       throw new AiProviderError("invalid_output", "Odpověď modelu není platný JSON.");
-    }
-
-    if (!isPlanDraft(parsed)) {
-      throw new AiProviderError("invalid_output", "Odpověď modelu neodpovídá kontraktu PlanDraft.");
     }
 
     return parsed;

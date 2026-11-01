@@ -375,6 +375,10 @@ export function isSupportedDemoWeek(weekStart: Date): boolean {
   );
 }
 
+export function demoRosterForWeek(weekStart: Date): DemoEmployee[] {
+  return isSupportedDemoWeek(weekStart) ? DEMO_EMPLOYEES : [];
+}
+
 export const CZECH_DAYS = ["Po", "Út", "St", "Čt", "Pá", "So", "Ne"];
 
 export function addDays(date: Date, days: number): Date {
