@@ -87,13 +87,6 @@ export function LoginForm({
         </button>
       </form>
 
-      {!authConfigured ? (
-        <p className="form-notice form-notice--visible" role="alert">
-          <strong>Přihlášení není nakonfigurované.</strong> Obraťte se na
-          správce aplikace.
-        </p>
-      ) : null}
-
       {error ? (
         <p className="form-notice form-notice--visible" role="alert">
           <strong>Přihlášení se nepodařilo.</strong> Zkontrolujte údaje a
