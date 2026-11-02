@@ -7,7 +7,6 @@ import { useEffect, useRef, useState, type ReactNode } from "react";
 import { Icon, type IconName } from "@/components/icons";
 import { Avatar } from "@/components/ui/avatar";
 import { BrandMark } from "@/components/ui/brand-mark";
-import { DEMO_ALERTS } from "@/lib/demo-data";
 import { shouldInitiallyOpenFutureFeatures } from "@/lib/navigation";
 
 type NavItem = {
@@ -22,7 +21,7 @@ const NAV_ITEMS: NavItem[] = [
   { href: "/", label: "Přehled", icon: "dashboard" },
   { href: "/planovani", label: "Rozpis směn", icon: "calendar" },
   { href: "/zamestnanci", label: "Zaměstnanci", icon: "users" },
-  { href: "/pozadavky", label: "Požadavky", icon: "clipboard", badge: "12" },
+  { href: "/pozadavky", label: "Požadavky", icon: "clipboard" },
   { href: "/dovolene", label: "Dovolené a absence", icon: "umbrella" },
   { href: "/pravidla", label: "Pravidla", icon: "shield" },
   { href: "/analyzy", label: "Analýzy", icon: "chart" },
@@ -31,9 +30,7 @@ const NAV_ITEMS: NavItem[] = [
   { href: "/nastaveni", label: "Nastavení", icon: "settings" },
 ];
 
-const ALERT_COUNT = DEMO_ALERTS.length;
-
-type Panel = "alerts" | "user" | null;
+type Panel = "user" | null;
 
 type AppShellUser = {
   readonly name?: string | null;
@@ -233,48 +230,9 @@ export function AppShell({
           </button>
 
           <span className="topbar__title">{titleFor(pathname)}</span>
-          <span className="demo-pill" title="Ukázková data, nikoli skutečný provoz">
-            Demo
-          </span>
-
           <span className="topbar__spacer" />
 
           <div className="topbar__actions">
-            <div className="popover-wrap" data-popover-root>
-              <button
-                type="button"
-                className="icon-btn"
-                aria-label={`Upozornění (demo), ${ALERT_COUNT} typy`}
-                aria-expanded={panel === "alerts"}
-                onClick={() =>
-                  setPanel((value) => (value === "alerts" ? null : "alerts"))
-                }
-              >
-                <Icon name="bell" width={19} height={19} />
-                <span className="icon-btn__count" aria-hidden="true">
-                  {ALERT_COUNT}
-                </span>
-              </button>
-
-              {panel === "alerts" ? (
-                <div className="popover" role="dialog" aria-label="Upozornění">
-                  <p className="popover__title">Upozornění (demo)</p>
-                  {DEMO_ALERTS.map((alert) => (
-                    <div className="popover__item" key={alert.label}>
-                      <span className="popover__dot" aria-hidden="true" />
-                      <span className="popover__item-text">{alert.label}</span>
-                      <span className="popover__count">{alert.count}</span>
-                    </div>
-                  ))}
-                  <p className="popover__note">
-                    Ukázková data. Nejde o skutečná upozornění.
-                  </p>
-                </div>
-              ) : null}
-            </div>
-
-            <span className="topbar__divider" aria-hidden="true" />
-
             <div className="popover-wrap" data-popover-root>
               <button
                 type="button"

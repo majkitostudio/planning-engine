@@ -218,7 +218,7 @@ export function AccountManagement({ initialAccounts }: { initialAccounts: Accoun
         {loading ? <p role="status">Načítám účty…</p> : null}
         {!loading && accounts.length === 0 ? <p>V databázi zatím nejsou žádné účty.</p> : null}
         {!loading && accounts.length > 0 ? (
-          <div className="table-wrap">
+          <div className="table-wrap account-table-wrap">
             <table className="staffing-settings-table">
               <thead>
                 <tr><th scope="col">Uživatel</th><th scope="col">Role</th><th scope="col">Stav</th><th scope="col">Heslo</th><th scope="col">Akce</th></tr>
@@ -234,20 +234,20 @@ export function AccountManagement({ initialAccounts }: { initialAccounts: Accoun
                         <input id={`name-${account.id}`} className="input" value={draft.displayName} maxLength={120} onChange={(event) => updateDraft(account.id, { displayName: event.target.value })} />
                         <span className="small muted">{account.email}</span>
                       </th>
-                      <td>
+                      <td data-label="Role">
                         <label className="sr-only" htmlFor={`role-${account.id}`}>Role {account.email}</label>
                         <select id={`role-${account.id}`} className="input" value={draft.role} onChange={(event) => updateDraft(account.id, { role: event.target.value as Account["role"] })}>
                           <option value="manager">Manager</option><option value="viewer">Viewer</option>
                         </select>
                       </td>
-                      <td>
+                      <td data-label="Stav">
                         <label className="sr-only" htmlFor={`active-${account.id}`}>Stav {account.email}</label>
                         <select id={`active-${account.id}`} className="input" value={String(draft.active)} onChange={(event) => updateDraft(account.id, { active: event.target.value === "true" })}>
                           <option value="true">Aktivní</option><option value="false">Deaktivovaný</option>
                         </select>
                       </td>
-                      <td>{account.mustChangePassword ? "Vyžaduje změnu" : "Bez vynucené změny"}</td>
-                      <td>
+                      <td data-label="Heslo">{account.mustChangePassword ? "Vyžaduje změnu" : "Bez vynucené změny"}</td>
+                      <td data-label="Akce">
                         <div className="settings-form__actions">
                           <button className="btn btn--secondary" type="button" disabled={saving} onClick={() => void saveAccount(account)}>Uložit</button>
                           <button className="btn btn--secondary" type="button" disabled={saving || !account.active} onClick={() => void resetPassword(account)}>Resetovat heslo</button>

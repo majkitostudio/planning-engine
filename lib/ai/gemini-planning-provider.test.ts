@@ -150,4 +150,38 @@ describe("GeminiPlanningProvider", () => {
     await provider.generatePlan(makeInput());
     expect(String(fetchMock.mock.calls[0][0])).toContain("gemini-2.5-flash-lite:generateContent");
   });
+
+  it("posílá měsíční vstup bez skutečných jmen a interních ID a ID návrhu obnoví až lokálně", async () => {
+    const realId = "local-employee-record-9281";
+    const realName = "Testovaci Zamestnanec";
+    let requestBody = "";
+    globalThis.fetch = vi.fn().mockImplementation(async (_url, init) => {
+      requestBody = (init as RequestInit).body as string;
+      return { ok: true, json: async () => ({ candidates: [{ content: { parts: [{ text: JSON.stringify({
+        month: "2026-11", instructionsOutcome: "Pokyn zohledněn.",
+        assignments: [{ employeeId: "employee_1", date: "2026-11-01", shiftKind: "morning" }],
+        explanations: [{ topic: "assignment", text: "Přiřazení", employeeIds: ["employee_1"] }],
+        alternatives: [{ id: "alt-1", summary: "Alternativa", impact: "Bez dopadu", assignments: [{ employeeId: "employee_1", date: "2026-11-02", shiftKind: "afternoon" }] }],
+        assumptions: [],
+      }) }] } }] }) };
+    }) as unknown as typeof fetch;
+
+    const provider = new GeminiPlanningProvider({ apiKey: "k" });
+    const draft = await provider.generateMonthlyPlan({
+      month: "2026-11",
+      employees: [{ id: realId, displayName: realName, employmentType: "full_time" }],
+      absences: [{ id: "absence-real-id", employeeId: realId, from: "2026-11-03", to: "2026-11-04", type: "vacation", status: "approved" }],
+      availability: [{ employeeId: realId, date: "2026-11-01", shiftKind: "morning", available: true }],
+      staffingRequirements: [{ date: "2026-11-01", shiftKind: "morning", requiredEmployees: 1 }],
+      instructions: `Zohledni ${realName} (${realId}).`,
+    }, { before: { complete: true, assignments: [{ employeeId: realId, date: "2026-10-31", shiftKind: "morning" }] }, after: { complete: false, assignments: [] } });
+
+    expect(requestBody).not.toContain(realName);
+    expect(requestBody).not.toContain(realId);
+    expect(requestBody).not.toContain("absence-real-id");
+    expect(requestBody).toContain("employee_1");
+    expect(draft.assignments[0].employeeId).toBe(realId);
+    expect(draft.explanations[0].employeeIds).toEqual([realId]);
+    expect(draft.alternatives[0].assignments[0].employeeId).toBe(realId);
+  });
 });

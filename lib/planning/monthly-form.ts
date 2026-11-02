@@ -14,6 +14,36 @@ export interface MonthlyFormData {
   readonly instructions: string;
 }
 
+export interface MonthlyFormReadiness {
+  readonly month: string;
+  readonly employeeCount: number;
+  readonly allMonthAvailableCount: number;
+  readonly absenceCount: number;
+  readonly availabilityCount: number;
+  readonly filledStaffingCount: number;
+  readonly missing: readonly string[];
+}
+
+/** Souhrn povinných polí před odesláním celoměsíčního návrhu. */
+export function monthlyFormReadiness(form: MonthlyFormData): MonthlyFormReadiness {
+  const missing: string[] = [];
+  if (!/^\d{4}-(0[1-9]|1[0-2])$/.test(form.month)) missing.push("Vyberte platný kalendářní měsíc.");
+  if (form.employees.length === 0) missing.push("Přidejte alespoň jednoho zaměstnance.");
+  const filledStaffingCount = form.staffing.filter((value) => /^\d+$/.test(value) && Number.isSafeInteger(Number(value))).length;
+  if (form.staffing.length !== 14 || filledStaffingCount !== 14) missing.push("Vyplňte požadované obsazení pro všech 7 dnů a obě směny.");
+  const prepared = buildMonthlyFormInput(form);
+  if (!prepared.ok && !missing.includes(prepared.message)) missing.push(prepared.message);
+  return {
+    month: form.month,
+    employeeCount: form.employees.length,
+    allMonthAvailableCount: form.employees.filter((employee) => employee.availableAllMonth).length,
+    absenceCount: form.absences.length,
+    availabilityCount: form.availability.length,
+    filledStaffingCount,
+    missing: [...new Set(missing)],
+  };
+}
+
 export function staffingFormValues(settings: readonly StaffingSetting[] | null): string[] {
   return Array.from({ length: 14 }, (_, index) => {
     const item = settings?.find((setting) => setting.dayOfWeek === Math.floor(index / 2) && setting.shiftKind === (index % 2 === 0 ? "morning" : "afternoon"));

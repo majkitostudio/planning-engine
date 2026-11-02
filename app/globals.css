@@ -1256,6 +1256,23 @@ textarea {
   text-align: right;
 }
 
+.account-table-wrap { overflow-x: visible; }
+
+@media (max-width: 720px) {
+  .account-table-wrap .staffing-settings-table,
+  .account-table-wrap .staffing-settings-table tbody { display: block; }
+  .account-table-wrap .staffing-settings-table thead { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; }
+  .account-table-wrap .staffing-settings-table tr { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; margin: 12px; padding: 14px; border: 1px solid var(--border); border-radius: 10px; background: var(--surface-2); }
+  .account-table-wrap .staffing-settings-table tbody th,
+  .account-table-wrap .staffing-settings-table tbody td { display: grid; min-width: 0; align-content: start; gap: 5px; padding: 0; border: 0; text-align: left !important; }
+  .account-table-wrap .staffing-settings-table tbody th { grid-column: 1 / -1; }
+  .account-table-wrap .staffing-settings-table tbody td[data-label="Akce"] { grid-column: 1 / -1; }
+  .account-table-wrap .staffing-settings-table tbody td::before { content: attr(data-label); color: var(--muted); font-size: 11px; font-weight: 700; }
+  .account-table-wrap .staffing-settings-table .input { width: 100%; min-height: 44px; }
+  .account-table-wrap .settings-form__actions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; padding: 0; border: 0; }
+  .account-table-wrap .btn { min-height: 44px; }
+}
+
 .roster {
   width: 100%;
   border-collapse: separate;
@@ -2210,6 +2227,83 @@ textarea {
   .topbar {
     padding: 0 14px;
   }
+}
+
+/* Souhrnný přehled bez vymyšlených provozních metrik. */
+.dashboard-layout > .card { min-width: 0; }
+.dashboard-links { display: grid; gap: 2px; margin: 0; padding: 0; list-style: none; }
+.dashboard-links a { display: flex; min-height: 44px; align-items: center; justify-content: space-between; gap: 12px; padding: 8px 10px; border-radius: 6px; color: var(--ink-2); text-decoration: none; }
+.dashboard-links a:hover { background: var(--surface-2); color: var(--ink); }
+.dashboard-links a:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+/* Postupný měsíční formulář. */
+.monthly-form-heading { display: flex; align-items: start; justify-content: space-between; gap: 12px; }
+.monthly-form-heading h2 { margin: 0; }
+.monthly-step-count { flex: 0 0 auto; color: var(--muted); font-size: 12px; }
+.monthly-progress { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 6px; margin: 8px 0; }
+.monthly-progress__step { display: grid; min-width: 0; min-height: 48px; grid-template-columns: 28px minmax(0, 1fr); align-items: center; gap: 7px; padding: 6px 8px; border: 1px solid var(--border); border-radius: 7px; background: var(--surface); color: var(--muted); text-align: left; cursor: pointer; }
+.monthly-progress__step[aria-current="step"] { border-color: var(--accent-border); background: var(--accent-soft); color: var(--ink); }
+.monthly-progress__number { display: grid; width: 26px; height: 26px; place-items: center; border: 1px solid currentColor; border-radius: 50%; font-size: 12px; font-weight: 700; }
+.monthly-progress__label { overflow-wrap: anywhere; font-size: 11px; line-height: 1.25; }
+.monthly-planning-panel fieldset { display: grid; align-items: stretch; gap: 14px; }
+.monthly-planning-panel legend { max-width: 100%; }
+.monthly-planning-panel .input { min-width: 0; min-height: 44px; }
+.monthly-planning-panel button { min-height: 44px; }
+.monthly-planning-panel button:focus-visible,
+.monthly-planning-panel input:focus-visible,
+.monthly-planning-panel select:focus-visible,
+.monthly-planning-panel textarea:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.monthly-form-actions { display: flex; align-items: center; flex-wrap: wrap; gap: 10px; }
+.monthly-form-actions > label,
+.monthly-entry-grid > label,
+.monthly-block-label { display: grid; flex: 1 1 190px; gap: 6px; }
+.monthly-inline-field { display: grid; grid-template-columns: minmax(130px, .7fr) minmax(0, 1.4fr) auto; align-items: end; gap: 10px; }
+.monthly-inline-field > label,
+.monthly-inline-field > label + input { min-width: 0; }
+.monthly-inline-field > label { grid-column: 1 / -1; }
+.monthly-entry-list { display: grid; gap: 8px; margin: 0; padding: 0; list-style: none; }
+.monthly-entry-list li { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 10px 12px; border: 1px solid var(--border); border-radius: 7px; background: var(--surface); }
+.monthly-entry-list li > span:first-child { min-width: 0; overflow-wrap: anywhere; }
+.monthly-checkbox { display: flex !important; margin-top: 5px; }
+.monthly-entry-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+.monthly-staffing-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 9px; }
+.monthly-staffing-day { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; padding: 10px; border: 1px solid var(--border); border-radius: 7px; background: var(--surface); }
+.monthly-staffing-day > strong { grid-column: 1 / -1; }
+.monthly-staffing-day label { display: grid !important; gap: 5px !important; }
+.monthly-staffing-day input { width: 100% !important; }
+.monthly-review-summary { display: grid; gap: 12px; }
+.monthly-review-summary h3 { margin: 0; font-size: 17px; }
+.monthly-review-summary dl { display: grid; gap: 0; margin: 0; }
+.monthly-review-summary dl > div { display: flex; justify-content: space-between; gap: 12px; padding: 8px 0; border-bottom: 1px solid var(--border); }
+.monthly-review-summary dt { color: var(--muted); }
+.monthly-review-summary dd { margin: 0; text-align: right; }
+.monthly-missing { padding: 10px 12px; border: 1px solid var(--amber-border); border-radius: 7px; background: var(--amber-soft); }
+.monthly-missing ul { margin: 6px 0 0; padding-left: 20px; }
+.monthly-ready,.monthly-muted { color: var(--muted); }
+.monthly-advisory { padding: 10px 12px; border-left: 3px solid var(--accent); background: var(--surface); }
+.monthly-step-controls { display: flex; justify-content: space-between; gap: 10px; }
+.monthly-error { padding: 10px 12px; border: 1px solid var(--red-border); border-radius: 6px; background: var(--red-soft); }
+.month-strip__nav { flex-basis: 44px; min-width: 44px; }
+
+@media (max-width: 720px) {
+  .monthly-progress { grid-template-columns: repeat(5, minmax(52px, 1fr)); overflow-x: auto; padding: 2px 2px 8px; }
+  .monthly-progress__step { grid-template-columns: 1fr; justify-items: center; text-align: center; }
+  .monthly-progress__label { display: none; }
+  .monthly-entry-grid { grid-template-columns: 1fr; }
+  .monthly-staffing-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .monthly-inline-field { grid-template-columns: minmax(0, 1fr) auto; }
+  .monthly-inline-field > label { grid-column: 1 / -1; }
+  .monthly-entry-list li { align-items: start; }
+}
+
+@media (max-width: 420px) {
+  .monthly-planning-panel { padding: 14px 12px; }
+  .monthly-form-heading { display: grid; }
+  .monthly-staffing-grid { grid-template-columns: 1fr; }
+  .monthly-staffing-day { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .monthly-review-summary dl > div { display: grid; gap: 3px; }
+  .monthly-review-summary dd { text-align: left; }
+  .monthly-form-actions > .btn { flex: 1 1 100%; }
 }
 
 /* Společné povrchy pro všechny sekce včetně přihlášení. */

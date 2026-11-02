@@ -25,7 +25,7 @@ export function LoginForm({
           : "microsoft-entra-id",
         {
           ...(authMode === "local" || authMode === "database" ? { email, password } : {}),
-          callbackUrl: "/",
+          callbackUrl: "/planovani",
           redirect: false,
         },
       );

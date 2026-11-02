@@ -25,6 +25,50 @@ export interface GeminiPlanningProviderOptions {
   readonly timeoutMs?: number;
 }
 
+function anonymizeMonthlyInput(input: MonthlyPlanningInput) {
+  const aliases = new Map(input.employees.map((employee, index) => [employee.id, `employee_${index + 1}`]));
+  let instructions = input.instructions;
+  for (const employee of input.employees) {
+    const name = employee.displayName.trim();
+    if (name) {
+      const normalizedNamePattern = name.split(/\s+/).map((part) => part.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")).join("\\s+");
+      instructions = instructions.replace(new RegExp(normalizedNamePattern, "gi"), "[zaměstnanec]");
+    }
+    instructions = instructions.replace(new RegExp(employee.id.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "g"), `[${aliases.get(employee.id)}]`);
+  }
+  return {
+    aliases,
+    input: {
+      ...input,
+      employees: input.employees.map((employee) => ({
+        id: aliases.get(employee.id)!,
+        displayName: `Zaměstnanec ${aliases.get(employee.id)!.slice("employee_".length)}`,
+        employmentType: employee.employmentType,
+      })),
+      absences: input.absences.map((absence, index) => ({ ...absence, id: `absence_${index + 1}`, employeeId: aliases.get(absence.employeeId)! })),
+      availability: input.availability.map((item) => ({ ...item, employeeId: aliases.get(item.employeeId)! })),
+      instructions,
+    },
+    boundary: (value: MonthlyBoundaryData): MonthlyBoundaryData => ({
+      before: { ...value.before, assignments: value.before.assignments.map((item) => ({ ...item, employeeId: aliases.get(item.employeeId) ?? "unknown_employee" })) },
+      after: { ...value.after, assignments: value.after.assignments.map((item) => ({ ...item, employeeId: aliases.get(item.employeeId) ?? "unknown_employee" })) },
+    }),
+  };
+}
+
+function restoreMonthlyEmployeeIds(draft: MonthlyPlanDraft, aliases: ReadonlyMap<string, string>): MonthlyPlanDraft {
+  const restoreAssignment = <T extends { readonly employeeId: string }>(assignment: T): T => ({ ...assignment, employeeId: aliases.get(assignment.employeeId) ?? assignment.employeeId });
+  return {
+    ...draft,
+    assignments: draft.assignments.map(restoreAssignment),
+    explanations: draft.explanations.map((explanation) => ({
+      ...explanation,
+      ...(explanation.employeeIds ? { employeeIds: explanation.employeeIds.map((id) => aliases.get(id) ?? id) } : {}),
+    })),
+    alternatives: draft.alternatives.map((alternative) => ({ ...alternative, assignments: alternative.assignments.map(restoreAssignment) })),
+  };
+}
+
 const PLAN_DRAFT_JSON_SCHEMA = {
   type: "object",
   properties: {
@@ -133,19 +177,20 @@ export class GeminiPlanningProvider implements PlanningModelProvider {
     boundary: MonthlyBoundaryData,
     options?: { readonly signal?: AbortSignal },
   ): Promise<MonthlyPlanDraft> {
+    const anonymized = anonymizeMonthlyInput(input);
     const prompt = [
       "Připrav jeden návrh směn pro celý zvolený kalendářní měsíc, včetně návazností na dodané okolní rozpisy.",
       "Ranní 07:45–16:30, odpolední všední 13:15–21:00, víkendová 12:45–21:00.",
       "Po šesti po sobě jdoucích pracovních dnech musí následovat 35 hodin odpočinku; při víkendové práci dva dny volna v témže týdnu (pondělí–neděle je předpoklad).",
       "Respektuj schválené absence, dostupnost a zadané obsazení. Nevymýšlej další pravidla, limity ani zaměstnance.",
       "Textové instrukce jsou pokyny, nikoli další tvrdá pravidla. V instructionsOutcome popiš, jak jsi s nimi naložil. Uveď chybějící podklady, předpoklady a alternativy. Rozpis neschvaluj.",
-      "Vstup a návaznosti jako JSON:", JSON.stringify({ input, boundary }),
+      "Vstup a návaznosti jako anonymizovaný JSON. Použij pouze anonymní identifikátory zaměstnanců:", JSON.stringify({ input: anonymized.input, boundary: anonymized.boundary(boundary) }),
     ].join("\n");
     const parsed = await this.requestPlan(prompt, MONTHLY_PLAN_SCHEMA, options);
     if (!isMonthlyPlanDraft(parsed, input.month)) {
       throw new AiProviderError("invalid_output", "Odpověď neodpovídá požadovanému měsíci nebo kontraktu.");
     }
-    return parsed;
+    return restoreMonthlyEmployeeIds(parsed, new Map([...anonymized.aliases].map(([realId, alias]) => [alias, realId])));
   }
 
   private async requestPlan(

@@ -7,16 +7,10 @@ import { MonthlyRosterTable } from "@/components/plan/monthly-roster-table";
 import { Avatar } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { EmptyState } from "@/components/ui/empty-state";
-import { StatCard } from "@/components/ui/stat-card";
 import {
   DEMO_ABSENCES,
-  DEMO_ALERTS,
   DEMO_EMPLOYEES,
-  DEMO_FREQUENT,
-  DEMO_OVERVIEW,
   DEMO_REQUESTS,
-  DEMO_STATS,
-  DEMO_WEEK_START,
   CZECH_DAYS,
   SHIFT_META,
   addDays,
@@ -32,8 +26,8 @@ import { selectMonthlyView } from "@/lib/planning/monthly-view";
 
 const TABS = [
   { key: "smeny", label: "Směny" },
-  { key: "pozadavky", label: "Požadavky", count: 12 },
-  { key: "absence", label: "Absence", count: 3 },
+  { key: "pozadavky", label: "Požadavky" },
+  { key: "absence", label: "Absence" },
   { key: "zamestnanci", label: "Zaměstnanci" },
 ] as const;
 
@@ -52,6 +46,16 @@ function monthKey(date: Date): string {
   return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
 }
 
+function currentMonthStart(): Date {
+  const now = new Date();
+  return new Date(now.getFullYear(), now.getMonth(), 1);
+}
+
+function initialWeekStart(): Date {
+  const first = currentMonthStart();
+  return addDays(first, -((first.getDay() + 6) % 7));
+}
+
 interface PlanWorkspaceProps {
   runtime: PlanningRuntime;
   canManage: boolean;
@@ -63,15 +67,15 @@ export function PlanWorkspace({
   canManage,
   initialStaffing,
 }: PlanWorkspaceProps) {
-  const [weekStart, setWeekStart] = useState<Date>(() => DEMO_WEEK_START);
-  const [visibleMonth, setVisibleMonth] = useState<Date>(() => DEMO_WEEK_START);
+  const [weekStart, setWeekStart] = useState<Date>(() => initialWeekStart());
+  const [visibleMonth, setVisibleMonth] = useState<Date>(() => currentMonthStart());
   const [tab, setTab] = useState<TabKey>("smeny");
   const [query, setQuery] = useState("");
   const [shiftFilter, setShiftFilter] = useState<"all" | ShiftKind>("all");
   const [draftViews, setDraftViews] = useState<Record<string, MonthlyView>>({});
   const [confirmedViews, setConfirmedViews] = useState<Record<string, MonthlyView | null>>({});
   const [loadErrors, setLoadErrors] = useState<Record<string, boolean>>({});
-  const [visitedMonths, setVisitedMonths] = useState<string[]>(() => [monthKey(DEMO_WEEK_START)]);
+  const [visitedMonths, setVisitedMonths] = useState<string[]>(() => [monthKey(currentMonthStart())]);
 
   const weekDates = useMemo(() => getWeekDates(weekStart), [weekStart]);
   const monthTitle = new Intl.DateTimeFormat("cs-CZ", {
@@ -212,7 +216,7 @@ export function PlanWorkspace({
       <details className="schedule-details">
         <summary>
           <Icon name="chevronRight" width={18} height={18} />
-          Filtry, další přehledy a upozornění
+          Filtry a doplňující ukázkové přehledy
         </summary>
       <div className="layout-2col">
         <div className="plan-main">
@@ -233,9 +237,6 @@ export function PlanWorkspace({
                     onKeyDown={(event) => onTabKeyDown(event, index)}
                   >
                     {item.label}
-                    {"count" in item ? (
-                      <span className="tab__count">{item.count}</span>
-                    ) : null}
                   </button>
                 ))}
               </div>
@@ -288,7 +289,7 @@ export function PlanWorkspace({
               </label>
               <span className="table-toolbar__meta" aria-live="polite">
                 {tab === "smeny"
-                  ? `${filteredEmployees.length} z ${DEMO_EMPLOYEES.length} zaměstnanců`
+                  ? `${filteredEmployees.length} výsledků v syntetickém seznamu`
                   : null}
               </span>
             </div>
@@ -338,8 +339,7 @@ export function PlanWorkspace({
                   />
                 )}
                 <p className="table-note">
-                  Ukázková data · seznam není vázán na zvolený týden · nejde o
-                  skutečné požadavky zaměstnanců.
+                  Syntetické ukázkové požadavky · nejsou načtené z uložených záznamů.
                 </p>
               </div>
             ) : null}
@@ -374,8 +374,7 @@ export function PlanWorkspace({
                   />
                 )}
                 <p className="table-note">
-                  Ukázková data · seznam není vázán na zvolený týden · nejde o
-                  skutečné absence.
+                  Syntetické ukázkové absence · nejsou načtené z uložených záznamů.
                 </p>
               </div>
             ) : null}
@@ -409,151 +408,31 @@ export function PlanWorkspace({
                   />
                 )}
                 <p className="table-note">
-                  Ukázkový seznam · nejde o skutečné zaměstnance.
+                  Syntetický ukázkový seznam · skutečné záznamy se spravují samostatně.
                 </p>
               </div>
             ) : null}
           </div>
 
           <div className="footer-status">
-            <span>Ukázková data · neproběhl skutečný výpočet</span>
+            <span>Rozpis se zobrazuje z měsíčního návrhu; tato obrazovka nespouští nový výpočet.</span>
             <span className="footer-status__right">
               <span className="footer-status__dot footer-status__dot--amber" aria-hidden="true" />
-              Jádro je hotové, UI napojené na orchestrátor (Fáze 2)
+              Souvislý měsíční průchod: NOT VERIFIED
             </span>
           </div>
         </div>
 
-        <aside className="plan-rail" aria-label="Přehledy a upozornění">
-          <section className="card" aria-labelledby="rail-overview">
-            <div className="card__head">
-              <div>
-                <h2 className="card__title" id="rail-overview">
-                  Rychlý přehled
-                </h2>
-                <p className="card__sub">Ukázkové souhrny</p>
-              </div>
-              <span className="card__head-icon" aria-hidden="true">
-                <Icon name="dashboard" width={18} height={18} />
-              </span>
-            </div>
-            <div className="rail-list">
-              {DEMO_OVERVIEW.map((row) => (
-                <div className="rail-row" key={row.label}>
-                  <span
-                    className={`rail-row__icon rail-row__icon--${row.tone}`}
-                    aria-hidden="true"
-                  >
-                    <Icon name={row.icon} width={15} height={15} />
-                  </span>
-                  <span className="rail-row__label">{row.label}</span>
-                  <span className="rail-row__value">{row.value}</span>
-                  {row.delta ? (
-                    <span className={`rail-row__delta delta--${row.trend}`}>
-                      {row.delta}
-                    </span>
-                  ) : (
-                    <span className="rail-row__arrow" aria-hidden="true">
-                      <Icon name="chevronRight" width={15} height={15} />
-                    </span>
-                  )}
-                </div>
-              ))}
-            </div>
-          </section>
-
-          <section
-            className="card card--alert"
-            id="upozorneni"
-            aria-labelledby="rail-alerts"
-          >
-            <div className="card__head">
-              <div>
-                <h2 className="card__title" id="rail-alerts">
-                  Aktuální upozornění
-                </h2>
-                <p className="card__sub">Ukázková data</p>
-              </div>
-              <Badge variant="danger" dot={false}>
-                7
-              </Badge>
-            </div>
-            <div className="alert-list">
-              {DEMO_ALERTS.map((alert) => (
-                <div className="alert-item" key={alert.label}>
-                  <Icon name="alert" width={15} height={15} />
-                  <span className="alert-item__label">{alert.label}</span>
-                  <span className="alert-item__count">{alert.count}</span>
-                </div>
-              ))}
-            </div>
-          </section>
-
-          <section className="card" aria-labelledby="rail-frequent">
-            <div className="card__head">
-              <div>
-                <h2 className="card__title" id="rail-frequent">
-                  Nejčastější požadavky
-                </h2>
-                <p className="card__sub">Ukázkové souhrny</p>
-              </div>
-              <span className="card__head-icon" aria-hidden="true">
-                <Icon name="users" width={18} height={18} />
-              </span>
-            </div>
-            <div className="rail-list">
-              {DEMO_FREQUENT.map((row) => (
-                <div className="rail-row" key={row.label}>
-                  <span
-                    className={`rail-row__icon rail-row__icon--${row.tone}`}
-                    aria-hidden="true"
-                  >
-                    <Icon name={row.icon} width={15} height={15} />
-                  </span>
-                  <span className="rail-row__label">{row.label}</span>
-                  <span className="rail-row__value">{row.value}</span>
-                  <span className={`rail-row__delta delta--${row.trend}`}>
-                    {row.delta}
-                  </span>
-                </div>
-              ))}
-            </div>
-          </section>
-
-          <section className="ai-card" aria-labelledby="rail-ai">
-            <div className="ai-card__head">
-              <span className="ai-card__icon" aria-hidden="true">
-                <Icon name="sparkles" width={16} height={16} />
-              </span>
-              <h2 className="ai-card__title" id="rail-ai">
-                Plánovací asistent
-              </h2>
-              <Badge variant={runtime.configured ? "success" : "warning"} dot={false}>
-                {runtime.configured ? "Aktivní" : "Nekonfigurovaný"}
-              </Badge>
-            </div>
-            <p className="ai-card__text">
-              {runtime.configured
-                ? `${runtime.mode === "simulated" ? "Ukázka používá připravená data" : "Reálné volání Gemini (NOT VERIFIED)"}. Měsíční návrh připravíte ve formuláři výše.`
-                : "Měsíční návrh zatím není nakonfigurovaný. Formulář výše zůstává dostupný pro přípravu vstupů."}
-            </p>
-          </section>
-        </aside>
-      </div>
-
-      <div className="stat-grid">
-        {DEMO_STATS.map((stat) => (
-          <StatCard
-            key={stat.key}
-            icon={stat.icon}
-            tone={stat.tone}
-            label={stat.label}
-            value={stat.value}
-            meta={stat.meta}
-            trend={stat.trend}
-            detailHref={stat.detail ? "#upozorneni" : undefined}
-          />
-        ))}
+        <aside className="plan-rail" aria-label="Stav plánovacího asistenta">
+        <section className="ai-card" aria-labelledby="rail-ai">
+          <div className="ai-card__head">
+            <span className="ai-card__icon" aria-hidden="true"><Icon name="sparkles" width={16} height={16} /></span>
+            <h2 className="ai-card__title" id="rail-ai">Plánovací asistent</h2>
+            <Badge variant={runtime.configured ? "success" : "warning"} dot={false}>{runtime.configured ? (runtime.mode === "simulated" ? "Simulovaný režim" : "AI nakonfigurována · neověřeno") : "Nekonfigurováno"}</Badge>
+          </div>
+          <p className="ai-card__text">{runtime.configured ? (runtime.mode === "simulated" ? "Návrh používá simulované scénáře; nejde o skutečné plánování AI." : "Měsíční návrh lze odeslat nakonfigurované AI. Kvalita výstupu pro provoz není ověřená.") : "Měsíční návrh zatím nelze vytvořit. Formulář zůstává dostupný pro přípravu vstupů."}</p>
+        </section>
+      </aside>
       </div>
       </details>
     </div>

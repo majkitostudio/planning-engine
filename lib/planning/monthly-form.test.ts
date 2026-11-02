@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { buildMonthlyFormInput, staffingFormValues } from "./monthly-form";
+import { buildMonthlyFormInput, monthlyFormReadiness, staffingFormValues } from "./monthly-form";
 
 describe("vstupy měsíčního formuláře", () => {
   it("převede výslovnou dostupnost a týdenní obsazení na celý přestupný únor", () => {
@@ -15,6 +15,11 @@ describe("vstupy měsíčního formuláře", () => {
   it("nepovažuje nezadanou dostupnost ani chybějící obsazení za nulu", () => {
     const result = buildMonthlyFormInput({ month: "2026-11", employees: [{ id: "e1", name: "Test", availableAllMonth: false }], absences: [], availability: [], staffing: Array.from({ length: 14 }, () => ""), instructions: "" });
     expect(result.ok).toBe(false);
+  });
+  it("před vytvořením návrhu shrne měsíc, vstupy a chybějící povinné obsazení", () => {
+    const readiness = monthlyFormReadiness({ month: "2026-11", employees: [{ id: "e1", name: "Test", availableAllMonth: false }], absences: [], availability: [], staffing: ["0", ...Array.from({ length: 13 }, () => "")], instructions: "" });
+    expect(readiness).toMatchObject({ month: "2026-11", employeeCount: 1, allMonthAvailableCount: 0, absenceCount: 0, availabilityCount: 0, filledStaffingCount: 1 });
+    expect(readiness.missing).toContain("Vyplňte požadované obsazení pro všech 7 dnů a obě směny.");
   });
   it("přebírá uložené minimum včetně explicitní nuly a nedoplňuje chybějící profil svévolně", () => {
     expect(staffingFormValues([{ dayOfWeek: 0, shiftKind: "morning", requiredEmployees: 0 }, { dayOfWeek: 6, shiftKind: "afternoon", requiredEmployees: 9 }])).toEqual(["0", "", "", "", "", "", "", "", "", "", "", "", "", "9"]);
