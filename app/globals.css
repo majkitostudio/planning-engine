@@ -771,13 +771,15 @@ textarea {
   background: var(--accent-strong);
 }
 
-.btn--ghost {
+.btn--ghost,
+.btn--secondary {
   background: var(--surface);
   border-color: var(--border-strong);
   color: var(--ink-2);
 }
 
-.btn--ghost:hover {
+.btn--ghost:hover,
+.btn--secondary:hover {
   background: var(--surface-2);
 }
 

@@ -1,8 +1,8 @@
 # Aktuální stav a další kroky — Plánovací Engine
 
-> Stav zdokumentován 2. 11. 2026 podle aktuálního kódu a kontrol dokončených
-> v tomto kroku. Plný měsíční průchod a vizuální kontrola v prohlížeči ověřeny
-> nebyly.
+> Stav zdokumentován 3. 11. 2026 podle aktuálního kódu a kontrol dokončených
+> v tomto kroku. Vizuální kontrola rozpisu na desktopu a při šířce 390 px je
+> ověřena; hlavní měsíční průchod zůstává neověřen.
 > Význam stavových popisků vysvětluje [`docs/README.md`](README.md#stavové-popisky).
 
 ## Stav MVP
@@ -20,14 +20,18 @@ opětovné načtení potvrzeného rozpisu zatím není ověřen (`NOT VERIFIED`)
 | Gemini adaptér | `IMPLEMENTED`; kvalita měsíčního výstupu pro provoz `NOT VERIFIED` |
 | Ochrana údajů před Gemini | Anonymizace jmen a interních identifikátorů před odesláním `IMPLEMENTED`; unit test ověřil anonymní request a lokální obnovu ID |
 | Přihlášení a role | Lokální/Auth.js MVP přístup `IMPLEMENTED`; produkční autentizace `NOT VERIFIED`; Entra `PLANNED` |
-| Databáze a persistence | Prisma persistence `IMPLEMENTED`; lokální Docker ověření z dřívějšího pilotu je omezené na jeho tehdejší prostředí; současné připojení ani produkční databáze nejsou tímto krokem ověřeny (`NOT VERIFIED`) |
+| Přihlášení a čtení měsíčních dat | Lokální přihlášení a načtení měsíčních dat ověřeno v připojeném testovacím prostředí (`VERIFIED`); žádný návrh nebyl vytvořen ani potvrzen |
+| Databáze a persistence | Prisma persistence `IMPLEMENTED`; dřívější ověření lokální Docker DB platí pro tehdejší prostředí; produkční databáze `NOT VERIFIED` |
 | Přehledová stránka | Pevné neprovozní souhrny odstraněny; lint, typecheck a build prošly |
-| Mobilní účty a měsíční formulář | Úprava rozložení `IMPLEMENTED`; vizuální kontrola na úzké šířce `NOT VERIFIED`, lokální web odmítl spojení na `localhost:3012` |
+| Měsíční kalendář a formulář | Rozložení `IMPLEMENTED`; desktop a šířka 390 px vizuálně ověřeny (`VERIFIED`); styl sekundárních tlačítek opraven a ověřen; hlavní tok `NOT VERIFIED` |
+| Mobilní správa účtů | Úprava rozložení `IMPLEMENTED`; vizuální kontrola `NOT VERIFIED` |
 
-Závěrečné kontroly: `npm run lint`, `npm run typecheck`, `npm run test`
-(363 prošlo, 3 přeskočeny), `npm run build` a `npm run db:validate` prošly.
-Integrační testy Gemini a PostgreSQL nebyly spuštěny; nebyla otevřena databáze
-ani externí AI služba.
+Kontroly po poslední změně: `npm run lint`, `npm run typecheck`, `npm run test`
+(363 prošlo, 3 přeskočeny) a `npm run build` prošly. `npm run db:validate`
+prošel při předchozím ověřování; tato změna schématu Prisma se nedotkla.
+Integrační testy Gemini a PostgreSQL nebyly spuštěny. Přihlášení a načtení
+měsíčního endpointu proběhlo v připojeném lokálním testovacím prostředí; žádný
+návrh nebyl zapsán ani potvrzen.
 
 ## Rozlišení dat
 
@@ -46,16 +50,17 @@ ani externí AI služba.
 
 ## Další postup před hlavním průchodem
 
-1. Spustit rozhraní v potvrzeném lokálním testovacím prostředí a dokončit
-   vizuální kontrolu, která nyní nešla provést, protože `localhost:3012` odmítl
-   spojení.
-2. Na úzké šířce a desktopu ověřit kalendář měsíce, vícekrokový formulář,
-   obsazení směn, mobilní správu účtů, stavy chyb a viditelný fokus.
-3. Teprve potom naplánovat hlavní uživatelský průchod přes již nakonfigurované
-   prostředí. Před každým zápisem ověřit, že cílová databáze a měsíc jsou určené
-   pro test; nepoužít produkční služby ani skutečné údaje zaměstnanců pro AI.
-4. Samostatně zaznamenat, které části průchodu byly `VERIFIED`; simulovaný běh
-   nepotvrzuje kvalitu AI ani produkční připravenost.
+1. V Chrome byla ověřena měsíční osa a formulář při výchozí šířce i při 390 px.
+   Formulář se na mobilu skládá pod sebe a kalendář lze vodorovně posouvat.
+   Sekundární tlačítka nyní používají kontrastní barvy. V UI nebyl vybrán žádný
+   zaměstnanec a žádný plánovací zápis nebyl proveden.
+2. Následuje hlavní uživatelský průchod. Před vytvořením návrhu určit testovací
+   měsíc a potvrdit, že test používá vhodná data a provider. Skutečná jména
+   zaměstnanců se nesmějí odesílat externímu AI provideru; návrh se nesmí potvrdit
+   bez výslovného ověření cílového prostředí a výsledku.
+3. Samostatně zaznamenat, které části průchodu byly `VERIFIED`; simulovaný běh
+   nepotvrzuje kvalitu plánování AI ani produkční připravenost.
+4. Poté vizuálně projít mobilní správu účtů, chybové stavy a fokus klávesnice.
 
 ## Rozhodnutí, která zůstávají závazná
 
