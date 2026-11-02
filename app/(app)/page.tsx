@@ -6,8 +6,8 @@ import { DEMO_ALERTS, DEMO_FREQUENT, DEMO_STATS } from "@/lib/demo-data";
 
 const STEPS = [
   {
-    title: "Vyberte týden",
-    desc: "Jeden týden od pondělí do neděle, pro který se připraví rozpis.",
+    title: "Vyberte měsíc",
+    desc: "Jeden celý kalendářní měsíc, pro který se připraví rozpis.",
     status: "1. krok",
     variant: "info",
   },
@@ -48,7 +48,7 @@ export default function DashboardPage() {
           <div>
             <h1 className="page-head__title">Přehled</h1>
             <p className="page-head__sub">
-              Ukázka týdenního plánování směn pro managera. AI připraví návrh,
+              Ukázka měsíčního plánování směn pro managera. AI připraví návrh,
               systém ho zkontroluje a poslední rozhodnutí zůstává na člověku.
             </p>
           </div>

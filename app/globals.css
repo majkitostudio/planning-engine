@@ -1772,77 +1772,6 @@ textarea {
 }
 
 /* --------------------------------------------------------------------------
-   15. Operativní náhrady — syntetický pilot
-   -------------------------------------------------------------------------- */
-.replacement-options {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 12px;
-}
-
-.replacement-option {
-  display: block;
-  cursor: pointer;
-  min-width: 0;
-}
-
-.replacement-option > input {
-  position: absolute;
-  opacity: 0;
-  pointer-events: none;
-}
-
-.replacement-option__body {
-  display: flex;
-  flex-direction: column;
-  gap: 9px;
-  height: 100%;
-  padding: 14px;
-  border: 1px solid var(--border);
-  border-radius: 10px;
-  background: var(--surface);
-  color: var(--ink-2);
-  transition: border-color 120ms ease, box-shadow 120ms ease, background 120ms ease;
-}
-
-.replacement-option:hover .replacement-option__body,
-.replacement-option:focus-within .replacement-option__body {
-  border-color: var(--accent-border);
-}
-
-.replacement-option[data-selected="true"] .replacement-option__body {
-  border-color: var(--accent);
-  box-shadow: 0 0 0 2px var(--accent-soft);
-  background: #fbfdff;
-}
-
-.replacement-option__body strong {
-  color: var(--ink);
-}
-
-.replacement-option__facts {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  font-size: 12px;
-}
-
-.replacement-option__changes {
-  display: flex;
-  flex-direction: column;
-  gap: 5px;
-  padding-top: 8px;
-  border-top: 1px solid var(--border);
-  font-size: 11.5px;
-}
-
-@media (max-width: 980px) {
-  .replacement-options {
-    grid-template-columns: 1fr;
-  }
-}
-
-/* --------------------------------------------------------------------------
    15. Prázdné stavy
    -------------------------------------------------------------------------- */
 .empty {
@@ -2363,10 +2292,6 @@ textarea {
   border-color: var(--border-strong);
 }
 
-.replacement-option[data-selected="true"] .replacement-option__body {
-  background: var(--accent-soft);
-}
-
 .login__card {
   background: var(--surface);
   border-color: var(--border);
@@ -2443,17 +2368,6 @@ textarea {
   }
 }
 
-/* --------------------------------------------------------------------------
-    Planning Result
-    -------------------------------------------------------------------------- */
-.planning-result {
-  margin-bottom: 24px;
-}
-
-.planning-result__controls {
-  border-top: 1px solid var(--border);
-}
-
 /* Pilotský rozpis: tmavé plátno podle docs/design/mvp-final.png. */
 .shell--planning {
   --bg: #191d20;
@@ -2509,16 +2423,14 @@ textarea {
 }
 
 .shell--planning .card__head,
-.shell--planning .table-toolbar,
-.shell--planning .planning-disclosure {
+.shell--planning .table-toolbar {
   border-color: var(--border);
 }
 
 .shell--planning .tabs,
 .shell--planning .tab,
 .shell--planning .footer-status,
-.shell--planning .table-note,
-.shell--planning .planning-disclosure__body {
+.shell--planning .table-note {
   color: var(--muted);
 }
 
@@ -2637,51 +2549,198 @@ textarea {
   color: var(--ink);
 }
 
-.planning-disclosure {
-  margin-bottom: 15px;
-  overflow: hidden;
+.monthly-planning-panel {
+  display: grid;
+  gap: 8px;
+  margin-bottom: 16px;
+  padding: 18px;
+}
+
+.monthly-planning-panel > h2 {
+  font-size: 20px;
+}
+
+.monthly-planning-panel > p {
+  color: var(--muted);
+}
+
+.monthly-planning-panel form {
+  display: grid;
+  gap: 12px;
+  margin-top: 8px;
+}
+
+.monthly-planning-panel fieldset {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+  padding: 14px 16px 16px;
   border: 1px solid var(--border);
   border-radius: 8px;
+  background: var(--surface-2);
+}
+
+.monthly-planning-panel legend {
+  padding: 0 6px;
+  color: var(--ink);
+  font-size: 14px;
+  font-weight: 650;
+}
+
+.monthly-planning-panel label {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 7px;
+  min-width: 0;
+  color: var(--ink-2);
+  font-size: 13px;
+}
+
+.monthly-planning-panel input:not([type="checkbox"]),
+.monthly-planning-panel select,
+.monthly-planning-panel textarea {
+  min-height: 38px;
+  padding: 8px 10px;
+  border: 1px solid var(--border-strong);
+  border-radius: 6px;
+  background: var(--surface);
+  color: var(--ink);
+  font: inherit;
+}
+
+.monthly-planning-panel input:not([type="checkbox"]):focus,
+.monthly-planning-panel select:focus,
+.monthly-planning-panel textarea:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-soft);
+}
+
+.monthly-planning-panel input[type="number"] {
+  width: 82px;
+}
+
+.monthly-planning-panel input[type="date"] {
+  min-width: 160px;
+}
+
+.monthly-planning-panel textarea {
+  width: 100%;
+  min-height: 88px;
+  resize: vertical;
+}
+
+.monthly-planning-panel fieldset:nth-of-type(1) > label {
+  flex: 1 1 240px;
+}
+
+.monthly-planning-panel fieldset:nth-of-type(1) > label input {
+  flex: 1 1 140px;
+}
+
+.monthly-planning-panel fieldset:nth-of-type(1) > ul,
+.monthly-planning-panel fieldset:nth-of-type(2) > ul {
+  flex-basis: 100%;
+  margin: 0;
+  padding-left: 20px;
+  color: var(--ink-2);
+}
+
+.monthly-planning-panel fieldset:nth-of-type(3) {
+  align-items: stretch;
+}
+
+.monthly-planning-panel fieldset:nth-of-type(3) > p {
+  flex-basis: 100%;
+  color: var(--muted);
+}
+
+.monthly-planning-panel fieldset:nth-of-type(3) > div {
+  display: grid;
+  flex: 1 1 220px;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  align-items: center;
+  gap: 8px;
+  padding: 9px 10px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
   background: var(--surface);
 }
 
-.planning-disclosure > summary {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  min-height: 58px;
-  padding: 12px 18px;
+.monthly-planning-panel fieldset:nth-of-type(3) > div > strong {
+  grid-column: 1 / -1;
   color: var(--ink);
-  font-size: 17px;
-  cursor: pointer;
-  list-style: none;
+  font-size: 13px;
 }
 
-.planning-disclosure > summary::-webkit-details-marker {
-  display: none;
+.monthly-planning-panel fieldset:nth-of-type(3) label {
+  display: grid;
+  gap: 4px;
 }
 
-.planning-disclosure > summary > svg {
-  transition: transform 0.15s ease;
+.monthly-planning-panel fieldset:nth-of-type(4) > label {
+  flex: 1 1 100%;
 }
 
-.planning-disclosure[open] > summary > svg {
-  transform: rotate(90deg);
-}
-
-.planning-disclosure__body {
-  padding: 0 16px 16px;
-  border-top: 1px solid var(--border);
-}
-
-.planning-disclosure__body .page-head {
-  padding-top: 16px;
-}
-
-.planning-disclosure .demo-notice {
+.monthly-planning-panel fieldset > button,
+.monthly-planning-panel fieldset > label + button {
+  min-height: 38px;
+  padding: 7px 12px;
+  border: 1px solid var(--border-strong);
+  border-radius: 6px;
+  background: var(--surface);
   color: var(--ink-2);
-  background: #292d30;
-  border-color: var(--border-strong);
+  cursor: pointer;
+}
+
+.monthly-planning-panel fieldset > button:hover:not(:disabled) {
+  border-color: var(--accent-border);
+  background: var(--surface-3);
+}
+
+.monthly-planning-panel button:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.monthly-planning-panel input[type="checkbox"] {
+  accent-color: var(--accent);
+}
+
+.monthly-planning-panel fieldset > .btn--primary {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #122126;
+}
+
+.monthly-planning-panel [role="alert"] {
+  padding: 10px 12px;
+  border: 1px solid var(--red-border);
+  border-radius: 6px;
+  background: var(--red-soft);
+  color: var(--ink);
+}
+
+.monthly-planning-panel [aria-live="polite"] {
+  display: grid;
+  gap: 8px;
+  padding: 14px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface-2);
+}
+
+.monthly-planning-panel [aria-live="polite"] h3,
+.monthly-planning-panel [aria-live="polite"] h4 {
+  font-size: 16px;
+}
+
+.monthly-planning-panel [aria-live="polite"] ul {
+  margin: 0;
+  padding-left: 20px;
 }
 
 .week-banner {

@@ -112,7 +112,7 @@ export function MonthlyPlanningPanel({ month, canManage, simulated, initialStaff
     } catch { setError("Spojení se serverem selhalo."); } finally { setBusy(false); }
   }
 
-  return <section className="card" aria-labelledby="monthly-title">
+  return <section className="card monthly-planning-panel" aria-labelledby="monthly-title">
     <h2 id="monthly-title">Měsíční návrh · {month}</h2>
     <p>Vyplňte syntetické vstupy. Návrh se ukládá odděleně a rozpis mění až potvrzení manažera.</p>
     {!canManage ? <p role="note">Vytvoření a potvrzení návrhu je dostupné manažerovi.</p> : null}
