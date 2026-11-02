@@ -8,6 +8,7 @@ import { Icon, type IconName } from "@/components/icons";
 import { Avatar } from "@/components/ui/avatar";
 import { BrandMark } from "@/components/ui/brand-mark";
 import { DEMO_ALERTS } from "@/lib/demo-data";
+import { shouldInitiallyOpenFutureFeatures } from "@/lib/navigation";
 
 type NavItem = {
   href: string;
@@ -58,7 +59,9 @@ export function AppShell({
   const pathname = usePathname();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
-  const [futureOpen, setFutureOpen] = useState(pathname !== "/planovani");
+  const [futureOpen, setFutureOpen] = useState(() =>
+    shouldInitiallyOpenFutureFeatures(pathname),
+  );
   const collapseButtonRef = useRef<HTMLButtonElement>(null);
   const restoreButtonRef = useRef<HTMLButtonElement>(null);
   const [panel, setPanel] = useState<Panel>(null);
@@ -71,7 +74,6 @@ export function AppShell({
   if (syncedPathname !== pathname) {
     setSyncedPathname(pathname);
     setSidebarOpen(false);
-    setFutureOpen(pathname !== "/planovani");
     setPanel(null);
   }
 
