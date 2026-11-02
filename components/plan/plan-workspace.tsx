@@ -2,22 +2,16 @@
 
 import { useEffect, useMemo, useState, type KeyboardEvent } from "react";
 import { Icon } from "@/components/icons";
-import { RosterTable } from "@/components/plan/roster-table";
 import { MonthlyPlanningPanel, type MonthlyView } from "@/components/plan/monthly-planning-panel";
 import { MonthlyRosterTable } from "@/components/plan/monthly-roster-table";
-import { Alert } from "@/components/ui/alert";
 import { Avatar } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { EmptyState } from "@/components/ui/empty-state";
 import { StatCard } from "@/components/ui/stat-card";
-import { PlanningResult } from "@/components/plan/planning-result";
-import { ReplacementPanel } from "@/components/plan/replacement-panel";
-import type { PlanningRunView, PlanningFailureView } from "@/lib/planning/view-model";
 import {
   DEMO_ABSENCES,
   DEMO_ALERTS,
   DEMO_EMPLOYEES,
-  demoRosterForWeek,
   DEMO_FREQUENT,
   DEMO_OVERVIEW,
   DEMO_REQUESTS,
@@ -28,14 +22,11 @@ import {
   addDays,
   formatIsoDate,
   getWeekDates,
-  isSupportedDemoWeek,
   shiftCount,
   weekLabel,
   type ShiftKind,
 } from "@/lib/demo-data";
 import type { PlanningRuntime } from "@/lib/planning/server-config";
-import type { SimulatedScenarioSummary } from "@/lib/planning/simulated/scenarios";
-import type { ReplacementTargetSummary } from "@/lib/planning/replacement-service";
 import type { StaffingSetting } from "@/lib/planning/staffing-settings";
 import { selectMonthlyView } from "@/lib/planning/monthly-view";
 
@@ -63,14 +54,12 @@ function monthKey(date: Date): string {
 
 interface PlanWorkspaceProps {
   runtime: PlanningRuntime;
-  replacementTargetSummary: ReplacementTargetSummary | null;
   canManage: boolean;
   initialStaffing: readonly StaffingSetting[] | null;
 }
 
 export function PlanWorkspace({
   runtime,
-  replacementTargetSummary,
   canManage,
   initialStaffing,
 }: PlanWorkspaceProps) {
@@ -79,17 +68,10 @@ export function PlanWorkspace({
   const [tab, setTab] = useState<TabKey>("smeny");
   const [query, setQuery] = useState("");
   const [shiftFilter, setShiftFilter] = useState<"all" | ShiftKind>("all");
-  const [notice, setNotice] = useState<string | null>(null);
   const [draftViews, setDraftViews] = useState<Record<string, MonthlyView>>({});
   const [confirmedViews, setConfirmedViews] = useState<Record<string, MonthlyView | null>>({});
   const [loadErrors, setLoadErrors] = useState<Record<string, boolean>>({});
   const [visitedMonths, setVisitedMonths] = useState<string[]>(() => [monthKey(DEMO_WEEK_START)]);
-
-  // Planning result state
-  const [planningView, setPlanningView] = useState<PlanningRunView | null>(null);
-  const [planningFailure, setPlanningFailure] = useState<PlanningFailureView | null>(null);
-  const [isPlanningLoading, setIsPlanningLoading] = useState(false);
-  const [selectedScenario, setSelectedScenario] = useState<string>("complete");
 
   const weekDates = useMemo(() => getWeekDates(weekStart), [weekStart]);
   const monthTitle = new Intl.DateTimeFormat("cs-CZ", {
@@ -97,7 +79,6 @@ export function PlanWorkspace({
     year: "numeric",
   }).format(visibleMonth);
   const monthDays = new Date(visibleMonth.getFullYear(), visibleMonth.getMonth() + 1, 0).getDate();
-  const isSupportedWeek = isSupportedDemoWeek(weekDates[0]);
   const visibleMonthValue = monthKey(visibleMonth);
   const monthlyView = selectMonthlyView(visibleMonthValue, draftViews[visibleMonthValue], confirmedViews[visibleMonthValue]);
   const showingMonthlyView = monthlyView && weekDates.some((date) => formatIsoDate(date).startsWith(`${monthlyView.input.month}-`));
@@ -113,8 +94,6 @@ export function PlanWorkspace({
       .catch(() => { if (!controller.signal.aborted) setLoadErrors((current) => ({ ...current, [visibleMonthValue]: true })); });
     return () => controller.abort();
   }, [visibleMonthValue]);
-  const unsupportedWeekNotice = `DEMO: Simulovaný běh je dostupný jen pro týden ${weekLabel(DEMO_WEEK_START)}. Zvolený týden lze prohlížet, ale nelze ho naplánovat.`;
-
   const normalizedQuery = query.trim().toLowerCase();
 
   const filteredEmployees = DEMO_EMPLOYEES.filter((employee) => {
@@ -141,23 +120,10 @@ export function PlanWorkspace({
       absence.type.toLowerCase().includes(normalizedQuery),
   );
 
-  function moveWeek(delta: number) {
-    const nextWeek = addDays(weekStart, delta * 7);
-    setWeekStart(nextWeek);
-    setVisibleMonth(nextWeek);
-    setVisitedMonths((current) => current.includes(monthKey(nextWeek)) ? current : [...current, monthKey(nextWeek)]);
-    setPlanningView(null);
-    setPlanningFailure(null);
-    setNotice(null);
-  }
-
   function selectCalendarDate(day: number) {
     const date = new Date(visibleMonth.getFullYear(), visibleMonth.getMonth(), day);
     const mondayOffset = (date.getDay() + 6) % 7;
     setWeekStart(addDays(date, -mondayOffset));
-    setPlanningView(null);
-    setPlanningFailure(null);
-    setNotice(null);
   }
 
   function moveMonth(delta: number) {
@@ -167,90 +133,6 @@ export function PlanWorkspace({
     const firstDay = nextMonth;
     const mondayOffset = (firstDay.getDay() + 6) % 7;
     setWeekStart(addDays(firstDay, -mondayOffset));
-    setPlanningView(null);
-    setPlanningFailure(null);
-    setNotice(null);
-  }
-
-  async function runPlanning() {
-    if (!runtime.configured) {
-      setNotice("Plánování není nakonfigurované. Nastavte PLANNING_PROVIDER.");
-      return;
-    }
-
-    if (!isSupportedWeek) {
-      setNotice(unsupportedWeekNotice);
-      return;
-    }
-
-    setIsPlanningLoading(true);
-    setPlanningView(null);
-    setPlanningFailure(null);
-    setNotice(null);
-
-    try {
-      const response = await fetch("/api/planning/run", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          scenario: selectedScenario,
-          weekStart: formatIsoDate(weekDates[0]),
-        }),
-      });
-
-      const data = await response.json();
-
-      if (data.ok && data.view) {
-        setPlanningView(data.view);
-      } else if (data.failure) {
-        setPlanningFailure(data.failure);
-      } else if (data.rejected) {
-        setPlanningFailure({
-          code: data.rejected.code,
-          title: data.rejected.code,
-          message: data.rejected.message,
-          details: data.rejected.blockers
-            ? { blockers: data.rejected.blockers }
-            : undefined,
-        });
-      }
-    } catch (error) {
-      setPlanningFailure({
-        code: "ai_failed",
-        title: "Síťová chyba",
-        message: error instanceof Error ? error.message : "Neznámá chyba při volání API.",
-      });
-    } finally {
-      setIsPlanningLoading(false);
-    }
-  }
-
-  async function confirmPlanning(proposalId: string) {
-    setIsPlanningLoading(true);
-    try {
-      const response = await fetch("/api/planning/confirm", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ proposalId }),
-      });
-
-      const data = await response.json();
-
-      if (data.ok && data.view) {
-        setPlanningView(data.view);
-        if (!data.alreadyConfirmed) {
-          setNotice("Návrh byl úspěšně potvrzen.");
-        }
-      } else if (data.rejected) {
-        setNotice(data.rejected.message);
-      }
-    } catch (error) {
-      setNotice(
-        error instanceof Error ? error.message : "Chyba při potvrzování návrhu.",
-      );
-    } finally {
-      setIsPlanningLoading(false);
-    }
   }
 
   function onTabKeyDown(event: KeyboardEvent<HTMLButtonElement>, index: number) {
@@ -261,10 +143,6 @@ export function PlanWorkspace({
     setTab(TABS[nextIndex].key);
     document.getElementById(`tab-${TABS[nextIndex].key}`)?.focus();
   }
-
-  const scenarios: readonly SimulatedScenarioSummary[] = runtime.configured
-    ? runtime.scenarios
-    : [];
 
   return (
     <div className="planning-screen">
@@ -312,99 +190,6 @@ export function PlanWorkspace({
         if (result) setLoadErrors((current) => ({ ...current, [month]: false }));
       }} /></div>)}
 
-      <details className="planning-disclosure">
-        <summary>
-          <Icon name="chevronRight" width={18} height={18} />
-          Starší týdenní ukázka
-        </summary>
-        <div className="planning-disclosure__body">
-          <div className="page-head">
-        <div className="page-head__lead">
-          <span className="page-head__icon" aria-hidden="true">
-            <Icon name="calendar" width={22} height={22} />
-          </span>
-          <div>
-            <h1 className="page-head__title">Plán směn</h1>
-            <p className="page-head__sub">
-              Připravte návrh směn pro vybraný týden z dostupných vstupů.
-              AI zohlední zaměstnance, absence, požadavky a potřebné obsazení.
-            </p>
-          </div>
-        </div>
-
-        <div className="page-head__actions">
-          <div className="period" role="group" aria-label="Plánovací týden">
-            <span className="period__icon" aria-hidden="true">
-              <Icon name="calendar" width={17} height={17} />
-            </span>
-            <span className="period__label" aria-live="polite">
-              {weekLabel(weekStart)}
-            </span>
-            <button
-              type="button"
-              className="period__btn"
-              aria-label="Předchozí týden"
-              onClick={() => moveWeek(-1)}
-            >
-              <Icon name="chevronLeft" width={16} height={16} />
-            </button>
-            <button
-              type="button"
-              className="period__btn"
-              aria-label="Následující týden"
-              onClick={() => moveWeek(1)}
-            >
-              <Icon name="chevronRight" width={16} height={16} />
-            </button>
-          </div>
-        </div>
-          </div>
-
-          <div className="demo-notice" role="note">
-        <span className="demo-notice__icon" aria-hidden="true">
-          <Icon name="info" width={17} height={17} />
-        </span>
-        <p>
-          <strong>Demonstrační data.</strong> Jména, počty i přiřazení jsou
-          smyšlené ukázky. Výsledek není platný ani schválený rozpis.
-        </p>
-          </div>
-
-          {notice ? (
-        <div className="notice-block">
-          <Alert variant="warning">
-            <strong>Upozornění.</strong> {notice}
-          </Alert>
-        </div>
-          ) : null}
-
-      {/* Planning Result Section - NEW */}
-          <PlanningResult
-        view={planningView}
-        failure={planningFailure}
-        onConfirm={confirmPlanning}
-        onRun={runPlanning}
-        scenarios={scenarios}
-        selectedScenario={selectedScenario}
-        setSelectedScenario={setSelectedScenario}
-        isLoading={isPlanningLoading}
-        runtimeNotice={
-          isSupportedWeek
-            ? runtime.configured
-              ? runtime.notice
-              : runtime.reason
-            : unsupportedWeekNotice
-        }
-        providerMode={runtime.configured ? runtime.mode : "simulated"}
-          />
-
-          <ReplacementPanel
-        enabled={runtime.configured && runtime.mode === "simulated"}
-        targetSummary={replacementTargetSummary}
-          />
-        </div>
-      </details>
-
       <div className="week-banner">
         <h2>Týden {isoWeekNumber(weekStart)}</h2>
         <p>{weekLabel(weekStart)}</p>
@@ -415,18 +200,13 @@ export function PlanWorkspace({
           <EmptyState icon="box" title="Rozpis se nepodařilo načíst" description="Ověřte připojení a zkuste stránku načíst znovu." />
         ) : showingMonthlyView ? (
           <MonthlyRosterTable view={monthlyView} weekDates={weekDates} />
-        ) : !isSupportedWeek ? (
-          <EmptyState icon="box" title="Pro tento týden nejsou k dispozici směny" description="Ukázkový rozpis je dostupný pouze pro týden 5.–11. října 2026." />
-        ) : filteredEmployees.length > 0 ? (
-          <RosterTable employees={demoRosterForWeek(weekStart).filter((employee) => filteredEmployees.includes(employee))} weekDates={weekDates} />
         ) : (
           <EmptyState
-            icon="search"
-            title="Nikdo neodpovídá filtru"
-            description="Upravte hledání nebo filtr v části Filtry a další přehledy."
+            icon="calendar"
+            title="Měsíční rozpis zatím není k dispozici"
+            description="Vyplňte vstupy a vytvořte měsíční návrh. Vybraný týden se zobrazí po načtení nebo vytvoření měsíčního rozpisu."
           />
         )}
-        {!loadErrors[visibleMonthValue] && !showingMonthlyView && isSupportedWeek ? <p className="table-note">Ukázková data · týden 5.–11. října 2026.</p> : null}
       </div>
 
       <details className="schedule-details">
@@ -488,11 +268,7 @@ export function PlanWorkspace({
                   className="icon-btn icon-btn--bordered"
                   aria-label="Export (připravované)"
                   title="Export bude dostupný po napojení dat"
-                  onClick={() =>
-                    setNotice(
-                      "Export bude dostupný po napojení databáze. Nyní jde o ukázkové rozhraní.",
-                    )
-                  }
+                  disabled
                 >
                   <Icon name="download" width={17} height={17} />
                 </button>
@@ -758,20 +534,9 @@ export function PlanWorkspace({
             </div>
             <p className="ai-card__text">
               {runtime.configured
-                ? `${runtime.mode === "simulated" ? "Ukázka používá připravená data" : "Reálné volání Gemini (NOT VERIFIED)"}. Vyberte případ a spusťte návrh.`
-                : "Ukázka není připravená. Pro spuštění dema nastavte režim simulated."}
+                ? `${runtime.mode === "simulated" ? "Ukázka používá připravená data" : "Reálné volání Gemini (NOT VERIFIED)"}. Měsíční návrh připravíte ve formuláři výše.`
+                : "Měsíční návrh zatím není nakonfigurovaný. Formulář výše zůstává dostupný pro přípravu vstupů."}
             </p>
-            {runtime.configured && (
-              <button
-                type="button"
-                className="btn btn--primary"
-                onClick={runPlanning}
-                disabled={isPlanningLoading}
-              >
-                <Icon name="sparkles" width={17} height={17} />
-                Spustit ukázku
-              </button>
-            )}
           </section>
         </aside>
       </div>

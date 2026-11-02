@@ -24,7 +24,7 @@ jsou `NOT VERIFIED` nebo `PLANNED`; lokální Docker PostgreSQL běh je `VERIFIE
 | AI kontrakt | `PlanningModelProvider`, `AiProviderError`, `isPlanDraft()` | `lib/planning/ai-provider.ts` |
 | Orchestrace | `runPlanning()`: vstup → AI → validace → změny a pokrytí | `lib/planning/orchestrator.ts`; 12 testů |
 | Simulovaný provider & Fáze 2 API | 3 fixture scénáře, `POST /api/planning/run`, `POST /api/planning/confirm` | `lib/planning/simulated/`, `app/api/planning/`; 18 testů |
-| UI napojení | `PlanningResult` komponenta, výběr scénáře, badge `SIMULATED`, blokace potvrzení | `components/plan/plan-workspace.tsx`, `planning-result.tsx` |
+| Aktuální plánovací UI | Měsíční formulář a týdenní výřez měsíčního rozpisu; samostatný týdenní tok už není v hlavní obrazovce | `components/plan/plan-workspace.tsx`, `monthly-planning-panel.tsx`, `monthly-roster-table.tsx` |
 | Gemini adaptér | serverové volání, strukturovaný JSON, konfigurace v prostředí | `lib/ai/gemini-planning-provider.ts`; 7 unit testů + 1 integrační test |
 | Auth.js / lokální login gate | credentials přihlášení, session, role a ochrana aplikace bez CRM | `auth.ts`, `lib/auth/`, `proxy.ts`; MVP `IMPLEMENTED` |
 | Budoucí Entra brána | ponechaný provider-neutral základ pro pozdější rekonstrukci | `lib/auth/config.ts`; `PLANNED` |

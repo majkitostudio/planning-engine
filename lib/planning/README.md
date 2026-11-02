@@ -58,8 +58,7 @@ sítě. Volání AI je schované za rozhraním; konkrétní poskytovatel je v `l
 | `api-types.ts` | Sdílené typy odpovědí HTTP API (`PlanningRunApiResponse`, `PlanningConfirmApiResponse`). |
 | `replacement-service.ts` | `IMPLEMENTED`: vytvoří varianty náhrady a deterministicky vyhodnotí jejich dopad. |
 | `simulated/replacement-scenarios.ts` | `SIMULATED`: syntetický výpadek a tři varianty. |
-| `app/api/planning/replacement/` | `IMPLEMENTED`: vytvoření pracovního snapshotu a manager-only potvrzení. |
-| `components/plan/replacement-panel.tsx` | `IMPLEMENTED` / `DEMO`: zadání výpadku, karty variant a potvrzení. |
+| `app/api/planning/replacement/` | API pro simulované návrhy náhrady zůstává implementované a testované; hlavní měsíční UI ho nevolá. |
 
 ## Tok
 
@@ -112,8 +111,8 @@ rozdíl odstranit nebo jej v UI výslovně přiznat.
 
 - **Route handlery:** `app/api/planning/run/route.ts` (POST), `app/api/planning/confirm/route.ts` (POST).
 - **Serverová stránka:** `app/(app)/planovani/page.tsx` — `force-dynamic`, `runtime: nodejs`, předává `PlanningRuntime` klientovi.
-- **Klientská komponenta:** `components/plan/plan-workspace.tsx` — spouští běh, zobrazuje výsledek, potvrzuje.
-- **Výsledková komponenta:** `components/plan/planning-result.tsx` — tři vrstvy (návrh, validace, potvrzení), změny, pokrytí, vysvětlení, blokátory potvrzení.
+- **Aktuální klientská plocha:** `components/plan/plan-workspace.tsx` zobrazuje měsíční formulář a týdenní výřez měsíčního rozpisu; `components/plan/monthly-planning-panel.tsx` komunikuje s měsíčním API a zobrazuje návrh i potvrzení.
+- **Starší týdenní API:** route handlery `/api/planning/run` a `/api/planning/confirm` a jejich testy zůstávají zachované, ale hlavní UI je už samostatné týdenní plánování nevolá.
 - **Provider režim:** `PLANNING_PROVIDER=simulated|gemini`; bez hodnoty → `ai_not_configured`.
 - **Simulované fixtures:** tři scénáře pro týden 5.–11. 10. 2026; provider selže u jiného týdne.
 - **Perzistence:** route handler po běhu ukládá snapshot do Prisma a při potvrzení zapisuje `ConfirmedPlan` a auditní událost. `memory` je pouze testovací režim.

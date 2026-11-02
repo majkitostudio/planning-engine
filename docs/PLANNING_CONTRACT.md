@@ -588,8 +588,10 @@ typů.
   `confirm-service.ts`; registr `run-registry.ts`; factory providerů
   `provider-factory.ts`; serverová konfigurace `server-config.ts`;
   simulovaný provider `simulated/`; view-model `view-model.ts`; potvrzení
-  `confirmation.ts`; UI komponenta `components/plan/planning-result.tsx`;
-  napojení v `components/plan/plan-workspace.tsx` a `app/(app)/planovani/page.tsx`.
+  `confirmation.ts`; původní samostatný týdenní UI byl následně odstraněn.
+  Aktuální hlavní obrazovka používá `components/plan/monthly-planning-panel.tsx`
+  a `components/plan/monthly-roster-table.tsx` přes
+  `components/plan/plan-workspace.tsx` a `app/(app)/planovani/page.tsx`.
 
 Kontrakt je `PROPOSAL`. Pokud se při implementaci ukáže, že některý údaj
 chybí nebo je nadbytečný, uprav tento dokument i typy společně a uveď důvod.
