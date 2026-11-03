@@ -6,19 +6,25 @@ Technický repozitář: `planning-engine`
 
 Plánovací Engine je záměr **chytrého plánovače směn** pro **zaměstnance call
 centra společnosti AAAAuto**, určeného pro **managera telemarketingového
-oddělení** (dlouhodobý rozsah **více než 100 zaměstnanců**). První funkční verze
-se zaměřuje na **jeden týden** a zaměstnance na **plný úvazek**.
+oddělení** (dlouhodobý rozsah **více než 100 zaměstnanců**). Hlavní MVP se
+zaměřuje na **celý kalendářní měsíc** a zaměstnance na **plný úvazek**; týdenní
+tabulka je pohled do měsíčního návrhu.
 
-**AI je hlavní plánovací logika**: sestavuje konkrétní návrh směn, vyhodnocuje
-požadavky, absence, dostupnost a obsazení a navrhuje řešení problémů.
-Deterministická validace návrh nezávisle kontroluje. Manažer návrh potvrzuje;
-bez potvrzení se návrh neaplikuje jako potvrzený plán.
+**Měsíční přiřazení sestavuje lokální OR-Tools plánovač.** Nezávislá
+deterministická validace kontroluje návrh; chybějící návaznosti zůstávají
+neověřené. AI může být oddělenou pomocí s pokyny či vysvětlením, ale její
+odpověď nenahrazuje plánovač ani validaci. Manažer návrh potvrzuje; bez
+potvrzení se návrh neaplikuje jako potvrzený plán.
 
 ## Stav projektu
 
 Toto je **rozpracovaný technický základ s demo UI**. Nejedná se o hotovou ani
 produkční aplikaci.
 
+- Měsíční plánování používá samostatný lokální OR-Tools provider. Syntetický
+  průchod v izolované PostgreSQL ověřil vytvoření návrhu, ruční úpravu,
+  celoměsíční opětovnou kontrolu a obnovení poslední verze; všechny zůstaly
+  nepotvrzené. Podrobnosti a omezení jsou v [`docs/ROADMAP.md`](docs/ROADMAP.md).
 - Plánovací jádro, doménový kontrakt, deterministická validace, AI kontrakt,
   Gemini adaptér, orchestrátor **a napojení demo UI (Fáze 2)** jsou `IMPLEMENTED` a pokryté testy.
 - Reálné volání Gemini je `VERIFIED` integračním testem s lokální konfigurací;
@@ -39,10 +45,11 @@ produkční aplikaci.
   `NOT VERIFIED`.
 - Potvrzené jsou časy směn, pravidlo 35 h odpočinku po šesti dnech a dva dny
   volna po práci o víkendu.
-- Projekt neobsahuje skutečná osobní ani zaměstnanecká data a není připraven
-  k produkčnímu provozu. Produkční autentizace, produkční databáze a integrace
-  zůstávají odložené; aktuální implementační target je popsán v
-  [`docs/ROADMAP.md`](docs/ROADMAP.md).
+- Repozitář neobsahuje skutečné zaměstnanecké záznamy. Lokální prostředí
+  nakonfigurované uživatelem může obsahovat skutečné záznamy; pro syntetický
+  integrační průchod se použila oddělená izolovaná databáze. Produkční
+  autentizace, databáze a integrace nejsou ověřené ani připravené k nasazení;
+  aktuální stav je popsán v [`docs/ROADMAP.md`](docs/ROADMAP.md).
 
 ## Technologický stack
 
@@ -82,7 +89,10 @@ Další příkazy: `npm run lint`, `npm run lint:fix`, `npm run build`, `npm run
 `npm run typecheck`, `npm run test`, `npm run test:watch`, `npm run db:generate`,
 `npm run db:validate`, `npm run db:migrate`, `npm run db:studio`.
 
-Pro aplikační běh nastav `PLANNING_PROVIDER`, `PLANNING_PERSISTENCE=prisma`,
+Pro aplikační běh nastav `PLANNING_PROVIDER`, případně samostatný
+`PLANNING_MONTHLY_PROVIDER=ortools` a `PLANNING_PYTHON_EXECUTABLE` na Python
+s lokálně instalovanými závislostmi ze `scripts/requirements-monthly-solver.txt`,
+`PLANNING_PERSISTENCE=prisma`,
 `DATABASE_URL` a lokální login proměnné (viz `.env.example`). Databázové příkazy
 (`db:migrate`, `db:studio`) vyžadují běžící PostgreSQL a před jejich spuštěním je
 nutné potvrdit cílovou lokální databázi.

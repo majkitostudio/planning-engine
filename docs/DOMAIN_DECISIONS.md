@@ -13,8 +13,15 @@
 > ho jen překládá do praxe a zaznamenává odpovědi.
 
 Datum vytvoření: 22. 10. 2026
-Poslední aktualizace: 29. 10. 2026
+Poslední aktualizace: 3. 11. 2026
 Vyplnil: uživatel / zadání projektu (částečně)
+
+## Výchozí dostupnost měsíčního plánování (`VERIFIED`, 3. 11. 2026)
+
+Při zadávání měsíčního návrhu jsou vybraní zaměstnanci výchozím nastavením
+dostupní na obě směny každý den, včetně víkendů. Výslovná nedostupnost a
+schválená absence mají přednost. Dostupnost sama neurčuje přidělení směny ani
+nenahrazuje kontrolu ostatních pravidel.
 
 ## Evidence z původního emailu managera (`SOURCE EVIDENCE`, 28. 10. 2026)
 
@@ -69,6 +76,21 @@ mění zadání:
 - **Práce o víkendu:** dva dny volna během téhož týdne.
 - **Obsazení směn:** konfigurovatelný vstup, ne historická konstanta.
 - **Countdown CRM:** budoucí architektonický směr, nyní žádná integrace.
+
+## Novější rozhodnutí pro měsíční MVP (`VERIFIED`, 3. 11. 2026)
+
+Toto rozhodnutí mění starší popis role AI pro hlavní měsíční tok; starší
+rozhodnutí zůstává kontextem původního týdenního řezu.
+
+- Lokální OR-Tools sestavuje přiřazení směn pro celý kalendářní měsíc.
+- AI není nutná pro vytvoření návrhu. Případná AI pomoc s pokyny či vysvětlením
+  je oddělená a bez schválené ochrany údajů nesmí odesílat skutečná jména ani
+  volný text.
+- Nezávislá deterministická validace kontroluje celý návrh včetně dostupných
+  návazností. Chybějící hranice, neúplný návrh ani výsledek solveru samy o sobě
+  nejsou ověření ani potvrzení.
+- Doplňující textové pokyny nejsou tvrdé pravidlo; v režimu OR-Tools se
+  nevyhodnocují a výsledek to musí přiznat.
 
 ## Potvrzený směr operativních náhrad (`VERIFIED`, 29. 10. 2026)
 

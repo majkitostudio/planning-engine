@@ -1,5 +1,9 @@
 # Minimální datový kontrakt plánovacího jádra
 
+> Tento dokument zachycuje původní týdenní kontrakt a související AI provider.
+> Hlavní měsíční MVP používá samostatný lokální OR-Tools provider podle
+> aktuálního rozhodnutí v [`DOMAIN_DECISIONS.md`](DOMAIN_DECISIONS.md#novější-rozhodnutí-pro-měsíční-mvp-verified-3-11-2026).
+
 - **Stav:** kontrakt je `PROPOSAL` (doména zůstává částečně otevřená);
   jeho implementace je `IMPLEMENTED` a ověřená testy.
 - **Datum:** 24. 10. 2026, aktualizováno 26. 10. 2026
@@ -592,9 +596,36 @@ typů.
   Aktuální hlavní obrazovka používá `components/plan/monthly-planning-panel.tsx`
   a `components/plan/monthly-roster-table.tsx` přes
   `components/plan/plan-workspace.tsx` a `app/(app)/planovani/page.tsx`.
+- **Ruční úprava měsíčního návrhu:** manažer vybírá v zobrazeném týdnu den a
+  zaměstnance a přidává nebo odebírá směny. Do nové kontroly jsou změny pouze
+  v prohlížeči a potvrzení je blokované. `POST /api/planning/monthly/recheck`
+  načte původní návrh a aktuální návazné podklady, zkontroluje celý měsíc a
+  uloží novou samostatnou verzi návrhu; potvrzený rozpis tím nemění. Při
+  potvrzování server opět kontroluje podklady a platnost. Prohlížeč si pamatuje
+  identifikátor poslední uložené verze pro daný měsíc. Manažerovi ji po obnovení
+  stránky načte a znovu zkontroluje; dosud nezkontrolované ruční úpravy se tím
+  neobnoví. V jiném prohlížeči se identifikátor automaticky nepřenáší.
 
 Kontrakt je `PROPOSAL`. Pokud se při implementaci ukáže, že některý údaj
 chybí nebo je nadbytečný, uprav tento dokument i typy společně a uveď důvod.
+
+### 11.1 Měsíční plánovací provider
+
+Hlavní rozhraní měsíčního MVP je `POST /api/planning/monthly/run`. Režim
+`PLANNING_MONTHLY_PROVIDER=ortools` předává lokálnímu procesu pouze měsíc,
+technické identifikátory převedené na dočasné anonymní značky, obsazení,
+absence, dostupnost a dostupné hraniční přiřazení. Jména a volné pokyny se do
+solveru neposílají. Pokyny se v tomto režimu nevyhodnocují.
+
+Závislosti jsou připnuté v `scripts/requirements-monthly-solver.txt`. Nastavte
+`PLANNING_PYTHON_EXECUTABLE` na Python z lokálního virtuálního prostředí.
+Na Windows vytvořte prostředí příkazy `py -3.14 -m venv .venv` a
+`.venv\Scripts\python.exe -m pip install -r scripts\requirements-monthly-solver.txt`;
+pro Python běh použijte `.venv\Scripts\python.exe -m unittest discover -s scripts -p monthly_solver_test.py`.
+Výsledek solveru je vždy jen návrh a musí projít `validateMonthlyPlan()`.
+`infeasible` se vztahuje jen na zadaný model; `unknown`/timeout není důkaz
+neproveditelnosti. Chybějící historie zůstává ve validaci neověřená a brání
+potvrzení.
 
 ## 12. Kde se doména napojuje na jádro
 

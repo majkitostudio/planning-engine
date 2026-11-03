@@ -5,6 +5,7 @@ import { requirePlanningActor } from "@/lib/auth/route-access";
 import { GeminiPlanningProvider } from "@/lib/ai/gemini-planning-provider";
 import { validateMonthlyInput } from "@/lib/planning/domain/month-input";
 import { executeMonthlyPlanning } from "@/lib/planning/monthly-planning";
+import { MonthlyOrtoolsProvider } from "@/lib/planning/monthly-ortools-provider";
 import { getMonthlyRuntime } from "@/lib/planning/monthly-runtime";
 import { SimulatedMonthlyProvider, type MonthlyScenario } from "@/lib/planning/simulated/monthly-provider";
 
@@ -26,9 +27,16 @@ export async function POST(request: Request) {
   if (current.mode === "simulated" && scenario !== "complete" && scenario !== "partial" && scenario !== "unverified") return NextResponse.json({ ok: false, message: "Zvolte platný simulovaný scénář." }, { status: 400 });
   try {
     const boundary = await current.loadBoundary(input.value.month, input.value.employees.map((employee) => employee.id));
-    const provider = current.mode === "simulated" ? new SimulatedMonthlyProvider(scenario as MonthlyScenario) : new GeminiPlanningProvider();
+    const provider = current.mode === "simulated" ? new SimulatedMonthlyProvider(scenario as MonthlyScenario)
+      : current.mode === "gemini" ? new GeminiPlanningProvider()
+        : new MonthlyOrtoolsProvider();
     const result = await executeMonthlyPlanning(input.value, boundary, provider);
-    if (!result.ok) return NextResponse.json(result, { status: 422 });
+    if (!result.ok) {
+      const status = result.code === "solver_timeout" ? 504
+        : result.code === "solver_unavailable" ? 503
+          : result.code === "solver_invalid_output" ? 502 : 422;
+      return NextResponse.json(result, { status });
+    }
     const id = randomUUID();
     await current.create({ id, input: input.value, draft: result.draft, providerName: provider.name, mode: current.mode });
     return NextResponse.json({ ok: true, id, mode: current.mode, input: input.value, draft: result.draft, validation: result.validation });

@@ -76,12 +76,11 @@ Tento soubor obsahuje projektové instrukce pro agenty pracující na projektu
 
 Tato rozhodnutí jsou pro další práci závazná:
 
-- **AI je hlavní plánovací logika**, ne volitelný doplněk. AI sestavuje konkrétní
-  návrh směn, vyhodnocuje požadavky, absence, dostupnost a potřebné obsazení
-  a aktivně navrhuje řešení nalezených problémů.
-- **Deterministická validace je nezávislá kontrola návrhu AI.** Nenahrazuje
-  plánování a nesmí být jediným nositelem pravidel. AI ani validace se
-  nepovažují za schválení.
+- **V hlavním měsíčním MVP sestavuje přiřazení lokální OR-Tools plánovač.** AI
+  není podmínkou vytvoření návrhu. Případná pomoc AI s pokyny nebo vysvětlením
+  nesmí dostat skutečná jména ani volný text bez schválené ochrany údajů.
+- **Deterministická validace nezávisle kontroluje celý měsíční návrh.** Nálezy
+  plánovače validaci nenahrazují a výsledek se nepovažuje za schválení.
 - **Manažer návrh kontroluje a potvrzuje.** Aplikace nesmí bez potvrzení
   automaticky uložit nebo aplikovat navržené změny.
 - **Návrh, ověřený návrh a potvrzené změny jsou tři různé stavy.** Samotné
@@ -93,8 +92,9 @@ Tato rozhodnutí jsou pro další práci závazná:
   a integrace zůstávají mimo pilot. Týdenní pravidla se uplatňují i při
   měsíčním plánování.
 - Manažer pro měsíční návrh zadává období, zaměstnance, absence, dostupnost,
-  potřebné obsazení a případné textové pokyny pro AI. Volný text je pokyn pro
-  AI; sám se nestává deterministicky ověřovaným tvrdým pravidlem.
+  potřebné obsazení a případné doplňující pokyny. Volný text se nestává
+  deterministicky ověřovaným tvrdým pravidlem. Režim OR-Tools pokyny nevyhodnotí
+  a tuto skutečnost musí zobrazit.
 - Měsíční návrh se kontroluje jako celek včetně návazností přes týdny a hranice
   měsíců. Využij dostupnou historii předchozího a navazujícího rozpisu; při
   chybějících podkladech označ dotčené kontroly jako neověřené. Neúplný návrh
@@ -133,9 +133,9 @@ směny; přestávky ani výpočet odpracované doby nejsou samostatné tvrdé pr
 
 - **Plánovací Engine je rozpracovaný technický základ s demo UI (Next.js +
   TypeScript).** Není to hotová ani produkční aplikace.
-- **Měsíční pilot:** `VERIFIED` jako požadovaný rozsah, `NOT VERIFIED` jako
-  implementace. Současný plánovací tok a simulované scénáře pracují s jedním
-  týdnem; jejich existence nedokazuje funkční měsíční plánování.
+- **Měsíční pilot:** celý kalendářní měsíc je hlavní tok; týdenní tabulka je
+  jeho pohled. Stav plánovače a souvislého průchodu musí odpovídat aktuálním
+  kontrolám, ne historickým pokusům.
 - Plánovací jádro: `IMPLEMENTED` — `lib/planning/` obsahuje doménově
   nezávislé kontrakty, běh pravidel a deterministickou validaci
   (`validatePlan()`).
@@ -156,8 +156,9 @@ směny; přestávky ani výpočet odpracované doby nejsou samostatné tvrdé pr
   `PLANNING_PERSISTENCE=prisma` ukládá snapshoty běhů, potvrzené plány a událost
   `planning.confirmed`; `memory` je pouze testovací režim. Migrace a potvrzení byly
   ověřeny v izolované lokální Docker PostgreSQL.
-- Provider režim přes `PLANNING_PROVIDER=simulated|gemini`; bez hodnoty →
-  `ai_not_configured`. Žádný tichý fallback na simulaci.
+- Starší týdenní provider používá `PLANNING_PROVIDER=simulated|gemini`; měsíční
+  provider jej může přepsat přes `PLANNING_MONTHLY_PROVIDER=simulated|gemini|ortools`.
+  Chybná hodnota ani nedostupný lokální plánovač nesmějí tiše přepnout provider.
 - Simulovaný provider (`lib/planning/simulated/`) vrací tři fixture scénáře
   (`complete`, `partial`, `unverified`) pro pevný týden 5.–11. 10. 2026.
 - Doménová specifikace: `PARTIALLY VERIFIED PROPOSAL` —

@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { executeMonthlyPlanning } from "./monthly-planning";
+import { executeMonthlyPlanning, MonthlyProviderError } from "./monthly-planning";
 import type { MonthlyPlanningInput } from "./domain/month-input";
 
 const input: MonthlyPlanningInput = { month: "2026-11", employees: [{ id: "e1", displayName: "Test", employmentType: "full_time" }], absences: [], availability: [], staffingRequirements: [], instructions: "pokyn" };
@@ -7,7 +7,7 @@ const boundary = { before: { complete: false, assignments: [] }, after: { comple
 const draft = { month: "2026-11", assignments: [], explanations: [], alternatives: [], assumptions: [], instructionsOutcome: "Zohledněno." };
 
 describe("měsíční plánovací běh", () => {
-  it("volá AI jednou a nezávisle zkontroluje celý návrh", async () => {
+  it("volá poskytovatele jednou a nezávisle zkontroluje celý návrh", async () => {
     const generateMonthlyPlan = vi.fn().mockResolvedValue(draft);
     const result = await executeMonthlyPlanning(input, boundary, { name: "test", generateMonthlyPlan });
     expect(generateMonthlyPlan).toHaveBeenCalledTimes(1);
@@ -29,5 +29,17 @@ describe("měsíční plánovací běh", () => {
   it("přizná chybu poskytovatele bez náhradního simulovaného návrhu", async () => {
     const provider = { name: "test", generateMonthlyPlan: vi.fn().mockRejectedValue(new Error("offline")) };
     expect(await executeMonthlyPlanning(input, boundary, provider)).toMatchObject({ ok: false, code: "ai_failed" });
+  });
+  it("zachová prokázanou neproveditelnost jako výsledek plánovače", async () => {
+    const provider = { name: "ortools", generateMonthlyPlan: vi.fn().mockRejectedValue(new MonthlyProviderError("solver_infeasible")) };
+    expect(await executeMonthlyPlanning(input, boundary, provider)).toMatchObject({
+      ok: false, code: "solver_infeasible", message: expect.stringContaining("známých vstupech"),
+    });
+  });
+  it("nepovažuje timeout za neproveditelné zadání", async () => {
+    const provider = { name: "ortools", generateMonthlyPlan: vi.fn().mockRejectedValue(new MonthlyProviderError("solver_timeout")) };
+    expect(await executeMonthlyPlanning(input, boundary, provider)).toMatchObject({
+      ok: false, code: "solver_timeout", message: expect.stringContaining("není rozhodnuta"),
+    });
   });
 });

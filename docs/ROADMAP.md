@@ -1,82 +1,69 @@
 # Aktuální stav a další kroky — Plánovací Engine
 
-> Stav zdokumentován 3. 11. 2026 podle aktuálního kódu a kontrol dokončených
-> v tomto kroku. Vizuální kontrola rozpisu na desktopu a při šířce 390 px je
-> ověřena; hlavní měsíční průchod zůstává neověřen.
-> Význam stavových popisků vysvětluje [`docs/README.md`](README.md#stavové-popisky).
+> Stav aktualizován 3. 11. 2026 po automatických kontrolách a průchodu nad
+> izolovanou databází se syntetickými záznamy. Význam stavových popisků
+> vysvětluje [`docs/README.md`](README.md#stavové-popisky).
 
-## Stav MVP
+## Stav měsíčního MVP
 
-Schváleným směrem je **jeden plán pro celý kalendářní měsíc**. Týdenní tabulka je
-jen výřez měsíčního rozpisu. Měsíční formulář, validace, rozhraní API a uložení
-návrhu jsou v kódu (`IMPLEMENTED`), ale souvislý měsíční průchod od zadání po
-opětovné načtení potvrzeného rozpisu zatím není ověřen (`NOT VERIFIED`).
+Schváleným směrem je jeden návrh pro celý kalendářní měsíc; týdenní tabulka je
+jeho pohled. Lokální OR-Tools plánovač vytváří přiřazení, aplikace je
+nezávisle kontroluje a manažer je může ve vybraném týdnu upravit. Každá ruční
+úprava se znovu kontroluje za celý měsíc. Návrh se nikdy nestává potvrzeným bez
+samostatné akce manažera.
 
 | Oblast | Aktuální stav |
 | --- | --- |
-| Měsíční plánovací UI, API a deterministická validace | `IMPLEMENTED`; úplný uživatelský průchod `NOT VERIFIED` |
-| Neúplný nebo neověřený návrh | Potvrzení je blokováno (`IMPLEMENTED`; odpovídající pravidlo OQ23 `VERIFIED`) |
-| Simulované plánování | `SIMULATED`; fixtures nejsou důkazem kvality plánování AI |
-| Gemini adaptér | `IMPLEMENTED`; kvalita měsíčního výstupu pro provoz `NOT VERIFIED` |
-| Ochrana údajů před Gemini | Anonymizace jmen a interních identifikátorů před odesláním `IMPLEMENTED`; unit test ověřil anonymní request a lokální obnovu ID |
-| Přihlášení a role | Lokální/Auth.js MVP přístup `IMPLEMENTED`; produkční autentizace `NOT VERIFIED`; Entra `PLANNED` |
-| Přihlášení a čtení měsíčních dat | Lokální přihlášení a načtení měsíčních dat ověřeno v připojeném testovacím prostředí (`VERIFIED`); žádný návrh nebyl vytvořen ani potvrzen |
-| Databáze a persistence | Prisma persistence `IMPLEMENTED`; dřívější ověření lokální Docker DB platí pro tehdejší prostředí; produkční databáze `NOT VERIFIED` |
-| Přehledová stránka | Pevné neprovozní souhrny odstraněny; lint, typecheck a build prošly |
-| Měsíční kalendář a formulář | Rozložení `IMPLEMENTED`; desktop a šířka 390 px vizuálně ověřeny (`VERIFIED`); styl sekundárních tlačítek opraven a ověřen; hlavní tok `NOT VERIFIED` |
-| Mobilní správa účtů | Úprava rozložení `IMPLEMENTED`; vizuální kontrola `NOT VERIFIED` |
+| Měsíční formulář, lokální OR-Tools provider a uložení návrhu | `IMPLEMENTED`; syntetický integrační průchod `VERIFIED` |
+| Nezávislá měsíční validace | `IMPLEMENTED`; v testovacím měsíci zůstala část pravidel `NOT VERIFIED` kvůli chybějícím návaznostem a otevřenému výkladu víkendového volna |
+| Ruční změna směn a nová kontrola | `IMPLEMENTED`; synteticky ověřeno odebrání směny, odhalení podobsazení a následná oprava |
+| Obnovení poslední uložené verze po načtení stránky | `IMPLEMENTED`; ověřeno ve stejném prohlížeči |
+| Potvrzení rozpisu | Zůstalo zablokované; žádný testovací návrh nebyl potvrzen |
+| Textové pokyny v režimu OR-Tools | Nevyhodnocují se; UI tuto skutečnost přiznává. Pokyny se solveru ani externí AI neposílají. |
+| Gemini provider | Zůstává dostupný pro ostatní nakonfigurované toky; není hlavním plánovačem měsíčního MVP. Kvalita produkčního plánování zůstává `NOT VERIFIED`. |
+| Produkční autentizace, databáze a provoz | `NOT VERIFIED`; mimo tento lokální průchod |
 
-Kontroly po poslední změně: `npm run lint`, `npm run typecheck`, `npm run test`
-(363 prošlo, 3 přeskočeny) a `npm run build` prošly. `npm run db:validate`
-prošel při předchozím ověřování; tato změna schématu Prisma se nedotkla.
-Integrační testy Gemini a PostgreSQL nebyly spuštěny. Přihlášení a načtení
-měsíčního endpointu proběhlo v připojeném lokálním testovacím prostředí; žádný
-návrh nebyl zapsán ani potvrzen.
+### Ověřený syntetický průchod
 
-## Rozlišení dat
+Test použil listopad 2026, 29 syntetických záznamů a obsazení 15 ranních / 7
+odpoledních míst ve všední dny. Víkendové hodnoty 7 / 3 byly pouze dočasným
+testovacím předpokladem, nikoli schváleným provozním pravidlem.
 
-- **Lokální testovací prostředí obsahuje skutečné záznamy zaměstnanců vložené
-  uživatelem.** Nejsou syntetická, nemažou se ani neupravují v rámci tohoto úkolu.
-- Syntetické fixtures v `lib/demo-data.ts` jsou samostatné předpřipravené
-  ukázkové záznamy používané některými částmi ukázkového UI a testů. Nejsou
-  exportem ani kopií uložených zaměstnanců.
-- Simulovaný provider vrací připravené scénáře; jeho označení `SIMULATED` se
-  zachovává. Výsledek se nesmí vydávat za skutečný výpočet AI.
-- Při volání externího Gemini API serverový adaptér nahrazuje jména, interní
-  zaměstnanecká ID a ID absencí anonymními štítky. Po odpovědi převádí ID návrhu
-  zpět pouze na serveru. Volný text instrukcí se před odesláním zbaví přesných
-  výskytů jmen a interních ID. Cílený unit test ověřil anonymizovaný požadavek
-  i obnovu ID v odpovědi; skutečné záznamy se pro integrační scénáře nepoužívají.
+- Lokální plánovač vytvořil návrh s 552 přiřazeními. Nezávislá validace
+  nezjistila chyby obsazení, ale označila výsledek jako `not_verified` kvůli
+  chybějícím návazným podkladům a nevyřešenému výkladu dvou víkendových dnů
+  volna.
+- Odebrání jedné směny vytvořilo novou verzi s 551 přiřazeními. Kontrola
+  označila konkrétní nedostatečně obsazenou směnu a blokovala potvrzení.
+- Po opětovném přidání směny se uložila další verze s 552 přiřazeními. Po
+  obnovení stránky se tato verze načetla a znovu zkontrolovala.
+- Izolovaná databáze obsahovala tři nepotvrzené verze; žádná neměla čas
+  potvrzení. Testovací data se nepřenášela k externí AI.
 
-## Další postup před hlavním průchodem
+### Automatické kontroly
 
-1. V Chrome byla ověřena měsíční osa a formulář při výchozí šířce i při 390 px.
-   Formulář se na mobilu skládá pod sebe a kalendář lze vodorovně posouvat.
-   Sekundární tlačítka nyní používají kontrastní barvy. V UI nebyl vybrán žádný
-   zaměstnanec a žádný plánovací zápis nebyl proveden.
-2. Následuje hlavní uživatelský průchod. Před vytvořením návrhu určit testovací
-   měsíc a potvrdit, že test používá vhodná data a provider. Skutečná jména
-   zaměstnanců se nesmějí odesílat externímu AI provideru; návrh se nesmí potvrdit
-   bez výslovného ověření cílového prostředí a výsledku.
-3. Samostatně zaznamenat, které části průchodu byly `VERIFIED`; simulovaný běh
-   nepotvrzuje kvalitu plánování AI ani produkční připravenost.
-4. Poté vizuálně projít mobilní správu účtů, chybové stavy a fokus klávesnice.
+| Kontrola | Výsledek |
+| --- | --- |
+| `npm run test` s aktivním lokálním OR-Tools prostředím | 59 testovacích souborů prošlo, 2 přeskočeny; 382 testů prošlo, 3 přeskočeny |
+| `npm run lint` | prošel |
+| `npm run typecheck` | prošel |
+| `npm run build` | prošel |
+| `npm run db:validate` | prošel |
+| Python testy plánovače | 10 testů prošlo |
 
-## Rozhodnutí, která zůstávají závazná
+## Známá omezení a další rozhodnutí
 
-- AI je hlavní logika plánování; deterministická validace nezávisle ověřuje jen
-  potvrzená pravidla. Ani AI, ani validace návrh neschvalují.
-- Manažer rozhoduje o potvrzení. Návrh, validovaný návrh a potvrzený rozpis jsou
-  rozdílné stavy.
-- Volný text je pokyn pro AI, nikoli automaticky deterministicky ověřované
-  pravidlo.
-- Chybějící historii nebo podklady označit jako neověřené; neúplný návrh nelze
-  potvrdit.
-- Pilotní rozsah tvoří zaměstnanci na plný úvazek a celý kalendářní měsíc.
-  Produkční autentizace, produkční databáze, částečné úvazky a CRM integrace jsou
-  mimo aktuální ověření.
+- Neověřené návaznosti na začátku nebo konci měsíce a otevřený výklad, zda
+  víkendové dva dny volna musí být po sobě, brání potvrzení testovacího návrhu.
+- Výsledek `infeasible` platí jen pro konkrétní vstupy a pravidla zahrnutá v
+  modelu. Timeout ani `unknown` nejsou důkazem, že je zaměstnanců málo.
+- Měsíční režim OR-Tools nevyhodnocuje volný text. Skutečná jména, interní ID
+  ani textové pokyny nejsou do procesu solveru posílány.
+- Testovací hodnoty obsazení nejsou schválený provozní profil. Pro provoz je
+  třeba zadat schválená data a vyřešit otevřené doménové otázky.
+- Tento průchod neověřuje kvalitu Gemini, pracovní právo, produkční zabezpečení,
+  produkční databázi ani připravenost aplikace k nasazení.
 
-Podrobnější doménová rozhodnutí jsou v [`DOMAIN_DECISIONS.md`](DOMAIN_DECISIONS.md),
-schválený směr rozhraní v historickém návrhu
-[`docs/superpowers/specs/2026-10-30-mesicni-mvp-design.md`](superpowers/specs/2026-10-30-mesicni-mvp-design.md)
-a vysvětlení stavových popisků v [`docs/README.md`](README.md#stavové-popisky).
+Další bezpečný krok je nezávislá kontrola celého diffu, odstranění případných
+nálezů, opakování kontrol po posledních úpravách a commit jednoho ověřeného
+milníku. Push je samostatný následný krok podle pravidel v `AGENTS.md`.

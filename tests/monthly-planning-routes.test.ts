@@ -7,8 +7,11 @@ const confirm = vi.fn();
 const loadBoundary = vi.fn();
 const getConfirmed = vi.fn();
 const loadPreviousWeeklyEmployees = vi.fn();
+const monthlyMode = vi.hoisted(() => ({ value: "simulated" as "simulated" | "ortools" }));
+const generateOrtools = vi.hoisted(() => vi.fn());
 vi.mock("@/lib/auth/route-access", () => ({ requirePlanningActor: () => access() }));
-vi.mock("@/lib/planning/monthly-runtime", () => ({ getMonthlyRuntime: () => ({ configured: true, mode: "simulated", create, confirm, loadBoundary, getConfirmed }), getMonthlyPersistenceRuntime: () => ({ configured: true, create, confirm, loadBoundary, getConfirmed, loadPreviousWeeklyEmployees }) }));
+vi.mock("@/lib/planning/monthly-runtime", () => ({ getMonthlyRuntime: () => ({ configured: true, mode: monthlyMode.value, create, confirm, loadBoundary, getConfirmed }), getMonthlyPersistenceRuntime: () => ({ configured: true, create, confirm, loadBoundary, getConfirmed, loadPreviousWeeklyEmployees }) }));
+vi.mock("@/lib/planning/monthly-ortools-provider", () => ({ MonthlyOrtoolsProvider: class { name = "ortools"; generateMonthlyPlan = generateOrtools; } }));
 
 import { POST as run } from "@/app/api/planning/monthly/run/route";
 import { POST as confirmRoute } from "@/app/api/planning/monthly/confirm/route";
@@ -17,7 +20,7 @@ import { GET as readMonth } from "@/app/api/planning/monthly/route";
 const input = { month: "2026-11", employees: [{ id: "e1", displayName: "Test", employmentType: "full_time" }], absences: [], availability: [], staffingRequirements: [], instructions: "Test" };
 const request = (body: unknown) => new Request("http://localhost", { method: "POST", body: JSON.stringify(body), headers: { "Content-Type": "application/json" } });
 
-beforeEach(() => { vi.clearAllMocks(); access.mockResolvedValue({ ok: true, actor }); loadBoundary.mockResolvedValue({ before: { complete: false, assignments: [] }, after: { complete: false, assignments: [] } }); });
+beforeEach(() => { vi.clearAllMocks(); monthlyMode.value = "simulated"; access.mockResolvedValue({ ok: true, actor }); loadBoundary.mockResolvedValue({ before: { complete: false, assignments: [] }, after: { complete: false, assignments: [] } }); });
 
 describe("měsíční plánovací API", () => {
   it("uloží pouze návrh a vrátí neověřené kontroly", async () => {
@@ -29,6 +32,16 @@ describe("měsíční plánovací API", () => {
     expect(body.validation.canConfirm).toBe(false);
     expect(create).toHaveBeenCalledOnce();
     expect(confirm).not.toHaveBeenCalled();
+  });
+  it("spustí OR-Tools jako samostatný měsíční režim a uloží jeho vlastní identitu", async () => {
+    monthlyMode.value = "ortools";
+    generateOrtools.mockResolvedValue({ month: input.month, assignments: [], explanations: [], alternatives: [], assumptions: [], instructionsOutcome: "Pokyny nebyly vyhodnoceny." });
+    const response = await run(request({ input }));
+    const body = await response.json();
+    expect(response.status).toBe(200);
+    expect(body.mode).toBe("ortools");
+    expect(generateOrtools).toHaveBeenCalledOnce();
+    expect(create).toHaveBeenCalledWith(expect.objectContaining({ mode: "ortools", providerName: "ortools" }));
   });
   it("viewer nemůže spustit ani potvrdit běh", async () => {
     access.mockResolvedValue({ ok: true, actor: { ...actor, role: "viewer" } });

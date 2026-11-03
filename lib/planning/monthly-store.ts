@@ -2,14 +2,14 @@ import { canConfirmPlanning, type PlanningActor } from "../auth/actor";
 import { validateMonthlyInput, type MonthlyPlanningInput } from "./domain/month-input";
 import type { MonthlyBoundaryData, MonthlyValidation } from "./domain/month-validation";
 import { isMonthlyPlanDraft, validateMonthlyDraft, type MonthlyPlanDraft } from "./monthly-planning";
-import type { PlanningProviderMode } from "./runtime-types";
+import type { MonthlyPlanningMode } from "./runtime-types";
 
 export interface MonthlyDraftRecord {
   readonly id: string;
   readonly input: MonthlyPlanningInput;
   readonly draft: MonthlyPlanDraft;
   readonly providerName: string;
-  readonly mode: PlanningProviderMode;
+  readonly mode: MonthlyPlanningMode;
 }
 export interface StoredMonthlyRun extends MonthlyDraftRecord {
   readonly confirmed: { readonly by: string; readonly at: string } | null;

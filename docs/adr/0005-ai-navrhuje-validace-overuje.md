@@ -1,7 +1,8 @@
 # ADR 0005 — AI navrhuje, validace ověřuje, manažer potvrzuje
 
-- **Stav:** `IMPLEMENTED` (rozhodnutí i navazující kód); reálné volání Gemini
-  je `NOT VERIFIED`
+- **Stav:** historické rozhodnutí pro původní týdenní tok; pro hlavní měsíční
+  MVP je role AI nahrazena rozhodnutím z 3. 11. 2026 v
+  [`DOMAIN_DECISIONS.md`](../DOMAIN_DECISIONS.md#novější-rozhodnutí-pro-měsíční-mvp-verified-3-11-2026).
 - **Datum:** 24. 10. 2026, aktualizováno 26. 10. 2026
 - **Kontext kódu:** `lib/planning/types.ts`, `lib/planning/domain/types.ts`,
   `lib/planning/ai-provider.ts`, `lib/planning/orchestrator.ts`,

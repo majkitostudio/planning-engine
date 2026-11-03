@@ -6,7 +6,7 @@ import type { StaffingSetting } from "./staffing-settings";
 
 export interface MonthlyFormData {
   readonly month: string;
-  readonly employees: readonly { id: string; name: string; availableAllMonth: boolean }[];
+  readonly employees: readonly { id: string; name: string }[];
   readonly absences: readonly Absence[];
   readonly availability: readonly MonthlyAvailability[];
   /** Pondělí až neděle, každému dni odpovídá ranní a odpolední směna. */
@@ -17,11 +17,11 @@ export interface MonthlyFormData {
 export interface MonthlyFormReadiness {
   readonly month: string;
   readonly employeeCount: number;
-  readonly allMonthAvailableCount: number;
   readonly absenceCount: number;
   readonly availabilityCount: number;
   readonly filledStaffingCount: number;
   readonly missing: readonly string[];
+  readonly warnings: readonly string[];
 }
 
 /** Souhrn povinných polí před odesláním celoměsíčního návrhu. */
@@ -33,14 +33,20 @@ export function monthlyFormReadiness(form: MonthlyFormData): MonthlyFormReadines
   if (form.staffing.length !== 14 || filledStaffingCount !== 14) missing.push("Vyplňte požadované obsazení pro všech 7 dnů a obě směny.");
   const prepared = buildMonthlyFormInput(form);
   if (!prepared.ok && !missing.includes(prepared.message)) missing.push(prepared.message);
+  const warnings: string[] = [];
+  if (form.employees.length > 0 && form.staffing.length === 14 && filledStaffingCount === 14) {
+    const demand = form.staffing.reduce((sum, value) => sum + Number(value), 0);
+    const capacity = form.employees.length * 5;
+    if (demand > capacity) warnings.push(`V úplném týdnu požadujete ${demand} směn, ale ${form.employees.length} zaměstnanců může podle víkendového volna a překryvu směn pokrýt nejvýše ${capacity}. Absence a další omezení mohou kapacitu dále snížit.`);
+  }
   return {
     month: form.month,
     employeeCount: form.employees.length,
-    allMonthAvailableCount: form.employees.filter((employee) => employee.availableAllMonth).length,
     absenceCount: form.absences.length,
     availabilityCount: form.availability.length,
     filledStaffingCount,
     missing: [...new Set(missing)],
+    warnings,
   };
 }
 
@@ -57,7 +63,7 @@ export function buildMonthlyFormInput(form: MonthlyFormData): { ok: true; value:
   if (form.staffing.length !== 14 || form.staffing.some((value) => !/^\d+$/.test(value) || !Number.isSafeInteger(Number(value)))) return { ok: false, message: "Vyplňte nezáporný počet pro každou směnu v týdnu." };
   const availability = new Map<string, MonthlyAvailability>();
   const key = (entry: MonthlyAvailability) => `${entry.employeeId}|${entry.date}|${entry.shiftKind}`;
-  for (const employee of form.employees) if (employee.availableAllMonth) {
+  for (const employee of form.employees) {
     for (const date of dates) for (const shiftKind of ["morning", "afternoon"] as const) {
       const entry = { employeeId: employee.id, date, shiftKind, available: true };
       availability.set(key(entry), entry);
@@ -68,6 +74,14 @@ export function buildMonthlyFormInput(form: MonthlyFormData): { ok: true; value:
     if (exceptions.has(key(entry))) return { ok: false, message: "Dostupnost stejné směny je zadaná vícekrát." };
     exceptions.add(key(entry));
     availability.set(key(entry), entry);
+  }
+  for (const absence of form.absences) if (absence.status === "approved") {
+    for (const date of dates) if (absence.from <= date && date <= absence.to) {
+      for (const shiftKind of ["morning", "afternoon"] as const) {
+        const entry = { employeeId: absence.employeeId, date, shiftKind, available: false };
+        availability.set(key(entry), entry);
+      }
+    }
   }
   const input: MonthlyPlanningInput = {
     month: form.month,

@@ -5,16 +5,17 @@ Dokument: `docs/DOMAIN_SPECIFICATION.md`
 
 > **Stav dokumentu: ČÁSTEČNĚ POTVRZENÝ NÁVRH (PARTIALLY VERIFIED PROPOSAL).**
 >
-> Dokument obsahuje **potvrzený kontext domény** (§0.1) a **potvrzená rozhodnutí
-> ze 24. 10. 2026** (§0.2): roli AI, rozsah prvního řezu, časy směn a dvě
+> Dokument obsahuje **potvrzený kontext domény** (§0.1) a **historická rozhodnutí
+> z 24. 10. 2026** (§0.2). Roli AI a rozsah hlavního měsíčního MVP později mění
+> rozhodnutí v `docs/DOMAIN_DECISIONS.md` ze 3. 11. 2026. Časy směn a dvě
 > pracovní pravidla. Zbytek zůstává `PROPOSAL` nebo `OPEN QUESTION` — dokument
 > stále není úplná schválená specifikace a nevymýšlí chybějící pravidla.
 > Každý pracovní předpoklad je označen `ASSUMPTION`, každá nevyřešená věc
 > `OPEN QUESTION`.
 >
-> **Závazný plánovací model:** AI je hlavní plánovací logika a vytváří konkrétní
-> návrh; deterministická validace ho nezávisle kontroluje; manažer návrh
-> potvrzuje a teprve potom se změny ukládají. Podrobnosti jsou v §1.4.
+> **Aktuální model měsíčního MVP:** lokální OR-Tools sestavuje přiřazení;
+> deterministická validace nezávisle kontroluje celý měsíc; manažer rozhoduje
+> o potvrzení. Historický týdenní AI tok zůstává oddělený.
 >
 > **Implementační stav (`IMPLEMENTED`, ne schválení domény):** doménové typy,
 > potvrzené časy, `validatePlan()`, AI kontrakt, Gemini adaptér a orchestrátor
@@ -41,7 +42,7 @@ Následující skutečnosti uživatel explicitně potvrdil v tomto projektu:
   AAAAuto**.
 - Nástroj je určen pro **managera telemarketingového oddělení**.
 - Dlouhodobým cílem je sestavování **měsíčních rozpisů směn** pro **více než
-  100 zaměstnanců**; první funkční verze se omezuje na jeden týden.
+  100 zaměstnanců**; aktuální MVP plánuje jeden celý kalendářní měsíc.
 - Technologický směr: **Next.js, React, TypeScript, PostgreSQL a Prisma**.
 - Plánovací předmět tedy není obecný „slot", ale **pracovní směna** v call centru.
 
@@ -54,18 +55,19 @@ nezávazně nepotvrdí.
 Následující rozhodnutí potvrdil uživatel v zadání pro pokračování projektu.
 Jsou závazná pro další implementaci:
 
-- **AI je hlavní plánovací logika**, ne volitelný doplněk. Sestavuje konkrétní
-  návrh směn, vyhodnocuje požadavky, absence, dostupnost a potřebné obsazení
-  a aktivně navrhuje řešení problémů.
-- **Deterministická validace je nezávislá kontrola návrhu AI.** Nenahrazuje
-  plánování; ověřuje, co AI navrhla.
+- **Původní týdenní řez používal AI jako hlavní plánovací logiku.** Toto
+  rozhodnutí je pro aktuální měsíční MVP nahrazeno: přiřazení sestavuje lokální
+  OR-Tools; případná AI pomoc s pokyny či vysvětlením je oddělená.
+- **Deterministická validace je nezávislá kontrola návrhu.** Nenahrazuje
+  plánování; ověřuje, co provider navrhl.
 - **Manažer návrh kontroluje a potvrzuje.** Bez potvrzení se navržené změny
   neukládají ani neaplikují.
 - **Návrh, ověřený návrh a potvrzené změny jsou tři různé stavy.**
 - **Neověřené nebo chybějící informace se nesmí prezentovat jako jistota.**
   Systém musí přiznat omezení a nabídnout nejlepší dostupné alternativy.
-- **První funkční verze:** jeden týden (pondělí–nedělí) a zaměstnanci na plný
-  úvazek. Částečné úvazky, měsíční rozsah a integrace jsou mimo první řez.
+- **Aktuální měsíční MVP:** celý kalendářní měsíc a zaměstnanci na plný
+  úvazek; týdenní tabulka je pohled do měsíčního návrhu. Částečné úvazky a
+  integrace zůstávají mimo rozsah.
 - **Potřebné obsazení směn je konfigurovatelný vstup.** Historické počty se
   nepovažují za univerzálně platné bez ověření.
 
@@ -202,24 +204,21 @@ prioritu.
 Poskytnout základ pro **chytrý plánovač směn** pro **zaměstnance call centra
 společnosti AAAAuto** (nástroj pro managera telemarketingového oddělení, §0.1):
 co se plánuje, z jakých vstupů, jakými pravidly a jak se reportují konflikty.
-První funkční verze má manažerovi skutečně ušetřit práci: AI sestaví konkrétní
-návrh týdenního rozpisu, nezávislá validace ho zkontroluje a manažer ho
-potvrdí nebo odmítne.
+Hlavní měsíční MVP má manažerovi ušetřit práci: lokální plánovač sestaví návrh na celý měsíc, nezávislá validace ho zkontroluje a manažer ho potvrdí nebo odmítne.
 
-### 1.2 V rozsahu první verze (`VERIFIED`)
+### 1.2 V rozsahu aktuálního měsíčního MVP (`VERIFIED`)
 
-- Jeden týden, pondělí–nedělí.
-- Zaměstnanci na plný úvazek; částečné úvazky jsou mimo první řez.
-- AI plánovač, který vytváří konkrétní návrh směn a navrhuje řešení problémů.
-- Deterministická validace jako nezávislá kontrola návrhu.
-- Výstup s návrhem, změnami, nesplněnými požadavky, výsledky validace,
-  vysvětlením a alternativami.
+- Jeden celý kalendářní měsíc; týdenní tabulka je pohled do něj.
+- Zaměstnanci na plný úvazek; částečné úvazky jsou mimo rozsah.
+- Lokální OR-Tools plánovač vytváří konkrétní přiřazení směn.
+- Deterministická validace nezávisle kontroluje celý měsíc podle dostupných podkladů.
+- Výstup rozlišuje nalezené řešení, známou neproveditelnost a nedokončený běh.
+- AI pomoc s pokyny či vysvětlením zůstává oddělená a volitelná.
 - Potvrzení manažerem před uložením nebo aplikací změn.
 - Syntetická demonstrační data; žádná reálná osobní data.
 
-### 1.3 Mimo rozsah první verze (explicitně)
+### 1.3 Mimo rozsah měsíčního MVP (explicitně)
 
-- Měsíční plánování a optimalizace přes více týdnů.
 - Zaměstnanci na částečný úvazek.
 - Integrace s Countdown CRM, EDocházkou, mzdami nebo jinými systémy.
 - Automatické ukládání nebo aplikace návrhu bez potvrzení manažera.
@@ -228,26 +227,23 @@ potvrdí nebo odmítne.
   z velké části `ASSUMPTION`/`OPEN QUESTION`).
 
 **Poznámka k databázi a API:** technologický směr zahrnuje **PostgreSQL a
-Prisma** (`VERIFIED`). Technický základ databázové vrstvy je v pořádku, ale
-doménové modely a migrace se doplní až podle potvrzeného kontraktu. Ukládá se
-až manažerem potvrzený výsledek, ne každý vygenerovaný návrh.
+Prisma** (`VERIFIED`). Návrh měsíce se ukládá jako samostatný nepotvrzený běh;
+potvrzený rozpis se změní až samostatným potvrzením manažera.
 
-### 1.4 Závazný plánovací model (`VERIFIED`)
+### 1.4 Aktuální měsíční plánovací model (`VERIFIED`)
 
 ```text
 vstupní podklady
-  → AI plánovač vytvoří konkrétní návrh
+  → lokální OR-Tools vytvoří měsíční přiřazení
   → deterministická validace návrh nezávisle zkontroluje
-  → výsledek: návrh + nálezy + vysvětlení + alternativy
+  → výsledek: návrh + nálezy + neověřené kontroly
   → manažer zkontroluje a potvrdí (nebo odmítne / upraví)
   → teprve potom se změny uloží
 ```
 
-AI není jen vysvětlující vrstva nad deterministickým algoritmem. Je hlavním
-nositelem rozhodování o tom, kdo bude v které směně. Deterministická pravidla
-jsou pojistka, která musí fungovat i tehdy, když AI pravidlo nepochopí nebo
-ho ignoruje. Výsledek validace není schválení; schválení je vždy krok
-manažera.
+AI není potřeba pro vytvoření měsíčního návrhu. Doplňující textové pokyny se
+v režimu OR-Tools nevyhodnocují a systém to přizná. Výsledek validace není
+schválení; schválení je vždy samostatný krok manažera.
 
 ### 1.5 Další implementační řez: operativní náhrada (`IMPLEMENTED` / `SIMULATED`)
 
@@ -276,7 +272,7 @@ Otázka OQ1 je tedy zodpovězena.
 
 `VERIFIED` pro první verzi:
 
-- Plánuje se **jeden týden** (pondělí–nedělí) pro zaměstnance na plný úvazek.
+- Měsíční MVP plánuje **celý kalendářní měsíc** pro zaměstnance na plný úvazek; týdenní pohled není samostatný plán.
 - Směna má potvrzený časový rozsah (ranní / odpolední, všední den / víkend).
 - Potřebné obsazení každé směny je vstup; nemusí být stejné pro všechny dny.
 - Návrh může obsahovat nepokryté směny, ale musí je přiznat a nabídnout
@@ -289,9 +285,10 @@ Otázka OQ1 je tedy zodpovězena.
 
 `OPEN QUESTION`:
 
-2. Je plán statický (jednou vygenerován), nebo se má po potvrzení průběžně
-   ručně upravovat? První řez předpokládá jednorázový návrh na týden
-   s potvrzením, bez průběžného přepočítávání.
+2. **Historická otázka původního týdenního návrhu; pro měsíční MVP nahrazena.**
+   Manažer může upravit nepotvrzený návrh ve vybraném týdenním pohledu. Každá
+   úprava vytvoří novou verzi po nezávislé kontrole celého měsíce. Potvrzený
+   rozpis se mění až samostatným potvrzením manažera.
 
 ## 3. Základní pojmy a entity
 
@@ -302,7 +299,7 @@ definice kontraktu.
 
 | Entita | Popis | Stav |
 | --- | --- | --- |
-| `PlanningWeek` | Týden pondělí–nedělí, pro který se plánuje | `VERIFIED` (rozsah) |
+| `PlanningWeek` | Legacy týdenní kontrakt; v měsíčním MVP jde o pohled do měsíčního návrhu | `IMPLEMENTED` (legacy) |
 | `Employee` | Zaměstnanec call centra; v první verzi plný úvazek, fiktivní data | `VERIFIED` (rozsah) |
 | `ShiftDefinition` | Potvrzené časy ranní/odpolední směny ve všední den a o víkendu | `VERIFIED` |
 | `StaffingRequirement` | Kolik zaměstnanců je potřeba na dané směně v daném dni | `VERIFIED` (vstup) |
@@ -310,7 +307,7 @@ definice kontraktu.
 | `EmployeeRequest` | Požadavek na volno nebo preference směny | `IMPLEMENTED` / `SIMULATED` (manager review); skutečný příjem požadavků není implementován |
 | `ExistingAssignment` | Již existující směna, vůči které se počítají změny | `VERIFIED` (vstup) |
 | `PlanningRules` | Potvrzená pravidla odpočinku a víkendových dnů volna | `VERIFIED` |
-| `PlanDraft` | Návrh AI: přiřazení, změny, nedostatky, vysvětlení, alternativy | `IMPLEMENTED` (typ) |
+| `PlanDraft` | Legacy návrh AI a společný tvar přiřazení; měsíční běh sestavuje lokální OR-Tools | `IMPLEMENTED` (typ) |
 | `ShiftIncident` | Provozní výpadek zaměstnance na konkrétní směně | `IMPLEMENTED` / `SIMULATED` |
 | `ReplacementRequest` | Požadavek na náhradu nad konkrétní verzí potvrzeného týdne | `IMPLEMENTED` / `SIMULATED` |
 | `ReplacementOption` | Jedna konkrétní varianta náhrady s dopočítaným dopadem | `IMPLEMENTED` / `SIMULATED` |
@@ -570,14 +567,11 @@ podřízený tomuto dokumentu — autoritativní seznam je tento.
 | Položka | Odkaz / stav |
 | --- | --- |
 | Základ pro budoucí logiku | `lib/planning/README.md` — jádro, doménový kontrakt, AI kontrakt a orchestrátor `IMPLEMENTED` |
-| Minimální datový kontrakt | [`PLANNING_CONTRACT.md`](PLANNING_CONTRACT.md) — `PROPOSAL` k ověření |
+| Datové kontrakty | [`PLANNING_CONTRACT.md`](PLANNING_CONTRACT.md) — týdenní kontrakt je historický; měsíční provider a validace jsou popsány v §11.1 (`IMPLEMENTED`) |
 | Doménové typy | `lib/planning/domain/` — `IMPLEMENTED` (kontrakt a potvrzená pravidla); zbytek `OPEN QUESTION` |
 | Přehled dokumentace | `docs/README.md` |
 | Projektové instrukce | `AGENTS.md` |
 | Technologický stack | Next.js + React + TypeScript + PostgreSQL + Prisma (`VERIFIED`) |
 | Tento dokument | `PARTIALLY VERIFIED PROPOSAL` — potvrzený kontext a rozhodnutí §0.2, zbytek čeká na rozhodnutí |
 
-Potvrzená rozhodnutí už umožňují první funkční řez: týdenní AI návrh, nezávislá
-validace potvrzených pravidel a potvrzení manažerem. Otevřené otázky výše
-omezují další rozšiřování (měsíce, částečné úvazky, role, váhy preferencí), ale
-nebrání bezpečnému prvnímu řezu. Doménu ani čísla nedomýšlej.
+Aktuální měsíční MVP plánuje celý zvolený kalendářní měsíc lokálním OR-Tools providerem; týdny jsou pouze pohledy do měsíčního návrhu. Syntetický integrační průchod ověřil vytvoření návrhu, ruční úpravu, novou kontrolu a obnovení nepotvrzené verze. Návrh zůstal `NOT VERIFIED`, protože chyběly potřebné návazné podklady a otevřený výklad víkendového volna; potvrzení zůstalo zablokované. Částečné úvazky, preference, produkční provoz a další integrace zůstávají mimo tento ověřený řez. Doménu ani čísla nedomýšlej.

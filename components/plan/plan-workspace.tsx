@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState, type KeyboardEvent } from "react";
+import { useCallback, useEffect, useMemo, useState, type KeyboardEvent } from "react";
 import { Icon } from "@/components/icons";
 import { MonthlyPlanningPanel, type MonthlyView } from "@/components/plan/monthly-planning-panel";
 import { MonthlyRosterTable } from "@/components/plan/monthly-roster-table";
@@ -20,7 +20,7 @@ import {
   weekLabel,
   type ShiftKind,
 } from "@/lib/demo-data";
-import type { PlanningRuntime } from "@/lib/planning/server-config";
+import type { MonthlyProviderRuntime } from "@/lib/planning/monthly-runtime";
 import type { StaffingSetting } from "@/lib/planning/staffing-settings";
 import { selectMonthlyView } from "@/lib/planning/monthly-view";
 
@@ -57,7 +57,7 @@ function initialWeekStart(): Date {
 }
 
 interface PlanWorkspaceProps {
-  runtime: PlanningRuntime;
+  runtime: MonthlyProviderRuntime;
   canManage: boolean;
   initialStaffing: readonly StaffingSetting[] | null;
 }
@@ -76,6 +76,11 @@ export function PlanWorkspace({
   const [confirmedViews, setConfirmedViews] = useState<Record<string, MonthlyView | null>>({});
   const [loadErrors, setLoadErrors] = useState<Record<string, boolean>>({});
   const [visitedMonths, setVisitedMonths] = useState<string[]>(() => [monthKey(currentMonthStart())]);
+  const onMonthlyResult = useCallback((month: string, result: MonthlyView | null) => {
+    setDraftViews((current) => { const next = { ...current }; if (!result || result.confirmed) delete next[month]; else next[month] = result; return next; });
+    if (result?.confirmed) setConfirmedViews((current) => ({ ...current, [month]: result }));
+    if (result) setLoadErrors((current) => ({ ...current, [month]: false }));
+  }, []);
 
   const weekDates = useMemo(() => getWeekDates(weekStart), [weekStart]);
   const monthTitle = new Intl.DateTimeFormat("cs-CZ", {
@@ -188,11 +193,7 @@ export function PlanWorkspace({
         </button>
       </div>
 
-      {visitedMonths.map((month) => <div key={month} hidden={month !== visibleMonthValue}><MonthlyPlanningPanel month={month} canManage={canManage} simulated={runtime.configured && runtime.mode === "simulated"} initialStaffing={initialStaffing} onResult={(result) => {
-        setDraftViews((current) => { const next = { ...current }; if (!result || result.confirmed) delete next[month]; else next[month] = result; return next; });
-        if (result?.confirmed) setConfirmedViews((current) => ({ ...current, [month]: result }));
-        if (result) setLoadErrors((current) => ({ ...current, [month]: false }));
-      }} /></div>)}
+      {visitedMonths.map((month) => <div key={month} hidden={month !== visibleMonthValue}><MonthlyPlanningPanel month={month} canManage={canManage} simulated={runtime.configured && runtime.mode === "simulated"} initialStaffing={initialStaffing} weekDates={weekDates.map(formatIsoDate)} onResult={onMonthlyResult} /></div>)}
 
       <div className="week-banner">
         <h2>Týden {isoWeekNumber(weekStart)}</h2>
@@ -427,10 +428,10 @@ export function PlanWorkspace({
         <section className="ai-card" aria-labelledby="rail-ai">
           <div className="ai-card__head">
             <span className="ai-card__icon" aria-hidden="true"><Icon name="sparkles" width={16} height={16} /></span>
-            <h2 className="ai-card__title" id="rail-ai">Plánovací asistent</h2>
-            <Badge variant={runtime.configured ? "success" : "warning"} dot={false}>{runtime.configured ? (runtime.mode === "simulated" ? "Simulovaný režim" : "AI nakonfigurována · neověřeno") : "Nekonfigurováno"}</Badge>
+            <h2 className="ai-card__title" id="rail-ai">Plánování směn</h2>
+            <Badge variant={runtime.configured ? "success" : "warning"} dot={false}>{runtime.configured ? (runtime.mode === "simulated" ? "Simulovaný režim" : runtime.mode === "ortools" ? "Lokální plánovač · neověřeno" : "AI nakonfigurována · neověřeno") : "Nekonfigurováno"}</Badge>
           </div>
-          <p className="ai-card__text">{runtime.configured ? (runtime.mode === "simulated" ? "Návrh používá simulované scénáře; nejde o skutečné plánování AI." : "Měsíční návrh lze odeslat nakonfigurované AI. Kvalita výstupu pro provoz není ověřená.") : "Měsíční návrh zatím nelze vytvořit. Formulář zůstává dostupný pro přípravu vstupů."}</p>
+          <p className="ai-card__text">{runtime.configured ? (runtime.mode === "simulated" ? "Návrh používá simulované scénáře; nejde o skutečné plánování." : runtime.mode === "ortools" ? "Návrh sestaví místní plánovač. Kvalita ani vhodnost pravidel pro provoz nejsou ověřené." : "Měsíční návrh lze odeslat nakonfigurované AI. Kvalita výstupu pro provoz není ověřená.") : "Měsíční návrh zatím nelze vytvořit. Formulář zůstává dostupný pro přípravu vstupů."}</p>
         </section>
       </aside>
       </div>

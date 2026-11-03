@@ -3,7 +3,7 @@ import { auth } from "@/auth";
 import { PlanWorkspace } from "@/components/plan/plan-workspace";
 import { getCompleteStaffingSettings, type StaffingSetting } from "@/lib/planning/staffing-settings";
 import { getPlanningPersistenceRuntime } from "@/lib/planning/persistence-runtime";
-import { getPlanningRuntime } from "@/lib/planning/server-config";
+import { getMonthlyProviderRuntime } from "@/lib/planning/monthly-runtime";
 
 export const metadata: Metadata = {
   title: "Plán směn",
@@ -14,7 +14,7 @@ export const dynamic = "force-dynamic";
 
 export default async function PlanningPage() {
   const session = await auth();
-  const runtime = getPlanningRuntime();
+  const runtime = getMonthlyProviderRuntime();
   const persistenceRuntime = getPlanningPersistenceRuntime();
   let initialStaffing: readonly StaffingSetting[] | null = null;
 

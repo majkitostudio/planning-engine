@@ -26,6 +26,12 @@ it("vrátí potvrzený měsíc i po novém načtení", async () => {
   expect(await new PrismaMonthlyStore(reader).getConfirmed("2026-11")).toMatchObject({ ok: true, run: { id: "p", confirmed: { by: "m" } } });
 });
 
+it("načte uložený OR-Tools návrh jako vlastní režim", async () => {
+  findUnique.mockResolvedValue({ ...row, mode: "ortools", providerName: "ortools" });
+  const reader = { monthlyPlanningRun: { findUnique } } as unknown as PrismaClient;
+  expect(await new PrismaMonthlyStore(reader).get("p")).toMatchObject({ mode: "ortools", providerName: "ortools" });
+});
+
 beforeEach(() => { vi.clearAllMocks(); findUnique.mockResolvedValue(row); findFirst.mockResolvedValue(null); updateMany.mockResolvedValue({ count: 1 }); });
 afterEach(() => vi.unstubAllEnvs());
 
