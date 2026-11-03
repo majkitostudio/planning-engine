@@ -17,6 +17,7 @@ export interface MonthlyView {
   readonly validation: MonthlyValidation;
   readonly confirmed?: boolean;
 }
+type BoundaryReadiness = { readonly key: string; readonly status: "loading" | "available" | "missing" | "unavailable"; readonly before: boolean; readonly after: boolean };
 
 const DAYS = ["Pondělí", "Úterý", "Středa", "Čtvrtek", "Pátek", "Sobota", "Neděle"];
 const STEPS = ["Zaměstnanci", "Absence a dostupnost", "Obsazení", "Doplňující pokyny", "Souhrn a návrh"] as const;
@@ -43,6 +44,7 @@ export function MonthlyPlanningPanel({ month, canManage, planningMode, initialSt
   const [edited, setEdited] = useState<readonly ProposedAssignment[] | null>(null);
   const [editEmployee, setEditEmployee] = useState("");
   const [editDate, setEditDate] = useState("");
+  const [boundaryReadiness, setBoundaryReadiness] = useState<BoundaryReadiness | null>(null);
   const revision = useRef(0);
   const storageKey = `planning-monthly-draft:${month}`;
 
@@ -62,6 +64,23 @@ export function MonthlyPlanningPanel({ month, canManage, planningMode, initialSt
       .catch(() => { if (!controller.signal.aborted && revision.current === currentRevision) setError("Uložený návrh se nepodařilo obnovit. Zkuste stránku načíst znovu."); });
     return () => controller.abort();
   }, [canManage, month, onResult, storageKey]);
+
+  const employeeIdKey = employees.map((employee) => employee.id).sort().join(",");
+  const boundaryKey = `${month}|${employeeIdKey}`;
+  const activeBoundary = employeeIdKey ? boundaryReadiness?.key === boundaryKey ? boundaryReadiness : { key: boundaryKey, status: "loading" as const, before: false, after: false } : null;
+  useEffect(() => {
+    if (!employeeIdKey) return;
+    const controller = new AbortController();
+    const query = new URLSearchParams({ month, employeeIds: employeeIdKey });
+    void fetch(`/api/planning/roster-history?${query.toString()}`, { signal: controller.signal })
+      .then(async (response) => {
+        const result = await response.json();
+        if (!response.ok || !result.ok || !result.boundary) throw new Error("Návaznost není dostupná.");
+        setBoundaryReadiness({ key: boundaryKey, status: "available", before: result.boundary.beforeComplete === true, after: result.boundary.afterComplete === true });
+      })
+      .catch(() => { if (!controller.signal.aborted) setBoundaryReadiness({ key: boundaryKey, status: "unavailable", before: false, after: false }); });
+    return () => controller.abort();
+  }, [boundaryKey, employeeIdKey, month]);
 
   function rememberDraft(id: string) { try { localStorage.setItem(storageKey, id); } catch { setError("Návrh byl uložen, ale prohlížeč nepovolil jeho automatické obnovení."); } }
 
@@ -155,6 +174,7 @@ export function MonthlyPlanningPanel({ month, canManage, planningMode, initialSt
   return <section className="card monthly-planning-panel" aria-labelledby="monthly-title">
     <div className="monthly-form-heading"><div><p className="eyebrow">Celý kalendářní měsíc</p><h2 id="monthly-title">Návrh rozpisu · {month}</h2></div><span className="monthly-step-count">Krok {step + 1} z {STEPS.length}</span></div>
     <p>Návrh se ukládá odděleně. Rozpis se změní až po potvrzení manažerem.</p>
+    {employees.length ? <div className="monthly-history-status" role="status"><strong>Návazné podklady</strong>{activeBoundary?.status === "loading" ? <span>Kontroluji sedm dní před měsícem a po něm…</span> : activeBoundary?.status === "unavailable" || !activeBoundary ? <span>Stav návaznosti se nepodařilo načíst. Před potvrzením proběhne serverová kontrola.</span> : <span>Před měsícem: {activeBoundary.before ? "k dispozici" : "chybí nebo jsou neúplné"} · Po měsíci: {activeBoundary.after ? "k dispozici" : "chybí nebo jsou neúplné"}{!activeBoundary.after ? " · Budoucí rozpis nemusí existovat; nic se nedoplňuje odhadem." : ""}</span>}<a href="/navaznost-smen">Zkontrolovat nebo vložit podklady</a></div> : null}
     {!canManage ? <p role="note">Vytvoření a potvrzení návrhu je dostupné manažerovi.</p> : null}
     <nav className="monthly-progress" aria-label="Postup zadání měsíčního návrhu">{STEPS.map((label, index) => <button key={label} type="button" className="monthly-progress__step" aria-current={step === index ? "step" : undefined} aria-label={`Krok ${index + 1}: ${label}`} onClick={() => changeStep(index)}><span className="monthly-progress__number">{index + 1}</span><span className="monthly-progress__label">{label}</span></button>)}</nav>
     <form onClick={(event) => { if (event.target instanceof HTMLElement && event.target.closest('button[type="button"]')) clearResult(); }} onChange={clearResult} onSubmit={(event) => void submit(event)}>

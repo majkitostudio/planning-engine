@@ -1,6 +1,6 @@
 # Návaznost směn a pokyny pro měsíční plán — architektonický a implementační plán
 
-**Stav:** Návrh pro rozhodnutí, nikoli schválené chování nebo dokončená implementace. Tento dokument je samostatným zadáním pro Codex; aktuální kód a projektové instrukce mají při provádění přednost před historickými plány.
+**Stav:** Uživatel schválil provedení plánu; jednotlivé kroky níže rozlišují dokončené, ověřené a dosud otevřené části. Tento dokument je zadáním pro Codex; aktuální kód a projektové instrukce mají při provádění přednost před historickými plány.
 
 **Cíl:** Manažer vloží návazný rozpis z firemního rosteru, zkontroluje jej a použije jako podklad pro měsíční plán. Postupně může zadat běžným jazykem podporované preference, které se prokazatelně promítnou do návrhu.
 
@@ -40,10 +40,10 @@
 
 **Soubory:** nové `lib/planning/roster-import.ts` a `lib/planning/roster-import.test.ts`; další soubory jen dle zjištěného formátu.
 
-- [ ] Na uživatelem otevřené stránce ověřit způsob kopírování a hlavičky bez stahování, předávání nebo ukládání reálných osobních údajů. Příklady pro testy přepsat výhradně na smyšlené osoby. Pokud kopírování neposkytne jednoznačná data, zaznamenat omezení a navrhnout náhradní ruční vstup.
-- [ ] Definovat strukturu náhledu: období, řádky se spárovaným ID, den a stav `shift` s přesnými časy / `off` / `unknown`, zdrojová buňka pouze v paměti náhledu a seznam chyb. Formát data převzít jen z ověřené hlavičky, rok nehádat.
-- [ ] Nejprve napsat testy a spustit je s očekávaným selháním: více dnů a zaměstnanců; výslovné volno; prázdná buňka jako neznámá; různé časové intervaly; neplatné datum; duplicitní řádek; jméno s diakritikou; žádná shoda a více shod. Automatické párování jen při jednoznačné shodě; ostatní rozhodne manažer.
-- [ ] Implementovat čistý převod a spustit `npm test -- --run lib/planning/roster-import.test.ts`. Předat přesné původní časy; nepřevádět neznámé nebo zkrácené směny na schválené časy bez rozhodnutí manažera.
+- [x] Ověřit uživatelem poskytnutý export bez vypisování nebo ukládání skutečných osobních údajů. Export je UTF-8 se středníky; hlavička uvádí číslo dne a českou zkratku dne v týdnu, nikoli měsíc ani rok. Příklady pro testy jsou výhradně syntetické.
+- [x] Definovat strukturu náhledu: období zvolí manažer a hlavička se proti němu ověří; řádky se spárovaným ID; stavy `shift` s přesnými časy / `off` / `unknown`; zdrojová buňka je pouze v paměti náhledu.
+- [x] Napsat syntetické testy pro více dnů, volno, prázdné a nepodporované buňky, vlastní intervaly, neplatný čas, diakritiku a jednoznačné/nejednoznačné párování. Duplicitní řádek export zastaví.
+- [x] Implementovat převod CSV a spustit `npm test -- --run lib/planning/roster-import.test.ts`. Neznámé stavy (včetně dovolené a nemoci) se automaticky nepřevádějí na volno ani schválenou absenci.
 
 ## Etapa B — uložení podkladů a zdroje pravdy
 
@@ -51,19 +51,19 @@
 
 **Soubory:** `prisma/schema.prisma`, nová Prisma migrace, nové `lib/planning/roster-history-store.ts` a odpovídající testy; `lib/planning/domain/month-history.ts`, `lib/planning/monthly-history-service.ts` a jejich testy.
 
-- [ ] Nejprve sepsat testy pro úplnost: den s výslovným volnem se započte jako známý, chybějící buňka nikoli; nový zaměstnanec nesmí získat zpětně vymyšlené volno; přesun času ani duplicita nesmějí projít tiše.
-- [ ] Navrhnout model převzatého období a jednotlivých záznamů tak, aby uchovával rozsah, osobu, datum, známý stav, přesné časy, zdroj, autora, čas uložení a verzi. Neudržovat surový text rosteru déle, než je potřebné k náhledu. Nesměšovat převzetí podkladů s potvrzením rozpisu.
-- [ ] Určit pravidlo konfliktů: při překryvu dvou rozdílných zdrojů žádný tiše nevyhrává; podklad je nejednoznačný, manažer dostane možnost věc opravit. Stejný či opakovaný import nesmí vytvářet zavádějící duplicity. Nemazat historii potvrzených plánů.
-- [ ] Rozšířit načítání návazností o jednoznačné uložené podklady, zachovat existující potvrzené rozpisy a znovu prověřit podklady při obnově, nové kontrole i pokusu o potvrzení. Změnit kontrakt návazností, jen pokud věrně zachová přesné časy; jiné než potvrzené typové intervaly nesmějí být tiše nahrazeny.
-- [ ] Ověřit testy `npm test -- --run lib/planning/domain/month-history.test.ts lib/planning/monthly-history-service.test.ts` a `npm run db:validate`. Migrace a transakční zápisy ověřovat pouze v prostředí výslovně určeném pro bezpečné ověření; nemigrovat existující skutečnou databázi bez výslovného schválení cíle.
+- [x] Testy pokrývají výslovné volno, neznámou buňku, nového zaměstnance, přesné časy, shodné překryvy a rozporné zdroje.
+- [x] Prisma model a migrace uchovávají období, osobu, datum, známý stav, přesné časy, zdroj, autora, čas uložení a verzi. Surový text rosteru se do databáze neposílá.
+- [x] Shodné překryvy se sloučí, konfliktní záznamy zůstanou neúplné, opakovaný identický import je idempotentní a potvrzené rozpisy se nemažou.
+- [x] Načítání návazností používá nejnovější verzi stejného rozsahu, zachovává starší potvrzené plány a při validaci přenáší přesné časy. Kontrola se opakuje i při potvrzení.
+- [x] Spuštěny `npm test -- --run lib/planning/domain/month-history.test.ts lib/planning/monthly-history-service.test.ts` a `npm run db:validate`; transakce jsou pokryté unit testy. Migrace nebyla aplikována na databázi, protože nebyl určen bezpečný cílový systém.
 
 ## Etapa C — stránka a srozumitelná návaznost
 
 **Soubory:** `components/app-shell.tsx`, nová stránka `app/(app)/navaznost-smen/page.tsx`, nový `components/roster-history-panel.tsx`, navazující API v `app/api/planning/` a testy podle existujících konvencí.
 
-- [ ] Přidat stránku do hlavní navigace. Vytvořit vstupní pole pro vložení, výběr období, čitelný náhled a opravu nespárovaných či nerozpoznaných údajů. Čtení a ukládání omezit podle stávajícího přístupu a serverově vynutit práva manažera pro zápis.
-- [ ] Přidat souhrn počtu známých/neznámých dní a jednoznačný krok uložení podkladů. Změna zaměstnance, data nebo času musí zneplatnit starý náhled; zrušení nesmí nic zapsat.
-- [ ] V měsíčním formuláři ukázat, které potřebné okolní podklady jsou k dispozici a které chybí. Vysvětlit, že budoucí rozpis nemusí být známý; nikdy nenabízet vymyšlení historie jako její doložení.
+- [x] Přidat stránku do hlavní navigace. Podporuje vložení i výběr staženého CSV, výběr období, náhled, opravy párování a ruční kontrolu neznámých buněk. Zápis je omezen na manažera serverově.
+- [x] Přidat počty směn/volna/neznámých buněk a samostatné uložení podkladů. Změna měsíce nebo vloženého textu zneplatní náhled; opravy párování, stavu a času jsou výslovnou součástí zkontrolovaného náhledu. Zrušení nic nezapisuje.
+- [x] V měsíčním formuláři ukázat stav sedmi okolních dnů; neznámou budoucnost ponechat neověřenou a odkázat na stránku návaznosti.
 - [ ] Ověřit oprávnění, chybný vstup, neúplný náhled, znovunačtení a konflikt dvou importů. Browser ověření provést se smyšlenými daty pouze způsobem, který nezasáhne skutečná data; pokud to nelze bezpečně zajistit, uvést omezení.
 
 ### Doplnění části měsíce
@@ -77,11 +77,11 @@
 
 **Soubory:** `lib/planning/domain/month-input.ts`, `lib/planning/monthly-form.ts`, `lib/planning/monthly-ortools-provider.ts`, `scripts/monthly_solver.py`, `lib/planning/domain/month-validation.ts`, příslušné testy.
 
-- [ ] Zavést střídání jako schválenou preferenci, která ustupuje závazným pravidlům a obsazení. Význam přes vložené volno zůstává otevřený: zda porovnávat následující pracovní směny i přes volno, nebo pouze směny v sousedních dnech. Do rozhodnutí nepředstírat, že je tento výklad potvrzený.
-- [ ] V testech popsat zvolený význam na malém měsíci: střídání je možné; pokrytí vyžaduje výjimku; mezera kvůli volnu; přechod měsíce se známou i chybějící historií. Ověřit, že povinné absence, odpočinek a obsazení mají přednost a výjimka je zobrazena.
-- [ ] Přidat výslovný strukturovaný vstup preference a odpovídající optimalizační cíl do lokálního solveru; absence zadání musí zachovat dnešní chování. Výsledek `FEASIBLE` při časovém limitu nesmí být nazván optimálním; `UNKNOWN` není důkaz neproveditelnosti.
-- [ ] Nezávisle spočítat a zobrazit porušení preference bez osobních údajů v logu; pokud pro vyhodnocení chybí okolní směna, označit pouze dotčený úsek jako neověřený. Textové pokyny nepovažovat za vyhodnocené, dokud tuto vazbu skutečně nepoužijí.
-- [ ] Spustit relevantní Vitest testy a `.venv\Scripts\python.exe -m unittest discover -s scripts -p monthly_solver_test.py`; přidat test pro konflikt, přesnou návaznost a dostupnost solveru.
+- [x] Zavést střídání jako schválenou preferenci, která ustupuje závazným pravidlům a obsazení. Uživatel rozhodl porovnávat sousední pracovní směny i přes volno.
+- [x] Testy pokrývají střídání, nutnou výjimku, dny volna a návaznost přes hranici měsíce; závazné kontroly mají přednost.
+- [x] Strukturovaný přepínač a měkký cíl jsou v lokálním solveru; nezadaná preference zachová dnešní chování.
+- [x] Validace nezávisle vyhodnocuje typy směn; vlastní čas z historie nepřevádí na ranní/odpolední a zobrazí neblokující nález.
+- [x] Spuštěny Vitest i Python testy solveru; `FEASIBLE`/`UNKNOWN` jsou odlišeny.
 
 ## Etapa E — AI jako prostředník
 
@@ -103,7 +103,7 @@
 
 ## Závěrečné ověření a předání
 
-- [ ] Spustit `npm run lint`, `npm run typecheck`, `npm test`, `npm run build`, `npm run db:validate` a relevantní Python testy; zaznamenat skutečné výsledky a přeskočené testy.
+- [x] Spustit `npm run lint`, `npm run typecheck`, `npm test`, `npm run build`, `npm run db:validate` a relevantní Python testy; zaznamenat skutečné výsledky a přeskočené testy do autoritativní specifikace.
 - [ ] Prověřit simulované vstupy z rosteru, nejednoznačné párování, překrývající se zdroje, neznámé versus volno, časovou návaznost, nedostupnost AI a solveru, chybějící budoucí podklady a ochranu potvrzení.
 - [ ] Aktualizovat jeden relevantní autoritativní dokument pro každé změněné rozhodnutí a odkazy na něj; rozlišit `PLANNED`, `IMPLEMENTED` a `VERIFIED`. Zkontrolovat diff a neznámé výstupy, zachovat existující nesledované podklady.
 - [ ] Commitovat samostatné ucelené a ověřené kroky podle projektových pravidel. Neprovádět produkční migraci, export, přenos osobních údajů externí AI, potvrzení reálného rozpisu ani nasazení bez příslušného výslovného schválení.

@@ -20,6 +20,7 @@ type NavItem = {
 const NAV_ITEMS: NavItem[] = [
   { href: "/", label: "Přehled", icon: "dashboard" },
   { href: "/planovani", label: "Rozpis směn", icon: "calendar" },
+  { href: "/navaznost-smen", label: "Návaznost směn", icon: "calendar" },
   { href: "/zamestnanci", label: "Zaměstnanci", icon: "users" },
   { href: "/pozadavky", label: "Požadavky", icon: "clipboard" },
   { href: "/dovolene", label: "Dovolené a absence", icon: "umbrella" },
@@ -156,7 +157,7 @@ export function AppShell({
 
         <nav className="sidebar__nav" aria-label="Sekce aplikace">
           <ul className="nav-list">
-            {visibleNavItems.filter((item) => item.href === "/planovani" || item.href === "/zamestnanci").map(renderNavItem)}
+            {visibleNavItems.filter((item) => item.href === "/planovani" || item.href === "/navaznost-smen" || item.href === "/zamestnanci").map(renderNavItem)}
           </ul>
           <details
             className="sidebar__future"
@@ -170,7 +171,7 @@ export function AppShell({
               <span className="nav-link__label">Budoucí funkce</span>
             </summary>
             <ul className="nav-list sidebar__future-list">
-              {visibleNavItems.filter((item) => item.href !== "/planovani" && item.href !== "/zamestnanci").map(renderNavItem)}
+              {visibleNavItems.filter((item) => item.href !== "/planovani" && item.href !== "/navaznost-smen" && item.href !== "/zamestnanci").map(renderNavItem)}
             </ul>
           </details>
         </nav>

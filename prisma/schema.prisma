@@ -25,6 +25,16 @@ enum EmployeeRequestDecisionStatus {
   rejected
 }
 
+enum RosterHistorySource {
+  copied_roster
+  manual
+}
+
+enum RosterHistoryEntryStatus {
+  shift
+  off
+}
+
 model AppUser {
   id              String              @id @default(cuid())
   externalSubject String?             @unique
@@ -40,6 +50,7 @@ model AppUser {
   confirmedMonthlyRuns MonthlyPlanningRun[] @relation("MonthlyPlanningRunConfirmedBy")
   auditEvents     AuditEvent[]
   employeeRequestDecisions EmployeeRequestDecision[]
+  rosterHistoryImports RosterHistoryImport[]
 }
 
 model MonthlyPlanningRun {
@@ -63,6 +74,49 @@ model PlanningEmployee {
   displayName String
   active      Boolean  @default(true)
   createdAt   DateTime @default(now())
+  rosterHistoryImports RosterHistoryImportEmployee[]
+}
+
+model RosterHistoryImport {
+  id            String                  @id
+  scopeKey      String
+  fingerprint   String                  @unique
+  version       Int
+  periodStart   String
+  periodEnd     String
+  source        RosterHistorySource
+  createdById   String
+  createdBy     AppUser                 @relation(fields: [createdById], references: [id], onDelete: Restrict)
+  employees     RosterHistoryImportEmployee[]
+  createdAt     DateTime                @default(now())
+
+  @@unique([scopeKey, version])
+  @@index([periodStart, periodEnd])
+  @@index([createdById, createdAt])
+}
+
+model RosterHistoryImportEmployee {
+  importId   String
+  employeeId String
+  import     RosterHistoryImport @relation(fields: [importId], references: [id], onDelete: Restrict)
+  employee   PlanningEmployee   @relation(fields: [employeeId], references: [id], onDelete: Restrict)
+  entries    RosterHistoryEntry[]
+
+  @@id([importId, employeeId])
+  @@index([employeeId])
+}
+
+model RosterHistoryEntry {
+  importId   String
+  employeeId String
+  date       String
+  status     RosterHistoryEntryStatus
+  startTime  String?
+  endTime    String?
+  importEmployee RosterHistoryImportEmployee @relation(fields: [importId, employeeId], references: [importId, employeeId], onDelete: Restrict)
+
+  @@id([importId, employeeId, date])
+  @@index([employeeId, date])
 }
 
 model EmployeeRequestDecision {

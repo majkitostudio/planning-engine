@@ -1,16 +1,36 @@
-import { buildMonthlyBoundary, type ConfirmedHistoryPeriod } from "./domain/month-history";
+import { buildMonthlyBoundary, type ConfirmedHistoryPeriod, type RosterHistoryPeriod } from "./domain/month-history";
 import { datesInMonth } from "./domain/month";
 import { addDays, isIsoDate, weekdayIndex } from "./domain/time";
 import type { ExistingAssignment } from "./domain/types";
 
 type HistoryRow = { weekStart: string; confirmedAt: Date | null; input: unknown; confirmedPlan: unknown };
 type MonthlyHistoryRow = { month: string; confirmedAt: Date | null; input: unknown; draft: unknown };
+type RosterHistoryRow = {
+  scopeKey: string;
+  version: number;
+  periodStart: string;
+  periodEnd: string;
+  employees: readonly {
+    employeeId: string;
+    entries: readonly { date: string; status: "shift" | "off"; startTime: string | null; endTime: string | null }[];
+  }[];
+};
 export interface MonthlyHistoryReader {
   readonly planningRunRecord: {
     findMany(args: { where: { confirmedAt: { not: null }; weekStart: { gte: string; lte: string } }; select: { weekStart: true; confirmedAt: true; input: true; confirmedPlan: true } }): Promise<readonly HistoryRow[]>;
   };
   readonly monthlyPlanningRun?: {
     findMany(args: { where: { confirmedAt: { not: null }; month: { in: string[] } }; select: { month: true; confirmedAt: true; input: true; draft: true } }): Promise<readonly MonthlyHistoryRow[]>;
+  };
+  readonly rosterHistoryImport?: {
+    findMany(args: {
+      where: { periodStart: { lte: string }; periodEnd: { gte: string } };
+      orderBy: { version: "desc" };
+      select: {
+        scopeKey: true; version: true; periodStart: true; periodEnd: true;
+        employees: { select: { employeeId: true; entries: { select: { date: true; status: true; startTime: true; endTime: true } } } };
+      };
+    }): Promise<readonly RosterHistoryRow[]>;
   };
 }
 
@@ -70,5 +90,26 @@ export async function loadMonthlyBoundary(month: string, employeeIds: readonly s
       periods.push({ start: monthDates[0], end: monthDates[monthDates.length - 1], employeeIds: validEmployees && validDraft ? (input.employees as { id: string }[]).map((employee) => employee.id) : [], assignments: validDraft ? draft.assignments as ExistingAssignment[] : [] });
     }
   }
-  return buildMonthlyBoundary(month, employeeIds, periods);
+  let rosterPeriods: RosterHistoryPeriod[] = [];
+  if (db.rosterHistoryImport) {
+    const rows = await db.rosterHistoryImport.findMany({
+      where: { periodStart: { lte: addDays(dates[dates.length - 1], 7) }, periodEnd: { gte: addDays(dates[0], -7) } },
+      orderBy: { version: "desc" },
+      select: {
+        scopeKey: true, version: true, periodStart: true, periodEnd: true,
+        employees: { select: { employeeId: true, entries: { select: { date: true, status: true, startTime: true, endTime: true } } } },
+      },
+    });
+    const latest = new Map<string, RosterHistoryRow>();
+    for (const row of [...rows].sort((a, b) => b.version - a.version)) {
+      if (!latest.has(row.scopeKey)) latest.set(row.scopeKey, row);
+    }
+    rosterPeriods = [...latest.values()].map((row) => ({
+      start: row.periodStart,
+      end: row.periodEnd,
+      employeeIds: row.employees.map((item) => item.employeeId),
+      entries: row.employees.flatMap((item) => item.entries.map((entry) => ({ ...entry, employeeId: item.employeeId }))),
+    }));
+  }
+  return buildMonthlyBoundary(month, employeeIds, periods, rosterPeriods);
 }

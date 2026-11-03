@@ -60,6 +60,13 @@ describe("měsíční validace", () => {
     expect(result.problems.some((problem) => problem.code === "REST_AFTER_SIX_DAYS")).toBe(false);
   });
 
+  it("při kontrole hranice zachová přesný čas převzaté směny", () => {
+    const before = ["2026-10-25", "2026-10-26", "2026-10-27", "2026-10-28", "2026-10-29", "2026-10-30"]
+      .map((date) => ({ employeeId: "e1", date, startTime: "12:00" as const, endTime: "20:00" as const }));
+    const result = validateMonthlyPlan(input, [assignment("2026-11-01")], { ...completeBoundary, before: { complete: true, assignments: before } });
+    expect(result.problems.some((problem) => problem.code === "REST_AFTER_SIX_DAYS")).toBe(false);
+  });
+
   it("kontroluje šestici začínající v měsíci, i když končí v dalším měsíci", () => {
     const dates = ["2026-11-29", "2026-11-30", "2026-12-01", "2026-12-02", "2026-12-03", "2026-12-04"];
     const worked = dates.map((date) => ({ ...assignment(date), shiftKind: "afternoon" as const }));
@@ -137,5 +144,14 @@ describe("měsíční validace", () => {
     const result = validateMonthlyPlan(rotationInput, [{ ...assignment("2026-11-01"), shiftKind: "afternoon" }], { before, after: completeBoundary.after });
 
     expect(result.preferenceFindings.some((finding) => finding.code === "SHIFT_ROTATION_REPEATED")).toBe(true);
+  });
+
+  it("nepřevádí vlastní čas směny na typ ranní nebo odpolední při hodnocení střídání", () => {
+    const rotationInput = { ...input, shiftRotationPreference: true, availability: [{ employeeId: "e1", date: "2026-11-01", shiftKind: "morning" as const, available: true }] };
+    const before = { ...completeBoundary.before, assignments: [{ employeeId: "e1", date: "2026-10-31", startTime: "08:05" as const, endTime: "16:45" as const }] };
+    const result = validateMonthlyPlan(rotationInput, [assignment("2026-11-01")], { before, after: completeBoundary.after });
+
+    expect(result.preferenceFindings.some((finding) => finding.code === "SHIFT_ROTATION_HISTORY_UNCLASSIFIED")).toBe(true);
+    expect(result.canConfirm).toBe(true);
   });
 });

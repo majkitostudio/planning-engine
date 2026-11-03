@@ -1,12 +1,20 @@
-import { CONFIRMED_SHIFT_DEFINITIONS, DEFAULT_TIME_ZONE } from "./confirmed";
+import { CONFIRMED_SHIFT_DEFINITIONS, DEFAULT_TIME_ZONE, getShiftWindow } from "./confirmed";
 import { datesInMonth, monthWeekStarts } from "./month";
 import { validateMonthlyInput, type MonthlyPlanningInput } from "./month-input";
-import { addDays, datesInWeek, getShiftInterval, isIsoDate, isWeekendDate } from "./time";
-import type { ExistingAssignment, ProposedAssignment, ShiftKind } from "./types";
+import { addDays, datesInWeek, getShiftInterval, isIsoDate, isLocalTime, isWeekendDate, zonedDateTimeToUtcMs } from "./time";
+import type { LocalTime, ProposedAssignment, ShiftKind } from "./types";
+
+export interface MonthlyBoundaryAssignment {
+  readonly employeeId: string;
+  readonly date: string;
+  readonly shiftKind?: ShiftKind;
+  readonly startTime?: LocalTime;
+  readonly endTime?: LocalTime;
+}
 
 export interface MonthlyBoundaryData {
-  readonly before: { readonly complete: boolean; readonly assignments: readonly ExistingAssignment[] };
-  readonly after: { readonly complete: boolean; readonly assignments: readonly ExistingAssignment[] };
+  readonly before: { readonly complete: boolean; readonly assignments: readonly MonthlyBoundaryAssignment[] };
+  readonly after: { readonly complete: boolean; readonly assignments: readonly MonthlyBoundaryAssignment[] };
 }
 export interface MonthlyFinding {
   readonly code: string;
@@ -43,10 +51,22 @@ export function validateMonthlyPlan(input: MonthlyPlanningInput, assignments: re
     const item = a as Record<string, unknown>;
     return typeof item.employeeId === "string" && employees.has(item.employeeId) && isIsoDate(item.date) && (item.shiftKind === "morning" || item.shiftKind === "afternoon");
   };
-  const boundaryAssignments: ProposedAssignment[] = [];
+  const isValidBoundaryAssignment = (a: unknown): a is MonthlyBoundaryAssignment => {
+    if (typeof a !== "object" || a === null) return false;
+    const item = a as Record<string, unknown>;
+    if (typeof item.employeeId !== "string" || !employees.has(item.employeeId) || !isIsoDate(item.date)) return false;
+    if (item.shiftKind === "morning" || item.shiftKind === "afternoon") {
+      if (item.startTime === undefined && item.endTime === undefined) return true;
+      if (!isLocalTime(item.startTime) || !isLocalTime(item.endTime) || item.startTime >= item.endTime) return false;
+      const expected = getShiftWindow(CONFIRMED_SHIFT_DEFINITIONS, item.shiftKind, isWeekendDate(item.date));
+      return item.startTime === expected.start && item.endTime === expected.end;
+    }
+    return isLocalTime(item.startTime) && isLocalTime(item.endTime) && item.startTime < item.endTime;
+  };
+  const boundaryAssignments: MonthlyBoundaryAssignment[] = [];
   for (const [items, side] of [[before, "before"], [after, "after"]] as const) {
     for (const item of items) {
-      if (!isValidAssignment(item) || (side === "before" ? item.date >= first : item.date <= last)) {
+      if (!isValidBoundaryAssignment(item) || (side === "before" ? item.date >= first : item.date <= last)) {
         unverified.push({ code: "BOUNDARY_HISTORY_INVALID", message: "Podklady navazujícího rozpisu obsahují neplatné přiřazení." });
       } else boundaryAssignments.push(item);
     }
@@ -89,18 +109,25 @@ export function validateMonthlyPlan(input: MonthlyPlanningInput, assignments: re
     if (!requirement) { unverified.push({ code: "COVERAGE_REQUIREMENT_MISSING", message: "Chybí požadované obsazení směny.", date, shiftKind: kind }); continue; }
     if (valid.filter((item) => item.date === date && item.shiftKind === kind).length < requirement.requiredEmployees) problems.push({ code: "COVERAGE_UNDERSTAFFED", message: "Směna není dostatečně obsazena.", date, shiftKind: kind });
   }
-  const all = [...boundaryAssignments, ...valid];
+  const all: MonthlyBoundaryAssignment[] = [...boundaryAssignments, ...valid];
   for (const employee of input.employees) {
     const work = all.filter((item) => item.employeeId === employee.id);
     const workDates = [...new Set(work.map((item) => item.date))].sort();
+    const shiftInterval = (item: MonthlyBoundaryAssignment) => {
+      if (item.shiftKind) return getShiftInterval(item.date, item.shiftKind, CONFIRMED_SHIFT_DEFINITIONS, DEFAULT_TIME_ZONE);
+      const startMs = zonedDateTimeToUtcMs(item.date, item.startTime!, DEFAULT_TIME_ZONE);
+      let endMs = zonedDateTimeToUtcMs(item.date, item.endTime!, DEFAULT_TIME_ZONE);
+      if (endMs <= startMs) endMs = zonedDateTimeToUtcMs(addDays(item.date, 1), item.endTime!, DEFAULT_TIME_ZONE);
+      return { startMs, endMs };
+    };
     const interval = (date: string) => {
-      const spans = work.filter((item) => item.date === date).map((item) => getShiftInterval(date, item.shiftKind, CONFIRMED_SHIFT_DEFINITIONS, DEFAULT_TIME_ZONE));
+      const spans = work.filter((item) => item.date === date).map(shiftInterval);
       return { start: Math.min(...spans.map((span) => span.startMs)), end: Math.max(...spans.map((span) => span.endMs)) };
     };
     for (const date of workDates) {
       const day = work.filter((item) => item.date === date);
       if (day.length > 1 && date >= first && date <= last) {
-        const spans = day.map((item) => getShiftInterval(date, item.shiftKind, CONFIRMED_SHIFT_DEFINITIONS, DEFAULT_TIME_ZONE)).sort((a, b) => a.startMs - b.startMs);
+        const spans = day.map(shiftInterval).sort((a, b) => a.startMs - b.startMs);
         if (spans.some((span, index) => index > 0 && span.startMs < spans[index - 1].endMs)) problems.push({ code: "SHIFT_OVERLAP", message: "Směny zaměstnance se překrývají.", date, employeeId: employee.id });
       }
     }
@@ -133,8 +160,10 @@ export function validateMonthlyPlan(input: MonthlyPlanningInput, assignments: re
         const previous = employeeWork[index - 1];
         const current = employeeWork[index];
         if ((previous.date < first && !beforeComplete) || (current.date > last && !afterComplete)) continue;
-        if (previous.shiftKind === current.shiftKind) {
+        if (previous.shiftKind && current.shiftKind && previous.shiftKind === current.shiftKind) {
           preferenceFindings.push({ code: "SHIFT_ROTATION_REPEATED", message: "Dvě sousední pracovní směny mají stejný typ, přestože je zapnuté přání střídání.", date: current.date, employeeId: employee.id, shiftKind: current.shiftKind });
+        } else if (!previous.shiftKind || !current.shiftKind) {
+          preferenceFindings.push({ code: "SHIFT_ROTATION_HISTORY_UNCLASSIFIED", message: "Přání střídání nelze ověřit, protože navazující směna nemá potvrzený typ ranní nebo odpolední.", date: current.date, employeeId: employee.id });
         }
       }
     }

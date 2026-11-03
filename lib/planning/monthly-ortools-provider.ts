@@ -67,6 +67,14 @@ export class MonthlyOrtoolsProvider implements MonthlyPlanningProvider {
     const employeeTokens = new Map(input.employees.map((employee, index) => [employee.id, `employee-${index}`]));
     const employeeIds = new Map([...employeeTokens].map(([id, token]) => [token, id]));
     const tokenize = (employeeId: string) => employeeTokens.get(employeeId) ?? "";
+    const solverBoundary = (side: MonthlyBoundaryData["before"]) => {
+      const assignments = side.assignments.filter((assignment) => assignment.shiftKind);
+      return {
+        complete: side.complete && assignments.length === side.assignments.length,
+        assignments: assignments.map((assignment) => ({ employeeId: tokenize(assignment.employeeId), date: assignment.date, shiftKind: assignment.shiftKind! })),
+      };
+    };
+    const hasUnclassifiedBoundary = [...boundary.before.assignments, ...boundary.after.assignments].some((assignment) => !assignment.shiftKind);
     const request = {
       input: {
         month: input.month,
@@ -77,8 +85,8 @@ export class MonthlyOrtoolsProvider implements MonthlyPlanningProvider {
         ...(input.shiftRotationPreference === undefined ? {} : { shiftRotationPreference: input.shiftRotationPreference }),
       },
       boundary: {
-        before: { complete: boundary.before.complete, assignments: boundary.before.assignments.map(({ employeeId, date, shiftKind }) => ({ employeeId: tokenize(employeeId), date, shiftKind })) },
-        after: { complete: boundary.after.complete, assignments: boundary.after.assignments.map(({ employeeId, date, shiftKind }) => ({ employeeId: tokenize(employeeId), date, shiftKind })) },
+        before: solverBoundary(boundary.before),
+        after: solverBoundary(boundary.after),
       },
       timeoutSeconds: 20,
     };
@@ -106,7 +114,7 @@ export class MonthlyOrtoolsProvider implements MonthlyPlanningProvider {
       assignments: response.assignments.map((item) => ({ ...item, employeeId: employeeIds.get(item.employeeId)! })),
       explanations: [],
       alternatives: [],
-      assumptions: [],
+      assumptions: hasUnclassifiedBoundary ? ["Plánovač nevyhodnotil vlastní časy směn v okolní historii jako ranní nebo odpolední; nezávislá kontrola ověřila přesné časy před potvrzením."] : [],
       instructionsOutcome: "Plán sestavil lokální OR-Tools. Textové pokyny nebyly automaticky vyhodnoceny ani odeslány externí AI.",
     };
   }

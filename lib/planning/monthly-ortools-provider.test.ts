@@ -60,6 +60,25 @@ describe("MonthlyOrtoolsProvider", () => {
     await expect(provider.generateMonthlyPlan(input, boundary)).rejects.toMatchObject({ code: "solver_invalid_output" });
   });
 
+  it("does not relabel custom boundary times for OR-Tools and reports independent verification", async () => {
+    let sent = "";
+    const provider = new MonthlyOrtoolsProvider(async (payload) => {
+      sent = payload;
+      return JSON.stringify({ status: "feasible", assignments: [] });
+    });
+    const customBoundary = {
+      before: { complete: true, assignments: [{ employeeId: "private-id", date: "2026-10-31", startTime: "08:05" as const, endTime: "16:45" as const }] },
+      after: { complete: false, assignments: [] },
+    };
+
+    const draft = await provider.generateMonthlyPlan(input, customBoundary);
+    const request = JSON.parse(sent);
+
+    expect(request.boundary.before).toEqual({ complete: false, assignments: [] });
+    expect(draft.assumptions[0]).toMatch(/vlastní časy.*nezávislá kontrola/i);
+    expect(draft.assumptions[0]).not.toContain("private-id");
+  });
+
   it.skipIf(!process.env.PLANNING_PYTHON_EXECUTABLE)("locally solves the full November test month with synthetic employees", async () => {
     const employees = Array.from({ length: 29 }, (_, index) => ({
       id: `synthetic-${index}`,

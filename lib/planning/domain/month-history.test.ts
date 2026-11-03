@@ -9,20 +9,30 @@ describe("podklady navazujících rozpisů", () => {
   it("rozpozná úplné sousední rozpisy i potvrzené volné dny", () => {
     const result = buildMonthlyBoundary("2026-11", novemberEmployee, [before, after]);
     expect(result.before.complete).toBe(true);
-    expect(result.before.assignments).toEqual(before.assignments);
+    expect(result.before.assignments).toMatchObject(before.assignments);
     expect(result.after.complete).toBe(true);
     expect(result.after.assignments).toEqual([]);
   });
-  it("nepovažuje chybějící nebo nejednoznačný rozpis za úplnou historii", () => {
+  it("sloučí totožné překryvy a neúplný rozpis nepovažuje za úplnou historii", () => {
     const result = buildMonthlyBoundary("2026-11", novemberEmployee, [before, before]);
-    expect(result.before.complete).toBe(false);
+    expect(result.before.complete).toBe(true);
     expect(result.after.complete).toBe(false);
-    expect(result.before.assignments).toEqual([]);
+    expect(result.before.assignments).toMatchObject(before.assignments);
   });
   it("nepovažuje rozpis bez vybraného zaměstnance za úplný", () => {
     const result = buildMonthlyBoundary("2026-11", ["e1", "e2"], [before, after]);
     expect(result.before.complete).toBe(false);
     expect(result.after.complete).toBe(false);
+  });
+
+  it("novému zaměstnanci nevymýšlí volno v dřívějším rosteru", () => {
+    const result = buildMonthlyBoundary("2026-11", ["e1", "e2"], [], [{
+      start: "2026-10-25", end: "2026-10-31", employeeIds: ["e1"],
+      entries: Array.from({ length: 7 }, (_, index) => ({ employeeId: "e1", date: `2026-10-${String(index + 25).padStart(2, "0")}`, status: "off" as const })),
+    }]);
+
+    expect(result.before.complete).toBe(false);
+    expect(result.before.assignments).toEqual([]);
   });
   it("nepovažuje chybný záznam směny za důkaz volného dne", () => {
     const invalid = { ...before, assignments: [{ employeeId: "e1", date: "not-a-date", shiftKind: "morning" as const }] };
@@ -32,7 +42,37 @@ describe("podklady navazujících rozpisů", () => {
     const previous = { ...before, assignments: [{ employeeId: "e1", date: "2026-10-25", shiftKind: "afternoon" as const }] };
     const following = { ...after, assignments: [{ employeeId: "e1", date: "2026-12-07", shiftKind: "morning" as const }] };
     const result = buildMonthlyBoundary("2026-11", novemberEmployee, [previous, following]);
-    expect(result.before.assignments).toEqual(previous.assignments);
-    expect(result.after.assignments).toEqual(following.assignments);
+    expect(result.before.assignments).toMatchObject(previous.assignments);
+    expect(result.after.assignments).toMatchObject(following.assignments);
+  });
+
+  it("počítá výslovné volno jako známý den a zachová vlastní čas směny", () => {
+    const roster = {
+      start: "2026-10-25", end: "2026-10-31", employeeIds: novemberEmployee,
+      entries: [
+        ...["2026-10-25", "2026-10-26", "2026-10-27", "2026-10-28", "2026-10-29", "2026-10-30"].map((date) => ({ employeeId: "e1", date, status: "shift" as const, startTime: "08:05", endTime: "16:45" })),
+        { employeeId: "e1", date: "2026-10-31", status: "off" as const },
+      ],
+    };
+    const result = buildMonthlyBoundary("2026-11", novemberEmployee, [], [roster]);
+
+    expect(result.before.complete).toBe(true);
+    expect(result.before.assignments[0]).toMatchObject({ date: "2026-10-25", startTime: "08:05", endTime: "16:45" });
+  });
+
+  it("ponechá chybějící rosterovou buňku neznámou a označí rozporné zdroje jako neúplné", () => {
+    const roster = {
+      start: "2026-10-25", end: "2026-10-31", employeeIds: novemberEmployee,
+      entries: [
+        ...["2026-10-25", "2026-10-26", "2026-10-27", "2026-10-28", "2026-10-29", "2026-10-30"].map((date) => ({ employeeId: "e1", date, status: "shift" as const, startTime: "08:05", endTime: "16:45" })),
+      ],
+    };
+    const missing = buildMonthlyBoundary("2026-11", novemberEmployee, [], [roster]);
+    const conflict = buildMonthlyBoundary("2026-11", novemberEmployee, [before], [
+      { ...roster, start: before.start, end: before.end, entries: [{ employeeId: "e1", date: "2026-10-31", status: "off" as const }] },
+    ]);
+
+    expect(missing.before.complete).toBe(false);
+    expect(conflict.before.complete).toBe(false);
   });
 });

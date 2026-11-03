@@ -24,6 +24,25 @@ describe("načtení sousedních potvrzených rozpisů", () => {
     expect(boundary.before.complete).toBe(true);
     expect(boundary.after.complete).toBe(true);
   });
+
+  it("načte poslední verzi uloženého rosteru a nepovažuje chybějící buňku za volno", async () => {
+    const dates = ["2026-10-25", "2026-10-26", "2026-10-27", "2026-10-28", "2026-10-29", "2026-10-30", "2026-10-31"];
+    const roster = (version: number, entries: readonly { date: string; status: "shift" | "off"; startTime: string | null; endTime: string | null }[]) => ({
+      scopeKey: "scope", version, periodStart: dates[0], periodEnd: dates[6],
+      employees: [{ employeeId: "e1", entries }],
+    });
+    const full = dates.map((date) => ({ date, status: "off" as const, startTime: null, endTime: null }));
+    const latestEntries = full.filter((entry) => entry.date !== "2026-10-28");
+    const db = {
+      planningRunRecord: { findMany: vi.fn().mockResolvedValue([]) },
+      rosterHistoryImport: { findMany: vi.fn().mockResolvedValue([roster(2, latestEntries), roster(1, full)]) },
+    };
+
+    const boundary = await loadMonthlyBoundary("2026-11", ["e1"], db);
+
+    expect(boundary.before.complete).toBe(false);
+    expect(db.rosterHistoryImport.findMany).toHaveBeenCalledOnce();
+  });
 });
 
 describe("převzetí zaměstnanců ze staršího týdenního rozpisu", () => {
