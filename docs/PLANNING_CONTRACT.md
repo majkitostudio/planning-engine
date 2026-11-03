@@ -1,8 +1,8 @@
 # Minimální datový kontrakt plánovacího jádra
 
 > Tento dokument zachycuje původní týdenní kontrakt a související AI provider.
-> Hlavní měsíční MVP používá samostatný lokální OR-Tools provider podle
-> aktuálního rozhodnutí v [`DOMAIN_DECISIONS.md`](DOMAIN_DECISIONS.md#novější-rozhodnutí-pro-měsíční-mvp-verified-3-11-2026).
+> Měsíční MVP nyní používá samostatný lokální OR-Tools provider. Rozdíl oproti
+> schválenému záměru s AI uvádí [`DOMAIN_DECISIONS.md`](DOMAIN_DECISIONS.md).
 
 - **Stav:** kontrakt je `PROPOSAL` (doména zůstává částečně otevřená);
   jeho implementace je `IMPLEMENTED` a ověřená testy.

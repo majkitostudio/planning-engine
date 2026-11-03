@@ -12,6 +12,10 @@ nezávisle kontroluje a manažer je může ve vybraném týdnu upravit. Každá 
 úprava se znovu kontroluje za celý měsíc. Návrh se nikdy nestává potvrzeným bez
 samostatné akce manažera.
 
+Schváleným záměrem je AI jako hlavní plánovací logika. Současná implementace
+s lokálním OR-Tools a bez vyhodnocení textových pokynů se od něj liší; její
+existence sama nedokládá schválení změny záměru. Viz `DOMAIN_DECISIONS.md`.
+
 | Oblast | Aktuální stav |
 | --- | --- |
 | Měsíční formulář, lokální OR-Tools provider a uložení návrhu | `IMPLEMENTED`; syntetický integrační průchod `VERIFIED` |
@@ -64,6 +68,15 @@ testovacím předpokladem, nikoli schváleným provozním pravidlem.
 - Tento průchod neověřuje kvalitu Gemini, pracovní právo, produkční zabezpečení,
   produkční databázi ani připravenost aplikace k nasazení.
 
-Další bezpečný krok je nezávislá kontrola celého diffu, odstranění případných
-nálezů, opakování kontrol po posledních úpravách a commit jednoho ověřeného
-milníku. Push je samostatný následný krok podle pravidel v `AGENTS.md`.
+### Kontrola po sjednocení hlavní složky (3. 11. 2026)
+
+- Hlavní `main` byl posunut na měsíční větev; předchozí rozpracované změny jsou
+  uchovány v pojmenované záloze Git stash. Nesledované vizuální výstupy zůstaly.
+- Lint, typecheck, build a validace Prisma schématu prošly. Testy s lokálním
+  Pythonem: 382 prošlých, 3 přeskočené; samostatné Python testy: 10 prošlých.
+- Syntetický browser průchod v paměťovém režimu vytvořil 552 přiřazení, po
+  odebrání směny ukázal podobsazení a blokaci potvrzení; opravená verze se po
+  obnovení načetla. Při tomto průchodu nebyla ověřována databáze ani Neon.
+- Pro další praktický test je třeba samostatně ověřit cílové prostředí, vstupy,
+  návazné rozpisy a nevyřešené doménové otázky; produkční připravenost se tímto
+  průchodem neprokázala.

@@ -12,14 +12,15 @@ jiných dokumentů neopakuje.
 | [`../README.md`](../README.md) | Co projekt je, jaký je stav a jak ho spustit | `IMPLEMENTED` |
 | [`../AGENTS.md`](../AGENTS.md) | Pravidla práce coding agenta a meze autonomie | `IMPLEMENTED` |
 | [`ROADMAP.md`](ROADMAP.md) | Co je hotové, co chybí a co dělat dál | `IMPLEMENTED` (pracovní plán) |
-| [`PLANNING_CONTRACT.md`](PLANNING_CONTRACT.md) | Tok vstup → AI → validace → manažer a tvary rozhraní | `PROPOSAL` (kontrakt) / `IMPLEMENTED` (kód) |
+| [`PLANNING_CONTRACT.md`](PLANNING_CONTRACT.md) | Původní týdenní AI kontrakt a odkazy na měsíční tok | `PROPOSAL` (kontrakt) / `IMPLEMENTED` (kód) |
 | [`DOMAIN_SPECIFICATION.md`](DOMAIN_SPECIFICATION.md) | Doménový model a pravidla s mírou potvrzení | `PARTIALLY VERIFIED PROPOSAL` |
 | [`DOMAIN_DECISIONS.md`](DOMAIN_DECISIONS.md) | Otevřené otázky a odpovědi managera | `PARTIALLY ANSWERED` |
+| [`superpowers/specs/2026-10-30-mesicni-mvp-design.md`](superpowers/specs/2026-10-30-mesicni-mvp-design.md) | Schválený rozsah a vizuální směr měsíčního MVP | `VERIFIED` jako návrh, nikoli automaticky implementace |
 | [`adr/`](adr/README.md) | Proč jsou technická rozhodnutí taková | `IMPLEMENTED` |
 | [`superpowers/specs/2026-10-29-operativni-nahrady-design.md`](superpowers/specs/2026-10-29-operativni-nahrady-design.md) | Historický návrh operativních náhrad; novější odpovědi managera z 30. 10. 2026 mají přednost | `SUPERSEDED` |
 | [`superpowers/plans/2026-10-29-operativni-nahrady.md`](superpowers/plans/2026-10-29-operativni-nahrady.md) | Historický implementační plán; aktuální stav je v roadmapě | `SUPERSEDED` |
 | [`../lib/planning/README.md`](../lib/planning/README.md) | Co skutečně obsahuje plánovací jádro | `IMPLEMENTED` |
-| [`../prisma/schema.prisma`](../prisma/schema.prisma) | Identita, běhy, staffing nastavení a rozhodnutí nad syntetickými požadavky; zaměstnanecké tabulky chybí | `IMPLEMENTED` (lokální migrace `VERIFIED`, produkční DB `NOT VERIFIED`) |
+| [`../prisma/schema.prisma`](../prisma/schema.prisma) | Identita, zaměstnanci, běhy, staffing a rozhodnutí | `IMPLEMENTED` (lokální migrace `VERIFIED`, produkční DB `NOT VERIFIED`) |
 
 ## Aktuální stav
 
@@ -33,8 +34,8 @@ jiných dokumentů neopakuje.
 | AI kontrakt | `IMPLEMENTED` | `lib/planning/ai-provider.ts` |
 | Gemini adaptér | `IMPLEMENTED` / `VERIFIED` | `lib/ai/gemini-planning-provider.ts`; integrační volání prošlo, produkční kvalita výstupu `NOT VERIFIED` |
 | Orchestrace | `IMPLEMENTED` | `runPlanning()` spojuje návrh, validaci a změny |
-| Napojení UI na orchestrátor | `IMPLEMENTED` / `DEMO` | `POST /api/planning/run`, `PlanningResult`; vstupy jsou simulované fixtures |
-| Měsíční pilot | `IMPLEMENTED` / `SIMULATED` / `NOT VERIFIED` | Hlavní obrazovka používá měsíční formulář a měsíční návrh; týdenní tabulka je pouze výřezem zvoleného měsíce. Potvrzení je dostupné manažerovi. Syntetický browser průchod včetně potvrzení a opětovného načtení prošel proti izolované PostgreSQL. Kvalita skutečného měsíčního návrhu Gemini a provozní použitelnost zůstávají `NOT VERIFIED`; chybějící podklady blokují potvrzení. |
+| Starší týdenní API | `IMPLEMENTED` / `DEMO` | `POST /api/planning/run`; samostatné týdenní UI bylo odstraněno |
+| Měsíční pilot | `IMPLEMENTED` / `NOT VERIFIED` | Měsíční formulář, lokální OR-Tools, kontrola a ruční úpravy; týden je pohled do měsíce. Syntetické ověření a omezení popisuje [roadmapa](ROADMAP.md). Schválený záměr hlavní role AI se liší od implementace. |
 | Zaměstnanci pro plánování | `IMPLEMENTED` | Manažer spravuje trvalý seznam a může načíst aktivní zaměstnance do měsíčního návrhu. Odebrání zachová historii a zaměstnance lze znovu zařadit se stejnou identitou. |
 | Přihlášení a role | `IMPLEMENTED` / `VERIFIED` (lokální syntetický smoke) | Auth.js podporuje vývojový local režim a databázové účty v PostgreSQL; vytvoření účtu, změna hesla a zneplatnění deaktivované session prošly lokálním browser průchodem. Produkční úroveň a Entra ID zůstávají `NOT VERIFIED`/`PLANNED` |
 | Správa přihlašovacích účtů | `IMPLEMENTED` / `VERIFIED` (izolovaná lokální PostgreSQL) | `/uzivatele`, manager-only API a jednorázový `db:bootstrap-manager`; migrace, bootstrap, create, role, reset, povinná změna hesla, viewer denial i souběžná ochrana posledního managera byly ověřeny synteticky. Produkce `NOT VERIFIED` |
@@ -44,7 +45,7 @@ jiných dokumentů neopakuje.
 | Operativní náhrada směny | `IMPLEMENTED` / `SIMULATED` | Syntetický řez: výpadek celé směny → tři varianty → deterministický dopad → výběr → manager-only potvrzení; Gemini a provozní kvalita `NOT VERIFIED` |
 | Nastavení potřebného obsazení | `IMPLEMENTED` / `VERIFIED` (lokální smoke) | `/nastaveni`, manager-only zápis přes API, Prisma persistence a použití v operativních náhradách; migrace a manuální browser smoke proběhly v lokálním Docker PostgreSQL |
 | Rozhodování o požadavcích | `IMPLEMENTED` / `SIMULATED` | `/pozadavky` ukazuje dopad dvou syntetických požadavků, dostupné kandidáty a manager-only schválení/zamítnutí; rozhodnutí se ukládá přes Prisma a samo neupraví rozpis |
-| Testy | `IMPLEMENTED` / `VERIFIED` | `npm test`: 271 prošlých, 1 přeskočený externí Gemini integrační test; databázový UI průchod byl ručně proveden pouze se syntetickými účty |
+| Testy | `IMPLEMENTED` | Výsledky a rozsah posledního zaznamenaného ověření uvádí [roadmapa](ROADMAP.md). |
 | Kvalitní brána (CI) | `IMPLEMENTED` / `VERIFIED` (lokální běh) | Testy, typecheck, lint, build a `db:validate` prošly; úplná provozní/produkční brána z toho nevyplývá |
 | Produkční připravenost | `NOT VERIFIED` | Není produkční aplikace |
 
@@ -76,10 +77,10 @@ OQ23 a OQ24 jsou pro první řez uzavřené. Pro operativní náhrady jsou nejd�
 3. Jak se mají vážit a porovnávat varianty náhrady (OQ12–OQ14, OQ17)?
 4. Jak podrobný má být audit operativní změny (OQ20)?
 
-## Aktuální target po kontrolním checkpointu
+## Historický checkpoint týdenního řezu
 
-Následující kroky zachycují aktuální target a jeho ověření; položky označené
-✅ jsou dokončené v uvedeném rozsahu.
+Následující kroky zachycují dřívější ověření týdenního řezu. Aktuální měsíční
+stav a otevřené body jsou v [roadmapě](ROADMAP.md).
 
 1. ✅ **Sjednotit zdroj pravdy o stavu.** Opravit zastaralé texty v dashboardu,
    které stále tvrdí, že napojení UI a kontrola výsledku chybí. Po změně znovu
@@ -121,7 +122,7 @@ Následující kroky zachycují aktuální target a jeho ověření; položky oz
    hodnota používá aktuální profil Po–Pá 23/8, So–Ne 12/9. Implementace i
    lokální DB/browser smoke jsou `VERIFIED` v rozsahu syntetického pilotu.
 
-## Doporučený postup po staffing pilotu
+## Historický postup po staffing pilotu
 
 Následující pořadí je pracovní plán, nikoli tvrzení o již ověřeném výsledku:
 

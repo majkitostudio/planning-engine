@@ -1,8 +1,7 @@
 # ADR 0005 — AI navrhuje, validace ověřuje, manažer potvrzuje
 
-- **Stav:** historické rozhodnutí pro původní týdenní tok; pro hlavní měsíční
-  MVP je role AI nahrazena rozhodnutím z 3. 11. 2026 v
-  [`DOMAIN_DECISIONS.md`](../DOMAIN_DECISIONS.md#novější-rozhodnutí-pro-měsíční-mvp-verified-3-11-2026).
+- **Stav:** schválený záměr; aktuální měsíční implementace s lokálním OR-Tools
+  se od něj liší. Viz [`DOMAIN_DECISIONS.md`](../DOMAIN_DECISIONS.md).
 - **Datum:** 24. 10. 2026, aktualizováno 26. 10. 2026
 - **Kontext kódu:** `lib/planning/types.ts`, `lib/planning/domain/types.ts`,
   `lib/planning/ai-provider.ts`, `lib/planning/orchestrator.ts`,

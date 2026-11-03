@@ -5,10 +5,10 @@ Dokument: `docs/DOMAIN_SPECIFICATION.md`
 
 > **Stav dokumentu: ČÁSTEČNĚ POTVRZENÝ NÁVRH (PARTIALLY VERIFIED PROPOSAL).**
 >
-> Dokument obsahuje **potvrzený kontext domény** (§0.1) a **historická rozhodnutí
-> z 24. 10. 2026** (§0.2). Roli AI a rozsah hlavního měsíčního MVP později mění
-> rozhodnutí v `docs/DOMAIN_DECISIONS.md` ze 3. 11. 2026. Časy směn a dvě
-> pracovní pravidla. Zbytek zůstává `PROPOSAL` nebo `OPEN QUESTION` — dokument
+> Dokument obsahuje **potvrzený kontext domény** (§0.1), rozhodnutí (§0.2),
+> časy směn a dvě pracovní pravidla. Současná měsíční implementace s OR-Tools
+> se liší od schváleného záměru využít AI jako hlavní plánovací logiku; rozdíl
+> je zaznamenán v `docs/DOMAIN_DECISIONS.md`. Zbytek zůstává `PROPOSAL` nebo `OPEN QUESTION` — dokument
 > stále není úplná schválená specifikace a nevymýšlí chybějící pravidla.
 > Každý pracovní předpoklad je označen `ASSUMPTION`, každá nevyřešená věc
 > `OPEN QUESTION`.
@@ -55,9 +55,9 @@ nezávazně nepotvrdí.
 Následující rozhodnutí potvrdil uživatel v zadání pro pokračování projektu.
 Jsou závazná pro další implementaci:
 
-- **Původní týdenní řez používal AI jako hlavní plánovací logiku.** Toto
-  rozhodnutí je pro aktuální měsíční MVP nahrazeno: přiřazení sestavuje lokální
-  OR-Tools; případná AI pomoc s pokyny či vysvětlením je oddělená.
+- **AI je schváleným záměrem hlavní plánovací logiky.** Aktuální měsíční
+  implementace přesto sestavuje přiřazení lokálním OR-Tools; tento rozpor je
+  otevřený a sám o sobě nemění schválené rozhodnutí.
 - **Deterministická validace je nezávislá kontrola návrhu.** Nenahrazuje
   plánování; ověřuje, co provider navrhl.
 - **Manažer návrh kontroluje a potvrzuje.** Bez potvrzení se navržené změny

@@ -76,9 +76,11 @@ Tento soubor obsahuje projektové instrukce pro agenty pracující na projektu
 
 Tato rozhodnutí jsou pro další práci závazná:
 
-- **V hlavním měsíčním MVP sestavuje přiřazení lokální OR-Tools plánovač.** AI
-  není podmínkou vytvoření návrhu. Případná pomoc AI s pokyny nebo vysvětlením
-  nesmí dostat skutečná jména ani volný text bez schválené ochrany údajů.
+- **AI je schváleným záměrem hlavní plánovací logiky.** Má sestavovat návrh,
+  vyhodnocovat požadavky, absence, dostupnost a obsazení a navrhovat řešení.
+  Současná měsíční implementace však používá lokální OR-Tools a textové pokyny
+  nevyhodnocuje. Tento rozdíl není dokladem změny schváleného záměru.
+  Skutečná jména ani volný text neposílej externí AI bez schválené ochrany údajů.
 - **Deterministická validace nezávisle kontroluje celý měsíční návrh.** Nálezy
   plánovače validaci nenahrazují a výsledek se nepovažuje za schválení.
 - **Manažer návrh kontroluje a potvrzuje.** Aplikace nesmí bez potvrzení
@@ -144,10 +146,9 @@ směny; přestávky ani výpočet odpracované doby nejsou samostatné tvrdé pr
   návrh, validaci, změny a pokrytí. Serverový Gemini adaptér je v
   `lib/ai/gemini-planning-provider.ts`; reálné volání je `VERIFIED` integračním
   testem. Kvalita plánovacího výstupu pro produkční provoz zůstává `NOT VERIFIED`.
-- **Fáze 2 — UI napojení na orchestrátor: `IMPLEMENTED`.** Route handlery
-  `POST /api/planning/run` a `/confirm` volají plánovací službu přes
-  `run-service.ts`; UI komponenta `PlanningResult` zobrazuje tři vrstvy
-  (návrh, validace, potvrzení) s blokátory potvrzení podle OQ23.
+- Starší týdenní API `POST /api/planning/run` a `/confirm` zůstává v kódu;
+  samostatné týdenní UI bylo odstraněno. Měsíční UI používá vlastní měsíční
+  API pro návrh, kontrolu a potvrzení s blokátory podle OQ23.
 - **MVP autentizace: `IMPLEMENTED`, lokální smoke `VERIFIED`, produkční úroveň `NOT VERIFIED`.** Auth.js
   používá lokální credentials login gate, role `manager`/`viewer` jsou v lokální
   konfiguraci a přihlášení nemá spojení s CRM ani Graph. Microsoft Entra provider
@@ -168,10 +169,9 @@ směny; přestávky ani výpočet odpracované doby nejsou samostatné tvrdé pr
 - Rozhodovací list pro managera: `docs/DOMAIN_DECISIONS.md` — částečně
   zodpovězený; otevřené otázky zůstávají `OPEN QUESTION`. Odpovědi ani doménu
   nedomýšlej.
-- Aktuální pracovní strom prochází lintem, typecheckem, testy, buildem i validací
-  Prisma schématu. Lokální login gate a izolované Docker PostgreSQL připojení jsou
-  ověřené smoke testem; produkční úroveň, produkční DB a budoucí Entra rekonstrukce
-  zůstávají neověřené/plánované. Podrobnosti jsou v `docs/ROADMAP.md`.
+- Dostupné kontroly zahrnují lint, typecheck, testy, build a validaci Prisma
+  schématu. Dřívější dílčí lokální smoke neprokazuje produkční úroveň ani
+  aktuální stav připojení; podrobnosti jsou v `docs/ROADMAP.md`.
 - Stav informací označuj popisky (`VERIFIED`, `IMPLEMENTED`, `PLANNED`,
   `ASSUMPTION`, `OPEN QUESTION`, `NOT VERIFIED`, `SIMULATED`, `BLOCKED`).
   Jejich význam a rozdíl mezi `IMPLEMENTED` a `VERIFIED` vysvětluje

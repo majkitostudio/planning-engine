@@ -16,6 +16,20 @@ Datum vytvoření: 22. 10. 2026
 Poslední aktualizace: 3. 11. 2026
 Vyplnil: uživatel / zadání projektu (částečně)
 
+## Rozhodnutí manažera: měsíční MVP a vizuální návrh (31. 10. 2026)
+
+- Hlavním cílem je jeden návrh pro celý kalendářní měsíc; týden je pohled do něj.
+  Schválený záměr počítá s AI a volnými textovými pokyny, které samy nejsou
+  deterministicky ověřovaným tvrdým pravidlem.
+- Návrh se kontroluje jako celek včetně návazností mezi týdny a přes hranice
+  měsíců; chybějící podklady se označí jako neověřené a neúplný plán nelze potvrdit.
+- Manažer zadává období, zaměstnance, absence, dostupnost, obsazení a pokyny.
+  Platí potvrzené časy směn v `AGENTS.md`.
+- Hlavní obrazovka je „Rozpis směn“, ostatní položky jsou ve skupině „Budoucí
+  funkce“. Schválený vizuální podklad je [`mvp-final.png`](design/mvp-final.png),
+  podrobnosti jsou ve [specifikaci](superpowers/specs/2026-10-30-mesicni-mvp-design.md).
+  Schválený návrh sám o sobě nedokládá implementaci ani ověření.
+
 ## Výchozí dostupnost měsíčního plánování (`VERIFIED`, 3. 11. 2026)
 
 Při zadávání měsíčního návrhu jsou vybraní zaměstnanci výchozím nastavením
@@ -65,8 +79,8 @@ mění zadání:
   požadavky, absence, dostupnost a obsazení a navrhuje řešení problémů.
 - **Deterministická validace je nezávislá kontrola návrhu AI.** Nenahrazuje
   plánování.
-- **Manažer návrh potvrzuje.** Aplikace bez potvrzení nic neukládá ani
-  neaplikuje.
+- **Manažer návrh potvrzuje.** Aplikace může uložit nepotvrzený návrh, ale bez
+  potvrzení jej nesmí aplikovat jako potvrzený rozpis.
 - **První funkční verze:** jeden týden, zaměstnanci na plný úvazek.
 - **Potvrzené časy směn:** ranní 7:45–16:30 (i víkend), odpolední ve všední den
   13:15–21:00, víkendová odpolední 12:45–21:00. Víkendový začátek 12:45 je
@@ -77,10 +91,11 @@ mění zadání:
 - **Obsazení směn:** konfigurovatelný vstup, ne historická konstanta.
 - **Countdown CRM:** budoucí architektonický směr, nyní žádná integrace.
 
-## Novější rozhodnutí pro měsíční MVP (`VERIFIED`, 3. 11. 2026)
+## Současná implementace měsíčního MVP (`IMPLEMENTED`, 3. 11. 2026)
 
-Toto rozhodnutí mění starší popis role AI pro hlavní měsíční tok; starší
-rozhodnutí zůstává kontextem původního týdenního řezu.
+Níže uvedené popisuje implementaci, nikoli doloženou změnu schváleného záměru
+AI jako hlavní plánovací logiky. Rozdíl mezi zadáním a implementací zůstává
+otevřený k rozhodnutí uživatele.
 
 - Lokální OR-Tools sestavuje přiřazení směn pro celý kalendářní měsíc.
 - AI není nutná pro vytvoření návrhu. Případná AI pomoc s pokyny či vysvětlením

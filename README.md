@@ -10,10 +10,11 @@ oddělení** (dlouhodobý rozsah **více než 100 zaměstnanců**). Hlavní MVP 
 zaměřuje na **celý kalendářní měsíc** a zaměstnance na **plný úvazek**; týdenní
 tabulka je pohled do měsíčního návrhu.
 
-**Měsíční přiřazení sestavuje lokální OR-Tools plánovač.** Nezávislá
-deterministická validace kontroluje návrh; chybějící návaznosti zůstávají
-neověřené. AI může být oddělenou pomocí s pokyny či vysvětlením, ale její
-odpověď nenahrazuje plánovač ani validaci. Manažer návrh potvrzuje; bez
+**Současná implementace měsíční přiřazení sestavuje lokálním OR-Tools.**
+Schváleným záměrem je AI jako hlavní plánovací logika; rozdíl oproti současné
+implementaci zůstává otevřený. Nezávislá deterministická validace kontroluje
+návrh; chybějící návaznosti zůstávají neověřené. Režim OR-Tools textové pokyny
+nevyhodnocuje. Manažer návrh potvrzuje; bez
 potvrzení se návrh neaplikuje jako potvrzený plán.
 
 ## Stav projektu
@@ -29,11 +30,10 @@ produkční aplikaci.
   Gemini adaptér, orchestrátor **a napojení demo UI (Fáze 2)** jsou `IMPLEMENTED` a pokryté testy.
 - Reálné volání Gemini je `VERIFIED` integračním testem s lokální konfigurací;
   kvalita plánovacího výstupu pro produkční provoz zůstává `NOT VERIFIED`.
-- **UI je napojené na orchestrátor:** `POST /api/planning/run` spouští běh,
-  `POST /api/planning/confirm` potvrzuje návrh; oba kroky vyžadují přihlášení.
-- Lokální MVP login gate je `IMPLEMENTED` přes Auth.js credentials provider;
-  účet je pouze v `.env.local` a není napojený na CRM. Microsoft Entra ID je
-  v kódu ponechané jako `PLANNED` budoucí autentizační brána.
+- Hlavní UI používá měsíční API pro návrh, novou kontrolu a potvrzení. Starší
+  týdenní API zůstává v kódu bez samostatného týdenního UI.
+- Auth.js podporuje lokální přihlášení a databázové účty; není napojený na CRM.
+  Microsoft Entra ID zůstává plánovanou budoucí autentizační bránou.
 - Potvrzení manažera a auditní zápis jsou `IMPLEMENTED`; aplikace používá
   explicitní `PLANNING_PERSISTENCE=prisma`. `memory` je pouze testovací režim.
 - **Operativní náhrady směn jsou `IMPLEMENTED` / `SIMULATED`.** Syntetický řez
