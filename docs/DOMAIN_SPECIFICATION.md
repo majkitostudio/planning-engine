@@ -210,6 +210,12 @@ Hlavní měsíční MVP má manažerovi ušetřit práci: lokální plánovač s
 ### 1.2 V rozsahu aktuálního měsíčního MVP (`VERIFIED`)
 
 - Jeden celý kalendářní měsíc; týdenní tabulka je pohled do něj.
+- `VERIFIED` (rozhodnutí uživatele, 3. 11. 2026): manažer má mít také možnost
+  doplánovat jen část měsíce; stávající směny mimo plánovanou část se zachovají.
+  Implementace tohoto rozšíření je `PLANNED`, současný tok je celoměsíční.
+- `VERIFIED` (rozhodnutí uživatele, 3. 11. 2026): střídání ranních a
+  odpoledních je přání, nikoli povinné pravidlo. Jeho zohlednění plánovačem je
+  `PLANNED`; výklad střídání přes dny volna zůstává otevřený.
 - Zaměstnanci na plný úvazek; částečné úvazky jsou mimo rozsah.
 - Lokální OR-Tools plánovač vytváří konkrétní přiřazení směn.
 - Deterministická validace nezávisle kontroluje celý měsíc podle dostupných podkladů.

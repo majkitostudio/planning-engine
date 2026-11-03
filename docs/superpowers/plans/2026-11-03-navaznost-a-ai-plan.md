@@ -10,7 +10,8 @@
 
 ## Hranice a rozhodnutí před implementací
 
-- Měsíční návrh pro celý kalendářní měsíc a týdenní pohled zůstávají aktuálním pravidlem. **OTEVŘENÉ:** Má manažer vložit již hotovou první polovinu měsíce a doplánovat jen zbytek, nebo se celý měsíc stále sestavuje znovu? Nenavrhovat ani neimplementovat částečný měsíc jako schválené chování bez odpovědi. Vložená historie mimo měsíc tento problém sama neřeší.
+- **ROZHODNUTO:** Manažer může doplánovat jen část měsíce. Například vloží hotový začátek listopadu a aplikace navrhne zbytek. Existující celoměsíční tok zůstává dostupný a týdenní tabulka je pohledem na měsíc. Vložené směny mimo zvolený úsek návrhu se nesmějí tiše přepisovat; návaznosti i měsíční výsledek se kontrolují jako celek.
+- **ROZHODNUTO:** Střídání ranních a odpoledních směn je přání, nikoli povinné pravidlo. Aplikace se jej snaží splnit při zachování závazných pravidel a požadovaného obsazení a přizná výjimky.
 - Příklad: pro listopad lze vložit známý konec října. To pomůže s návazností na začátku listopadu, ale samo nedoloží začátek prosince ani dřívější část listopadu jako závaznou pro návrh.
 - Výchozí dostupnost vybraných zaměstnanců zůstává zachována; schválená absence a výslovná nedostupnost mají přednost. Údaje z rosteru nepovažovat za změnu pravidel dostupnosti nebo za novou absenci.
 - Úplnost podkladů nepředpokládat: neznámý údaj není volno. Platný, neúplný a neověřený stav se nesmějí sloučit. Zachovat serverové ověření, blokátory a výslovné rozhodnutí manažera; změna textu či skrytí tlačítka není zrušení pravidel.
@@ -30,7 +31,7 @@
 1. Manažer zvolí období, zkopíruje z rosteru příslušný výřez a vloží jej na stránku **Návaznost směn**.
 2. Aplikace zobrazí rozpoznané dny, zaměstnance, konkrétní směny, výslovné volno a nejasnosti. Manažer opraví párování a potvrdí, jaké dny a osoby podklady opravdu pokrývají; aplikace odmítne rozpory a nezakryje nerozpoznané buňky.
 3. Uložení znamená schválení převzatých **podkladů**, nikoli potvrzení nového návrhu nebo změnu docházky. V historii zůstává zdroj a rozsah záznamu.
-4. Nový návrh použije vhodné jednoznačné podklady. Při chybějících, rozporných či nepokrytých údajích ukáže přesný důvod; nevyrobí si náhradní směny.
+4. Manažer zvolí celý měsíc nebo jeho část. Při doplánování části zůstanou převzaté směny ve zbývající části měsíce zachované; návrh je použije jako pevný podklad a nové směny vytvoří pouze ve zvoleném úseku. Při chybějících, rozporných či nepokrytých údajích ukáže přesný důvod; nevyrobí si náhradní směny.
 5. Nezávislá validace použije stejné zdroje, ale pravidla kontroluje samostatně. Při pozdější změně podkladů se návrh znovu zkontroluje i na serveru před případným potvrzením.
 
 ## Etapa A — formát a bezpečný převod
@@ -65,11 +66,18 @@
 - [ ] V měsíčním formuláři ukázat, které potřebné okolní podklady jsou k dispozici a které chybí. Vysvětlit, že budoucí rozpis nemusí být známý; nikdy nenabízet vymyšlení historie jako její doložení.
 - [ ] Ověřit oprávnění, chybný vstup, neúplný náhled, znovunačtení a konflikt dvou importů. Browser ověření provést se smyšlenými daty pouze způsobem, který nezasáhne skutečná data; pokud to nelze bezpečně zajistit, uvést omezení.
 
+### Doplnění části měsíce
+
+- [ ] Rozšířit měsíční vstup o výslovný souvislý rozsah návrhu uvnitř zvoleného měsíce. Bez zadaného rozsahu zachovat celý měsíc. Prověřit vstup, API, uložení verze, zobrazení a obnovu návrhu.
+- [ ] Převzaté směny mimo rozsah předat plánovači jako pevné podklady; návrh je nesmí měnit. Údaje uvnitř rozsahu se nesmějí tiše přepsat: při překryvu s již vloženými směnami předložit manažerovi konflikt a požadovat jeho vyřešení.
+- [ ] Nezávisle zkontrolovat celý výsledný měsíc včetně přechodu mezi převzatou a doplánovanou částí a hranic měsíce. Neznámý zbytek měsíce nezobrazovat jako ověřené volno; potvrzení se řídí stávajícími bezpečnostními podmínkami.
+- [ ] Testy: doplánování posledních 14–15 dní, zachování vložené první části, chybějící vstup, konflikt s existující směnou, odpočinek a víkendové volno přes hranici částí, nedostatečné obsazení a chybějící okolní historie. Ověřit, že původní tok pro celý měsíc funguje beze změny.
+
 ## Etapa D — preference střídání a nezávislé vyhodnocení
 
 **Soubory:** `lib/planning/domain/month-input.ts`, `lib/planning/monthly-form.ts`, `lib/planning/monthly-ortools-provider.ts`, `scripts/monthly_solver.py`, `lib/planning/domain/month-validation.ts`, příslušné testy.
 
-- [ ] Před zavedením chování rozhodnout s manažerem význam: střídání mezi následujícími pracovními směnami i přes volno, nebo pouze v sousedních dnech; zda jde o povinnost, nebo preferenci. **Doporučení:** preference, která ustupuje platným pravidlům a obsazení; toto doporučení není schválené pravidlo.
+- [ ] Zavést střídání jako schválenou preferenci, která ustupuje závazným pravidlům a obsazení. Význam přes vložené volno zůstává otevřený: zda porovnávat následující pracovní směny i přes volno, nebo pouze směny v sousedních dnech. Do rozhodnutí nepředstírat, že je tento výklad potvrzený.
 - [ ] V testech popsat zvolený význam na malém měsíci: střídání je možné; pokrytí vyžaduje výjimku; mezera kvůli volnu; přechod měsíce se známou i chybějící historií. Ověřit, že povinné absence, odpočinek a obsazení mají přednost a výjimka je zobrazena.
 - [ ] Přidat výslovný strukturovaný vstup preference a odpovídající optimalizační cíl do lokálního solveru; absence zadání musí zachovat dnešní chování. Výsledek `FEASIBLE` při časovém limitu nesmí být nazván optimálním; `UNKNOWN` není důkaz neproveditelnosti.
 - [ ] Nezávisle spočítat a zobrazit porušení preference bez osobních údajů v logu; pokud pro vyhodnocení chybí okolní směna, označit pouze dotčený úsek jako neověřený. Textové pokyny nepovažovat za vyhodnocené, dokud tuto vazbu skutečně nepoužijí.
@@ -102,9 +110,8 @@
 
 ## Rozhodnutí k potvrzení před závislou prací
 
-1. **Rozsah měsíce:** doplánování posledních 14–15 dní při zachování vložené první části, nebo návrh celého měsíce s historií mimo měsíc? Částečný měsíc ovlivní vstupy, obsazení, pravidla, kontrolu, výsledek a potvrzení.
-2. **Střídání:** co znamená při vloženém volnu a zda je povinné, či přednostní přání. Dokud není rozhodnuto, nezavádět tvrdé pravidlo.
-3. **Neznámá budoucnost:** jaký manažerský postup umožnit, když rozpis po plánovaném měsíci ještě neexistuje. Zachovat neověřený stav a stávající omezení potvrzení, dokud není schváleno bezpečné řešení.
-4. **Data a AI:** zda a za jakých konkrétních podmínek smí být externí služba použita. Bez toho pracovat pouze lokálně a s umělými příklady.
+1. **Střídání přes volno:** porovnávat následující pracovní směny i přes den volna, nebo pouze směny v sousedních dnech? Charakter přání už je rozhodnutý.
+2. **Neznámá budoucnost:** jaký manažerský postup umožnit, když rozpis po plánovaném měsíci ještě neexistuje. Zachovat neověřený stav a stávající omezení potvrzení, dokud není schváleno bezpečné řešení.
+3. **Data a AI:** zda a za jakých konkrétních podmínek smí být externí služba použita. Bez toho pracovat pouze lokálně a s umělými příklady.
 
-Provedení zadání má probíhat po etapách, samostatně a bez nasazování dalších agentů, pokud je uživatel výslovně nevyžádá. Rozhodnutí 1–4 blokují pouze kroky, které na nich závisejí; nebrání předchozí analýze a nezávislým úpravám.
+Provedení zadání má probíhat po etapách, samostatně a bez nasazování dalších agentů, pokud je uživatel výslovně nevyžádá. Otevřená rozhodnutí blokují pouze kroky, které na nich závisejí; nebrání předchozí analýze a nezávislým úpravám.
