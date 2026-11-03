@@ -56,6 +56,66 @@ class SolverInputTests(unittest.TestCase):
             "employeeId": "synthetic-1", "date": "2026-11-02", "shiftKind": "morning"
         }])
 
+    def test_alternates_consecutive_work_shifts_across_days_off_when_requested(self):
+        payload = month_with_requirements("2026-11", 2, {
+            ("2026-11-02", kind) for kind in ("morning", "afternoon")
+        } | {
+            ("2026-11-04", kind) for kind in ("morning", "afternoon")
+        } | {
+            ("2026-11-06", kind) for kind in ("morning", "afternoon")
+        })
+        payload["input"]["shiftRotationPreference"] = True
+
+        result = solve(payload)
+
+        self.assertEqual(result["status"], "feasible")
+        by_employee = {}
+        for item in result["assignments"]:
+            by_employee.setdefault(item["employeeId"], []).append(item["shiftKind"])
+        self.assertEqual(len(by_employee), 2)
+        for shifts in by_employee.values():
+            self.assertEqual(len(shifts), 3)
+            self.assertTrue(all(previous != following for previous, following in zip(shifts, shifts[1:])))
+
+    def test_rejects_non_boolean_shift_rotation_preference(self):
+        payload = sample()
+        payload["input"]["shiftRotationPreference"] = "true"
+
+        self.assertEqual(solve(payload)["status"], "invalid_input")
+
+    def test_uses_known_previous_month_shift_as_rotation_context(self):
+        payload = month_with_requirements("2026-11", 2, {
+            ("2026-11-01", kind) for kind in ("morning", "afternoon")
+        })
+        payload["input"]["shiftRotationPreference"] = True
+        payload["boundary"]["before"]["assignments"] = [
+            {"employeeId": "synthetic-0", "date": "2026-10-31", "shiftKind": "afternoon"},
+            {"employeeId": "synthetic-1", "date": "2026-10-31", "shiftKind": "morning"},
+        ]
+
+        result = solve(payload)
+
+        self.assertEqual(result["status"], "feasible")
+        first_day = {item["employeeId"]: item["shiftKind"] for item in result["assignments"] if item["date"] == "2026-11-01"}
+        self.assertEqual(first_day, {"synthetic-0": "morning", "synthetic-1": "afternoon"})
+
+    def test_keeps_staffing_and_availability_ahead_of_rotation_preference(self):
+        required = {("2026-11-02", "morning"), ("2026-11-04", "morning")}
+        payload = month_with_requirements("2026-11", 1, required)
+        payload["input"]["shiftRotationPreference"] = True
+        payload["input"]["availability"] = [
+            {"employeeId": "synthetic-0", "date": date, "shiftKind": "afternoon", "available": False}
+            for date in ("2026-11-02", "2026-11-04")
+        ]
+
+        result = solve(payload)
+
+        self.assertEqual(result["status"], "feasible")
+        self.assertEqual(result["assignments"], [
+            {"employeeId": "synthetic-0", "date": "2026-11-02", "shiftKind": "morning"},
+            {"employeeId": "synthetic-0", "date": "2026-11-04", "shiftKind": "morning"},
+        ])
+
     def test_rejects_non_boolean_availability(self):
         payload = sample()
         payload["input"]["availability"] = [{

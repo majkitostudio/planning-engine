@@ -11,6 +11,7 @@ const input: MonthlyPlanningInput = {
   availability: [],
   staffingRequirements: [{ date: "2026-11-02", shiftKind: "morning", requiredEmployees: 1 }],
   instructions: "private instruction text",
+  shiftRotationPreference: true,
 };
 const boundary = {
   before: { complete: false, assignments: [] },
@@ -35,6 +36,7 @@ describe("MonthlyOrtoolsProvider", () => {
     expect(sent).not.toContain("Private Name");
     expect(sent).not.toContain("private instruction text");
     expect(sent).not.toContain("private-id");
+    expect(JSON.parse(sent).input.shiftRotationPreference).toBe(true);
     expect(draft.assignments).toEqual([{ employeeId: "private-id", date: "2026-11-02", shiftKind: "morning" }]);
     expect(draft.instructionsOutcome).toMatch(/nebyly.*vyhodnoceny/i);
   });

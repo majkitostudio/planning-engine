@@ -30,6 +30,7 @@ export interface MonthlyFormData {
   /** Pondělí až neděle, každému dni odpovídá ranní a odpolední směna. */
   readonly staffing: readonly string[];
   readonly instructions: string;
+  readonly shiftRotationPreference?: boolean;
 }
 
 export interface MonthlyFormReadiness {
@@ -108,6 +109,7 @@ export function buildMonthlyFormInput(form: MonthlyFormData): { ok: true; value:
     availability: [...availability.values()],
     staffingRequirements: dates.flatMap((date) => (["morning", "afternoon"] as ShiftKind[]).map((shiftKind, index) => ({ date, shiftKind, requiredEmployees: Number(form.staffing[weekdayIndex(date) * 2 + index]) }))),
     instructions: form.instructions,
+    ...(form.shiftRotationPreference === undefined ? {} : { shiftRotationPreference: form.shiftRotationPreference }),
   };
   return validateMonthlyInput(input);
 }

@@ -19,6 +19,7 @@ export interface MonthlyValidation {
   readonly status: "valid" | "invalid" | "not_verified";
   readonly problems: readonly MonthlyFinding[];
   readonly unverified: readonly MonthlyFinding[];
+  readonly preferenceFindings: readonly MonthlyFinding[];
   readonly canConfirm: boolean;
 }
 
@@ -26,8 +27,9 @@ export interface MonthlyValidation {
 export function validateMonthlyPlan(input: MonthlyPlanningInput, assignments: readonly ProposedAssignment[], boundary: MonthlyBoundaryData): MonthlyValidation {
   const problems: MonthlyFinding[] = [];
   const unverified: MonthlyFinding[] = [];
+  const preferenceFindings: MonthlyFinding[] = [];
   const parsed = validateMonthlyInput(input);
-  if (!parsed.ok) return { status: "invalid", problems: [{ code: "INPUT_INVALID", message: parsed.message }], unverified, canConfirm: false };
+  if (!parsed.ok) return { status: "invalid", problems: [{ code: "INPUT_INVALID", message: parsed.message }], unverified, preferenceFindings, canConfirm: false };
   const dates = datesInMonth(input.month);
   const first = dates[0];
   const last = dates[dates.length - 1];
@@ -117,7 +119,26 @@ export function validateMonthlyPlan(input: MonthlyPlanningInput, assignments: re
       const off = weekDates.filter((date) => !workDates.includes(date));
       if (off.length < 2) problems.push({ code: "WEEKEND_TWO_DAYS_OFF", message: "Při víkendové práci chybí dva dny volna v týdnu.", date: week, employeeId: employee.id });
     }
+
+    if (input.shiftRotationPreference) {
+      const employeeWork = work.filter((item) => item.employeeId === employee.id).sort((a, b) => a.date.localeCompare(b.date));
+      const monthWork = employeeWork.filter((item) => item.date >= first && item.date <= last);
+      if (monthWork.length > 0 && (!beforeComplete || !employeeWork.some((item) => item.date < first))) {
+        preferenceFindings.push({ code: "SHIFT_ROTATION_HISTORY_INCOMPLETE", message: "Střídání na začátku měsíce nelze ověřit bez známé předchozí směny.", date: monthWork[0].date, employeeId: employee.id });
+      }
+      if (monthWork.length > 0 && (!afterComplete || !employeeWork.some((item) => item.date > last))) {
+        preferenceFindings.push({ code: "SHIFT_ROTATION_HISTORY_INCOMPLETE", message: "Střídání po konci měsíce nelze ověřit bez známé navazující směny.", date: monthWork[monthWork.length - 1].date, employeeId: employee.id });
+      }
+      for (let index = 1; index < employeeWork.length; index++) {
+        const previous = employeeWork[index - 1];
+        const current = employeeWork[index];
+        if ((previous.date < first && !beforeComplete) || (current.date > last && !afterComplete)) continue;
+        if (previous.shiftKind === current.shiftKind) {
+          preferenceFindings.push({ code: "SHIFT_ROTATION_REPEATED", message: "Dvě sousední pracovní směny mají stejný typ, přestože je zapnuté přání střídání.", date: current.date, employeeId: employee.id, shiftKind: current.shiftKind });
+        }
+      }
+    }
   }
   const status = problems.length ? "invalid" : unverified.length ? "not_verified" : "valid";
-  return { status, problems, unverified, canConfirm: status === "valid" };
+  return { status, problems, unverified, preferenceFindings, canConfirm: status === "valid" };
 }

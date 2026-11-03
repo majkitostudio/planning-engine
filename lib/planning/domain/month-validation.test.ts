@@ -101,4 +101,41 @@ describe("měsíční validace", () => {
     expect(result.status).toBe("valid");
     expect(result.canConfirm).toBe(true);
   });
+
+  it("nezávisle označí opakování směny přes den volna", () => {
+    const rotationInput = { ...input, shiftRotationPreference: true };
+    const availability = ["2026-11-02", "2026-11-04"].map((date) => ({ employeeId: "e1", date, shiftKind: "morning" as const, available: true }));
+    const boundary = {
+      before: { complete: true, assignments: [{ ...assignment("2026-10-30"), shiftKind: "afternoon" as const }] },
+      after: { complete: true, assignments: [{ ...assignment("2026-12-01"), shiftKind: "afternoon" as const }] },
+    };
+    const result = validateMonthlyPlan({ ...rotationInput, availability }, [assignment("2026-11-02"), assignment("2026-11-04")], boundary);
+
+    expect(result.preferenceFindings.some((finding) => finding.code === "SHIFT_ROTATION_REPEATED")).toBe(true);
+    expect(result.canConfirm).toBe(true);
+  });
+
+  it("označí neověřenou návaznost střídání, pokud známé okno neobsahuje předchozí směnu", () => {
+    const rotationInput = { ...input, shiftRotationPreference: true, availability: [{ employeeId: "e1", date: "2026-11-16", shiftKind: "morning" as const, available: true }] };
+    const result = validateMonthlyPlan(rotationInput, [assignment("2026-11-16")], { before: { complete: true, assignments: [] }, after: { complete: true, assignments: [] } });
+
+    expect(result.preferenceFindings.some((finding) => finding.code === "SHIFT_ROTATION_HISTORY_INCOMPLETE")).toBe(true);
+    expect(result.canConfirm).toBe(true);
+  });
+
+  it("označí neověřenou návaznost střídání, pokud známé okno neobsahuje navazující směnu", () => {
+    const rotationInput = { ...input, shiftRotationPreference: true, availability: [{ employeeId: "e1", date: "2026-11-16", shiftKind: "morning" as const, available: true }] };
+    const result = validateMonthlyPlan(rotationInput, [assignment("2026-11-16")], { before: { complete: true, assignments: [{ ...assignment("2026-10-30"), shiftKind: "afternoon" }] }, after: { complete: true, assignments: [] } });
+
+    expect(result.preferenceFindings.some((finding) => finding.code === "SHIFT_ROTATION_HISTORY_INCOMPLETE")).toBe(true);
+    expect(result.canConfirm).toBe(true);
+  });
+
+  it("ohlásí opakování mezi poslední známou směnou před měsícem a první směnou v měsíci", () => {
+    const rotationInput = { ...input, shiftRotationPreference: true, availability: [{ employeeId: "e1", date: "2026-11-01", shiftKind: "afternoon" as const, available: true }] };
+    const before = { ...completeBoundary.before, assignments: [{ ...assignment("2026-10-31"), shiftKind: "afternoon" as const }] };
+    const result = validateMonthlyPlan(rotationInput, [{ ...assignment("2026-11-01"), shiftKind: "afternoon" }], { before, after: completeBoundary.after });
+
+    expect(result.preferenceFindings.some((finding) => finding.code === "SHIFT_ROTATION_REPEATED")).toBe(true);
+  });
 });

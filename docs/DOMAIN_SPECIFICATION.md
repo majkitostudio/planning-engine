@@ -50,7 +50,7 @@ Tato kontextová fakta jsou `VERIFIED` (potvrzena požadavkem). Konkrétní prav
 entity i role zůstávají `ASSUMPTION` nebo `OPEN QUESTION`, dokud je uživatel
 nezávazně nepotvrdí.
 
-### 0.2 Potvrzená rozhodnutí z 24. a 28. 10. 2026 (`VERIFIED`)
+### 0.2 Potvrzená rozhodnutí z 24. 10. až 3. 11. 2026 (`VERIFIED`)
 
 Následující rozhodnutí potvrdil uživatel v zadání pro pokračování projektu.
 Jsou závazná pro další implementaci:
@@ -70,6 +70,11 @@ Jsou závazná pro další implementaci:
   integrace zůstávají mimo rozsah.
 - **Potřebné obsazení směn je konfigurovatelný vstup.** Historické počty se
   nepovažují za univerzálně platné bez ověření.
+- **Střídání ranních a odpoledních směn je měkké přání managera.** Porovnávají
+  se sousední pracovní směny zaměstnance i přes libovolný počet dnů volna;
+  potvrzená pravidla a potřebné obsazení mají přednost. Výjimky se zobrazí,
+  ale samy neblokují potvrzení. Pokud chybí směna před nebo po plánovaném
+  měsíci, střídání v dotčeném okraji je neověřené. `VERIFIED`, 3. 11. 2026.
 
 #### Potvrzené časy směn
 
@@ -417,7 +422,11 @@ více směn v jednom dni se započítá jednou.
 | S3 | Práce mimo pevnou směnu | `VERIFIED` (interní zákaz; viz H12) |
 | S4 | Preferovat kontinuitu (stejný tým/kampaň v rámci období) | `ASSUMPTION` |
 | S5 | Vyvažovat složitost/obtížnost směn | `ASSUMPTION` |
+| S6 | Střídat ranní a odpolední mezi sousedními pracovními směnami i přes dny volna | `VERIFIED` (měkké přání managera, 3. 11. 2026) |
 
+Preference S6 může manager výslovně zapnout pro měsíční návrh. Lokální OR-Tools
+ji optimalizuje a nezávislá validace zobrazí opakování nebo chybějící
+návaznost. Nejde o tvrdé pravidlo a tyto nálezy samy neblokují potvrzení.
 Další měkké preference a jejich váhy se do MVP nepřidávají. Manager rozhoduje,
 zda požadavku vyhoví; aplikace pouze ukáže dopad na obsazení a navrhne pokrytí.
 U operativní náhrady platí aktuální minimum nastavené pro konkrétní datum a
@@ -581,4 +590,4 @@ podřízený tomuto dokumentu — autoritativní seznam je tento.
 | Technologický stack | Next.js + React + TypeScript + PostgreSQL + Prisma (`VERIFIED`) |
 | Tento dokument | `PARTIALLY VERIFIED PROPOSAL` — potvrzený kontext a rozhodnutí §0.2, zbytek čeká na rozhodnutí |
 
-Aktuální měsíční MVP plánuje celý zvolený kalendářní měsíc lokálním OR-Tools providerem; týdny jsou pouze pohledy do měsíčního návrhu. Syntetický integrační průchod ověřil vytvoření návrhu, ruční úpravu, novou kontrolu a obnovení nepotvrzené verze. Návrh zůstal `NOT VERIFIED`, protože chyběly potřebné návazné podklady a otevřený výklad víkendového volna; potvrzení zůstalo zablokované. Částečné úvazky, preference, produkční provoz a další integrace zůstávají mimo tento ověřený řez. Doménu ani čísla nedomýšlej.
+Aktuální měsíční MVP plánuje celý zvolený kalendářní měsíc lokálním OR-Tools providerem; týdny jsou pouze pohledy do měsíčního návrhu. Syntetický integrační průchod ověřil vytvoření návrhu, ruční úpravu, novou kontrolu a obnovení nepotvrzené verze. Návrh zůstal `NOT VERIFIED`, protože chyběly potřebné návazné podklady a otevřený výklad víkendového volna; potvrzení zůstalo zablokované. Preference střídání S6 je `IMPLEMENTED`: lokální solver ji používá jako měkký cíl a nezávislá validace vrací výjimky i neověřenou návaznost bez toho, aby preference sama blokovala potvrzení. Částečné úvazky, další preference, produkční provoz a další integrace zůstávají mimo tento ověřený řez. Doménu ani čísla nedomýšlej.

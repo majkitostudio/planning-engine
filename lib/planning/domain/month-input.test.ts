@@ -24,6 +24,7 @@ describe("monthly planning input", () => {
     { ...input, staffingRequirements: [{ ...input.staffingRequirements[0], requiredEmployees: -1 }] },
     { ...input, staffingRequirements: [...input.staffingRequirements, ...input.staffingRequirements] },
     { ...input, absences: [{ id: "a", employeeId: "unknown", from: "2026-02-01", to: "2026-02-02", type: "vacation", status: "approved" }] },
+    { ...input, shiftRotationPreference: "yes" },
   ])("rejects malformed or inconsistent input %#", (value) => {
     expect(validateMonthlyInput(value).ok).toBe(false);
   });

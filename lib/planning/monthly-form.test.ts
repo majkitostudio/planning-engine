@@ -53,6 +53,11 @@ describe("vstupy měsíčního formuláře", () => {
       expect(result.value.instructions).toBe("Pokyn");
     }
   });
+  it("předá výslovně zvolenou preferenci střídání jako strukturovaný vstup", () => {
+    const result = buildMonthlyFormInput({ month: "2026-11", employees: [{ id: "e1", name: "Test" }], absences: [], availability: [], staffing: Array.from({ length: 14 }, () => "0"), instructions: "", shiftRotationPreference: true });
+    expect(result.ok).toBe(true);
+    if (result.ok) expect(result.value.shiftRotationPreference).toBe(true);
+  });
   it("nepovažuje chybějící obsazení za nulu", () => {
     const result = buildMonthlyFormInput({ month: "2026-11", employees: [{ id: "e1", name: "Test" }], absences: [], availability: [], staffing: Array.from({ length: 14 }, () => ""), instructions: "" });
     expect(result.ok).toBe(false);

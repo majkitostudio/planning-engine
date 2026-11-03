@@ -18,6 +18,8 @@ export interface MonthlyPlanningInput {
   readonly staffingRequirements: readonly StaffingRequirement[];
   /** Doplňující pokyn pro AI, nikoli deterministické pravidlo. */
   readonly instructions: string;
+  /** Schválené přání: střídat sousední pracovní směny i přes dny volna. */
+  readonly shiftRotationPreference?: boolean;
 }
 
 type InputResult = { readonly ok: true; readonly value: MonthlyPlanningInput } | { readonly ok: false; readonly message: string };
@@ -37,6 +39,7 @@ export function validateMonthlyInput(value: unknown): InputResult {
     ids.add(employee.id);
   }
   if (!Array.isArray(value.absences) || !Array.isArray(value.availability) || !Array.isArray(value.staffingRequirements) || typeof value.instructions !== "string") return invalid("Vstup nemá platný tvar.");
+  if (value.shiftRotationPreference !== undefined && typeof value.shiftRotationPreference !== "boolean") return invalid("Preference střídání směn není platná.");
   const absenceIds = new Set<string>();
   for (const absence of value.absences) {
     if (!record(absence) || typeof absence.id !== "string" || !absence.id || absenceIds.has(absence.id) || typeof absence.employeeId !== "string" || !ids.has(absence.employeeId) || !isIsoDate(absence.from) || !isIsoDate(absence.to) || absence.from > absence.to || !["vacation", "sick", "other"].includes(String(absence.type)) || !["approved", "pending", "rejected"].includes(String(absence.status))) return invalid("Absence je neplatná.");

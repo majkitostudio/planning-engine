@@ -74,6 +74,7 @@ export class MonthlyOrtoolsProvider implements MonthlyPlanningProvider {
         absences: input.absences.map(({ employeeId, from, to, type, status }) => ({ employeeId: tokenize(employeeId), from, to, type, status })),
         availability: input.availability.map(({ employeeId, date, shiftKind, available }) => ({ employeeId: tokenize(employeeId), date, shiftKind, available })),
         staffingRequirements: input.staffingRequirements,
+        ...(input.shiftRotationPreference === undefined ? {} : { shiftRotationPreference: input.shiftRotationPreference }),
       },
       boundary: {
         before: { complete: boundary.before.complete, assignments: boundary.before.assignments.map(({ employeeId, date, shiftKind }) => ({ employeeId: tokenize(employeeId), date, shiftKind })) },
