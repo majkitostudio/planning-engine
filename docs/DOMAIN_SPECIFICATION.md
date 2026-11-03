@@ -97,7 +97,8 @@ plánovacího engine; nejde o pracovněprávní posudek ani výpočet placené d
   následovat alespoň **35 hodin nepřetržitého odpočinku**. `VERIFIED`
 - **Víkend a dva dny volna:** zaměstnanec, který pracuje o víkendu, má mít
   během téhož týdne **dva dny volna**. `VERIFIED`; výklad „během týdne“ jako
-  pondělí–neděle je `ASSUMPTION` do potvrzení.
+  pondělí–neděle je `ASSUMPTION` do potvrzení. Dny volna nemusí následovat
+  po sobě; odpočinek po šesti pracovních dnech se kontroluje samostatně. `VERIFIED`
 - **Plný úvazek:** první verze neobsahuje zaměstnance na částečný úvazek.
   `VERIFIED` jako rozsah, ne jako doménové pravidlo.
 - **Konfigurovatelné obsazení:** počty potřebných zaměstnanců na směnách jsou

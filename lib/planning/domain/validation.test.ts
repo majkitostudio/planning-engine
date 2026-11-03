@@ -378,7 +378,7 @@ describe("validatePlan — dva dny volna po víkendu", () => {
     expect(findProblem(result, "WEEKEND_TWO_DAYS_OFF")).toBeUndefined();
   });
 
-  it("označí nepo sobě jdoucí dva dny volna jako neověřený výklad", () => {
+  it("povolí nepo sobě jdoucí dva dny volna", () => {
     const workDates = [
       WEEK_DATES[0],
       WEEK_DATES[1],
@@ -405,9 +405,9 @@ describe("validatePlan — dva dny volna po víkendu", () => {
       result,
       "WEEKEND_DAYS_OFF_INTERPRETATION",
     );
-    expect(result.status).toBe("not_verified");
+    expect(result.status).toBe("valid");
     expect(result.problems).toEqual([]);
-    expect(check?.employeeId).toBe(EMPLOYEE_1);
+    expect(check).toBeUndefined();
   });
 });
 

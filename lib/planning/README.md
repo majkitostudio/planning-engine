@@ -152,7 +152,6 @@ Index a pravidla zápisu: [`docs/adr/README.md`](../../docs/adr/README.md).
 
 Tyto otázky nebrání prvnímu řezu, ale nesmí se z nich stát tichý předpoklad:
 
-1. Zda musí být dva dny volna po víkendu po sobě jdoucí.
-2. Role, maximální hodiny, zamykání a váhy preferencí (OQ9–OQ14).
-3. Provozní incident, verze potvrzeného týdne a rozsah auditu náhrady
+1. Role, maximální hodiny, zamykání a váhy preferencí (OQ9–OQ14).
+2. Provozní incident, verze potvrzeného týdne a rozsah auditu náhrady
    (OQ2, OQ20, OQ22).

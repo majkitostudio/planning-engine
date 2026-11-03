@@ -45,7 +45,7 @@ const RULE_REST = "REST-AFTER-SIX-DAYS";
 const RULE_WEEKEND = "WEEKEND-TWO-DAYS-OFF";
 
 const ASSUMPTION_WEEKEND =
-  "„Během týdne“ je vyhodnoceno jako pondělí–nedělí; dva dny volna se počítají jako libovolné dva dny, pokud nejsou po sobě jdoucí, výsledek je označen jako neověřený.";
+  "„Během týdne“ je vyhodnoceno jako pondělí–neděle; dva dny volna nemusí následovat po sobě.";
 const ASSUMPTION_REQUESTS =
   "Jako tvrdá překážka se používají jen schválené absence; požadavky a neschválené absence jsou pouze kontext (OQ22).";
 
@@ -1100,18 +1100,6 @@ function checkWeekendDaysOff(
       continue;
     }
 
-    if (!hasConsecutiveDays(offDays)) {
-      addUnverified(state, {
-        code: "WEEKEND_DAYS_OFF_INTERPRETATION",
-        employeeId,
-        date: weekendAssignments[0]?.date,
-        message: `Zaměstnanec "${employeeId}" má dva dny volna, ale ne po sobě jdoucí; zda to pravidlo vyžaduje, není potvrzené.`,
-        details: {
-          offDays: offDays.join(", "),
-          requiredDaysOff: CONFIRMED_PLANNING_RULES.weekendWorkDaysOff,
-        },
-      });
-    }
   }
 
   if (checked) {
@@ -1135,17 +1123,6 @@ function datesTouchedByAssignment(
   return timeToMinutes(window.end) <= timeToMinutes(window.start)
     ? [assignment.date, addDays(assignment.date, 1)]
     : [assignment.date];
-}
-
-function hasConsecutiveDays(dates: readonly IsoDate[]): boolean {
-  for (let index = 1; index < dates.length; index += 1) {
-    const previous = dates[index - 1];
-    const current = dates[index];
-    if (previous && current && addDays(previous, 1) === current) {
-      return true;
-    }
-  }
-  return false;
 }
 
 function slotKey(date: IsoDate, shiftKind: ShiftKind): string {

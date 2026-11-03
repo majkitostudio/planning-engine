@@ -102,6 +102,22 @@ class SolverInputTests(unittest.TestCase):
 
         self.assertEqual(solve(payload)["status"], "infeasible")
 
+    def test_rest_uses_shifts_before_month_boundary(self):
+        payload = month_with_requirements("2026-11", 1, {("2026-11-01", "morning")})
+        payload["boundary"]["before"]["assignments"] = [
+            {"employeeId": "synthetic-0", "date": f"2026-10-{day:02}", "shiftKind": "afternoon"}
+            for day in range(25, 31)
+        ]
+        self.assertEqual(solve(payload)["status"], "infeasible")
+
+    def test_rest_uses_shifts_after_month_boundary(self):
+        required = {(f"2026-11-{day:02}", "afternoon") for day in range(25, 31)}
+        payload = month_with_requirements("2026-11", 1, required)
+        payload["boundary"]["after"]["assignments"] = [
+            {"employeeId": "synthetic-0", "date": "2026-12-02", "shiftKind": "morning"}
+        ]
+        self.assertEqual(solve(payload)["status"], "infeasible")
+
     def test_does_not_reject_more_than_six_consecutive_days_when_rest_reaches_35_hours(self):
         required = {(f"2026-12-{day:02}", "morning") for day in range(2, 8)}
         required.add(("2026-12-09", "morning"))

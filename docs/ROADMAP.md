@@ -57,8 +57,9 @@ testovacím předpokladem, nikoli schváleným provozním pravidlem.
 
 ## Známá omezení a další rozhodnutí
 
-- Neověřené návaznosti na začátku nebo konci měsíce a otevřený výklad, zda
-  víkendové dva dny volna musí být po sobě, brání potvrzení testovacího návrhu.
+- Neověřené návaznosti na začátku nebo konci měsíce brání potvrzení návrhu.
+  Dva dny volna při víkendové práci nemusí následovat po sobě; viz
+  `docs/DOMAIN_SPECIFICATION.md`.
 - Výsledek `infeasible` platí jen pro konkrétní vstupy a pravidla zahrnutá v
   modelu. Timeout ani `unknown` nejsou důkazem, že je zaměstnanců málo.
 - Měsíční režim OR-Tools nevyhodnocuje volný text. Skutečná jména, interní ID

@@ -17,6 +17,12 @@ const assignment = (date: string): ProposedAssignment => ({ employeeId: "e1", da
 const completeBoundary = { before: { complete: true, assignments: [] }, after: { complete: true, assignments: [] } };
 
 describe("měsíční validace", () => {
+  it("povolí dva oddělené dny volna při víkendové práci", () => {
+    const days = ["2026-11-02", "2026-11-03", "2026-11-05", "2026-11-07", "2026-11-08"];
+    const availability = days.map((date) => ({ employeeId: "e1", date, shiftKind: "morning" as const, available: true }));
+    const result = validateMonthlyPlan({ ...input, availability }, days.map(assignment), completeBoundary);
+    expect(result.status).toBe("valid");
+  });
   it("označí chybějící podklady za neověřené a blokuje potvrzení", () => {
     const result = validateMonthlyPlan(input, [], { before: { complete: false, assignments: [] }, after: { complete: false, assignments: [] } });
     expect(result.status).toBe("not_verified");
@@ -46,6 +52,12 @@ describe("měsíční validace", () => {
     const before = ["2026-10-25", "2026-10-26", "2026-10-27", "2026-10-28", "2026-10-29", "2026-10-30"].map((date) => ({ ...assignment(date), shiftKind: "afternoon" as const }));
     const result = validateMonthlyPlan(input, [assignment("2026-11-01")], { ...completeBoundary, before: { complete: true, assignments: before } });
     expect(result.problems.some((problem) => problem.code === "REST_AFTER_SIX_DAYS")).toBe(true);
+  });
+
+  it("přijme dostatečný nepřerušený odpočinek přes hranici měsíce", () => {
+    const before = ["2026-10-25", "2026-10-26", "2026-10-27", "2026-10-28", "2026-10-29", "2026-10-30"].map(assignment);
+    const result = validateMonthlyPlan(input, [assignment("2026-11-01")], { ...completeBoundary, before: { complete: true, assignments: before } });
+    expect(result.problems.some((problem) => problem.code === "REST_AFTER_SIX_DAYS")).toBe(false);
   });
 
   it("kontroluje šestici začínající v měsíci, i když končí v dalším měsíci", () => {

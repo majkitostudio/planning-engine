@@ -4,6 +4,24 @@ import { validateMonthlyInput, type MonthlyAvailability, type MonthlyPlanningInp
 import type { Absence, ShiftKind } from "./domain/types";
 import type { StaffingSetting } from "./staffing-settings";
 
+export interface PartialAbsence {
+  readonly employeeId: string;
+  readonly from: string;
+  readonly to: string;
+  readonly shiftKind: ShiftKind;
+}
+
+/** Částečné absence se kontrolují jako nedostupnost konkrétní směny. */
+export function partialAbsenceAvailability(month: string, absences: readonly PartialAbsence[]): MonthlyAvailability[] {
+  const entries = new Map<string, MonthlyAvailability>();
+  for (const absence of absences) for (const date of datesInMonth(month)) {
+    if (date < absence.from || date > absence.to) continue;
+    const entry = { employeeId: absence.employeeId, date, shiftKind: absence.shiftKind, available: false };
+    entries.set(`${entry.employeeId}|${date}|${entry.shiftKind}`, entry);
+  }
+  return [...entries.values()];
+}
+
 export interface MonthlyFormData {
   readonly month: string;
   readonly employees: readonly { id: string; name: string }[];

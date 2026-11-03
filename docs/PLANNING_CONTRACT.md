@@ -566,7 +566,7 @@ typů.
 | — | Časová zóna `Europe/Prague` | `ASSUMPTION` |
 | — | „Během týdne“ = pondělí–neděle | `ASSUMPTION` |
 | — | Pracovní den = kalendářní den s alespoň jednou směnou | `VERIFIED` — OQ21 |
-| — | Dva dny volna mohou být libovolné; po sobě jdoucí výklad není potvrzen | `ASSUMPTION` |
+| — | Dva dny volna nemusí následovat po sobě | `VERIFIED` — viz `DOMAIN_SPECIFICATION.md` |
 | — | Historie musí být úplná alespoň za 6 dnů před `weekStart` | `ASSUMPTION` |
 | — | Existující směny lze měnit (bez zamykání) | `ASSUMPTION` |
 | — | Role je volitelná a bez pravidla | `ASSUMPTION` |

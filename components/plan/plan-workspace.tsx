@@ -193,7 +193,7 @@ export function PlanWorkspace({
         </button>
       </div>
 
-      {visitedMonths.map((month) => <div key={month} hidden={month !== visibleMonthValue}><MonthlyPlanningPanel month={month} canManage={canManage} simulated={runtime.configured && runtime.mode === "simulated"} initialStaffing={initialStaffing} weekDates={weekDates.map(formatIsoDate)} onResult={onMonthlyResult} /></div>)}
+      {visitedMonths.map((month) => <div key={month} hidden={month !== visibleMonthValue}><MonthlyPlanningPanel month={month} canManage={canManage} planningMode={runtime.configured ? runtime.mode : null} initialStaffing={initialStaffing} weekDates={weekDates.map(formatIsoDate)} onResult={onMonthlyResult} /></div>)}
 
       <div className="week-banner">
         <h2>Týden {isoWeekNumber(weekStart)}</h2>

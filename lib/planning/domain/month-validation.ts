@@ -116,7 +116,6 @@ export function validateMonthlyPlan(input: MonthlyPlanningInput, assignments: re
       if ((week < first && !beforeComplete) || (weekDates[6] > last && !afterComplete)) continue;
       const off = weekDates.filter((date) => !workDates.includes(date));
       if (off.length < 2) problems.push({ code: "WEEKEND_TWO_DAYS_OFF", message: "Při víkendové práci chybí dva dny volna v týdnu.", date: week, employeeId: employee.id });
-      else if (!off.some((date) => off.includes(addDays(date, 1)))) unverified.push({ code: "WEEKEND_DAYS_OFF_INTERPRETATION", message: "Není potvrzeno, zda dva dny volna musí následovat po sobě.", date: week, employeeId: employee.id });
     }
   }
   const status = problems.length ? "invalid" : unverified.length ? "not_verified" : "valid";
