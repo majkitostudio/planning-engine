@@ -57,6 +57,17 @@ testovacím předpokladem, nikoli schváleným provozním pravidlem.
 
 ## Známá omezení a další rozhodnutí
 
+### To-Do: Zjednodušit rozhraní pro manažera
+
+- `PLANNED` — Zpřehlednit výsledek návrhu, odstranit technické názvy a stavové
+  kódy a srozumitelně vysvětlit konkrétní problémy a chybějící podklady.
+- `PLANNED` — Podle zpětné vazby odstranit z výsledku ruční úpravy a zbytečné
+  ovládání potvrzení; zachovat bezpečnostní pravidla a zákaz automatického potvrzení.
+- `PLANNED` — Skrýt výběr simulovaného scénáře před manažerem, odstranit
+  ukázkové filtry a přehledy a upravit správu zaměstnanců včetně čitelnosti tlačítek.
+- `PLANNED` — Upravit souhrn dostupnosti a odstranit označené technické texty
+  z přehledu a nastavení. Netvrdit, že se pokyny zohledňují, dokud tomu tak není.
+
 - Neověřené návaznosti na začátku nebo konci měsíce brání potvrzení návrhu.
   Dva dny volna při víkendové práci nemusí následovat po sobě; viz
   `docs/DOMAIN_SPECIFICATION.md`.
