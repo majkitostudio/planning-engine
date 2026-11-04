@@ -164,7 +164,11 @@ testovacím předpokladem, nikoli schváleným provozním pravidlem.
   požadavek na neprázdné ID a případně jej ošetřit cíleně s testem; starý
   soubor ani pracovní strom při auditu nemažou ani nepřepisují.
   Syntetické přímé volání `isPlanDraft()` potvrdilo přijetí alternativy s
-  prázdným ID; dopad na běžný uživatelský tok nebyl samostatně ověřen.
+  prázdným ID. Následný syntetický test na `508c486` potvrdil, že i měsíční
+  `isMonthlyPlanDraft()` přijme dvě alternativy se shodným prázdným ID;
+  měsíční UI přitom používá ID jako klíč položky. Běžný uživatelský dopad
+  ani vznik takového výstupu skutečným plánovačem nebyly ověřeny. Prověřit
+  neprázdnost a jedinečnost ID v obou kontraktech před převzetím dílčí změny.
 - Hlavní README a rozcestník dokumentace byly sladěny s odstraněním ručních
   úprav z manažerské obrazovky; další historické souhrny vyžadují kontrolu.
 - GitHub CI v aktuálním workflow samostatně nespouští Python testy solveru ani
