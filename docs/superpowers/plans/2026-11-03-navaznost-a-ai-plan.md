@@ -64,7 +64,7 @@
 - [x] Přidat stránku do hlavní navigace. Podporuje vložení i výběr staženého CSV, výběr období, náhled, opravy párování a ruční kontrolu neznámých buněk. Zápis je omezen na manažera serverově.
 - [x] Přidat počty směn/volna/neznámých buněk a samostatné uložení podkladů. Změna měsíce nebo vloženého textu zneplatní náhled; opravy párování, stavu a času jsou výslovnou součástí zkontrolovaného náhledu. Zrušení nic nezapisuje.
 - [x] V měsíčním formuláři ukázat stav sedmi okolních dnů; neznámou budoucnost ponechat neověřenou a odkázat na stránku návaznosti.
-- [x] Testy ověřují oprávnění, chybný vstup, neúplný náhled, znovunačtení a konfliktní/opakované importy. Prohlížeč ověřil náhled syntetického CSV bez ukládání; uložený průchod zůstává `NOT VERIFIED`, protože v prostředí není dostupná databáze.
+- [x] Testy ověřují oprávnění, chybný vstup, neúplný náhled, znovunačtení a konfliktní/opakované importy. Prohlížeč nejprve ověřil náhled bez ukládání; následný syntetický průchod přes UI/API a dočasnou lokální PostgreSQL ověřil uložení CSV, verzování, idempotenci a změnu podkladů.
 
 ### Doplnění části měsíce
 
@@ -104,7 +104,7 @@
 ## Závěrečné ověření a předání
 
 - [x] Spustit `npm run lint`, `npm run typecheck`, `npm test`, `npm run build`, `npm run db:validate` a relevantní Python testy; zaznamenat skutečné výsledky a přeskočené testy do autoritativní specifikace.
-- [x] Prověřit simulované vstupy z rosteru, nejednoznačné párování, překrývající se zdroje, neznámé versus volno, časovou návaznost, nedostupnost AI a solveru, chybějící budoucí podklady a ochranu potvrzení. Testy používají syntetická data; databázový průchod zůstává `NOT VERIFIED`.
+- [x] Prověřit simulované vstupy z rosteru, nejednoznačné párování, překrývající se zdroje, neznámé versus volno, časovou návaznost, nedostupnost AI a solveru, chybějící budoucí podklady a ochranu potvrzení. Testy používají syntetická data. Migrace, čtení/zápis importu přes UI, odmítnutí zastaralého návrhu a úspěšné potvrzení doplnění byly následně ověřeny přes běžnou lokální aplikaci s dočasnou PostgreSQL; zbylé aplikační scénáře se ověřují průběžně.
 - [x] Aktualizovat jeden relevantní autoritativní dokument pro každé změněné rozhodnutí a odkazy na něj; rozlišit `PLANNED`, `IMPLEMENTED` a `VERIFIED`. Zkontrolovat diff a neznámé výstupy, zachovat existující nesledované podklady.
 - [ ] Commitovat samostatné ucelené a ověřené kroky podle projektových pravidel. Neprovádět produkční migraci, export, přenos osobních údajů externí AI, potvrzení reálného rozpisu ani nasazení bez příslušného výslovného schválení.
 
