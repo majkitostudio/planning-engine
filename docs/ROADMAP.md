@@ -193,8 +193,12 @@ testovacím předpokladem, nikoli schváleným provozním pravidlem.
   napodoben přímou změnou testovacího účtu v databázi; změnu hesla provedla
   aplikační služba. Aktualizace relace neporovnává verzi hesla. Prověřit a
   implementovat zneplatnění starých relací včetně testu celého přihlášení.
-- `NOT VERIFIED` — Prověřit ochranu přihlášení před opakovanými pokusy a pokrytí
-  autentizace, oprávnění a práce s osobními údaji při bezpečnostní kontrole.
+- `VERIFIED` (omezený lokální test) — Deset po sobě jdoucích chybných pokusů
+  o přihlášení syntetickým účtem nevrátilo `429`; následné správné přihlášení
+  v lokálním režimu uspělo. Jde o test bez reverzní proxy a nedokazuje stav
+  jiného nasazení. V aplikačním kódu autentizace nebyla nalezena samostatná
+  ochrana proti opakovaným pokusům; před širším použitím navrhnout a ověřit
+  odpovídající omezení, monitoring a ochranu účtů.
 - `VERIFIED` — `npm audit --omit=dev` na `main` nahlásil 4. 11. 2026 nula
   známých zranitelností provozních závislostí. Úplný `npm audit` nahlásil
   16 položek střední závažnosti v řetězci vývojových nástrojů, souvisejících
