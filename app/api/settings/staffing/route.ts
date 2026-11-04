@@ -5,6 +5,7 @@ import { requirePlanningActor } from "@/lib/auth/route-access";
 import { getPlanningPersistenceRuntime } from "@/lib/planning/persistence-runtime";
 import {
   getCompleteStaffingSettings,
+  getStaffingProfileStatus,
   validateStaffingSettingsPayload,
 } from "@/lib/planning/staffing-settings";
 
@@ -24,6 +25,8 @@ export async function GET() {
     const savedSettings = await persistenceRuntime.persistence.getStaffingSettings();
     return NextResponse.json({
       ok: true,
+      profileStatus: getStaffingProfileStatus(savedSettings),
+      savedSettingsCount: savedSettings.length,
       settings: getCompleteStaffingSettings(savedSettings),
     });
   } catch {
@@ -68,7 +71,12 @@ export async function POST(request: Request) {
 
   try {
     await persistenceRuntime.persistence.saveStaffingSettings(validation.settings);
-    return NextResponse.json({ ok: true, settings: validation.settings });
+    return NextResponse.json({
+      ok: true,
+      profileStatus: getStaffingProfileStatus(validation.settings),
+      savedSettingsCount: validation.settings.length,
+      settings: validation.settings,
+    });
   } catch {
     return rejection(
       "persistence_failed",

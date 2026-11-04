@@ -4,6 +4,7 @@ import {
   DEFAULT_STAFFING_MINIMUMS,
   applyStaffingSettings,
   getCompleteStaffingSettings,
+  getStaffingProfileStatus,
   getStaffingRequirement,
   validateStaffingSettingsPayload,
 } from "./staffing-settings";
@@ -12,6 +13,19 @@ import { getSimulatedReplacementScenario } from "./simulated/replacement-scenari
 import { evaluateReplacementOption } from "./replacement-service";
 
 describe("staffing settings", () => {
+  it("rozlišuje úplný, částečný, chybějící a nedostupný uložený profil", () => {
+    const complete = Array.from({ length: 14 }, (_, index) => ({
+      dayOfWeek: Math.floor(index / 2),
+      shiftKind: index % 2 === 0 ? "morning" as const : "afternoon" as const,
+      requiredEmployees: 1,
+    }));
+
+    expect(getStaffingProfileStatus(complete)).toBe("complete");
+    expect(getStaffingProfileStatus(complete.slice(0, 1))).toBe("partial");
+    expect(getStaffingProfileStatus([])).toBe("missing");
+    expect(getStaffingProfileStatus([], false)).toBe("unavailable");
+  });
+
   it("vrací minima podle pracovního dne nebo víkendu", () => {
     const settings = getCompleteStaffingSettings([]);
 

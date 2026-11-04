@@ -2,8 +2,8 @@
 
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import Link from "next/link";
-import { buildMonthlyFormInput, monthlyFormReadiness, partialAbsenceAvailability, staffingFormValues, type MonthlyFormData, type PartialAbsence } from "@/lib/planning/monthly-form";
-import type { StaffingSetting } from "@/lib/planning/staffing-settings";
+import { buildMonthlyFormInput, monthlyFormReadiness, monthlyStaffingProfileNotice, partialAbsenceAvailability, staffingFormValues, type MonthlyFormData, type PartialAbsence } from "@/lib/planning/monthly-form";
+import type { StaffingProfileStatus, StaffingSetting } from "@/lib/planning/staffing-settings";
 import type { MonthlyPlanningInput } from "@/lib/planning/domain/month-input";
 import type { Absence, ShiftKind } from "@/lib/planning/domain/types";
 import type { MonthlyPlanDraft } from "@/lib/planning/monthly-planning";
@@ -25,7 +25,7 @@ type BoundaryReadiness = { readonly key: string; readonly status: "loading" | "a
 const DAYS = ["Pondělí", "Úterý", "Středa", "Čtvrtek", "Pátek", "Sobota", "Neděle"];
 const STEPS = ["Zaměstnanci", "Absence a dostupnost", "Obsazení", "Doplňující pokyny", "Souhrn a návrh"] as const;
 
-export function MonthlyPlanningPanel({ month, canManage, planningMode, initialStaffing, onResult }: { month: string; canManage: boolean; planningMode: MonthlyView["mode"] | null; initialStaffing: readonly StaffingSetting[] | null; onResult: (month: string, result: MonthlyView | null) => void }) {
+export function MonthlyPlanningPanel({ month, canManage, planningMode, initialStaffing, staffingProfileStatus, onResult }: { month: string; canManage: boolean; planningMode: MonthlyView["mode"] | null; initialStaffing: readonly StaffingSetting[] | null; staffingProfileStatus: StaffingProfileStatus; onResult: (month: string, result: MonthlyView | null) => void }) {
   const [employees, setEmployees] = useState<MonthlyFormData["employees"]>([]);
   const [name, setName] = useState("");
   const [absences, setAbsences] = useState<Absence[]>([]);
@@ -185,7 +185,10 @@ export function MonthlyPlanningPanel({ month, canManage, planningMode, initialSt
           <ul className="monthly-entry-list">{absences.map((absence) => <li key={absence.id}><span>{employeeName(absence.employeeId)} · celodenní · {absence.from}–{absence.to}</span><button className="btn btn--secondary" type="button" onClick={() => setAbsences((current) => current.filter((item) => item.id !== absence.id))}>Odebrat</button></li>)}{partialAbsences.map((item) => <li key={item.id}><span>{employeeName(item.employeeId)} · {item.shiftKind === "morning" ? "ranní" : "odpolední"} · {item.from}–{item.to}</span><button className="btn btn--secondary" type="button" onClick={() => setPartialAbsences((current) => current.filter((entry) => entry.id !== item.id))}>Odebrat</button></li>)}</ul>
         </> : null}
         {step === 2 ? <>
-          <p className="monthly-muted">{initialStaffing ? "Předvyplněno z uloženého týdenního profilu. Změny zde se vztahují k tomuto měsíčnímu návrhu." : "Profil obsazení není dostupný; vyplňte všechna pole. Nulu zadejte výslovně."}</p>
+          <p className="monthly-muted">{monthlyStaffingProfileNotice(
+            staffingProfileStatus,
+            initialStaffing?.length ?? 0,
+          )}</p>
           <div className="monthly-staffing-grid">{DAYS.map((day, index) => <div className="monthly-staffing-day" key={day}><strong>{day}</strong>{(["Ranní", "Odpolední"] as const).map((label, shiftIndex) => <label key={label}>{label}<input className="input" type="number" min="0" step="1" inputMode="numeric" aria-label={`${day}, ${label}, počet zaměstnanců`} value={staffing[index * 2 + shiftIndex] ?? ""} onChange={(event) => setStaffing((current) => current.map((value, i) => i === index * 2 + shiftIndex ? event.target.value : value))} /></label>)}</div>)}</div>
         </> : null}
         {step === 3 ? <>

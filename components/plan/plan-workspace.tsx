@@ -13,7 +13,10 @@ import {
   weekLabel,
 } from "@/lib/demo-data";
 import type { MonthlyProviderRuntime } from "@/lib/planning/monthly-runtime";
-import type { StaffingSetting } from "@/lib/planning/staffing-settings";
+import type {
+  StaffingProfileStatus,
+  StaffingSetting,
+} from "@/lib/planning/staffing-settings";
 import { selectMonthlyView } from "@/lib/planning/monthly-view";
 
 function isoWeekNumber(date: Date): number {
@@ -43,12 +46,14 @@ interface PlanWorkspaceProps {
   runtime: MonthlyProviderRuntime;
   canManage: boolean;
   initialStaffing: readonly StaffingSetting[] | null;
+  staffingProfileStatus: StaffingProfileStatus;
 }
 
 export function PlanWorkspace({
   runtime,
   canManage,
   initialStaffing,
+  staffingProfileStatus,
 }: PlanWorkspaceProps) {
   const [weekStart, setWeekStart] = useState<Date>(() => initialWeekStart());
   const [visibleMonth, setVisibleMonth] = useState<Date>(() => currentMonthStart());
@@ -138,7 +143,7 @@ export function PlanWorkspace({
         </button>
       </div>
 
-      {visitedMonths.map((month) => <div key={month} hidden={month !== visibleMonthValue}><MonthlyPlanningPanel month={month} canManage={canManage} planningMode={runtime.configured ? runtime.mode : null} initialStaffing={initialStaffing} onResult={onMonthlyResult} /></div>)}
+      {visitedMonths.map((month) => <div key={month} hidden={month !== visibleMonthValue}><MonthlyPlanningPanel month={month} canManage={canManage} planningMode={runtime.configured ? runtime.mode : null} initialStaffing={initialStaffing} staffingProfileStatus={staffingProfileStatus} onResult={onMonthlyResult} /></div>)}
 
       <div className="week-banner">
         <h2>Týden {isoWeekNumber(weekStart)}</h2>

@@ -15,7 +15,7 @@ Opravené nálezy i otevřené kroky jsou označené samostatně. Před širší
 | --- | --- |
 | Vysoká | OPRAVENO — zápis přes starší API vyžaduje managera a chrání uložený záznam; souběžné potvrzení atomicky uloží právě jeden plán a auditní událost. |
 | Vysoká | OPRAVENO — starší relace se po resetu, změně hesla, změně role i deaktivaci odmítají podle verze relace; ověřeno také proti izolované PostgreSQL. |
-| Vysoká | Formulář může označit výchozí obsazení za uložený profil i při prázdné databázi. Rozlišit skutečný zdroj hodnot a jejich potvrzení manažerem. |
+| Vysoká | Částečně opraveno — nastavení, API a měsíční formulář rozlišují uložené hodnoty od výchozích; stále je třeba rozhodnout, zda samotné uložení celé tabulky znamená schválení výchozích hodnot a jak se má chovat operativní náhrada při chybějícím profilu. |
 | Další | Opravit zjištěné chyby přístupnosti, neexistující návrh, časovou změnu a nesoulad limitu 200 zaměstnanců; ověřit výkon na reprezentativních syntetických zadáních. |
 | Dokončení MVP | Rozhodnout o pravidlech mazání a implementovat správu jednotlivých rozpisů; doplnit Python a izolované databázové testy do CI a dokončit kontrolu uživatelského toku. |
 
@@ -295,12 +295,16 @@ testovacím předpokladem, nikoli schváleným provozním pravidlem.
   zobrazil chybějící návaznosti, zablokoval potvrzení a po obnovení stránky
   návrh znovu načetl. V databázi byl jeden návrh a žádný potvrzený rozpis.
   Neověřuje to kvalitu návrhu s reálným obsazením ani celý tok potvrzení.
-- `VERIFIED` / oprava nutná — Ve stejném průchodu tabulka uloženého nastavení
-  obsazení obsahovala nula záznamů, formulář však předvyplnil výchozí hodnoty
-  a označil je za uložený týdenní profil. `getCompleteStaffingSettings()`
-  chybějící hodnoty doplňuje výchozími hodnotami, takže současný text může
-  vzbudit dojem schváleného nastavení. Zobrazit skutečný zdroj a vyřešit
-  potvrzení chybějících hodnot před dalším praktickým použitím.
+- `VERIFIED` / částečně opraveno — Ve stejném průchodu tabulka uloženého
+  nastavení obsazení obsahovala nula záznamů, ale formulář zobrazil výchozí
+  hodnoty jako uložený týdenní profil. Nyní stránky nastavení a plánování i API
+  rozlišují úplný, částečný, chybějící a nedostupný profil. Měsíční formulář
+  předvyplní pouze skutečně uložené hodnoty; chybějící pole zůstanou prázdná.
+  Nastavení přiznává výchozí hodnoty a stav zdroje, API vrací stav i počet
+  uložených položek. Cílené testy (25), lint a typecheck prošly. Otevřeno:
+  určit, zda manažerovým výslovným uložením celé tabulky schvaluje i dosazené
+  výchozí hodnoty, a rozhodnout, zda operativní náhrada smí při neúplném profilu
+  dál používat fallback. Její plánovací chování se touto změnou neměnilo.
 - `VERIFIED` — Na větvi `c7218af` prošlo všech sedm migrací na nově vytvořené
   izolované PostgreSQL 16. Testy včetně databázových a lokálního plánovače:
   484 úspěšných, jeden přeskočený integrační test Gemini. Databáze obsahovala
@@ -423,9 +427,12 @@ označíme za hotovou až po opravě a doloženém ověření jejího rozsahu.
      3 prošly; celý Vitest: 490 prošlo, 10 přeskočeno; lint, typecheck, Prisma
      validace a build prošly. Izolovaná PostgreSQL 16 byla odstraněna.
 4. **P1 — Pravdivé zdroje obsazení.**
-   - [ ] Odlišit uložený profil od výchozích hodnot a určit, jak manažer schvaluje
-     chybějící nebo předvyplněné hodnoty.
-   - [ ] Prověřit další použití výchozího profilu.
+   - [x] V nastavení, API a měsíčním formuláři rozlišit uložený profil od
+     výchozích hodnot; měsíční návrh předvyplňuje jen uložené hodnoty.
+   - [ ] Určit, zda manažer výslovným uložením celé tabulky schvaluje i
+     dosazené výchozí hodnoty.
+   - [ ] Prověřit další použití výchozího profilu a rozhodnout o fallbacku při
+     operativní náhradě.
 5. **P1 — Pravidla a limity plánování.**
    - [ ] Uzavřít potřebná doménová rozhodnutí a ověřit návaznosti, nepokryté dny,
      absence a částečný měsíc.

@@ -20,6 +20,26 @@ export interface StaffingSetting {
   readonly requiredEmployees: number;
 }
 
+export type StaffingProfileStatus =
+  | "complete"
+  | "partial"
+  | "missing"
+  | "unavailable";
+
+export function getStaffingProfileStatus(
+  savedSettings: readonly StaffingSetting[],
+  available = true,
+): StaffingProfileStatus {
+  if (!available) return "unavailable";
+  const savedKeys = new Set(
+    savedSettings.map((setting) => settingKey(setting.dayOfWeek, setting.shiftKind)),
+  );
+  if (savedKeys.size === STAFFING_DAY_COUNT * STAFFING_SHIFT_KINDS.length) {
+    return "complete";
+  }
+  return savedKeys.size === 0 ? "missing" : "partial";
+}
+
 export type StaffingSettingsValidation =
   | { readonly ok: true; readonly settings: readonly StaffingSetting[] }
   | { readonly ok: false; readonly errors: readonly string[] };

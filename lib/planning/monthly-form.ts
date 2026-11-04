@@ -2,7 +2,7 @@ import { datesInMonth } from "./domain/month";
 import { weekdayIndex } from "./domain/time";
 import { validateMonthlyInput, type MonthlyAvailability, type MonthlyPlanningInput, type MonthlyPlanningRange } from "./domain/month-input";
 import type { Absence, ShiftKind } from "./domain/types";
-import type { StaffingSetting } from "./staffing-settings";
+import type { StaffingProfileStatus, StaffingSetting } from "./staffing-settings";
 
 export interface PartialAbsence {
   readonly employeeId: string;
@@ -75,6 +75,22 @@ export function staffingFormValues(settings: readonly StaffingSetting[] | null):
     const item = settings?.find((setting) => setting.dayOfWeek === Math.floor(index / 2) && setting.shiftKind === (index % 2 === 0 ? "morning" : "afternoon"));
     return item ? String(item.requiredEmployees) : "";
   });
+}
+
+export function monthlyStaffingProfileNotice(
+  status: StaffingProfileStatus,
+  savedCount: number,
+): string {
+  if (status === "complete") {
+    return "Předvyplněno z uloženého týdenního profilu. Změny zde se vztahují pouze k tomuto měsíčnímu návrhu.";
+  }
+  if (status === "partial") {
+    return `Z uloženého profilu je předvyplněno ${savedCount}/14 hodnot. Ostatní pole doplňte ručně; výchozí minima se nepoužijí.`;
+  }
+  if (status === "missing") {
+    return "Uložený týdenní profil chybí. Vyplňte všechna pole; výchozí minima nejsou automaticky dosazena.";
+  }
+  return "Stav uloženého týdenního profilu se nepodařilo ověřit. Vyplňte všechna pole ručně.";
 }
 
 export function buildMonthlyFormInput(form: MonthlyFormData): { ok: true; value: MonthlyPlanningInput } | { ok: false; message: string } {

@@ -1,7 +1,11 @@
 import type { Metadata } from "next";
 import { auth } from "@/auth";
 import { PlanWorkspace } from "@/components/plan/plan-workspace";
-import { getCompleteStaffingSettings, type StaffingSetting } from "@/lib/planning/staffing-settings";
+import {
+  getStaffingProfileStatus,
+  type StaffingProfileStatus,
+  type StaffingSetting,
+} from "@/lib/planning/staffing-settings";
 import { getPlanningPersistenceRuntime } from "@/lib/planning/persistence-runtime";
 import { getMonthlyProviderRuntime } from "@/lib/planning/monthly-runtime";
 
@@ -17,13 +21,15 @@ export default async function PlanningPage() {
   const runtime = getMonthlyProviderRuntime();
   const persistenceRuntime = getPlanningPersistenceRuntime();
   let initialStaffing: readonly StaffingSetting[] | null = null;
+  let staffingProfileStatus: StaffingProfileStatus = "unavailable";
 
   if (persistenceRuntime.configured) {
     try {
-      const settings = await persistenceRuntime.persistence.getStaffingSettings();
-      initialStaffing = getCompleteStaffingSettings(settings);
+      initialStaffing = await persistenceRuntime.persistence.getStaffingSettings();
+      staffingProfileStatus = getStaffingProfileStatus(initialStaffing);
     } catch {
       initialStaffing = null;
+      staffingProfileStatus = "unavailable";
     }
   }
 
@@ -32,6 +38,7 @@ export default async function PlanningPage() {
       runtime={runtime}
       canManage={session?.user?.role === "manager"}
       initialStaffing={initialStaffing}
+      staffingProfileStatus={staffingProfileStatus}
     />
   );
 }

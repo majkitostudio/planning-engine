@@ -101,12 +101,22 @@ describe("staffing settings route handlers", () => {
       jsonRequest("http://localhost/api/settings/staffing", "POST", { settings }),
     );
     const readResponse = await GET();
+    const saveBody = (await saveResponse.json()) as {
+      profileStatus: string;
+      savedSettingsCount: number;
+    };
     const readBody = (await readResponse.json()) as {
       settings: typeof settings;
+      profileStatus: string;
+      savedSettingsCount: number;
     };
 
     expect(saveResponse.status).toBe(200);
+    expect(saveBody.profileStatus).toBe("complete");
+    expect(saveBody.savedSettingsCount).toBe(14);
     expect(readBody.settings).toEqual(settings);
+    expect(readBody.profileStatus).toBe("complete");
+    expect(readBody.savedSettingsCount).toBe(14);
 
     vi.stubEnv("PLANNING_PROVIDER", "simulated");
     const scenario = getSimulatedReplacementScenario("single-absence");

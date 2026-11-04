@@ -1,7 +1,18 @@
 import { describe, expect, it } from "vitest";
-import { buildMonthlyFormInput, monthlyFormReadiness, staffingFormValues, partialAbsenceAvailability } from "./monthly-form";
+import { buildMonthlyFormInput, monthlyFormReadiness, monthlyStaffingProfileNotice, staffingFormValues, partialAbsenceAvailability } from "./monthly-form";
 
 describe("vstupy měsíčního formuláře", () => {
+  it("nezamění neuložená minima za profil a vyžádá chybějící hodnoty", () => {
+    expect(staffingFormValues([])).toEqual(Array(14).fill(""));
+    expect(staffingFormValues([{ dayOfWeek: 0, shiftKind: "morning", requiredEmployees: 5 }])).toEqual([
+      "5", "", "", "", "", "", "", "", "", "", "", "", "", "",
+    ]);
+    expect(monthlyStaffingProfileNotice("missing", 0)).toContain("profil chybí");
+    expect(monthlyStaffingProfileNotice("partial", 6)).toContain("6/14 hodnot");
+    expect(monthlyStaffingProfileNotice("unavailable", 0)).toContain("nepodařilo ověřit");
+    expect(monthlyStaffingProfileNotice("complete", 14)).toContain("uloženého týdenního profilu");
+  });
+
   it("přenese zvolený úsek plánování a odmítne neplatné hranice", () => {
     const form = { month: "2026-11", employees: [{ id: "e1", name: "Test" }], absences: [], availability: [], staffing: Array(14).fill("0"), instructions: "", planningRange: { startDate: "2026-11-15", endDate: "2026-11-30" } };
     const result = buildMonthlyFormInput(form);

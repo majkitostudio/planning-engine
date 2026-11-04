@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Icon } from "@/components/icons";
 import {
   getDefaultStaffingRequirement,
+  type StaffingProfileStatus,
   STAFFING_SHIFT_KINDS,
   type StaffingSetting,
 } from "@/lib/planning/staffing-settings";
@@ -19,23 +20,34 @@ const DAY_LABELS = [
 ] as const;
 
 type SettingsResponse =
-  | { readonly ok: true; readonly settings: readonly StaffingSetting[] }
+  | {
+      readonly ok: true;
+      readonly settings: readonly StaffingSetting[];
+      readonly profileStatus: StaffingProfileStatus;
+      readonly savedSettingsCount: number;
+    }
   | { readonly ok: false; readonly rejected?: { readonly message?: string } };
 
 export function StaffingSettingsForm({
   initialSettings,
   canEdit,
   persistenceConfigured,
+  profileStatus,
+  savedSettingsCount,
   notice: initialNotice,
 }: {
   readonly initialSettings: readonly StaffingSetting[];
   readonly canEdit: boolean;
   readonly persistenceConfigured: boolean;
+  readonly profileStatus: StaffingProfileStatus;
+  readonly savedSettingsCount: number;
   readonly notice: string | null;
 }) {
   const [settings, setSettings] = useState(() => newSettingsMap(initialSettings));
   const [notice, setNotice] = useState<string | null>(initialNotice);
   const [isSaving, setIsSaving] = useState(false);
+  const [currentProfileStatus, setCurrentProfileStatus] = useState(profileStatus);
+  const [currentSavedSettingsCount, setCurrentSavedSettingsCount] = useState(savedSettingsCount);
 
   function updateSetting(dayOfWeek: number, shiftKind: StaffingSetting["shiftKind"], value: string) {
     setSettings((current) => ({
@@ -62,6 +74,8 @@ export function StaffingSettingsForm({
       }
 
       setSettings(newSettingsMap(data.settings));
+      setCurrentProfileStatus(data.profileStatus);
+      setCurrentSavedSettingsCount(data.savedSettingsCount);
       setNotice("Nastavení bylo uloženo.");
     } catch {
       setNotice("Nastavení se nepodařilo uložit kvůli chybě spojení.");
@@ -96,6 +110,15 @@ export function StaffingSettingsForm({
       </div>
 
       {notice ? <p className="settings-form__notice" role="status">{notice}</p> : null}
+      <p className="settings-form__notice" role="note">
+        {currentProfileStatus === "complete"
+          ? "Načten úplný uložený týdenní profil (14/14 hodnot)."
+          : currentProfileStatus === "partial"
+            ? `Uloženo ${currentSavedSettingsCount}/14 hodnot. Chybějící buňky jsou doplněny výchozími minimy; před uložením zkontrolujte celou tabulku.`
+            : currentProfileStatus === "missing"
+              ? "Týdenní profil není uložen. Zobrazená čísla jsou výchozí minima; uložený profil vytvoříte výslovným uložením celé tabulky."
+              : "Zdroj uložených hodnot se nepodařilo ověřit. Zobrazená čísla jsou výchozí minima, ne ověřený profil."}
+      </p>
 
       <form className="card settings-form" onSubmit={saveSettings}>
         <div className="card__head">

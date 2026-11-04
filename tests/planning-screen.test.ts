@@ -9,7 +9,7 @@ import { staffingSettingsPersistenceNotice } from "@/lib/settings-view";
 
 describe("obrazovka plánování", () => {
   it("nabízí měsíční plán bez ukázkových filtrů a seznamů", () => {
-    const html = renderToStaticMarkup(createElement(PlanWorkspace, { runtime: { configured: true, mode: "ortools" }, canManage: true, initialStaffing: null }));
+    const html = renderToStaticMarkup(createElement(PlanWorkspace, { runtime: { configured: true, mode: "ortools" }, canManage: true, initialStaffing: null, staffingProfileStatus: "unavailable" }));
     expect(html).toContain("Návrh rozpisu");
     expect(html).toContain("Měsíční rozpis zatím není k dispozici");
     expect(html).not.toContain("Filtry a doplňující ukázkové přehledy");
@@ -29,9 +29,10 @@ describe("obrazovka plánování", () => {
     expect(employees).toContain("Přidat zaměstnance");
     expect(employees).toContain("btn--primary");
     const settings = renderToStaticMarkup(createElement(StaffingSettingsForm, {
-      initialSettings: [], canEdit: true, persistenceConfigured: true, notice: null,
+      initialSettings: [], canEdit: true, persistenceConfigured: true, profileStatus: "missing", savedSettingsCount: 0, notice: null,
     }));
     expect(settings).toContain("Upravte potřebný počet lidí pro jednotlivé směny.");
+    expect(settings).toContain("Týdenní profil není uložen.");
     expect(settings).not.toContain("lokální výpočty");
     expect(settings).not.toContain("MANAGER");
     expect(staffingSettingsPersistenceNotice(false)).toBe("Ukládání není v tomto prostředí dostupné; hodnoty se nyní neuloží.");
