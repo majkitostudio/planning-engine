@@ -123,6 +123,9 @@ testovacím předpokladem, nikoli schváleným provozním pravidlem.
   které Windows Git označuje jako nedostupné, jsou přístupné z Ubuntu a jejich
   pracovní stromy byly při kontrole čisté; jejich commity jsou zahrnuté v `main`.
   Označení Windows Git tedy samo o sobě neprokazuje, že je lze odstranit.
+- Při opakované kontrole byl nalezen další pracovní strom `jolly-pixel` v
+  odpojeném stavu. Jeho pracovní strom byl čistý a commit `6077301` je již
+  předkem `main`; strom zůstává zachován.
 - Porovnání stromu `cline/9dbfe`: upravené testovací soubory jsou totožné s
   `main` a změny exportů a importu již `main` obsahuje. Nesledovaný starší
   `ai-provider.ts` se od současného liší; jeho převzetí by odstranilo novější
