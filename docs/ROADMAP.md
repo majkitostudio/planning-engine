@@ -169,6 +169,13 @@ testovacím předpokladem, nikoli schváleným provozním pravidlem.
   ale není součástí jejich popisku ani programově přidružené skupiny. Doplnit
   rozlišitelné názvy nebo skupiny s kontextem osoby a dne a ověřit ovládání se
   čtečkou obrazovky. Jde o kontrolu zdrojového kódu, nikoli test se čtečkou.
+- `VERIFIED` / klávesnice — V přihlášené lokální aplikaci na `01d7029` s
+  izolovanou databází a syntetickým vstupem zůstal po přechodu z absence na
+  obsazení stiskem Enter fokus na tlačítku „Pokračovat“. Následný Tab nová
+  pole obsazení přeskočil a přešel na ovládání vývojářských nástrojů. Stejný
+  vzor byl pozorován při předchozím přechodu myší z prvního kroku. Přesunout
+  fokus po změně kroku na jeho nadpis nebo první vhodný prvek a ověřit pořadí
+  v běžném sestavení i se čtečkou; pokus běžel ve vývojovém režimu.
 - `VERIFIED` / UX oprava — Při odkazu prohlížeče na již neexistující návrh
   server vrátil `404`; stránka nabídla opětovné načtení, po kterém se stejná
   chyba zopakovala. Rozlišit chybějící návrh od dočasné chyby spojení a
