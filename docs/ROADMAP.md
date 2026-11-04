@@ -523,6 +523,12 @@ označíme za hotovou až po opravě a doloženém ověření jejího rozsahu.
      dosazené výchozí hodnoty.
    - [ ] Prověřit další použití výchozího profilu a rozhodnout o fallbacku při
      operativní náhradě.
+   - `VERIFIED` (5. 11. 2026, kontrola zdrojového kódu) — GET nastavení skládá
+     úplných 14 buněk z uložených hodnot a výchozích minim; formulář při
+     výslovném uložení odešle všech 14 a API je uloží. Operativní náhrada při
+     chybějícím cílovém požadavku v plánovacím vstupu volá fallback nad prázdným
+     profilem. Jde o popis implementace, nikoli o rozhodnutí, že uložené
+     výchozí hodnoty jsou schválené nebo že fallback je provozně povolen.
 5. **P1 — Pravidla a limity plánování.**
    - [ ] Uzavřít potřebná doménová rozhodnutí a ověřit návaznosti, nepokryté dny,
      absence a částečný měsíc.
