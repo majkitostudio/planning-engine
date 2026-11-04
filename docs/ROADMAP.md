@@ -160,6 +160,12 @@ testovacím předpokladem, nikoli schváleným provozním pravidlem.
   klávesnice a návrat fokusu; ověřit též čtečku obrazovky a další průchody.
   Přihlášení, prázdný formulář a stránka návazností byly vizuálně zkontrolovány;
   databáze byla záměrně nedostupná a jejich datové operace se netestovaly.
+- `VERIFIED` / kontrola kódu přístupnosti — V měsíčním formuláři mají tlačítka
+  pro odebrání různých zaměstnanců a absencí shodný název „Odebrat“. V náhledu
+  návaznosti se opakují ovládací prvky „Stav“, „Od“ a „Do“; datum je vedle nich,
+  ale není součástí jejich popisku ani programově přidružené skupiny. Doplnit
+  rozlišitelné názvy nebo skupiny s kontextem osoby a dne a ověřit ovládání se
+  čtečkou obrazovky. Jde o kontrolu zdrojového kódu, nikoli test se čtečkou.
 - `VERIFIED` / UX oprava — Při odkazu prohlížeče na již neexistující návrh
   server vrátil `404`; stránka nabídla opětovné načtení, po kterém se stejná
   chyba zopakovala. Rozlišit chybějící návrh od dočasné chyby spojení a
