@@ -196,6 +196,20 @@ testovacím předpokladem, nikoli schváleným provozním pravidlem.
   200/201 i průchod API. Limit je technické omezení, nikoli důkaz provozní
   kapacity pro 200 zaměstnanců; tu je třeba měřit na reprezentativních
   syntetických scénářích.
+- `VERIFIED` / částečně opraveno — Vlastní místní časy z importu byly bez
+  rozlišení přijímány i v mezeře a překryvu změny času. Import a uložení rosteru
+  nyní takové časy odmítnou; validace měsíčních podkladů je nepustí do plánování
+  a vlastní čas v návaznosti označí jako neověřený, takže návrh nelze potvrdit.
+  Testy pokrývají neexistující čas 29. 3. 2026 i dvojí výskyt 25. 10. 2026;
+  klasifikace používá ohraničenou cache do 4096 položek, její výkon ale nebyl
+  benchmarkován.
+  Potvrzené standardní směny těmito přechody neprocházejí. `scripts/monthly_solver.py`
+  zatím nemá stejnou samostatnou kontrolu a může při přímém volání použít
+  výchozí interpretaci `ZoneInfo`; doplnit ji a přidat Python testy. Na tomto
+  počítači nejsou dostupné OR-Tools ani databáze časových pásem pro Python,
+  takže tento okraj solveru nebylo možné lokálně ověřit. Vzorkovací kontrola
+  zatím není ověřena pro libovolná historická časová pásma nebo jejich neobvyklé
+  změny.
 - `VERIFIED` / omezený výkonnostní pokus — Přímé volání lokálního solveru pro
   listopad 2026 a 101 syntetických zaměstnanců s testovacím obsazením 15/7 ve
   všední dny a 7/3 o víkendu vrátilo `unknown` po 20,94 s při limitu řešení
@@ -442,7 +456,9 @@ označíme za hotovou až po opravě a doloženém ověření jejího rozsahu.
      vstup nad limit odmítnout před načtením podkladů a spuštěním solveru.
    - [ ] Ověřit výkon na schválených syntetických scénářích; technický limit
      nepovažovat za doloženou provozní kapacitu.
-   - [ ] Ošetřit neexistující i nejednoznačné místní časy při změně času.
+   - [x] Blokovat neexistující i nejednoznačné místní časy při importu a
+     validaci měsíční historie; nedovolit potvrzení návrhu s takovou návazností.
+   - [ ] Doplnit odpovídající obranu a Python testy přímo do solveru.
 6. **P1 — Správa rozpisů.**
    - [ ] Navrhnout a implementovat seznam rozpisů s možností smazat jednotlivý
      rozpis.

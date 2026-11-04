@@ -1,4 +1,6 @@
 import { isIsoDate } from "./domain/time";
+import { DEFAULT_TIME_ZONE } from "./domain/confirmed";
+import { getZonedDateTimeStatus } from "./domain/time";
 import { createHash, randomUUID } from "node:crypto";
 import { Prisma, type PrismaClient } from "@/prisma/generated/client";
 import { prisma as defaultPrisma } from "../db";
@@ -73,7 +75,9 @@ export function validateRosterHistoryImport(value: unknown): RosterHistoryImport
       entries.push({ employeeId: entry.employeeId, date: entry.date, status: "off" });
       continue;
     }
-    if (!isClockTime(entry.startTime) || !isClockTime(entry.endTime) || entry.startTime >= entry.endTime) {
+    if (!isClockTime(entry.startTime) || !isClockTime(entry.endTime) || entry.startTime >= entry.endTime
+      || getZonedDateTimeStatus(entry.date, entry.startTime, DEFAULT_TIME_ZONE) !== "valid"
+      || getZonedDateTimeStatus(entry.date, entry.endTime, DEFAULT_TIME_ZONE) !== "valid") {
       return { ok: false, code: "invalid_shift_time" };
     }
     entries.push({ employeeId: entry.employeeId, date: entry.date, status: "shift", startTime: entry.startTime, endTime: entry.endTime });

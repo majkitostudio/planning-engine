@@ -1,6 +1,6 @@
-import { CONFIRMED_SHIFT_DEFINITIONS, getShiftWindow } from "./confirmed";
+import { CONFIRMED_SHIFT_DEFINITIONS, DEFAULT_TIME_ZONE, getShiftWindow } from "./confirmed";
 import { datesInMonth } from "./month";
-import { addDays, isIsoDate, isLocalTime, isWeekendDate } from "./time";
+import { addDays, getZonedDateTimeStatus, isIsoDate, isLocalTime, isWeekendDate } from "./time";
 import type { MonthlyBoundaryAssignment, MonthlyBoundaryData } from "./month-validation";
 import type { MonthlyRosterDay, MonthlyRosterSnapshot } from "./month-input";
 import type { ExistingAssignment, IsoDate, ShiftKind } from "./types";
@@ -62,7 +62,9 @@ function validateRosterPeriod(period: RosterHistoryPeriod): boolean {
     seen.add(key);
     if (item.status === "off") {
       if (item.startTime != null || item.endTime != null) return false;
-    } else if (!isLocalTime(item.startTime) || !isLocalTime(item.endTime) || item.startTime >= item.endTime) return false;
+    } else if (!isLocalTime(item.startTime) || !isLocalTime(item.endTime) || item.startTime >= item.endTime
+      || getZonedDateTimeStatus(item.date, item.startTime, DEFAULT_TIME_ZONE) !== "valid"
+      || getZonedDateTimeStatus(item.date, item.endTime, DEFAULT_TIME_ZONE) !== "valid") return false;
   }
   return true;
 }

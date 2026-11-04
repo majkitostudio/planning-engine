@@ -1,7 +1,7 @@
 import { CONFIRMED_SHIFT_DEFINITIONS, DEFAULT_TIME_ZONE, getShiftWindow } from "./confirmed";
 import { datesInMonth, monthWeekStarts } from "./month";
 import { validateMonthlyInput, type MonthlyPlanningInput } from "./month-input";
-import { addDays, datesInWeek, getShiftInterval, isIsoDate, isLocalTime, isWeekendDate, zonedDateTimeToUtcMs } from "./time";
+import { addDays, datesInWeek, getShiftInterval, getZonedDateTimeStatus, isIsoDate, isLocalTime, isWeekendDate, zonedDateTimeToUtcMs } from "./time";
 import type { LocalTime, ProposedAssignment, ShiftKind } from "./types";
 
 export interface MonthlyBoundaryAssignment {
@@ -62,7 +62,9 @@ export function validateMonthlyPlan(input: MonthlyPlanningInput, assignments: re
       const expected = getShiftWindow(CONFIRMED_SHIFT_DEFINITIONS, item.shiftKind, isWeekendDate(item.date));
       return item.startTime === expected.start && item.endTime === expected.end;
     }
-    return isLocalTime(item.startTime) && isLocalTime(item.endTime) && item.startTime < item.endTime;
+    return isLocalTime(item.startTime) && isLocalTime(item.endTime) && item.startTime < item.endTime
+      && getZonedDateTimeStatus(item.date, item.startTime, DEFAULT_TIME_ZONE) === "valid"
+      && getZonedDateTimeStatus(item.date, item.endTime, DEFAULT_TIME_ZONE) === "valid";
   };
   const boundaryAssignments: MonthlyBoundaryAssignment[] = [];
   for (const [items, side] of [[before, "before"], [after, "after"]] as const) {

@@ -1,6 +1,6 @@
 import { datesInMonth } from "./month";
-import { CONFIRMED_SHIFT_DEFINITIONS, getShiftWindow } from "./confirmed";
-import { isIsoDate, isLocalTime, isWeekendDate } from "./time";
+import { CONFIRMED_SHIFT_DEFINITIONS, DEFAULT_TIME_ZONE, getShiftWindow } from "./confirmed";
+import { getZonedDateTimeStatus, isIsoDate, isLocalTime, isWeekendDate } from "./time";
 import type { Absence, Employee, IsoDate, ShiftKind, StaffingRequirement } from "./types";
 
 /** Jedno explicitní sdělení o dostupnosti; neuvedené položky nejsou automaticky dostupné. */
@@ -68,6 +68,10 @@ function isMonthlyRosterSnapshot(value: unknown, dates: readonly string[], emplo
     if (item.status === "shift") {
       if (!isLocalTime(item.startTime) || !isLocalTime(item.endTime) || item.startTime >= item.endTime
         || (item.shiftKind !== undefined && !shift(item.shiftKind))) return false;
+      if (item.shiftKind === undefined && (
+        getZonedDateTimeStatus(item.date as IsoDate, item.startTime, DEFAULT_TIME_ZONE) !== "valid"
+        || getZonedDateTimeStatus(item.date as IsoDate, item.endTime, DEFAULT_TIME_ZONE) !== "valid"
+      )) return false;
       if (item.shiftKind) {
         const window = getShiftWindow(CONFIRMED_SHIFT_DEFINITIONS, item.shiftKind, isWeekendDate(item.date));
         if (window.start !== item.startTime || window.end !== item.endTime) return false;

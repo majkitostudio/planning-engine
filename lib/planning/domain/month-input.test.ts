@@ -52,6 +52,35 @@ describe("monthly planning input", () => {
     expect(validateMonthlyInput({ ...input, rosterHistory: { imports: [], days: [] } }).ok).toBe(false);
   });
 
+  it("odmítne měsíční podklady s nejednoznačným nebo neexistujícím vlastním časem", () => {
+    const dates = datesInMonth("2026-10");
+    const snapshot = {
+      imports: [],
+      days: dates.map((date) => date === "2026-10-25"
+        ? { employeeId: "e1", date, status: "shift" as const, startTime: "02:30", endTime: "04:00" }
+        : { employeeId: "e1", date, status: "off" as const }),
+    };
+
+    const monthlyInput = (month: string, rosterHistory: unknown) => ({
+      ...input,
+      month,
+      availability: [],
+      staffingRequirements: [{ date: `${month}-01`, shiftKind: "morning", requiredEmployees: 0 }],
+      rosterHistory,
+    });
+
+    expect(validateMonthlyInput(monthlyInput("2026-10", snapshot))).toEqual({
+      ok: false,
+      message: "Historie rosteru musí mít právě jeden platný záznam pro každý den každého zaměstnance.",
+    });
+    expect(validateMonthlyInput(monthlyInput("2026-03", {
+      imports: [],
+      days: datesInMonth("2026-03").map((date) => date === "2026-03-29"
+        ? { employeeId: "e1", date, status: "shift" as const, startTime: "02:30", endTime: "04:00" }
+        : { employeeId: "e1", date, status: "off" as const }),
+    }))).toMatchObject({ ok: false, message: "Historie rosteru musí mít právě jeden platný záznam pro každý den každého zaměstnance." });
+  });
+
   it.each([
     { ...input, month: "2026-13" },
     { ...input, employees: [] },

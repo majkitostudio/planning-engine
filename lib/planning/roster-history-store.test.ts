@@ -73,6 +73,15 @@ describe("uložené podklady návaznosti", () => {
     })).toMatchObject({ ok: false, code: "invalid_shift_time" });
   });
 
+  it("odmítne import s nejednoznačným místním časem při změně času", () => {
+    expect(validateRosterHistoryImport({
+      ...base,
+      startDate: "2026-10-25",
+      endDate: "2026-10-25",
+      entries: [{ employeeId: "e1", date: "2026-10-25", status: "shift", startTime: "02:30", endTime: "04:00" }],
+    })).toMatchObject({ ok: false, code: "invalid_shift_time" });
+  });
+
   it("stejný překryv považuje za jednu známou skutečnost, rozdílné záznamy za konflikt", () => {
     const first = validateRosterHistoryImport({
       ...base,

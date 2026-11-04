@@ -1,4 +1,5 @@
-import { isIsoDate, weekdayIndex } from "./domain/time";
+import { DEFAULT_TIME_ZONE } from "./domain/confirmed";
+import { getZonedDateTimeStatus, isIsoDate, weekdayIndex } from "./domain/time";
 import { datesInMonth } from "./domain/month";
 
 export interface RosterImportEmployeeReference {
@@ -126,7 +127,9 @@ export function parseRosterCsv(
       if (shift) {
         const startTime = shift[1].padStart(5, "0");
         const endTime = shift[2].padStart(5, "0");
-        if (!isClockTime(startTime) || !isClockTime(endTime) || startTime >= endTime) return { ok: false, code: "invalid_shift_time" };
+        if (!isClockTime(startTime) || !isClockTime(endTime) || startTime >= endTime
+          || getZonedDateTimeStatus(dates[index], startTime, DEFAULT_TIME_ZONE) !== "valid"
+          || getZonedDateTimeStatus(dates[index], endTime, DEFAULT_TIME_ZONE) !== "valid") return { ok: false, code: "invalid_shift_time" };
         days[dates[index]] = { status: "shift", startTime, endTime, sourceCell };
       } else days[dates[index]] = { status: "unknown", reason: "unsupported_cell", sourceCell };
     }

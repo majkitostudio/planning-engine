@@ -66,4 +66,15 @@ describe("převod exportu rosteru", () => {
     const wrongMonth = headerFor("2026-10").join(";") + "\n" + makeRow("Nováková Jana", {}).join(";");
     expect(parseRosterCsv(wrongMonth, month, []).ok).toBe(false);
   });
+
+  it("odmítne vlastní čas, který při přechodu času neexistuje nebo nastává dvakrát", () => {
+    const marchHeader = headerFor("2026-03");
+    const makeMarchCsv = (time: string) => [
+      marchHeader.join(";"),
+      ["Test osoba", ...marchHeader.slice(1).map((_, index) => index === 28 ? time : "Volno")].join(";"),
+    ].join("\n");
+
+    expect(parseRosterCsv(makeMarchCsv("02:30-04:00"), "2026-03", [])).toMatchObject({ ok: false, code: "invalid_shift_time" });
+    expect(parseRosterCsv(makeMarchCsv("01:30-02:30"), "2026-03", [])).toMatchObject({ ok: false, code: "invalid_shift_time" });
+  });
 });

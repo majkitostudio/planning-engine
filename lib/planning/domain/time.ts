@@ -19,6 +19,8 @@ export interface ShiftInterval {
 const ISO_DATE_PATTERN = /^(\d{4})-(\d{2})-(\d{2})$/;
 const LOCAL_TIME_PATTERN = /^([01]\d|2[0-3]):([0-5]\d)$/;
 const formatterCache = new Map<string, Intl.DateTimeFormat>();
+const zonedDateTimeStatusCache = new Map<string, ZonedDateTimeStatus>();
+export type ZonedDateTimeStatus = "valid" | "nonexistent" | "ambiguous";
 
 /** Ověří kalendářní datum `YYYY-MM-DD`; neplatné datum (např. 2026-02-30) odmítne. */
 export function isIsoDate(value: unknown): value is IsoDate {
@@ -112,9 +114,8 @@ export function datesInWeek(weekStart: IsoDate): IsoDate[] {
 /**
  * Převede místní datum a čas v časové zóně na UTC milisekundy.
  *
- * Výpočet používá offset z `Intl`; u letního času se offset ověří ještě jednou
- * po prvním přepočtu. Směny první verze nezasahují do přechodu času, takže
- * nevzniká nejednoznačný nebo neexistující čas.
+ * Čas se přijme pouze tehdy, pokud v dané zóně určuje právě jeden okamžik.
+ * Neexistující a opakované místní časy při změně času se odmítnou.
  */
 export function zonedDateTimeToUtcMs(
   date: IsoDate,
@@ -125,6 +126,11 @@ export function zonedDateTimeToUtcMs(
   const { hour, minute } = parseLocalTime(time);
   const naiveUtcMs = Date.UTC(year, month - 1, day, hour, minute, 0, 0);
 
+  const status = getZonedDateTimeStatus(date, time, timeZone);
+  if (status !== "valid") {
+    throw new RangeError(`Místní čas ${date} ${time} v zóně ${timeZone} je ${status === "ambiguous" ? "nejednoznačný" : "neexistující"}.`);
+  }
+
   const firstOffset = getTimeZoneOffsetMs(naiveUtcMs, timeZone);
   let candidate = naiveUtcMs - firstOffset;
   const secondOffset = getTimeZoneOffsetMs(candidate, timeZone);
@@ -132,6 +138,42 @@ export function zonedDateTimeToUtcMs(
     candidate = naiveUtcMs - secondOffset;
   }
   return candidate;
+}
+
+/** Určí, zda místní datum a čas odpovídají jednomu okamžiku v časové zóně. */
+export function getZonedDateTimeStatus(
+  date: IsoDate,
+  time: LocalTime,
+  timeZone: string,
+): ZonedDateTimeStatus {
+  const cacheKey = `${timeZone}|${date}|${time}`;
+  const cached = zonedDateTimeStatusCache.get(cacheKey);
+  if (cached) return cached;
+
+  const { year, month, day } = parseIsoDate(date);
+  const { hour, minute } = parseLocalTime(time);
+  const localAsUtcMs = Date.UTC(year, month - 1, day, hour, minute, 0, 0);
+  const sampleOffsets = [-36, 0, 36].map((hours) =>
+    getTimeZoneOffsetMs(localAsUtcMs + hours * 60 * 60 * 1000, timeZone),
+  );
+  const candidates = new Set<number>();
+
+  for (const offset of new Set(sampleOffsets)) {
+    const candidate = localAsUtcMs - offset;
+    if (getLocalDateTimeAsUtcMs(candidate, timeZone) === localAsUtcMs) {
+      candidates.add(candidate);
+    }
+  }
+
+  const status = candidates.size === 0
+    ? "nonexistent"
+    : candidates.size === 1 ? "valid" : "ambiguous";
+  zonedDateTimeStatusCache.set(cacheKey, status);
+  if (zonedDateTimeStatusCache.size > 4096) {
+    const oldestKey = zonedDateTimeStatusCache.keys().next().value;
+    if (oldestKey) zonedDateTimeStatusCache.delete(oldestKey);
+  }
+  return status;
 }
 
 /** Vytvoří absolutní interval směny; konec po půlnoci se posune na další den. */
@@ -189,6 +231,22 @@ function getTimeZoneOffsetMs(utcMs: number, timeZone: string): number {
   );
 
   return asUtcMs - utcMs;
+}
+
+function getLocalDateTimeAsUtcMs(utcMs: number, timeZone: string): number {
+  const parts = getFormatter(timeZone).formatToParts(new Date(utcMs));
+  const values: Record<string, string> = {};
+  for (const part of parts) {
+    if (part.type !== "literal") values[part.type] = part.value;
+  }
+  return Date.UTC(
+    Number(values.year),
+    Number(values.month) - 1,
+    Number(values.day),
+    Number(values.hour),
+    Number(values.minute),
+    Number(values.second),
+  );
 }
 
 function getFormatter(timeZone: string): Intl.DateTimeFormat {

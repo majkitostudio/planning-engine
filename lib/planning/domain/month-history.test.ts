@@ -38,6 +38,14 @@ describe("podklady navazujících rozpisů", () => {
     const invalid = { ...before, assignments: [{ employeeId: "e1", date: "not-a-date", shiftKind: "morning" as const }] };
     expect(buildMonthlyBoundary("2026-11", novemberEmployee, [invalid, after]).before.complete).toBe(false);
   });
+  it("nepovažuje import s nejednoznačným místním časem za ověřenou historii", () => {
+    const dstRoster = {
+      start: "2026-10-25", end: "2026-10-25", employeeIds: novemberEmployee,
+      entries: [{ employeeId: "e1", date: "2026-10-25", status: "shift" as const, startTime: "02:30", endTime: "04:00" }],
+    };
+
+    expect(buildMonthlyBoundary("2026-11", novemberEmployee, [], [dstRoster]).before.complete).toBe(false);
+  });
   it("zachová sedmý den před měsícem i sedmý den po měsíci pro kontrolu 35 hodin", () => {
     const previous = { ...before, assignments: [{ employeeId: "e1", date: "2026-10-25", shiftKind: "afternoon" as const }] };
     const following = { ...after, assignments: [{ employeeId: "e1", date: "2026-12-07", shiftKind: "morning" as const }] };

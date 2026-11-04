@@ -103,7 +103,7 @@ export function RosterHistoryPanel({ canManage, initialMonth }: { readonly canMa
         invalid_month: "Vyberte platný měsíc.", invalid_csv: "Text není platný export CSV se středníky.",
         invalid_header: "V exportu nebyla rozpoznána hlavička dnů.", header_month_mismatch: "Čísla dnů nebo dny v týdnu neodpovídají vybranému měsíci.",
         invalid_row: "Export obsahuje řádek bez použitelného zaměstnance nebo s neplatnou strukturou.",
-        invalid_shift_time: "Export obsahuje neplatný čas směny. Opravte zdroj a načtěte jej znovu.",
+        invalid_shift_time: "Export obsahuje neplatný nebo při změně času nejednoznačný čas směny. Opravte zdroj a načtěte jej znovu.",
         duplicate_person: "Stejná osoba je v exportu uvedena vícekrát. Import byl zastaven.",
       };
       setError(messages[result.code]);

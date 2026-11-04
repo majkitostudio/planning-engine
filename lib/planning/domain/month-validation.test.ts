@@ -211,4 +211,15 @@ describe("měsíční validace", () => {
     expect(result.preferenceFindings.some((finding) => finding.code === "SHIFT_ROTATION_HISTORY_UNCLASSIFIED")).toBe(true);
     expect(result.canConfirm).toBe(true);
   });
+
+  it("označí směnu s nejednoznačným místním časem v návaznosti jako neověřenou", () => {
+    const boundary = {
+      before: { complete: true, assignments: [{ employeeId: "e1", date: "2026-10-25", startTime: "02:30", endTime: "04:00" }] },
+      after: { complete: true, assignments: [] },
+    };
+    const result = validateMonthlyPlan(input, [], boundary);
+
+    expect(result.unverified.some((finding) => finding.code === "BOUNDARY_HISTORY_INVALID")).toBe(true);
+    expect(result.canConfirm).toBe(false);
+  });
 });
