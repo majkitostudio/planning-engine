@@ -420,11 +420,18 @@ označíme za hotovou až po opravě a doloženém ověření jejího rozsahu.
    - [ ] Každou nalezenou změnu porovnat s `main`, určit její účel a zapsat
      výsledek: začlenit, bezpečně odložit, nebo po ověření označit za nepotřebnou.
      Žádný obsah nemazat ani nepřepisovat před jeho kontrolou.
-   - [ ] Konkrétně prověřit starou větev a pracovní strom `cline/9dbfe` na HEAD
+   - [x] Konkrétně prověřit starou větev a pracovní strom `cline/9dbfe` na HEAD
      `7a57454`: změny ve dvou testech, exporty v `lib/planning/index.ts`, úpravu
      `lib/planning/orchestrator.ts` a nový `lib/planning/ai-provider.ts`.
      Porovnat je také s čistým `cline/8f998`, který má stejný commit; užitečný
-     kód nebo testy nejdřív začlenit a ověřit na `main`.
+     kód nebo testy nejdřív začlenit a ověřit na `main`. `VERIFIED` (5. 11. 2026):
+     `8f998` je čistý a oba Cline commity jsou předkem `main`. Odstraněné
+     nepoužité testovací pomocné funkce, veřejné exporty i odebrání nepoužitého
+     importu jsou už obsažené v `main`. Starší `ai-provider.ts` nepřebírat:
+     současná verze v `main` navíc podporuje návrhy operativních náhrad a
+     kompatibilní kontrolu starých alternativ. Starý snapshot navíc postrádá
+     regresní test prázdného ID alternativy, který současný `main` obsahuje.
+     Necommitnuté změny ve `9dbfe` zůstaly nedotčené; nebylo co začleňovat.
    - [ ] Zkontrolovat dočasné, duplicitní a matoucí historické soubory i neznámé
      untracked výstupy včetně `design-qa.md` a `output/`; zachovat hodnotné
      podklady, ostatní odstranit až po určení původu a po ověření zálohy či
