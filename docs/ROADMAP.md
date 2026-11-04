@@ -260,6 +260,11 @@ testovacím předpokladem, nikoli schváleným provozním pravidlem.
   směny; nedokazuje všechny souběhy ani kompletní průchod přes prohlížeč.
   Samostatný historický průchod s obsazeným návrhem a potvrzením popisuje
   `DOMAIN_SPECIFICATION.md`; při tomto auditu nebyl zopakován.
+- `VERIFIED` / cílené plánovací testy — Na `bc2a1d6` prošlo 54 testů měsíční
+  a týdenní validace a načítání návazností a 21 Python testů solveru. Mezi
+  pokrytými příklady jsou 35hodinový odpočinek, směny přes hranici měsíce a
+  chybějící historie. Nejde o důkaz správnosti všech kombinací pravidel ani
+  o pracovněprávní posudek.
 - `VERIFIED` / oprava nutná — Již vydaná relace po resetu a následné změně
   hesla znovu umožní přístup. Integrační test použil syntetický účet a
   izolovanou PostgreSQL: stejná relace dostala z chráněného API před resetem
