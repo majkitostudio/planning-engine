@@ -130,6 +130,8 @@ testovacím předpokladem, nikoli schváleným provozním pravidlem.
   strukturální kontrola dovoluje libovolný řetězec. `OPEN QUESTION` — ověřit
   požadavek na neprázdné ID a případně jej ošetřit cíleně s testem; starý
   soubor ani pracovní strom při auditu nemažou ani nepřepisují.
+  Syntetické přímé volání `isPlanDraft()` potvrdilo přijetí alternativy s
+  prázdným ID; dopad na běžný uživatelský tok nebyl samostatně ověřen.
 - Hlavní README a rozcestník dokumentace byly sladěny s odstraněním ručních
   úprav z manažerské obrazovky; další historické souhrny vyžadují kontrolu.
 - GitHub CI v aktuálním workflow samostatně nespouští Python testy solveru ani
@@ -157,7 +159,9 @@ testovacím předpokladem, nikoli schváleným provozním pravidlem.
   se stejným výsledkem; testovací databáze byla opět izolovaná.
 - `NOT VERIFIED` — Přezkoumat zneplatnění již vydaných relací po změně nebo
   resetu hesla. Aktualizace relace načítá aktuální účet, ale neporovnává verzi
-  hesla; dopad je potřeba potvrdit samostatným integračním testem a vyřešit.
+  hesla. Syntetický test funkce `refreshAccountSession()` s náhradou databáze
+  vrátil účet před změnou i po změně hesla; dopad na vydanou prohlížečovou
+  relaci je potřeba potvrdit samostatným integračním testem a vyřešit.
 - `NOT VERIFIED` — Prověřit ochranu přihlášení před opakovanými pokusy a pokrytí
   autentizace, oprávnění a práce s osobními údaji při bezpečnostní kontrole.
 - `VERIFIED` — `npm audit --omit=dev` na `main` nahlásil 4. 11. 2026 nula
