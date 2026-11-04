@@ -468,6 +468,12 @@ označíme za hotovou až po opravě a doloženém ověření jejího rozsahu.
      `C:\Users\mikes\.cline\worktrees\9dbfe\planning-engine`. Následný
      požadavek na její rekurzivní odstranění automatická kontrola zamítla;
      složka zůstává zachována a P0 úklid není dokončen.
+   - `VERIFIED` (5. 11. 2026) — Odstraněny také čisté redundantní stromy a
+     větve `cline/8f998` a odpojený `jolly-pixel`; jejich commity zůstávají v
+     `main`. Ostatní zachované stromy mají ignorované výstupy, plánovací
+     podklady nebo lokální `.env.local`, a proto nebyly odstraněny. Zbylá
+     složka `cline/9dbfe` je osiřelý, částečně odstraněný checkout; jeho přesný
+     pracovní diff byl před odstraněním zachován v pojmenovaném stash.
 1. **P0 — Starší API a ochrana rozpisů.**
    - [x] Vyžadovat roli managera pro zápis přes týdenní `/run` a `/replacement`;
      viewer zůstává pouze pro čtení.
