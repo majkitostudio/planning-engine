@@ -165,6 +165,13 @@ testovacím předpokladem, nikoli schváleným provozním pravidlem.
   chyba zopakovala. Rozlišit chybějící návrh od dočasné chyby spojení a
   nabídnout bezpečný postup pro pokračování bez automatického mazání dat.
   Ověřeno v izolovaném prohlížeči a prázdné testovací databázi.
+- `VERIFIED` / souběh — Při přímém volání databázového úložiště na `6d1b9cc`
+  skončilo pět dvojic současných shodných syntetických importů vždy jedním
+  uložením a jednou chybou transakce `P2034`; vzniklo pět importů, nikoli deset.
+  Služba opakování konfliktu neprovádí a API všechny chyby ukládání převádí na
+  obecné `503` (to vyplývá z kódu, API při tomto pokusu voláno nebylo).
+  Doplnit bezpečné opakování a srozumitelný stav pro uživatele, ověřit i souběh
+  různých verzí a reakci rozhraní. Pokus použil izolovanou PostgreSQL 16.
 - `VERIFIED` (omezený rozsah) — Stránky Návaznost směn a Zaměstnanci zobrazily
   prázdný stav; navigace mezi nimi fungovala. Tlačítko Budoucí funkce přijalo
   klávesový fokus. Nejde o úplný test přístupnosti ani mobilního zobrazení.
