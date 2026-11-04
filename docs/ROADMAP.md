@@ -222,6 +222,13 @@ testovacím předpokladem, nikoli schváleným provozním pravidlem.
   opakují stejná ID nadpisů a polí. Zajistit jedinečná ID pro každý měsíc a
   ověřit je v prohlížeči i se čtečkou; po obnovení stránky tento pokus stav
   formuláře netestoval. Použita byla izolovaná syntetická databáze.
+- `VERIFIED` / rozpracované vstupy — V přihlášené vývojové aplikaci na
+  `77515ff` byl do formuláře přidán syntetický zaměstnanec. Po obnovení stránky
+  se formulář bez upozornění vrátil do prázdného stavu; návrh předtím nebyl
+  vytvořen a databázové ukládání bylo záměrně nedostupné. Prověřit upozornění
+  na ztrátu rozpracovaných vstupů nebo bezpečné ukládání rozepsané práce;
+  případné uchovávání osobních údajů vyžaduje samostatné rozhodnutí. Toto se
+  netýká výše ověřené obnovy již vytvořeného návrhu.
 - `VERIFIED` / UX oprava — Při odkazu prohlížeče na již neexistující návrh
   server vrátil `404`; stránka nabídla opětovné načtení, po kterém se stejná
   chyba zopakovala. Rozlišit chybějící návrh od dočasné chyby spojení a
