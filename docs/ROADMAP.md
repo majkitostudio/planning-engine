@@ -375,20 +375,65 @@ testovacím předpokladem, nikoli schváleným provozním pravidlem.
   lokální OR-Tools volný text nevyhodnocuje. Produkční provoz zůstává mimo
   aktuálně ověřený rozsah.
 
-### Doporučené pořadí dokončení před závěrečným testováním
+### To-Do: postup podle auditu před závěrečným testováním
 
-1. Zabezpečit oprávnění a ukládání starších API a zneplatnění starých relací;
-   doplnit nezávislé testy viewer/manager a souběhu.
-2. Opravit označení zdroje obsazení a vyjasnit, jak manažer potvrzuje chybějící
-   nebo výchozí hodnoty. Zkontrolovat ostatní místa používající výchozí profil.
-3. Uzavřít potřebná doménová rozhodnutí, následně prověřit návaznosti,
-   nepokryté dny, absenci, časový limit solveru a částečný měsíc.
-4. Navrhnout a implementovat správu rozpisů včetně jednotlivého mazání a
-   dohodnutého zachování historie, auditu a návazností.
-5. Rozhodnout o bezpečném použití AI a vysvětlování pokynů; současný lokální
-   plánovač volný text nevyhodnocuje.
-6. Doplnit kontroly Pythonu a izolované databáze do CI, posoudit vývojové
-   závislosti a dokončit kontrolu přístupnosti a chybových stavů.
-7. Provést závěrečný syntetický průchod návrh → kontrola → potvrzení →
-   obnovení, včetně souběhu a rolí; reálná data a další nasazení řešit až v
-   samostatně odsouhlaseném rozsahu.
+Podle auditu postupujeme po malých, samostatně ověřených částech. Položku
+označíme za hotovou až po opravě a doloženém ověření jejího rozsahu.
+
+1. **P0 — Starší API a ochrana rozpisů.**
+   - [x] Vyžadovat roli managera pro zápis přes týdenní `/run` a `/replacement`;
+     viewer zůstává pouze pro čtení.
+   - [x] Zabránit přepsání existujícího záznamu podle klientem ovlivnitelného ID,
+     zejména pokud už je rozpis potvrzený; zachovat zamýšlenou práci s novými
+     návrhy.
+   - [x] Přidat regresní testy viewer/manager a test kolize ID nad izolovanou
+     PostgreSQL.
+   - `VERIFIED` (4. 11. 2026) — Cílené i úplné Vitest testy, lint, typecheck,
+     Prisma validace a build prošly. Samostatný integrační test nad jednorázovou
+     PostgreSQL 16 na `localhost:55439/planning_monthly_test` potvrdil, že
+     opakovaný ani křížový zápis nepřepíše potvrzený týdenní záznam; zůstal
+     zachovaný plán a jediná auditní událost. Testovací databáze byla po ověření
+     zastavena a odstraněna.
+2. **P0 — Zneplatnění starých přihlášení.**
+   - [ ] Po resetu hesla, změně hesla, změně role nebo deaktivaci účtu odmítnout
+     dříve vydanou relaci.
+   - [ ] Rozhodnout a otestovat, zda se uživatel po vlastní změně hesla znovu
+     přihlásí, nebo bezpečně získá novou relaci; zahrnout starý token bez nové
+     verze relace.
+3. **P0 — Jediné atomické potvrzení.**
+   - [ ] Zajistit, aby souběžné potvrzení týdenního rozpisu i operativní náhrady
+     vytvořilo právě jedno potvrzení a jednu auditní událost.
+   - [ ] Ověřit vítězný zápis v databázových integračních testech nad izolovanou
+     PostgreSQL.
+4. **P1 — Pravdivé zdroje obsazení.**
+   - [ ] Odlišit uložený profil od výchozích hodnot a určit, jak manažer schvaluje
+     chybějící nebo předvyplněné hodnoty.
+   - [ ] Prověřit další použití výchozího profilu.
+5. **P1 — Pravidla a limity plánování.**
+   - [ ] Uzavřít potřebná doménová rozhodnutí a ověřit návaznosti, nepokryté dny,
+     absence a částečný měsíc.
+   - [ ] Sjednotit limit 200 zaměstnanců mezi vstupní kontrolou a solverem;
+     ověřit časové limity na schválených syntetických scénářích.
+   - [ ] Ošetřit neexistující i nejednoznačné místní časy při změně času.
+6. **P1 — Správa rozpisů.**
+   - [ ] Navrhnout a implementovat seznam rozpisů s možností smazat jednotlivý
+     rozpis.
+   - [ ] Před mazáním potvrzených rozpisů stanovit zachování historie, auditu a
+     podkladů pro návazné plánování.
+7. **P1 — AI a citlivý text.**
+   - [ ] Rozhodnout o souladu současného lokálního plánovače s potvrzeným záměrem
+     AI a o bezpečném zpracování pokynů.
+   - [ ] Před praktickým použitím určit přístup, uchování a mazání volného textu;
+     dokud to není schválené, neposílat skutečná jména, rozpisy ani pokyny externí
+     AI.
+8. **P1 — Kvalita a přístupnost.**
+   - [ ] Doplnit Python testy solveru a databázové integrační testy do CI s
+     izolovanou testovací databází.
+   - [ ] Opravit zjištěné problémy s klávesnicí, popisky, fokusem, chybou
+     neexistujícího návrhu a ztrátou rozepsaných vstupů; ověřit čtečkou obrazovky.
+   - [ ] Posoudit vývojové závislosti a ověřit kompatibilní aktualizace.
+9. **P2 — Závěrečné ověření MVP.**
+   - [ ] Provést syntetický průchod návrh → kontrola → potvrzení → obnovení,
+     včetně rolí, souběhu, návazností a správy rozpisů.
+   - [ ] Reálná data, produkční služby a další nasazení řešit až v samostatně
+     odsouhlaseném rozsahu.
