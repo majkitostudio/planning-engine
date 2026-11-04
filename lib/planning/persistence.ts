@@ -546,14 +546,33 @@ export class PrismaPlanningPersistence implements PlanningPersistence {
         assignments,
         confirmedAt: confirmedAt.toISOString(),
       };
-      const updated = await tx.planningRunRecord.update({
-        where: { proposalId },
+      const update = await tx.planningRunRecord.updateMany({
+        where: { proposalId, confirmedAt: null },
         data: {
           confirmedPlan: toInputJson(confirmedPlan),
           confirmedAt,
           confirmedById: actorRecord.id,
         },
       });
+
+      if (update.count !== 1) {
+        const winner = await tx.planningRunRecord.findUnique({
+          where: { proposalId },
+        });
+        if (!winner) return null;
+        if (winner.confirmedPlan !== null) {
+          return {
+            snapshot: planningSnapshotFromRecord(winner),
+            alreadyConfirmed: true,
+          };
+        }
+        throw new PlanningPersistenceConflictError();
+      }
+
+      const updated = await tx.planningRunRecord.findUnique({
+        where: { proposalId },
+      });
+      if (!updated) throw new PlanningPersistenceConflictError();
 
       await tx.auditEvent.create({
         data: {
@@ -603,8 +622,8 @@ export class PrismaPlanningPersistence implements PlanningPersistence {
         assignments,
         confirmedAt: confirmedAt.toISOString(),
       };
-      const updated = await tx.planningRunRecord.update({
-        where: { proposalId: replacementId },
+      const update = await tx.planningRunRecord.updateMany({
+        where: { proposalId: replacementId, confirmedAt: null },
         data: {
           result: toInputJson({
             ...replacementEnvelope(current),
@@ -630,6 +649,27 @@ export class PrismaPlanningPersistence implements PlanningPersistence {
           confirmedById: actorRecord.id,
         },
       });
+
+      if (update.count !== 1) {
+        const winner = await tx.planningRunRecord.findUnique({
+          where: { proposalId: replacementId },
+        });
+        if (!winner || !isReplacementRecord(winner)) return null;
+        if (winner.confirmedPlan !== null) {
+          return {
+            snapshot: replacementSnapshotFromRecord(winner),
+            alreadyConfirmed: true,
+          };
+        }
+        throw new PlanningPersistenceConflictError();
+      }
+
+      const updated = await tx.planningRunRecord.findUnique({
+        where: { proposalId: replacementId },
+      });
+      if (!updated || !isReplacementRecord(updated)) {
+        throw new PlanningPersistenceConflictError();
+      }
 
       await tx.auditEvent.create({
         data: {

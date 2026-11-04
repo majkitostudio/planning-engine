@@ -13,7 +13,7 @@ Opravené nálezy i otevřené kroky jsou označené samostatně. Před širší
 
 | Priorita | Zjištění a další krok |
 | --- | --- |
-| Vysoká | ČÁSTEČNĚ OPRAVENO — zápis přes starší API vyžaduje managera a chrání uložený záznam; zbývá ověřit atomické souběžné potvrzení (P0 bod 3). |
+| Vysoká | OPRAVENO — zápis přes starší API vyžaduje managera a chrání uložený záznam; souběžné potvrzení atomicky uloží právě jeden plán a auditní událost. |
 | Vysoká | OPRAVENO — starší relace se po resetu, změně hesla, změně role i deaktivaci odmítají podle verze relace; ověřeno také proti izolované PostgreSQL. |
 | Vysoká | Formulář může označit výchozí obsazení za uložený profil i při prázdné databázi. Rozlišit skutečný zdroj hodnot a jejich potvrzení manažerem. |
 | Další | Opravit zjištěné chyby přístupnosti, neexistující návrh, časovou změnu a nesoulad limitu 200 zaměstnanců; ověřit výkon na reprezentativních syntetických zadáních. |
@@ -409,10 +409,19 @@ označíme za hotovou až po opravě a doloženém ověření jejího rozsahu.
      povinnou změnu hesla, změnu role i deaktivaci. Databáze byla po testu
      zastavena a odstraněna.
 3. **P0 — Jediné atomické potvrzení.**
-   - [ ] Zajistit, aby souběžné potvrzení týdenního rozpisu i operativní náhrady
+   - [x] Zajistit, aby souběžné potvrzení týdenního rozpisu i operativní náhrady
      vytvořilo právě jedno potvrzení a jednu auditní událost.
-   - [ ] Ověřit vítězný zápis v databázových integračních testech nad izolovanou
+   - [x] Ověřit vítězný zápis v databázových integračních testech nad izolovanou
      PostgreSQL.
+   - `VERIFIED` (4. 11. 2026) — Týdenní i náhradové potvrzení používá podmíněný
+     databázový zápis podle `confirmedAt IS NULL`; auditní událost vznikne jen
+     při úspěšné změně. Poražená souběžná transakce načte a vrátí vítězný uložený
+     výsledek jako již potvrzený. Dvě integrační zkoušky s řízenou bariérou
+     ověřily, že obě transakce nejprve načtou nepotvrzený záznam: před opravou
+     testy reprodukovaly dvě vítězná potvrzení, po opravě zůstalo právě jedno
+     potvrzení a jedna auditní událost v každém toku. Cílené databázové testy:
+     3 prošly; celý Vitest: 490 prošlo, 10 přeskočeno; lint, typecheck, Prisma
+     validace a build prošly. Izolovaná PostgreSQL 16 byla odstraněna.
 4. **P1 — Pravdivé zdroje obsazení.**
    - [ ] Odlišit uložený profil od výchozích hodnot a určit, jak manažer schvaluje
      chybějící nebo předvyplněné hodnoty.
