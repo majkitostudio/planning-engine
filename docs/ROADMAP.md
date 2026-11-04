@@ -118,9 +118,11 @@ testovacím předpokladem, nikoli schváleným provozním pravidlem.
   tři testy byly přeskočeny. Předchozí verze `a95ff90` navíc prošla validací
   Prisma schématu a 21 samostatnými Python testy. Další commity do `c7218af`
   mění pouze dokumentaci.
-- Jeden starší pracovní strom obsahuje necommitnuté změny; záloha Git stash a
-  nesledované výstupy v hlavní složce zůstávají zachovány. Část záznamů
-  pracovních stromů ukazuje na cesty z jiného prostředí a vyžaduje ověření.
+- Jeden starší pracovní strom obsahuje necommitnuté změny; zálohy Git stash a
+  nesledované výstupy v hlavní složce zůstávají zachovány. Čtyři stromy,
+  které Windows Git označuje jako nedostupné, jsou přístupné z Ubuntu a jejich
+  pracovní stromy byly při kontrole čisté; jejich commity jsou zahrnuté v `main`.
+  Označení Windows Git tedy samo o sobě neprokazuje, že je lze odstranit.
 - Hlavní README a rozcestník dokumentace byly sladěny s odstraněním ručních
   úprav z manažerské obrazovky; další historické souhrny vyžadují kontrolu.
 - GitHub CI v aktuálním workflow samostatně nespouští Python testy solveru ani
