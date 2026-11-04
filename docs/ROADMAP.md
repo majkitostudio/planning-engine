@@ -135,6 +135,8 @@ testovacím předpokladem, nikoli schváleným provozním pravidlem.
   izolované PostgreSQL 16. Testy včetně databázových a lokálního plánovače:
   484 úspěšných, jeden přeskočený integrační test Gemini. Databáze obsahovala
   pouze syntetické testovací záznamy a testovací kontejner byl ukončen.
+  Stejná kontrola byla 4. 11. zopakována na sjednoceném `main` (`5cd5d80`)
+  se stejným výsledkem; testovací databáze byla opět izolovaná.
 - `NOT VERIFIED` — Přezkoumat zneplatnění již vydaných relací po změně nebo
   resetu hesla. Aktualizace relace načítá aktuální účet, ale neporovnává verzi
   hesla; dopad je potřeba potvrdit samostatným integračním testem a vyřešit.
