@@ -140,6 +140,13 @@ testovacím předpokladem, nikoli schváleným provozním pravidlem.
 
 ### Další kontrola a postup před uzavřením MVP
 
+- `VERIFIED` / přístupnost — Při šířce prohlížeče 390 × 844 px šlo otevřít
+  mobilní menu a přejít na Návaznost směn. Po přechodu se menu vizuálně zavřelo,
+  ale stisk `Tab` přesunul fokus na skrytý odkaz Zaměstnanci; fokus nebyl na
+  obrazovce viditelný. Zajistit správné vyloučení zavřené navigace z pořadí
+  klávesnice a návrat fokusu; ověřit též čtečku obrazovky a další průchody.
+  Přihlášení, prázdný formulář a stránka návazností byly vizuálně zkontrolovány;
+  databáze byla záměrně nedostupná a jejich datové operace se netestovaly.
 - `VERIFIED` / UX oprava — Při odkazu prohlížeče na již neexistující návrh
   server vrátil `404`; stránka nabídla opětovné načtení, po kterém se stejná
   chyba zopakovala. Rozlišit chybějící návrh od dočasné chyby spojení a
