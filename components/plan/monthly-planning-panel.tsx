@@ -11,6 +11,7 @@ import type { MonthlyValidation } from "@/lib/planning/domain/month-validation";
 import { addDays } from "@/lib/planning/domain/time";
 import { datesInMonth } from "@/lib/planning/domain/month";
 import { monthlyInstructionMessage, monthlyValidationMessage } from "@/lib/planning/monthly-view";
+import { isUnavailableMonthlyDraftStatus } from "@/lib/planning/monthly-recovery";
 import { removalActionLabel, shouldFocusStepHeading } from "@/lib/accessibility-labels";
 
 export interface MonthlyView {
@@ -44,6 +45,7 @@ export function MonthlyPlanningPanel({ month, canManage, planningMode, initialSt
   const [step, setStep] = useState(0);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
+  const [unavailableDraftId, setUnavailableDraftId] = useState<string | null>(null);
   const [view, setView] = useState<MonthlyView | null>(null);
   const [confirmed, setConfirmed] = useState(false);
   const [restored, setRestored] = useState(false);
@@ -70,10 +72,17 @@ export function MonthlyPlanningPanel({ month, canManage, planningMode, initialSt
     void fetch(`/api/planning/monthly/draft?month=${encodeURIComponent(month)}&id=${encodeURIComponent(id)}`, { signal: controller.signal })
       .then(async (response) => {
         const result = await response.json();
+        if (isUnavailableMonthlyDraftStatus(response.status)) {
+          if (!controller.signal.aborted && revision.current === currentRevision) {
+            setUnavailableDraftId(id);
+            setError("Tento návrh už nelze obnovit. Mohl být potvrzen, odebrán nebo patřit k jinému měsíci. Odkaz můžete odebrat pouze z tohoto prohlížeče; serverová data tím nesmažete.");
+          }
+          return;
+        }
         if (!response.ok || !result.ok) throw new Error("Uložený návrh se nepodařilo obnovit.");
-        if (!controller.signal.aborted && revision.current === currentRevision) { setView(result); setRestored(true); onResult(month, result); }
+        if (!controller.signal.aborted && revision.current === currentRevision) { setUnavailableDraftId(null); setView(result); setRestored(true); onResult(month, result); }
       })
-      .catch(() => { if (!controller.signal.aborted && revision.current === currentRevision) setError("Uložený návrh se nepodařilo obnovit. Zkuste stránku načíst znovu."); });
+      .catch(() => { if (!controller.signal.aborted && revision.current === currentRevision) setError("Uložený návrh se nepodařilo ověřit kvůli dočasné chybě. Odkaz zůstává zachován; zkuste stránku načíst znovu nebo později."); });
     return () => controller.abort();
   }, [canManage, month, onResult, storageKey]);
 
@@ -94,7 +103,23 @@ export function MonthlyPlanningPanel({ month, canManage, planningMode, initialSt
     return () => controller.abort();
   }, [boundaryKey, employeeIdKey, month]);
 
-  function rememberDraft(id: string) { try { localStorage.setItem(storageKey, id); } catch { setError("Návrh byl uložen, ale prohlížeč nepovolil jeho automatické obnovení."); } }
+  function rememberDraft(id: string) { try { localStorage.setItem(storageKey, id); setUnavailableDraftId(null); } catch { setError("Návrh byl uložen, ale prohlížeč nepovolil jeho automatické obnovení."); } }
+
+  function removeUnavailableDraftReference() {
+    if (!unavailableDraftId) return;
+    try {
+      if (localStorage.getItem(storageKey) !== unavailableDraftId) {
+        setUnavailableDraftId(null);
+        setError("Odkaz se mezitím změnil, proto nebyl odebrán.");
+        return;
+      }
+      localStorage.removeItem(storageKey);
+      setUnavailableDraftId(null);
+      setError("Odkaz na návrh byl odebrán z tohoto prohlížeče. Serverová data se nezměnila.");
+    } catch {
+      setError("Odkaz se nepodařilo odebrat z prohlížeče; serverová data zůstala beze změny.");
+    }
+  }
 
   const availability = partialAbsenceAvailability(month, partialAbsences);
   const formData: MonthlyFormData = { month, employees, absences, availability, staffing, instructions, shiftRotationPreference: planningMode === "ortools" && shiftRotationPreference, ...(partialMonth && planningMode === "ortools" ? { planningRange: { startDate: rangeStart, endDate: rangeEnd } } : {}) };
@@ -211,7 +236,7 @@ export function MonthlyPlanningPanel({ month, canManage, planningMode, initialSt
       </fieldset>
       <div className="monthly-step-controls"><button className="btn btn--secondary" type="button" disabled={step === 0 || busy} onClick={() => changeStep(step - 1)}>Zpět</button>{step < STEPS.length - 1 ? <button className="btn btn--primary" type="button" disabled={busy} onClick={() => changeStep(step + 1)}>Pokračovat: {STEPS[step + 1]}</button> : null}</div>
     </form>
-    {error ? <p className="monthly-error" role="alert">{error}</p> : null}
+    {error ? <div className="monthly-error" role="alert"><p>{error}</p>{unavailableDraftId ? <button className="btn btn--secondary" type="button" onClick={removeUnavailableDraftReference}>Odebrat odkaz na návrh</button> : null}</div> : null}
     {view && view.input.month === month ? <div aria-live="polite"><h3>Výsledek návrhu</h3>{restored ? <p role="status">Obnovený uložený návrh. Původní vstupy jsou jeho součástí, ale formulář pro nový návrh nahoře není znovu vyplněný.</p> : null}<p>{view.mode === "simulated" ? "Simulovaný návrh. " : view.mode === "ortools" ? "Návrh připravil lokální plánovač. " : "Návrh připravila AI. "}{confirmed ? "Rozpis je potvrzený." : "Návrh čeká na rozhodnutí."} {monthlyValidationMessage(view.validation.status)}</p><p>{monthlyInstructionMessage(view.mode, view.draft.instructionsOutcome)}</p>{view.input.shiftRotationPreference ? <p>Střídání směn bylo zadáno jako nezávazné přání. Výjimky a chybějící okrajové podklady jsou uvedeny v kontrole preference.</p> : null}<p>Navržených směn: {view.draft.assignments.length}.</p>
       {view.input.planningRange ? <p>Doplňovaný úsek: {view.input.planningRange.startDate} až {view.input.planningRange.endDate}. V tabulce značí P převzatou směnu.</p> : null}
 

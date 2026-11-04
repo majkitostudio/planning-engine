@@ -267,11 +267,11 @@ testovacím předpokladem, nikoli schváleným provozním pravidlem.
   na ztrátu rozpracovaných vstupů nebo bezpečné ukládání rozepsané práce;
   případné uchovávání osobních údajů vyžaduje samostatné rozhodnutí. Toto se
   netýká výše ověřené obnovy již vytvořeného návrhu.
-- `VERIFIED` / UX oprava — Při odkazu prohlížeče na již neexistující návrh
-  server vrátil `404`; stránka nabídla opětovné načtení, po kterém se stejná
-  chyba zopakovala. Rozlišit chybějící návrh od dočasné chyby spojení a
-  nabídnout bezpečný postup pro pokračování bez automatického mazání dat.
-  Ověřeno v izolovaném prohlížeči a prázdné testovací databázi.
+- `IMPLEMENTED` / UX oprava — Odkaz na návrh vracející `404` nyní zobrazí
+  vysvětlení a umožní odebrat pouze odpovídající ID z `localStorage` daného
+  prohlížeče; serverová data se nemažou. Jiné chyby obnovy zachovají odkaz a
+  nabídnou opakování později. Cílený test rozlišuje `404` od `503`;
+  skutečný průchod této obrazovky v prohlížeči zůstává `NOT VERIFIED`.
 - `VERIFIED` / souběh — Při přímém volání databázového úložiště na `6d1b9cc`
   skončilo pět dvojic současných shodných syntetických importů vždy jedním
   uložením a jednou chybou transakce `P2034`; vzniklo pět importů, nikoli deset.
@@ -492,8 +492,8 @@ označíme za hotovou až po opravě a doloženém ověření jejího rozsahu.
      proti vyhrazené databázi `planning_monthly_test`. Lokálně i v GitHub Actions
      prošly všechny 4 soubory a 6 testů; běh CI `41916140404` na commitu
      `d21c8e8` skončil úspěšně. Běžný testovací job zůstává bez databázové služby.
-   - [ ] Opravit zjištěné problémy s klávesnicí, popisky, fokusem, chybou
-     neexistujícího návrhu a ztrátou rozepsaných vstupů; ověřit čtečkou obrazovky.
+   - [ ] Opravit zjištěné problémy s klávesnicí, popisky, fokusem a ztrátou
+     rozepsaných vstupů; ověřit čtečkou obrazovky.
      - [x] Zavřená mobilní navigace se po zavírací animaci vyřadí z pořadí
        klávesnice; při zavření se fokus vrací na tlačítko menu. Regresní test
        ověřuje přechod otevřeno → zavřeno. V prohlížeči při 390 × 844 px
@@ -511,8 +511,11 @@ označíme za hotovou až po opravě a doloženém ověření jejího rozsahu.
        aktivního kroku, včetně skoku do souhrnu při chybějících vstupech.
        Cílený test ověřuje přechodový predikát; úplné testy, lint, typecheck a
        build prošly. Skutečný fokus v prohlížeči zůstává `NOT VERIFIED`.
-     - [ ] Ověřit mobilní ovládání a fokus se čtečkou obrazovky; opravit chybu
-       chybějícího návrhu a ochranu rozepsaných vstupů.
+     - [x] Při `404` nabídnout bezpečné odebrání neplatného odkazu pouze
+       z prohlížeče; při dočasné chybě zachovat odkaz. Cílený test prošel;
+       zobrazení a ovládání v prohlížeči je `NOT VERIFIED`.
+     - [ ] Ověřit mobilní ovládání a fokus se čtečkou obrazovky; rozhodnout o
+       ochraně rozepsaných vstupů s ohledem na citlivá data.
    - [ ] Posoudit vývojové závislosti a ověřit kompatibilní aktualizace.
 9. **P2 — Závěrečné ověření MVP.**
    - [ ] Provést syntetický průchod návrh → kontrola → potvrzení → obnovení,

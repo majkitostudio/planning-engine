@@ -3,6 +3,10 @@ import type { MonthlyRosterSnapshot } from "./domain/month-input";
 import { validateMonthlyDraft } from "./monthly-planning";
 import type { StoredMonthlyRun } from "./monthly-store";
 
+export function isUnavailableMonthlyDraftStatus(status: number): boolean {
+  return status === 404;
+}
+
 export async function recoverMonthlyDraft(store: { get(id: string): Promise<StoredMonthlyRun | null> }, id: string, month: string, boundary: MonthlyBoundaryData, currentRoster?: MonthlyRosterSnapshot) {
   const run = await store.get(id);
   if (!run || run.confirmed || run.input.month !== month) return { ok: false as const, message: "Uložený nepotvrzený návrh nebyl nalezen." };

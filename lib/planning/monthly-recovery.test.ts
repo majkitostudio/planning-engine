@@ -1,10 +1,15 @@
 import { describe, expect, it } from "vitest";
 import { buildMonthlyFormInput } from "./monthly-form";
 import { InMemoryMonthlyStore } from "./monthly-store";
-import { recoverMonthlyDraft } from "./monthly-recovery";
+import { isUnavailableMonthlyDraftStatus, recoverMonthlyDraft } from "./monthly-recovery";
 import { datesInMonth } from "./domain/month";
 
 describe("obnovení měsíčního návrhu", () => {
+  it("odliší neobnovitelný odkaz od dočasného selhání služby", () => {
+    expect(isUnavailableMonthlyDraftStatus(404)).toBe(true);
+    expect(isUnavailableMonthlyDraftStatus(503)).toBe(false);
+  });
+
   it("ověří při obnovení aktuální verzi měsíčního rosteru", async () => {
     const form = buildMonthlyFormInput({ month: "2026-11", employees: [{ id: "e", name: "Test" }], absences: [], availability: [], staffing: Array(14).fill("0"), instructions: "" });
     if (!form.ok) throw new Error(form.message);
