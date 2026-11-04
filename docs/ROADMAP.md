@@ -16,8 +16,8 @@ Opravené nálezy i otevřené kroky jsou označené samostatně. Před širší
 | Vysoká | OPRAVENO — zápis přes starší API vyžaduje managera a chrání uložený záznam; souběžné potvrzení atomicky uloží právě jeden plán a auditní událost. |
 | Vysoká | OPRAVENO — starší relace se po resetu, změně hesla, změně role i deaktivaci odmítají podle verze relace; ověřeno také proti izolované PostgreSQL. |
 | Vysoká | Částečně opraveno — nastavení, API a měsíční formulář rozlišují uložené hodnoty od výchozích; stále je třeba rozhodnout, zda samotné uložení celé tabulky znamená schválení výchozích hodnot a jak se má chovat operativní náhrada při chybějícím profilu. |
-| Další | Opravit zjištěné chyby přístupnosti a neexistující návrh, ošetřit časovou změnu; výkon plánování zůstává neověřený. Vstup nad 200 zaměstnanců je odmítnut před spuštěním solveru. |
-| Dokončení MVP | Rozhodnout o pravidlech mazání a implementovat správu jednotlivých rozpisů; doplnit Python a izolované databázové testy do CI a dokončit kontrolu uživatelského toku. |
+| Další | Částečně opraveno — nejednoznačné a neexistující místní časy i vstup nad 200 zaměstnanců jsou blokovány. Pokračovat v opravách přístupnosti, chyby chybějícího návrhu a ověřit výkon plánování. |
+| Dokončení MVP | Otevřené — rozhodnout o pravidlech mazání a implementovat správu jednotlivých rozpisů; dokončit syntetický uživatelský průchod. Python i izolované databázové testy již běží v CI. |
 
 Všechny nalezené commitované větve jsou zahrnuté v `main`. Zachované zálohy,
 nesledované výstupy a starý pracovní strom s necommitovaným souborem nejsou
@@ -145,6 +145,18 @@ testovacím předpokladem, nikoli schváleným provozním pravidlem.
 - Při opakované kontrole byl nalezen další pracovní strom `jolly-pixel` v
   odpojeném stavu. Jeho pracovní strom byl čistý a commit `6077301` je již
   předkem `main`; strom zůstává zachován.
+- `VERIFIED` / inventura 4. 11. 2026 — Commitované špičky větví
+  `codex/database-managed-accounts`, `codex/database-managed-accounts-windows`,
+  `codex/leadership-demo`, `codex/monthly-ortools-mvp`, `codex/navaznost-ai-plan`
+  i obou větví `cline/*` jsou předky `main`; žádný jejich commit tedy nechybí.
+  Vzdálený `main`, lokální `main` a pracovní větev auditu byly na `7ee2fde`.
+  Hlavní pracovní strom má zachované uživatelské soubory `design-qa.md` a
+  `output/`. Strom `cline/9dbfe` obsahuje necommitnuté změny čtyř souborů a
+  nesledovaný `lib/planning/ai-provider.ts`; starší soubor se liší od současné
+  implementace, proto nebyl převzat ani odstraněn. Některé staré záznamy stromů
+  ukazují na chybějící Linuxové cesty a dva dostupné adresáře mají neplatný
+  odkaz na Git metadata. Úklid metadat a větví zůstává otevřený, dokud nebude
+  možné bezpečně určit jejich obsah.
 - Dvě zachované zálohy obsahují starší změny. První zachycuje průběžný audit,
   jehož body byly přeneseny nebo aktualizovány v této roadmapě; druhá obsahuje
   starší měsíční dokumentaci a podobu formuláře. Současný měsíční směr a
@@ -183,9 +195,10 @@ testovacím předpokladem, nikoli schváleným provozním pravidlem.
   pracovní strom nebyly přepsány.
 - Hlavní README a rozcestník dokumentace byly sladěny s odstraněním ručních
   úprav z manažerské obrazovky; další historické souhrny vyžadují kontrolu.
-- GitHub CI nyní spouští Python testy solveru. Databázové integrační testy
-  stále nejsou součástí CI; před jejich doplněním je třeba připravit izolovanou
-  testovací databázi.
+- GitHub CI spouští běžnou kvalitu, Python solver testy a samostatný databázový
+  job s PostgreSQL 16. Běh `41919111437` na `7ee2fde` dokončil všechny tři joby
+  úspěšně; databázová sada ověřila migrace a šest integračních testů nad
+  izolovanou databází.
 
 ### Další kontrola a postup před uzavřením MVP
 
