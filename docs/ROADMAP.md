@@ -179,9 +179,14 @@ testovacím předpokladem, nikoli schváleným provozním pravidlem.
   identifikátor přepsat jeho obsah návrhem náhrady. V izolované PostgreSQL
   zůstal jeden nepotvrzený záznam, jehož scénář se změnil na náhradu. Routy
   kontrolují přihlášení, nikoli roli pro vytvoření; ukládání používá `upsert`
-  podle dodaného identifikátoru. Potvrzené záznamy nebyly v pokusu měněny;
-  dopad kolize na ně vyžaduje samostatný test. Opravit oprávnění a ochranu
-  identit existujících záznamů, potom pokrýt role a kolize integračním testem.
+  podle dodaného identifikátoru. Následný test na `f1661c6` s novou izolovanou
+  PostgreSQL potvrdil dopad i na syntetický potvrzený týdenní záznam: volání
+  routy s nasimulovanou relací viewer a kolidujícím identifikátorem vrátilo
+  `200` a přepsalo scénář a výsledek záznamu, zatímco původní potvrzený plán
+  a čas potvrzení zůstaly zachovány. Test používá simulated režim náhrad a
+  neprokazuje dopad na samostatnou tabulku měsíčních návrhů. Opravit oprávnění
+  a ochranu identit existujících záznamů, potom pokrýt role a kolize integračním
+  testem.
   Test `tests/planning-authenticated-flow.test.ts` přitom výslovně očekává,
   že viewer může starý týdenní návrh spustit; to odporuje aktuálnímu rozhodnutí
   v `DOMAIN_DECISIONS.md`, podle něhož viewer pouze čte. Při opravě změnit i
