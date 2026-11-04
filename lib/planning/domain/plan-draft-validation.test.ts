@@ -152,6 +152,17 @@ describe("runPlanning — dvouvrstvá validace PlanDraft", () => {
       expect(isPlanDraft(invalidDraft)).toBe(false);
     });
 
+    it("odmítne alternativu s prázdným identifikátorem", () => {
+      const draft: PlanDraft = {
+        weekStart: WEEK_START,
+        assignments: [],
+        explanations: [],
+        alternatives: [{ id: "", summary: "Alternativa", impact: "Dopad", assignments: [] }],
+        assumptions: [],
+      };
+      expect(isPlanDraft(draft)).toBe(false);
+    });
+
     it("odmítne nekompletní přiřazení", () => {
       const invalidDraft: PlanDraft = {
         weekStart: WEEK_START,

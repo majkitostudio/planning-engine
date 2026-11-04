@@ -170,8 +170,12 @@ testovacím předpokladem, nikoli schváleným provozním pravidlem.
   ani vznik takového výstupu skutečným plánovačem nebyly ověřeny. Současný
   měsíční OR-Tools i simulovaný provider vytvářejí prázdný seznam alternativ;
   zjištění se tedy jejich nově vytvořených výstupů v této podobě netýká.
-  Prověřit neprázdnost a jedinečnost ID v obou kontraktech před převzetím dílčí
-  změny, včetně případných starších uložených návrhů.
+  `IMPLEMENTED` / `VERIFIED` — Ze staršího souboru byla cíleně převzata
+  kontrola, která odmítá prázdné ID alternativy; doplněný test nejprve selhal
+  a po opravě prošel. Týká se i měsíčního kontraktu. Starší uložený návrh s
+  prázdným ID nyní nemusí projít načtením; jeho případný výskyt nebyl na
+  skutečných datech prověřen. Jedinečnost a ID tvořené jen mezerami tato dílčí
+  oprava neřeší. Celý starý soubor ani pracovní strom nebyly přepsány.
 - Hlavní README a rozcestník dokumentace byly sladěny s odstraněním ručních
   úprav z manažerské obrazovky; další historické souhrny vyžadují kontrolu.
 - GitHub CI v aktuálním workflow samostatně nespouští Python testy solveru ani
