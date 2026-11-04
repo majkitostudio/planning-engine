@@ -413,6 +413,34 @@ testovacím předpokladem, nikoli schváleným provozním pravidlem.
 Podle auditu postupujeme po malých, samostatně ověřených částech. Položku
 označíme za hotovou až po opravě a doloženém ověření jejího rozsahu.
 
+0. **P0 — Sjednocení projektu do `main` a povinný úklid.**
+   - [ ] Udělat úplnou inventuru lokálních i vzdálených větví, všech pracovních
+     stromů a jejich tracked, untracked, ignored a staged změn; ověřit také
+     odložené změny, detached worktrees a metadata nedostupná z tohoto systému.
+   - [ ] Každou nalezenou změnu porovnat s `main`, určit její účel a zapsat
+     výsledek: začlenit, bezpečně odložit, nebo po ověření označit za nepotřebnou.
+     Žádný obsah nemazat ani nepřepisovat před jeho kontrolou.
+   - [ ] Konkrétně prověřit starou větev a pracovní strom `cline/9dbfe` na HEAD
+     `7a57454`: změny ve dvou testech, exporty v `lib/planning/index.ts`, úpravu
+     `lib/planning/orchestrator.ts` a nový `lib/planning/ai-provider.ts`.
+     Porovnat je také s čistým `cline/8f998`, který má stejný commit; užitečný
+     kód nebo testy nejdřív začlenit a ověřit na `main`.
+   - [ ] Zkontrolovat dočasné, duplicitní a matoucí historické soubory i neznámé
+     untracked výstupy včetně `design-qa.md` a `output/`; zachovat hodnotné
+     podklady, ostatní odstranit až po určení původu a po ověření zálohy či
+     začlenění.
+   - [ ] Po začlenění veškeré potřebné práce odstranit nepotřebné pracovní
+     stromy a lokální větve; vzdálené větve ponechat nebo odstranit až po
+     ověření obsahu a potvrzení, že `main` obsahuje všechny potřebné změny.
+     Konečný stav: jediný aktivní pracovní strom a jediná vývojová větev `main`.
+   - `VERIFIED` (5. 11. 2026) — Dostupné commitované tipy jsou již předky
+     `origin/main` (`175ab674`); lokální `main` byl fast-forwardem srovnán a
+     zachoval nesledované `design-qa.md` a `output/`. `cline/9dbfe` má stále
+     výše uvedené necommitnuté změny a nový soubor; nic z nich nebylo smazáno.
+     Čtyři WSL záznamy pracovních stromů míří na nedostupná metadata a čekají na
+     kontrolu ve WSL. Samotný `AGENTS.md` je pracovní instrukce, nikoli Git hook
+     ani centrální hlídač; každý worktree má samostatný stav, takže čistý `main`
+     neprokazuje čistotu ostatních stromů.
 1. **P0 — Starší API a ochrana rozpisů.**
    - [x] Vyžadovat roli managera pro zápis přes týdenní `/run` a `/replacement`;
      viewer zůstává pouze pro čtení.
