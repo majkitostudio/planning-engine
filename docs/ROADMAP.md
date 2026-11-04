@@ -5,6 +5,25 @@
 > Význam stavových popisků
 > vysvětluje [`docs/README.md`](README.md#stavové-popisky).
 
+## Stručný přehled auditu
+
+Audit probíhá; podrobnosti a hranice jednotlivých ověření jsou v části
+[Další kontrola a postup](#další-kontrola-a-postup-před-uzavřením-mvp).
+Nález neznamená, že je opravený. Před širším použitím je potřeba zejména:
+
+| Priorita | Zjištění a další krok |
+| --- | --- |
+| Vysoká | Starší týdenní a náhradové API umožnilo vieweru přepsat část potvrzeného týdenního záznamu. Opravit role a ochranu uložených podkladů; prověřit návaznosti a souběh potvrzení. |
+| Vysoká | Starší relace se po resetu a změně hesla znovu stala použitelnou. Zajistit její zneplatnění a doplnit integrační ověření. |
+| Vysoká | Formulář může označit výchozí obsazení za uložený profil i při prázdné databázi. Rozlišit skutečný zdroj hodnot a jejich potvrzení manažerem. |
+| Další | Opravit zjištěné chyby přístupnosti, neexistující návrh, časovou změnu a nesoulad limitu 200 zaměstnanců; ověřit výkon na reprezentativních syntetických zadáních. |
+| Dokončení MVP | Rozhodnout o pravidlech mazání a implementovat správu jednotlivých rozpisů; doplnit Python a izolované databázové testy do CI a dokončit kontrolu uživatelského toku. |
+
+Všechny nalezené commitované větve jsou zahrnuté v `main`. Zachované zálohy,
+nesledované výstupy a starý pracovní strom s necommitovaným souborem nejsou
+automaticky převzaté ani odstraněné. Postup prací je v
+[doporučeném pořadí](#doporučené-pořadí-dokončení-před-závěrečným-testováním).
+
 ## Stav měsíčního MVP
 
 Schváleným směrem je jeden návrh pro celý kalendářní měsíc; týdenní tabulka je
@@ -23,7 +42,7 @@ existence sama nedokládá schválení změny záměru. Viz `DOMAIN_DECISIONS.md
 | Měsíční formulář, lokální OR-Tools provider a uložení návrhu | `IMPLEMENTED`; syntetický integrační průchod `VERIFIED` |
 | Nezávislá měsíční validace | `IMPLEMENTED`; v testovacím měsíci zůstala část pravidel `NOT VERIFIED` kvůli chybějícím návaznostem a otevřenému výkladu víkendového volna |
 | Ruční změna směn a nová kontrola | Serverové rozhraní `IMPLEMENTED`; ruční úprava z manažerské obrazovky odstraněna |
-| Obnovení uložené verze po načtení stránky | `IMPLEMENTED`; ověření aktuálního toku v tomto auditu `NOT VERIFIED` |
+| Obnovení uložené verze po načtení stránky | `IMPLEMENTED`; obnovení syntetického prázdného návrhu v tomto auditu `VERIFIED`, další varianty `NOT VERIFIED` |
 | Potvrzení rozpisu | `IMPLEMENTED`; neúplné a neověřené návrhy mají být blokovány. Níže uvedený historický návrh potvrzen nebyl. |
 | Textové pokyny v režimu OR-Tools | Nevyhodnocují se; UI tuto skutečnost přiznává. Pokyny se solveru ani externí AI neposílají. |
 | Gemini provider | Zůstává dostupný pro ostatní nakonfigurované toky; není hlavním plánovačem měsíčního MVP. Kvalita produkčního plánování zůstává `NOT VERIFIED`. |
