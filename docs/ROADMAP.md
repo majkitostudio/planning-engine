@@ -287,6 +287,11 @@ testovacím předpokladem, nikoli schváleným provozním pravidlem.
   nález. Přímý syntetický běh solveru se dvěma zaměstnanci a schválenou absencí
   přes hranici měsíce přiřadil požadovanou směnu druhému zaměstnanci. Tyto
   kontroly samy neověřují celý průchod rozhraním ani všechny kombinace.
+- `VERIFIED` / částečný měsíc v jednotkových testech — Na `b9e069b` prošlo
+  24 testů měsíční orchestrace, úložiště a endpointu spuštění. Pokrývají
+  mimo jiné nové načtení rosteru a blokaci potvrzení při změně podkladů.
+  Databázové závislosti těchto cílených testů jsou nahrazené mocky; nejde o
+  nové ověření souběžné změny rosteru na skutečné databázi.
 - `VERIFIED` / GitHub CI — Na `e8ba5cf` prošel běh 41869577350: lint,
   typecheck, Vitest, validace Prisma schématu a build. Workflow samostatně
   nespouští Python testy solveru ani integrační testy s databází.
