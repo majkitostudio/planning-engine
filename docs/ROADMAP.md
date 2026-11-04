@@ -197,6 +197,12 @@ testovacím předpokladem, nikoli schváleným provozním pravidlem.
   napodoben přímou změnou testovacího účtu v databázi; změnu hesla provedla
   aplikační služba. Aktualizace relace neporovnává verzi hesla. Prověřit a
   implementovat zneplatnění starých relací včetně testu celého přihlášení.
+- `IMPLEMENTED` / `OPEN QUESTION` — Měsíční běh odmítá externí Gemini a
+  OR-Tools nedostává volné pokyny ani skutečná jména. Text pokynů se však
+  ukládá se vstupem návrhu do databáze, i když jej OR-Tools nevyhodnocuje.
+  Před praktickým použitím určit přístup, dobu uchování a mazání těchto údajů.
+  Překladač pokynů není zapojený; před jeho použitím je nutné samostatně
+  schválit ochranu a rozsah předávaného textu.
 - `VERIFIED` (omezený lokální test) — Deset po sobě jdoucích chybných pokusů
   o přihlášení syntetickým účtem nevrátilo `429`; následné správné přihlášení
   v lokálním režimu uspělo. Jde o test bez reverzní proxy a nedokazuje stav
