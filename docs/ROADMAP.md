@@ -270,6 +270,14 @@ testovacím předpokladem, nikoli schváleným provozním pravidlem.
   pokrytými příklady jsou 35hodinový odpočinek, směny přes hranici měsíce a
   chybějící historie. Nejde o důkaz správnosti všech kombinací pravidel ani
   o pracovněprávní posudek.
+- `VERIFIED` / vstupy absencí — Na `bbbfbe6` prošlo 22 cílených testů
+  měsíčního formuláře a vstupního kontraktu. Testované scénáře zahrnují
+  částečnou absenci přes hranici měsíce, překryvy a přednost schválené absence
+  před dostupností. Kód solveru vylučuje schválenou absenci a výslovnou
+  nedostupnost; nezávislá kontrola při chybějící dostupnosti vrací neověřený
+  nález. Přímý syntetický běh solveru se dvěma zaměstnanci a schválenou absencí
+  přes hranici měsíce přiřadil požadovanou směnu druhému zaměstnanci. Tyto
+  kontroly samy neověřují celý průchod rozhraním ani všechny kombinace.
 - `VERIFIED` / GitHub CI — Na `e8ba5cf` prošel běh 41869577350: lint,
   typecheck, Vitest, validace Prisma schématu a build. Workflow samostatně
   nespouští Python testy solveru ani integrační testy s databází.
