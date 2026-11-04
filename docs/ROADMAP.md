@@ -57,16 +57,18 @@ testovacím předpokladem, nikoli schváleným provozním pravidlem.
 
 ## Známá omezení a další rozhodnutí
 
-### To-Do: Zjednodušit rozhraní pro manažera
+### Rozhraní manažera — `IMPLEMENTED`, ověřeno částečně
 
-- `PLANNED` — Zpřehlednit výsledek návrhu, odstranit technické názvy a stavové
-  kódy a srozumitelně vysvětlit konkrétní problémy a chybějící podklady.
-- `PLANNED` — Podle zpětné vazby odstranit z výsledku ruční úpravy a zbytečné
-  ovládání potvrzení; zachovat bezpečnostní pravidla a zákaz automatického potvrzení.
-- `PLANNED` — Skrýt výběr simulovaného scénáře před manažerem, odstranit
-  ukázkové filtry a přehledy a upravit správu zaměstnanců včetně čitelnosti tlačítek.
-- `PLANNED` — Upravit souhrn dostupnosti a odstranit označené technické texty
-  z přehledu a nastavení. Netvrdit, že se pokyny zohledňují, dokud tomu tak není.
+- Výsledek návrhu používá srozumitelné stavy a konkrétní nálezy; zobrazuje,
+  zda plánovač pokyny vyhodnotil. U AI je její popis označen jako neověřené tvrzení.
+- Ruční úpravy návrhu a volba ukázkového scénáře jsou z manažerské obrazovky
+  odstraněny. Zůstává jedno výslovné tlačítko manažerského potvrzení; serverové
+  blokátory i zákaz automatického potvrzení zůstávají.
+- Ukázkové přehledy jsou odstraněny, tlačítka zaměstnanců mají čitelný styl a
+  přehled i nastavení neukazují technické názvy režimů či interních proměnných.
+- Prohlížečově ověřeno při 390×844 a 1280×900 px a dostupnost odkazu přeskočení
+  při ovládání klávesnicí. Bez databáze nebyl proveden průchod s uloženými daty;
+  tento provozní tok zůstává `NOT VERIFIED`.
 
 - Neověřené návaznosti na začátku nebo konci měsíce brání potvrzení návrhu.
   Dva dny volna při víkendové práci nemusí následovat po sobě; viz

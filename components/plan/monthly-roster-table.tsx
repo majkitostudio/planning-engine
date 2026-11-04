@@ -1,10 +1,10 @@
 import { CZECH_DAYS, SHIFT_META, formatDayMonth, formatIsoDate } from "@/lib/demo-data";
+import { monthlyRosterCaption } from "@/lib/planning/monthly-view";
 import type { MonthlyView } from "./monthly-planning-panel";
 
 export function MonthlyRosterTable({ view, weekDates }: { view: MonthlyView; weekDates: Date[] }) {
-  const title = view.confirmed ? "Potvrzený rozpis" : "Nepotvrzený návrh";
   return <div className="table-wrap"><table className="roster">
-    <caption>{title} · {view.input.month}{view.mode === "simulated" ? " · SIMULATED" : ""}</caption>
+    <caption>{monthlyRosterCaption({ confirmed: view.confirmed ?? false, month: view.input.month, mode: view.mode })}</caption>
     <thead><tr><th scope="col" className="roster__employee-col">Zaměstnanec</th>{weekDates.map((date, index) => <th key={formatIsoDate(date)} scope="col" className={index >= 5 ? "roster__day roster__day--weekend" : "roster__day"}><span className="roster__day-name">{CZECH_DAYS[index]}</span><span className="roster__day-date">{formatDayMonth(date)}</span></th>)}</tr></thead>
     <tbody>{view.input.employees.map((employee) => <tr key={employee.id}><th scope="row" className="roster__employee-col">{employee.displayName}</th>{weekDates.map((day, index) => {
       const date = formatIsoDate(day);

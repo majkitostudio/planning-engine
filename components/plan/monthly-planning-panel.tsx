@@ -5,11 +5,12 @@ import Link from "next/link";
 import { buildMonthlyFormInput, monthlyFormReadiness, partialAbsenceAvailability, staffingFormValues, type MonthlyFormData, type PartialAbsence } from "@/lib/planning/monthly-form";
 import type { StaffingSetting } from "@/lib/planning/staffing-settings";
 import type { MonthlyPlanningInput } from "@/lib/planning/domain/month-input";
-import type { Absence, ProposedAssignment, ShiftKind } from "@/lib/planning/domain/types";
+import type { Absence, ShiftKind } from "@/lib/planning/domain/types";
 import type { MonthlyPlanDraft } from "@/lib/planning/monthly-planning";
 import type { MonthlyValidation } from "@/lib/planning/domain/month-validation";
 import { addDays } from "@/lib/planning/domain/time";
 import { datesInMonth } from "@/lib/planning/domain/month";
+import { monthlyInstructionMessage, monthlyValidationMessage } from "@/lib/planning/monthly-view";
 
 export interface MonthlyView {
   readonly id: string;
@@ -24,7 +25,7 @@ type BoundaryReadiness = { readonly key: string; readonly status: "loading" | "a
 const DAYS = ["Pondělí", "Úterý", "Středa", "Čtvrtek", "Pátek", "Sobota", "Neděle"];
 const STEPS = ["Zaměstnanci", "Absence a dostupnost", "Obsazení", "Doplňující pokyny", "Souhrn a návrh"] as const;
 
-export function MonthlyPlanningPanel({ month, canManage, planningMode, initialStaffing, weekDates, onResult }: { month: string; canManage: boolean; planningMode: MonthlyView["mode"] | null; initialStaffing: readonly StaffingSetting[] | null; weekDates: readonly string[]; onResult: (month: string, result: MonthlyView | null) => void }) {
+export function MonthlyPlanningPanel({ month, canManage, planningMode, initialStaffing, onResult }: { month: string; canManage: boolean; planningMode: MonthlyView["mode"] | null; initialStaffing: readonly StaffingSetting[] | null; onResult: (month: string, result: MonthlyView | null) => void }) {
   const [employees, setEmployees] = useState<MonthlyFormData["employees"]>([]);
   const [name, setName] = useState("");
   const [absences, setAbsences] = useState<Absence[]>([]);
@@ -39,16 +40,12 @@ export function MonthlyPlanningPanel({ month, canManage, planningMode, initialSt
   const [date, setDate] = useState("");
   const [endDate, setEndDate] = useState("");
   const [absenceShift, setAbsenceShift] = useState<ShiftKind | "full_day">("full_day");
-  const [scenario, setScenario] = useState("complete");
   const [step, setStep] = useState(0);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [view, setView] = useState<MonthlyView | null>(null);
   const [confirmed, setConfirmed] = useState(false);
   const [restored, setRestored] = useState(false);
-  const [edited, setEdited] = useState<readonly ProposedAssignment[] | null>(null);
-  const [editEmployee, setEditEmployee] = useState("");
-  const [editDate, setEditDate] = useState("");
   const [boundaryReadiness, setBoundaryReadiness] = useState<BoundaryReadiness | null>(null);
   const revision = useRef(0);
   const storageKey = `planning-monthly-draft:${month}`;
@@ -139,16 +136,16 @@ export function MonthlyPlanningPanel({ month, canManage, planningMode, initialSt
     if (readiness.missing.length) { setStep(4); setError("Doplňte povinné vstupy uvedené v souhrnu před vytvořením návrhu."); return; }
     const prepared = buildMonthlyFormInput(formData);
     if (!prepared.ok) { setStep(4); setError(prepared.message); return; }
-    revision.current++; setBusy(true); setView(null); setEdited(null); setConfirmed(false); setRestored(false); onResult(month, null);
+    revision.current++; setBusy(true); setView(null); setConfirmed(false); setRestored(false); onResult(month, null);
     try {
-      const response = await fetch("/api/planning/monthly/run", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ input: prepared.value, scenario }) });
+      const response = await fetch("/api/planning/monthly/run", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ input: prepared.value, ...(planningMode === "simulated" ? { scenario: "complete" } : {}) }) });
       const result = await response.json();
       if (!response.ok || !result.ok) { setError(result.message ?? "Návrh se nepodařilo vytvořit. Vyplněné hodnoty zůstaly zachované."); return; }
       rememberDraft(result.id); setView(result); onResult(month, result);
     } catch { setError("Spojení se serverem selhalo. Vyplněné hodnoty zůstaly zachované."); } finally { setBusy(false); }
   }
   async function confirm() {
-    if (!view || edited !== null) return;
+    if (!view) return;
     setBusy(true); setError("");
     try {
       const response = await fetch("/api/planning/monthly/confirm", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id: view.id }) });
@@ -158,21 +155,11 @@ export function MonthlyPlanningPanel({ month, canManage, planningMode, initialSt
       setConfirmed(true); onResult(month, { ...view, confirmed: true });
     } catch { setError("Spojení se serverem selhalo."); } finally { setBusy(false); }
   }
-  async function recheck() {
-    if (!view || edited === null) return;
-    setBusy(true); setError("");
-    try {
-      const response = await fetch("/api/planning/monthly/recheck", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id: view.id, assignments: edited }) });
-      const result = await response.json();
-      if (!response.ok || !result.ok) { setError(result.message ?? "Kontrola se nezdařila."); return; }
-      rememberDraft(result.id); setView(result); setEdited(null); onResult(month, result);
-    } catch { setError("Spojení se serverem selhalo; úpravy zůstaly v prohlížeči."); } finally { setBusy(false); }
-  }
   function changeStep(next: number) { setStep(Math.max(0, Math.min(STEPS.length - 1, next))); setError(""); }
   function clearResult() {
     revision.current++;
     if (!view) return;
-    setView(null); setEdited(null); setConfirmed(false); setRestored(false); onResult(month, null);
+    setView(null); setConfirmed(false); setRestored(false); onResult(month, null);
   }
   const employeeName = (id: string) => employees.find((employee) => employee.id === id)?.name ?? "Neznámý zaměstnanec";
 
@@ -205,7 +192,6 @@ export function MonthlyPlanningPanel({ month, canManage, planningMode, initialSt
           <p className="monthly-muted">Napište další pokyny. {planningMode === "ortools" ? "Lokální plánovač volný text nevyhodnocuje, ale zohlední níže uvedené střídání směn." : planningMode === "simulated" ? "Simulovaný návrh nezohlední střídání ani volný text." : planningMode === "gemini" ? "AI může přihlédnout k volnému textu, jeho splnění však nezávislá kontrola neověří. Strukturovanou preferenci střídání tento režim nepodporuje." : "Plánovač není nastaven; volný text ani preference zatím nelze zpracovat."}</p>
           {planningMode === "ortools" ? <label className="monthly-block-label"><input type="checkbox" checked={shiftRotationPreference} onChange={(event) => setShiftRotationPreference(event.target.checked)} /> Přednostně střídat ranní a odpolední směny mezi sousedními pracovními směnami, i když jsou mezi nimi dny volna. Jde o přání; obsazení a potvrzená pravidla mají přednost.</label> : null}
           <label className="monthly-block-label" htmlFor="monthly-instructions">Doplňující pokyny<textarea className="input" id="monthly-instructions" value={instructions} onChange={(event) => setInstructions(event.target.value)} /></label>
-          {planningMode === "simulated" ? <label className="monthly-block-label">Simulovaný scénář<select className="input" value={scenario} onChange={(event) => setScenario(event.target.value)}><option value="complete">Simulovaný pokus o obsazení</option><option value="partial">Simulovaný částečný návrh</option><option value="unverified">Simulované neověřené podklady</option></select></label> : null}
         </> : null}
         {step === 4 && partialMonth && planningMode === "ortools" ? <p className="monthly-range">Doplňovaný úsek: {rangeStart} až {rangeEnd}</p> : null}
         {step === 4 ? <div className="monthly-review-summary"><h3>Souhrn před vytvořením návrhu</h3><dl><div><dt>Měsíc</dt><dd>{month}</dd></div><div><dt>Zaměstnanci</dt><dd>{readiness.employeeCount}</dd></div><div><dt>Výchozí dostupnost</dt><dd>Obě směny každý den včetně víkendů; platí zadané výjimky</dd></div><div><dt>Absence</dt><dd>{readiness.absenceCount + partialAbsences.length}</dd></div><div><dt>Vyplněné hodnoty obsazení</dt><dd>{readiness.filledStaffingCount} z 14</dd></div><div><dt>Střídání směn</dt><dd>{planningMode === "ortools" && shiftRotationPreference ? "Požadováno jako nezávazné přání" : "Bez preference"}</dd></div><div><dt>Doplňující pokyny</dt><dd>{instructions.trim() ? planningMode === "gemini" ? "Zadány; AI je může zohlednit, nezávisle ověřeny nejsou" : planningMode === "ortools" || planningMode === "simulated" ? "Zadány; tento režim je automaticky nevyhodnocuje" : "Zadány; bez nastaveného plánovače nejsou zpracovány" : "Bez doplňujících pokynů"}</dd></div></dl>{readiness.warnings.length ? <div className="monthly-missing" role="status"><strong>Upozornění k obsazení:</strong><ul>{readiness.warnings.map((warning) => <li key={warning}>{warning}</li>)}</ul></div> : null}{readiness.missing.length ? <div className="monthly-missing" role="alert"><strong>Před návrhem doplňte:</strong><ul>{readiness.missing.map((item) => <li key={item}>{item}</li>)}</ul></div> : <p className="monthly-ready" role="status">Povinná pole jsou vyplněna. Výsledek stále může být neúplný nebo neověřený a pak jej nebude možné potvrdit.</p>}<button className="btn btn--primary" type="submit" disabled={!canManage || busy || readiness.missing.length > 0}>{busy ? "Pracuji…" : "Vytvořit měsíční návrh"}</button></div> : null}
@@ -213,11 +199,9 @@ export function MonthlyPlanningPanel({ month, canManage, planningMode, initialSt
       <div className="monthly-step-controls"><button className="btn btn--secondary" type="button" disabled={step === 0 || busy} onClick={() => changeStep(step - 1)}>Zpět</button>{step < STEPS.length - 1 ? <button className="btn btn--primary" type="button" disabled={busy} onClick={() => changeStep(step + 1)}>Pokračovat: {STEPS[step + 1]}</button> : null}</div>
     </form>
     {error ? <p className="monthly-error" role="alert">{error}</p> : null}
-    {view && view.input.month === month ? <div aria-live="polite"><h3>Výsledek návrhu</h3>{restored ? <p role="status">Obnovený uložený návrh. Původní vstupy jsou jeho součástí, ale formulář pro nový návrh nahoře není znovu vyplněný.</p> : null}<p>{view.mode === "simulated" ? "SIMULATED · simulovaný scénář · " : view.mode === "ortools" ? "LOKÁLNÍ PLÁNOVAČ · OR-TOOLS · NOT VERIFIED · " : "AI · NOT VERIFIED · "}{confirmed ? "Potvrzený rozpis" : "Návrh čeká na rozhodnutí"}. Stav kontrol: {view.validation.status}.</p><p>Pokyny: {view.draft.instructionsOutcome}</p>{view.input.shiftRotationPreference ? <p>Střídání směn bylo zadáno jako nezávazné přání. Výjimky a chybějící okrajové podklady jsou uvedeny v kontrole preference.</p> : null}<p>Navržených směn: {view.draft.assignments.length}.</p>
+    {view && view.input.month === month ? <div aria-live="polite"><h3>Výsledek návrhu</h3>{restored ? <p role="status">Obnovený uložený návrh. Původní vstupy jsou jeho součástí, ale formulář pro nový návrh nahoře není znovu vyplněný.</p> : null}<p>{view.mode === "simulated" ? "Simulovaný návrh. " : view.mode === "ortools" ? "Návrh připravil lokální plánovač. " : "Návrh připravila AI. "}{confirmed ? "Rozpis je potvrzený." : "Návrh čeká na rozhodnutí."} {monthlyValidationMessage(view.validation.status)}</p><p>{monthlyInstructionMessage(view.mode, view.draft.instructionsOutcome)}</p>{view.input.shiftRotationPreference ? <p>Střídání směn bylo zadáno jako nezávazné přání. Výjimky a chybějící okrajové podklady jsou uvedeny v kontrole preference.</p> : null}<p>Navržených směn: {view.draft.assignments.length}.</p>
       {view.input.planningRange ? <p>Doplňovaný úsek: {view.input.planningRange.startDate} až {view.input.planningRange.endDate}. V tabulce značí P převzatou směnu.</p> : null}
-      {!confirmed && canManage ? <details><summary>Upravit návrh ručně</summary><fieldset disabled={busy}><legend>Ruční úprava vybraného týdne</legend><p>Vyberte den a zaměstnance. Změna se projeví v tabulce po nové kontrole celého měsíce. Při obnovení stránky se nezkontrolované úpravy ztratí.</p><div className="monthly-entry-grid"><label>Den<select className="input" value={weekDates.includes(editDate) ? editDate : ""} onChange={(event) => setEditDate(event.target.value)}><option value="">Vyberte den</option>{weekDates.filter((day) => day.startsWith(`${month}-`) && (!view.input.planningRange || (day >= view.input.planningRange.startDate && day <= view.input.planningRange.endDate))).map((day) => <option key={day} value={day}>{day}</option>)}</select></label><label>Zaměstnanec<select className="input" value={editEmployee} onChange={(event) => setEditEmployee(event.target.value)}><option value="">Vyberte zaměstnance</option>{view.input.employees.map((employee) => <option key={employee.id} value={employee.id}>{employee.displayName}</option>)}</select></label></div>
-        {editEmployee && weekDates.includes(editDate) && editDate.startsWith(`${month}-`) && (!view.input.planningRange || (editDate >= view.input.planningRange.startDate && editDate <= view.input.planningRange.endDate)) ? <div className="monthly-form-actions">{(["morning", "afternoon"] as const).map((kind) => { const assignments = edited ?? view.draft.assignments; const present = assignments.some((item) => item.employeeId === editEmployee && item.date === editDate && item.shiftKind === kind); return <label key={kind}><input type="checkbox" checked={present} onChange={(event) => { const remaining = assignments.filter((item) => !(item.employeeId === editEmployee && item.date === editDate && item.shiftKind === kind)); setEdited(event.target.checked ? [...remaining, { employeeId: editEmployee, date: editDate, shiftKind: kind }] : remaining); }} /> {kind === "morning" ? "Ranní" : "Odpolední"}</label>; })}</div> : null}
-        {edited !== null ? <p role="status">Úpravy čekají na novou kontrolu; zobrazené problémy a tabulka zatím patří předchozí verzi. Potvrzení je zablokováno.</p> : null}<button className="btn btn--secondary" type="button" disabled={edited === null} onClick={() => void recheck()}>Zkontrolovat celý měsíc</button></fieldset></details> : null}
+
       <details><summary>Pokrytí jednotlivých směn</summary><ul>{view.input.staffingRequirements.map((requirement) => {
         const range = view.input.planningRange;
         const fixed = range && (requirement.date < range.startDate || requirement.date > range.endDate) ? view.input.rosterHistory?.days.filter((day) => day.date === requirement.date && day.status === "shift") ?? [] : [];
@@ -231,7 +215,7 @@ export function MonthlyPlanningPanel({ month, canManage, planningMode, initialSt
       <h4>Problémy</h4>{view.validation.problems.length ? <ul>{view.validation.problems.map((finding, index) => <li key={`${finding.code}-${index}`}>{finding.date ? `${finding.date} · ` : ""}{finding.employeeId ? `${view.input.employees.find((employee) => employee.id === finding.employeeId)?.displayName ?? "Neznámý zaměstnanec"} · ` : ""}{finding.shiftKind ? `${finding.shiftKind === "morning" ? "ranní" : "odpolední"} · ` : ""}{finding.message}</li>)}</ul> : <p>Kontrola nenašla žádný problém.</p>}
       {view.validation.preferenceFindings.length ? <details><summary>Kontrola přání ke střídání ({view.validation.preferenceFindings.length})</summary><p>Výjimky a chybějící návaznost u této měkké preference samy o sobě neblokují potvrzení. Chybějící podklady pro závazné kontroly se zobrazují zvlášť.</p><ul>{view.validation.preferenceFindings.map((finding, index) => <li key={`${finding.code}-${index}`}>{finding.date ? `${finding.date} · ` : ""}{finding.employeeId ? `${view.input.employees.find((employee) => employee.id === finding.employeeId)?.displayName ?? "Neznámý zaměstnanec"} · ` : ""}{finding.message}</li>)}</ul></details> : null}
       {view.validation.unverified.length ? <details><summary>Neověřené podklady a omezení ({view.validation.unverified.length})</summary><p>Část návrhu nelze ověřit. Rozbalte podrobnosti.</p><ul>{view.validation.unverified.map((finding, index) => <li key={`${finding.code}-${index}`}>{finding.date ? `${finding.date} · ` : ""}{finding.employeeId ? `${view.input.employees.find((employee) => employee.id === finding.employeeId)?.displayName ?? "Neznámý zaměstnanec"} · ` : ""}{finding.shiftKind ? `${finding.shiftKind === "morning" ? "ranní" : "odpolední"} · ` : ""}{finding.message}</li>)}</ul></details> : null}
-      <button className="btn btn--primary" type="button" disabled={!canManage || busy || confirmed || edited !== null || !view.validation.canConfirm} onClick={() => void confirm()}>Potvrdit rozpis</button>
+      <button className="btn btn--primary" type="button" disabled={!canManage || busy || confirmed || !view.validation.canConfirm} onClick={() => void confirm()}>Potvrdit rozpis</button>
       {!view.validation.canConfirm ? <p>Potvrzení je zablokováno, dokud nejsou vyřešené problémy a ověřené potřebné podklady.</p> : null}
     </div> : null}
   </section>;

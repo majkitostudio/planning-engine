@@ -96,9 +96,9 @@
 
 **Zdroj úkolů:** `docs/ROADMAP.md`, část „To-Do: Zjednodušit rozhraní pro manažera“; relevantní soubory zahrnují `components/plan/monthly-planning-panel.tsx`, `components/plan/plan-workspace.tsx`, `components/employees-manager.tsx`, `app/(app)/page.tsx` a stránku nastavení.
 
-- [ ] Nahradit kódy stavů a názvy vnitřních nástrojů krátkými srozumitelnými výsledky, konkrétními problémy a chybějícími podklady; manažer musí vidět, zda se pokyn skutečně použil.
-- [ ] Podle anotací odstranit ruční úpravu návrhu z obrazovky, výběr simulovaného scénáře a ukázkové přehledy; upřesnit podobu odstranění ovládání potvrzení tak, aby zůstaly zachovány nezávislé serverové blokátory a žádná změna se nepotvrdila automaticky.
-- [ ] Opravit čitelnost tlačítek a vzhled správy zaměstnanců. Odstranit označené technické texty z přehledu a nastavení. Návrh věty „Dostupnost: dle zadaných pravidel a pokynů“ použít pouze pokud pravdivě odpovídá skutečnému vyhodnocení pokynů; do té doby srozumitelně popsat dostupnost a omezení pokynů.
+- [x] Nahradit kódy stavů a názvy vnitřních nástrojů krátkými srozumitelnými výsledky, konkrétními problémy a chybějícími podklady; manažer vidí, zda plánovač pokyny vyhodnotil. Tvrzení AI je výslovně označeno jako nezávisle neověřené.
+- [x] Odstranit ruční úpravu návrhu z obrazovky, výběr simulovaného scénáře a ukázkové přehledy. Zůstává jedno výslovné potvrzení manažerem; serverové blokátory jsou zachované a automatické potvrzení neexistuje.
+- [x] Zlepšit čitelnost tlačítek a správy zaměstnanců, odstranit technické texty z přehledu a nastavení a pravdivě uvést, že lokální plánovač pokyny nevyhodnocuje.
 - [ ] Ověřit ovládání klávesnicí, čitelnost a zobrazení na šířkách odpovídajících anotacím. Nemanipulovat se skutečnými zaměstnanci ani s potvrzením rozpisu.
 
 ## Závěrečné ověření a předání

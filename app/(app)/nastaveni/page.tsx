@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { auth } from "@/auth";
 import { StaffingSettingsForm } from "@/components/settings/staffing-settings-form";
+import { staffingSettingsPersistenceNotice } from "@/lib/settings-view";
 import { getPlanningPersistenceRuntime } from "@/lib/planning/persistence-runtime";
 import {
   getCompleteStaffingSettings,
@@ -18,7 +19,7 @@ export default async function SettingsPage() {
   const session = await auth();
   const persistenceRuntime = getPlanningPersistenceRuntime();
   let settings: readonly StaffingSetting[] = getCompleteStaffingSettings([]);
-  let notice = persistenceRuntime.configured ? null : persistenceRuntime.reason;
+  let notice = staffingSettingsPersistenceNotice(persistenceRuntime.configured);
 
   if (persistenceRuntime.configured) {
     try {

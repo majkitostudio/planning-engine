@@ -91,7 +91,7 @@ export function StaffingSettingsForm({
           <Icon name="info" width={17} height={17} />
         </span>
         <p>
-          <strong>Pilotní konfigurovatelná data.</strong> Hodnoty nejsou pracovněprávním pravidlem ani produkčním nastavením. Návrh směn ani náhrady se tímto formulářem automaticky nepotvrzují.
+          <strong>Počet lidí na směně.</strong> Tato hodnota slouží při přípravě návrhu. Není pracovněprávním pravidlem a rozpis se potvrzuje samostatně.
         </p>
       </div>
 
@@ -102,10 +102,10 @@ export function StaffingSettingsForm({
           <div>
             <h2 className="card__title">Potřebné obsazení směn</h2>
             <p className="card__sub">
-              {canEdit ? "Upravte hodnoty a uložte je pro další lokální výpočty." : "Viewer může hodnoty pouze zobrazit."}
+              {canEdit ? "Upravte potřebný počet lidí pro jednotlivé směny." : "Počty lidí pro jednotlivé směny."}
             </p>
           </div>
-          {canEdit ? <span className="settings-form__role">MANAGER</span> : <span className="settings-form__role">VIEWER</span>}
+          {canEdit ? null : <span className="settings-form__role">Pouze pro čtení</span>}
         </div>
 
         <div className="table-wrap">
@@ -150,7 +150,7 @@ export function StaffingSettingsForm({
             <button className="btn btn--primary" type="submit" disabled={isSaving || !persistenceConfigured}>
               {isSaving ? "Ukládám…" : "Uložit nastavení"}
             </button>
-            {!persistenceConfigured ? <span className="small muted">Uložení vyžaduje nakonfigurovanou lokální persistenci.</span> : null}
+            {!persistenceConfigured ? <span className="small muted">Uložení není v tomto prostředí dostupné.</span> : null}
           </div>
         ) : null}
       </form>
