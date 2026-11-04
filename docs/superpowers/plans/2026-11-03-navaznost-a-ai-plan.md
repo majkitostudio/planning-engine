@@ -68,10 +68,10 @@
 
 ### Doplnění části měsíce
 
-- [ ] Rozšířit měsíční vstup o výslovný souvislý rozsah návrhu uvnitř zvoleného měsíce. Bez zadaného rozsahu zachovat celý měsíc. Prověřit vstup, API, uložení verze, zobrazení a obnovu návrhu.
-- [ ] Převzaté směny mimo rozsah předat plánovači jako pevné podklady; návrh je nesmí měnit. Údaje uvnitř rozsahu se nesmějí tiše přepsat: při překryvu s již vloženými směnami předložit manažerovi konflikt a požadovat jeho vyřešení.
-- [ ] Nezávisle zkontrolovat celý výsledný měsíc včetně přechodu mezi převzatou a doplánovanou částí a hranic měsíce. Neznámý zbytek měsíce nezobrazovat jako ověřené volno; potvrzení se řídí stávajícími bezpečnostními podmínkami.
-- [ ] Testy: doplánování posledních 14–15 dní, zachování vložené první části, chybějící vstup, konflikt s existující směnou, odpočinek a víkendové volno přes hranici částí, nedostatečné obsazení a chybějící okolní historie. Ověřit, že původní tok pro celý měsíc funguje beze změny.
+- [x] Rozšířit měsíční vstup o výslovný souvislý rozsah návrhu uvnitř zvoleného měsíce. Bez zadaného rozsahu zachovat celý měsíc. Prověřit vstup, API, uložení verze, zobrazení a obnovu návrhu.
+- [x] Převzaté směny mimo rozsah předat plánovači jako pevné podklady; návrh je nesmí měnit. Údaje uvnitř rozsahu se nesmějí tiše přepsat: při překryvu s již vloženými směnami předložit manažerovi konflikt a požadovat jeho vyřešení.
+- [x] Nezávisle zkontrolovat celý výsledný měsíc včetně přechodu mezi převzatou a doplánovanou částí a hranic měsíce. Neznámý zbytek měsíce nezobrazovat jako ověřené volno; potvrzení se řídí stávajícími bezpečnostními podmínkami.
+- [x] Testy: doplánování posledních 14–15 dní, zachování vložené první části, chybějící vstup, konflikt s existující směnou, odpočinek a víkendové volno přes hranici částí, nedostatečné obsazení a chybějící okolní historie. Ověřit, že původní tok pro celý měsíc funguje beze změny.
 
 ## Etapa D — preference střídání a nezávislé vyhodnocení
 
