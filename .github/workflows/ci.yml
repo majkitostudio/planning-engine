@@ -70,3 +70,50 @@ jobs:
 
       - name: Testy solveru
         run: python -m unittest discover -s scripts -p "monthly_solver_test.py"
+
+  database-integration:
+    name: Database integration tests
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_DB: planning_monthly_test
+          POSTGRES_USER: planning
+          POSTGRES_PASSWORD: planning
+        ports:
+          - 55439:5432
+        options: >-
+          --health-cmd "pg_isready -U planning -d planning_monthly_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      DATABASE_URL: postgresql://planning:planning@localhost:55439/planning_monthly_test?schema=public
+      PLANNING_AUTH_SESSION_INTEGRATION: "1"
+      PLANNING_CONFIRMATION_RACE_INTEGRATION: "1"
+      PLANNING_PERSISTENCE_INTEGRATION: "1"
+      PLANNING_MONTHLY_INTEGRATION: "1"
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      - name: Instalace závislostí
+        run: npm ci
+
+      - name: Aplikace databázových migrací
+        run: npx prisma migrate deploy
+
+      - name: Databázové integrační testy
+        run: >-
+          npx vitest run
+          lib/auth/account-session.integration.test.ts
+          lib/planning/confirmation-race.integration.test.ts
+          lib/planning/persistence-prisma.integration.test.ts
+          lib/planning/monthly-prisma.integration.test.ts
