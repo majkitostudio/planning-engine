@@ -66,9 +66,9 @@ testovacím předpokladem, nikoli schváleným provozním pravidlem.
   blokátory i zákaz automatického potvrzení zůstávají.
 - Ukázkové přehledy jsou odstraněny, tlačítka zaměstnanců mají čitelný styl a
   přehled i nastavení neukazují technické názvy režimů či interních proměnných.
-- Prohlížečově ověřeno při 390×844 a 1280×900 px a dostupnost odkazu přeskočení
-  při ovládání klávesnicí. Bez databáze nebyl proveden průchod s uloženými daty;
-  tento provozní tok zůstává `NOT VERIFIED`.
+- Prohlížečově ověřeno při 390×844 a 1280×900 px; odkaz přeskočení i náhled
+  syntetického rosteru lze ovládat klávesnicí. Bez databáze nebyl proveden zápis
+  ani načtení uložených dat; tento provozní tok zůstává `NOT VERIFIED`.
 
 - Neověřené návaznosti na začátku nebo konci měsíce brání potvrzení návrhu.
   Dva dny volna při víkendové práci nemusí následovat po sobě; viz

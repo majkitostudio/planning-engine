@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { parseRosterCsv, type RosterImportDay, type RosterImportResult } from "@/lib/planning/roster-import";
+import { rosterHistoryEmptyState } from "@/lib/planning/roster-history-view";
 
 type Employee = { readonly id: string; readonly displayName: string };
 type SavedImport = { readonly id: string; readonly periodStart: string; readonly periodEnd: string; readonly source: string; readonly version: number; readonly createdAt: string; readonly employeeCount: number; readonly knownDayCount: number };
@@ -32,20 +33,30 @@ export function RosterHistoryPanel({ canManage, initialMonth }: { readonly canMa
   const [dayEdits, setDayEdits] = useState<Record<string, EditableDay>>({});
   const [savedImports, setSavedImports] = useState<readonly SavedImport[]>([]);
   const [savedImportsMonth, setSavedImportsMonth] = useState("");
+  const [savedImportsUnavailable, setSavedImportsUnavailable] = useState(false);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
   const [notice, setNotice] = useState("");
   const [error, setError] = useState("");
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  async function loadImports(selectedMonth: string) {
+  async function loadImports(selectedMonth: string, signal?: AbortSignal) {
     try {
-      const response = await fetch(`/api/planning/roster-history?month=${encodeURIComponent(selectedMonth)}`);
+      const response = await fetch(`/api/planning/roster-history?month=${encodeURIComponent(selectedMonth)}`, signal ? { signal } : undefined);
       const result = await response.json();
-      if (response.ok && result.ok) setSavedImports(result.imports);
-      else setSavedImports([]);
-    } catch { setSavedImports([]); }
-    finally { setSavedImportsMonth(selectedMonth); }
+      if (!response.ok || !result.ok) throw new Error("Uložené podklady nejsou dostupné.");
+      if (!signal?.aborted) {
+        setSavedImports(result.imports);
+        setSavedImportsUnavailable(false);
+        setSavedImportsMonth(selectedMonth);
+      }
+    } catch {
+      if (!signal?.aborted) {
+        setSavedImports([]);
+        setSavedImportsUnavailable(true);
+        setSavedImportsMonth(selectedMonth);
+      }
+    }
   }
 
   useEffect(() => {
@@ -56,12 +67,7 @@ export function RosterHistoryPanel({ canManage, initialMonth }: { readonly canMa
         if (!response.ok || !result.ok) throw new Error(result.message ?? "Seznam zaměstnanců se nepodařilo načíst.");
         setEmployees(result.employees);
       }),
-      fetch(`/api/planning/roster-history?month=${encodeURIComponent(month)}`, { signal: controller.signal }).then(async (response) => {
-        const result = await response.json();
-        if (!response.ok || !result.ok) throw new Error(result.message ?? "Uložená návaznost se nepodařilo načíst.");
-        setSavedImports(result.imports);
-        setSavedImportsMonth(month);
-      }),
+      Promise.resolve().then(() => loadImports(month, controller.signal)),
     ]).catch((cause: unknown) => {
       if (!controller.signal.aborted) setError(cause instanceof Error ? cause.message : "Data návaznosti se nepodařilo načíst.");
     }).finally(() => { if (!controller.signal.aborted) setLoading(false); });
@@ -74,6 +80,8 @@ export function RosterHistoryPanel({ canManage, initialMonth }: { readonly canMa
     const value = dayEdits[dayKey(employeeIndex, date)] ?? initialCell(day);
     return value.status !== "shift" || (validTime(value.startTime) && validTime(value.endTime) && value.startTime < value.endTime);
   })));
+  const importsLoadState = loading || savedImportsMonth !== month ? "loading" : savedImportsUnavailable ? "unavailable" : "ready";
+  const importsEmptyMessage = rosterHistoryEmptyState(importsLoadState, savedImports.length);
 
   function clearPreview() { setPreview(null); setEmployeeMapping({}); setDayEdits({}); setNotice(""); setError(""); }
 
@@ -191,7 +199,7 @@ export function RosterHistoryPanel({ canManage, initialMonth }: { readonly canMa
         <div className="roster-history__actions"><button type="button" className="btn btn--primary" disabled={!canManage || busy || !mappingValid || !editValid} onClick={() => void savePreview()}>{busy ? "Ukládám…" : "Uložit zkontrolované podklady"}</button><button type="button" className="btn btn--secondary" disabled={busy} onClick={clearSource}>Zrušit náhled a vymazat obsah</button></div>
       </section> : null}
 
-      <section className="roster-history__saved" aria-labelledby="roster-saved-title"><h3 id="roster-saved-title">Uložené podklady pro {month}</h3>{loading || savedImportsMonth !== month ? <p role="status">Načítám…</p> : savedImports.length ? <ul>{savedImports.map((item) => <li key={item.id}><span>{item.periodStart} až {item.periodEnd} · verze {item.version}</span><span>{item.employeeCount} osob · {item.knownDayCount} známých dnů</span><time dateTime={item.createdAt}>{new Intl.DateTimeFormat("cs-CZ", { dateStyle: "medium", timeStyle: "short" }).format(new Date(item.createdAt))}</time></li>)}</ul> : <p>Pro toto období zatím nejsou uložené žádné podklady.</p>}</section>
+      <section className="roster-history__saved" aria-labelledby="roster-saved-title"><h3 id="roster-saved-title">Uložené podklady pro {month}</h3>{importsEmptyMessage ? <p role="status">{importsEmptyMessage}</p> : <ul>{savedImports.map((item) => <li key={item.id}><span>{item.periodStart} až {item.periodEnd} · verze {item.version}</span><span>{item.employeeCount} osob · {item.knownDayCount} známých dnů</span><time dateTime={item.createdAt}>{new Intl.DateTimeFormat("cs-CZ", { dateStyle: "medium", timeStyle: "short" }).format(new Date(item.createdAt))}</time></li>)}</ul>}</section>
       <p className="roster-history__footnote">Uložení podkladů nemění potvrzený rozpis. Měsíční návrh je při nové kontrole znovu porovná s okolní historií.</p>
     </div>
   </section>;

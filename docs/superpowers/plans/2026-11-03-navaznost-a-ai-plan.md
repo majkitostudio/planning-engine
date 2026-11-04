@@ -64,7 +64,7 @@
 - [x] Přidat stránku do hlavní navigace. Podporuje vložení i výběr staženého CSV, výběr období, náhled, opravy párování a ruční kontrolu neznámých buněk. Zápis je omezen na manažera serverově.
 - [x] Přidat počty směn/volna/neznámých buněk a samostatné uložení podkladů. Změna měsíce nebo vloženého textu zneplatní náhled; opravy párování, stavu a času jsou výslovnou součástí zkontrolovaného náhledu. Zrušení nic nezapisuje.
 - [x] V měsíčním formuláři ukázat stav sedmi okolních dnů; neznámou budoucnost ponechat neověřenou a odkázat na stránku návaznosti.
-- [ ] Ověřit oprávnění, chybný vstup, neúplný náhled, znovunačtení a konflikt dvou importů. Browser ověření provést se smyšlenými daty pouze způsobem, který nezasáhne skutečná data; pokud to nelze bezpečně zajistit, uvést omezení.
+- [x] Testy ověřují oprávnění, chybný vstup, neúplný náhled, znovunačtení a konfliktní/opakované importy. Prohlížeč ověřil náhled syntetického CSV bez ukládání; uložený průchod zůstává `NOT VERIFIED`, protože v prostředí není dostupná databáze.
 
 ### Doplnění části měsíce
 
@@ -99,7 +99,7 @@
 - [x] Nahradit kódy stavů a názvy vnitřních nástrojů krátkými srozumitelnými výsledky, konkrétními problémy a chybějícími podklady; manažer vidí, zda plánovač pokyny vyhodnotil. Tvrzení AI je výslovně označeno jako nezávisle neověřené.
 - [x] Odstranit ruční úpravu návrhu z obrazovky, výběr simulovaného scénáře a ukázkové přehledy. Zůstává jedno výslovné potvrzení manažerem; serverové blokátory jsou zachované a automatické potvrzení neexistuje.
 - [x] Zlepšit čitelnost tlačítek a správy zaměstnanců, odstranit technické texty z přehledu a nastavení a pravdivě uvést, že lokální plánovač pokyny nevyhodnocuje.
-- [ ] Ověřit ovládání klávesnicí, čitelnost a zobrazení na šířkách odpovídajících anotacím. Nemanipulovat se skutečnými zaměstnanci ani s potvrzením rozpisu.
+- [x] Ověřit ovládání klávesnicí, čitelnost a zobrazení při 390×844 a 1280×900 px. Náhled rosteru se ovládá klávesnicí; test používal jen syntetická data a nic neukládal ani nepotvrzoval.
 
 ## Závěrečné ověření a předání
 
