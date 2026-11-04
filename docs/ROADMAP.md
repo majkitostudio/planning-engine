@@ -131,6 +131,17 @@ testovacím předpokladem, nikoli schváleným provozním pravidlem.
 
 ### Další kontrola a postup před uzavřením MVP
 
+- `VERIFIED` — Přihlášený průchod na izolované PostgreSQL se syntetickým
+  zaměstnancem a záměrně nulovým testovacím obsazením vytvořil prázdný návrh,
+  zobrazil chybějící návaznosti, zablokoval potvrzení a po obnovení stránky
+  návrh znovu načetl. V databázi byl jeden návrh a žádný potvrzený rozpis.
+  Neověřuje to kvalitu návrhu s reálným obsazením ani celý tok potvrzení.
+- `VERIFIED` / oprava nutná — Ve stejném průchodu tabulka uloženého nastavení
+  obsazení obsahovala nula záznamů, formulář však předvyplnil výchozí hodnoty
+  a označil je za uložený týdenní profil. `getCompleteStaffingSettings()`
+  chybějící hodnoty doplňuje výchozími hodnotami, takže současný text může
+  vzbudit dojem schváleného nastavení. Zobrazit skutečný zdroj a vyřešit
+  potvrzení chybějících hodnot před dalším praktickým použitím.
 - `VERIFIED` — Na větvi `c7218af` prošlo všech sedm migrací na nově vytvořené
   izolované PostgreSQL 16. Testy včetně databázových a lokálního plánovače:
   484 úspěšných, jeden přeskočený integrační test Gemini. Databáze obsahovala
