@@ -35,4 +35,21 @@ describe("měsíční plánování se serverovými podklady", () => {
     expect(mocks.loadRosterSnapshot).not.toHaveBeenCalled();
     expect(mocks.execute).not.toHaveBeenCalled();
   });
+  it("odmítne 201 zaměstnance před načtením podkladů a spuštěním plánovače", async () => {
+    const employees = Array.from({ length: 201 }, (_, index) => ({
+      id: `e${index + 1}`,
+      displayName: `Test ${index + 1}`,
+      employmentType: "full_time",
+    }));
+    const response = await POST(request({ ...input, employees }));
+
+    expect(response.status).toBe(400);
+    await expect(response.json()).resolves.toMatchObject({
+      ok: false,
+      message: "Plán lze připravit nejvýše pro 200 zaměstnanců.",
+    });
+    expect(mocks.loadBoundary).not.toHaveBeenCalled();
+    expect(mocks.loadRosterSnapshot).not.toHaveBeenCalled();
+    expect(mocks.execute).not.toHaveBeenCalled();
+  });
 });

@@ -12,6 +12,21 @@ const input = {
 };
 
 describe("monthly planning input", () => {
+  it("přijme nejvýše 200 zaměstnanců a další odmítne srozumitelnou chybou", () => {
+    const employees = Array.from({ length: 200 }, (_, index) => ({
+      id: `e${index + 1}`,
+      displayName: `Test ${index + 1}`,
+      employmentType: "full_time",
+    }));
+
+    expect(validateMonthlyInput({ ...input, employees }).ok).toBe(true);
+    expect(validateMonthlyInput({ ...input, employees: [...employees, {
+      id: "e201",
+      displayName: "Test 201",
+      employmentType: "full_time",
+    }] })).toEqual({ ok: false, message: "Plán lze připravit nejvýše pro 200 zaměstnanců." });
+  });
+
   it("accepts valid input and keeps advisory instructions", () => {
     expect(validateMonthlyInput(input)).toEqual({ ok: true, value: input });
   });

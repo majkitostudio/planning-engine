@@ -16,7 +16,7 @@ Opravené nálezy i otevřené kroky jsou označené samostatně. Před širší
 | Vysoká | OPRAVENO — zápis přes starší API vyžaduje managera a chrání uložený záznam; souběžné potvrzení atomicky uloží právě jeden plán a auditní událost. |
 | Vysoká | OPRAVENO — starší relace se po resetu, změně hesla, změně role i deaktivaci odmítají podle verze relace; ověřeno také proti izolované PostgreSQL. |
 | Vysoká | Částečně opraveno — nastavení, API a měsíční formulář rozlišují uložené hodnoty od výchozích; stále je třeba rozhodnout, zda samotné uložení celé tabulky znamená schválení výchozích hodnot a jak se má chovat operativní náhrada při chybějícím profilu. |
-| Další | Opravit zjištěné chyby přístupnosti, neexistující návrh, časovou změnu a nesoulad limitu 200 zaměstnanců; ověřit výkon na reprezentativních syntetických zadáních. |
+| Další | Opravit zjištěné chyby přístupnosti a neexistující návrh, ošetřit časovou změnu; výkon plánování zůstává neověřený. Vstup nad 200 zaměstnanců je odmítnut před spuštěním solveru. |
 | Dokončení MVP | Rozhodnout o pravidlech mazání a implementovat správu jednotlivých rozpisů; doplnit Python a izolované databázové testy do CI a dokončit kontrolu uživatelského toku. |
 
 Všechny nalezené commitované větve jsou zahrnuté v `main`. Zachované zálohy,
@@ -189,11 +189,13 @@ testovacím předpokladem, nikoli schváleným provozním pravidlem.
 
 ### Další kontrola a postup před uzavřením MVP
 
-- `VERIFIED` / oprava nutná — Syntetický vstup s 201 zaměstnanci prošel
-  `validateMonthlyInput()`, ale lokální solver má maximum 200 zaměstnanců a
-  běh skončil kódem `solver_invalid_output`. Sjednotit limit vstupní kontroly
-  a plánovače a sdělit překročení limitu před spuštěním; bez zátěžového testu
-  nelze z tohoto limitu vyvozovat provozní kapacitu pro 200 zaměstnanců.
+- `VERIFIED` / opraveno — Syntetický vstup s 201 zaměstnanci dříve prošel
+  `validateMonthlyInput()`, zatímco lokální solver přijímá nejvýše 200.
+  Vstupní kontrola nyní odmítne více než 200 zaměstnanců s jasnou chybou ještě
+  před načtením dalších podkladů a spuštěním solveru. Testy ověřují hranici
+  200/201 i průchod API. Limit je technické omezení, nikoli důkaz provozní
+  kapacity pro 200 zaměstnanců; tu je třeba měřit na reprezentativních
+  syntetických scénářích.
 - `VERIFIED` / omezený výkonnostní pokus — Přímé volání lokálního solveru pro
   listopad 2026 a 101 syntetických zaměstnanců s testovacím obsazením 15/7 ve
   všední dny a 7/3 o víkendu vrátilo `unknown` po 20,94 s při limitu řešení
@@ -436,8 +438,10 @@ označíme za hotovou až po opravě a doloženém ověření jejího rozsahu.
 5. **P1 — Pravidla a limity plánování.**
    - [ ] Uzavřít potřebná doménová rozhodnutí a ověřit návaznosti, nepokryté dny,
      absence a částečný měsíc.
-   - [ ] Sjednotit limit 200 zaměstnanců mezi vstupní kontrolou a solverem;
-     ověřit časové limity na schválených syntetických scénářích.
+   - [x] Sjednotit limit 200 zaměstnanců mezi vstupní kontrolou a solverem;
+     vstup nad limit odmítnout před načtením podkladů a spuštěním solveru.
+   - [ ] Ověřit výkon na schválených syntetických scénářích; technický limit
+     nepovažovat za doloženou provozní kapacitu.
    - [ ] Ošetřit neexistující i nejednoznačné místní časy při změně času.
 6. **P1 — Správa rozpisů.**
    - [ ] Navrhnout a implementovat seznam rozpisů s možností smazat jednotlivý

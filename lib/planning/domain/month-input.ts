@@ -42,6 +42,7 @@ export interface MonthlyPlanningInput {
 }
 
 type InputResult = { readonly ok: true; readonly value: MonthlyPlanningInput } | { readonly ok: false; readonly message: string };
+export const MAX_MONTHLY_EMPLOYEES = 200;
 const invalid = (message: string): InputResult => ({ ok: false, message });
 const record = (v: unknown): v is Record<string, unknown> => typeof v === "object" && v !== null && !Array.isArray(v);
 const shift = (v: unknown): v is ShiftKind => v === "morning" || v === "afternoon";
@@ -82,6 +83,9 @@ export function validateMonthlyInput(value: unknown): InputResult {
   let dates: string[];
   try { dates = datesInMonth(value.month); } catch { return invalid("Měsíc není platný."); }
   if (!Array.isArray(value.employees) || value.employees.length === 0) return invalid("Zadejte zaměstnance.");
+  if (value.employees.length > MAX_MONTHLY_EMPLOYEES) {
+    return invalid(`Plán lze připravit nejvýše pro ${MAX_MONTHLY_EMPLOYEES} zaměstnanců.`);
+  }
   const ids = new Set<string>();
   for (const employee of value.employees) {
     if (!record(employee) || typeof employee.id !== "string" || !employee.id.trim() || ids.has(employee.id) || typeof employee.displayName !== "string" || !employee.displayName.trim() || employee.employmentType !== "full_time") return invalid("Zaměstnanec je neplatný nebo duplicitní.");
