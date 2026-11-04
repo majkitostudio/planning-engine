@@ -140,6 +140,11 @@ testovacím předpokladem, nikoli schváleným provozním pravidlem.
 
 ### Další kontrola a postup před uzavřením MVP
 
+- `VERIFIED` / oprava nutná — Syntetický vstup s 201 zaměstnanci prošel
+  `validateMonthlyInput()`, ale lokální solver má maximum 200 zaměstnanců a
+  běh skončil kódem `solver_invalid_output`. Sjednotit limit vstupní kontroly
+  a plánovače a sdělit překročení limitu před spuštěním; bez zátěžového testu
+  nelze z tohoto limitu vyvozovat provozní kapacitu pro 200 zaměstnanců.
 - `VERIFIED` / přístupnost — Při šířce prohlížeče 390 × 844 px šlo otevřít
   mobilní menu a přejít na Návaznost směn. Po přechodu se menu vizuálně zavřelo,
   ale stisk `Tab` přesunul fokus na skrytý odkaz Zaměstnanci; fokus nebyl na
