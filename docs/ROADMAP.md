@@ -140,6 +140,14 @@ testovacím předpokladem, nikoli schváleným provozním pravidlem.
 
 ### Další kontrola a postup před uzavřením MVP
 
+- `VERIFIED` / vysoká priorita — Starší týdenní a náhradové API dovolilo
+  přihlášenému vieweru vytvořit uložený syntetický běh a poté přes zvolený
+  identifikátor přepsat jeho obsah návrhem náhrady. V izolované PostgreSQL
+  zůstal jeden nepotvrzený záznam, jehož scénář se změnil na náhradu. Routy
+  kontrolují přihlášení, nikoli roli pro vytvoření; ukládání používá `upsert`
+  podle dodaného identifikátoru. Potvrzené záznamy nebyly v pokusu měněny;
+  dopad kolize na ně vyžaduje samostatný test. Opravit oprávnění a ochranu
+  identit existujících záznamů, potom pokrýt role a kolize integračním testem.
 - `VERIFIED` — Přihlášený průchod na izolované PostgreSQL se syntetickým
   zaměstnancem a záměrně nulovým testovacím obsazením vytvořil prázdný návrh,
   zobrazil chybějící návaznosti, zablokoval potvrzení a po obnovení stránky
@@ -182,3 +190,21 @@ testovacím předpokladem, nikoli schváleným provozním pravidlem.
 - `OPEN QUESTION` — Uzavřít zbývající pravidla a způsob práce s pokyny AI;
   lokální OR-Tools volný text nevyhodnocuje. Produkční provoz zůstává mimo
   aktuálně ověřený rozsah.
+
+### Doporučené pořadí dokončení před závěrečným testováním
+
+1. Zabezpečit oprávnění a ukládání starších API a zneplatnění starých relací;
+   doplnit nezávislé testy viewer/manager a souběhu.
+2. Opravit označení zdroje obsazení a vyjasnit, jak manažer potvrzuje chybějící
+   nebo výchozí hodnoty. Zkontrolovat ostatní místa používající výchozí profil.
+3. Uzavřít potřebná doménová rozhodnutí, následně prověřit návaznosti,
+   nepokryté dny, absenci, časový limit solveru a částečný měsíc.
+4. Navrhnout a implementovat správu rozpisů včetně jednotlivého mazání a
+   dohodnutého zachování historie, auditu a návazností.
+5. Rozhodnout o bezpečném použití AI a vysvětlování pokynů; současný lokální
+   plánovač volný text nevyhodnocuje.
+6. Doplnit kontroly Pythonu a izolované databáze do CI, posoudit vývojové
+   závislosti a dokončit kontrolu přístupnosti a chybových stavů.
+7. Provést závěrečný syntetický průchod návrh → kontrola → potvrzení →
+   obnovení, včetně souběhu a rolí; reálná data a další nasazení řešit až v
+   samostatně odsouhlaseném rozsahu.
