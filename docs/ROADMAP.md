@@ -459,6 +459,15 @@ označíme za hotovou až po opravě a doloženém ověření jejího rozsahu.
      `output/` zůstávají zachované. Celkový P0 úklid proto není dokončen:
      obsah záloh a zachovaných podkladů nebyl určen k odstranění a stromy ani
      větve nebyly naslepo smazány.
+   - `VERIFIED` / `BLOCKED` (5. 11. 2026) — Čistý `cline/8f998` a jeho
+     redundantní lokální větev byly odstraněny. Diff `cline/9dbfe` byl nejprve
+     uložen do `stash@{0}` (`audit-preserve-cline-9dbfe-before-cleanup`), poté
+     byla odstraněna jeho lokální větev i registrace worktree. `git worktree
+     remove` selhal při odstraňování ignorovaného `node_modules` kvůli příliš
+     dlouhé cestě a zanechal osiřelou složku
+     `C:\Users\mikes\.cline\worktrees\9dbfe\planning-engine`. Následný
+     požadavek na její rekurzivní odstranění automatická kontrola zamítla;
+     složka zůstává zachována a P0 úklid není dokončen.
 1. **P0 — Starší API a ochrana rozpisů.**
    - [x] Vyžadovat roli managera pro zápis přes týdenní `/run` a `/replacement`;
      viewer zůstává pouze pro čtení.
