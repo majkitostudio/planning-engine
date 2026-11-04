@@ -206,9 +206,10 @@ testovacím předpokladem, nikoli schváleným provozním pravidlem.
   Potvrzené standardní směny těmito přechody neprocházejí. `scripts/monthly_solver.py`
   nyní samostatně odmítá nejednoznačné i neexistující vlastní časy při přímém
   volání. V izolovaném Python 3.14 prostředí s připnutými závislostmi prošlo
-  všech 23 testů solveru. Workflow CI nyní spouští tuto sadu také; výsledek
-  vzdáleného běhu je třeba ověřit. Vzorkovací kontrola zatím není ověřena pro
-  libovolná historická časová pásma nebo jejich neobvyklé změny.
+  všech 23 testů solveru. GitHub Actions na `b596bdc` (run `41914690570`)
+  úspěšně dokončil Python solver job i původní job s lintem, typecheckem,
+  JavaScript testy, validací Prisma a buildem. Vzorkovací kontrola zatím není
+  ověřena pro libovolná historická časová pásma nebo jejich neobvyklé změny.
 - `VERIFIED` / omezený výkonnostní pokus — Přímé volání lokálního solveru pro
   listopad 2026 a 101 syntetických zaměstnanců s testovacím obsazením 15/7 ve
   všední dny a 7/3 o víkendu vrátilo `unknown` po 20,94 s při limitu řešení
