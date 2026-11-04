@@ -132,6 +132,11 @@ testovacím předpokladem, nikoli schváleným provozním pravidlem.
   obrazovka jsou mezitím řešeny novější implementací; zastaralý popis v
   `package.json` byl opraven samostatně. Zálohy nebyly aplikovány ani smazány;
   úplná shoda jejich vizuálních úprav se současným UI nebyla prokázána.
+- Nesledovaný `design-qa.md` popisuje historickou vizuální kontrolu
+  simulovaného týdenního rozhraní z 1. 11. 2026 a obsahuje závěr „passed“.
+  Složka `output/playwright` obsahuje 13 historických PNG podkladů. Tyto
+  nesledované soubory byly zachovány; jejich závěr není důkazem aktuálního
+  stavu měsíčního rozhraní ani úplné přístupnosti.
 - Porovnání stromu `cline/9dbfe`: upravené testovací soubory jsou totožné s
   `main` a změny exportů a importu již `main` obsahuje. Nesledovaný starší
   `ai-provider.ts` se od současného liší; jeho převzetí by odstranilo novější
@@ -265,6 +270,9 @@ testovacím předpokladem, nikoli schváleným provozním pravidlem.
   pokrytými příklady jsou 35hodinový odpočinek, směny přes hranici měsíce a
   chybějící historie. Nejde o důkaz správnosti všech kombinací pravidel ani
   o pracovněprávní posudek.
+- `VERIFIED` / GitHub CI — Na `e8ba5cf` prošel běh 41869577350: lint,
+  typecheck, Vitest, validace Prisma schématu a build. Workflow samostatně
+  nespouští Python testy solveru ani integrační testy s databází.
 - `VERIFIED` / oprava nutná — Již vydaná relace po resetu a následné změně
   hesla znovu umožní přístup. Integrační test použil syntetický účet a
   izolovanou PostgreSQL: stejná relace dostala z chráněného API před resetem
