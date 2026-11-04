@@ -169,6 +169,10 @@ testovacím předpokladem, nikoli schváleným provozním pravidlem.
   podle dodaného identifikátoru. Potvrzené záznamy nebyly v pokusu měněny;
   dopad kolize na ně vyžaduje samostatný test. Opravit oprávnění a ochranu
   identit existujících záznamů, potom pokrýt role a kolize integračním testem.
+  Test `tests/planning-authenticated-flow.test.ts` přitom výslovně očekává,
+  že viewer může starý týdenní návrh spustit; to odporuje aktuálnímu rozhodnutí
+  v `DOMAIN_DECISIONS.md`, podle něhož viewer pouze čte. Při opravě změnit i
+  tento test a zachovat oddělenou kontrolu potvrzení.
 - `VERIFIED` — Přihlášený průchod na izolované PostgreSQL se syntetickým
   zaměstnancem a záměrně nulovým testovacím obsazením vytvořil prázdný návrh,
   zobrazil chybějící návaznosti, zablokoval potvrzení a po obnovení stránky
