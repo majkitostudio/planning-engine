@@ -186,7 +186,13 @@ testovacím předpokladem, nikoli schváleným provozním pravidlem.
   a čas potvrzení zůstaly zachovány. Test používá simulated režim náhrad a
   neprokazuje dopad na samostatnou tabulku měsíčních návrhů. Opravit oprávnění
   a ochranu identit existujících záznamů, potom pokrýt role a kolize integračním
-  testem.
+  testem. Samostatný syntetický test načtení návaznosti dále ukázal možný
+  dopad změněného seznamu zaměstnanců: pro září 2026 zůstaly dny 5.–7. října
+  u zaměstnance bez původního týdenního podkladu neznámé, ale po nahrazení
+  vstupu seznamem ze simulované náhrady byla návaznost pro téhož zaměstnance
+  označena jako úplná a bez směn. Test sestavil upravené databázové řádky v
+  paměti; nešlo o společný průchod útoku až po měsíční potvrzení. Doplnit
+  test integrity potvrzeného vstupu i návaznosti a nesprávné podklady prověřit.
   Test `tests/planning-authenticated-flow.test.ts` přitom výslovně očekává,
   že viewer může starý týdenní návrh spustit; to odporuje aktuálnímu rozhodnutí
   v `DOMAIN_DECISIONS.md`, podle něhož viewer pouze čte. Při opravě změnit i
