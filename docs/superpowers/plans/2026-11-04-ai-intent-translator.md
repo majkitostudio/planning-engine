@@ -72,9 +72,24 @@
 - [x] **Step 5: Run** `npm run lint` and `npm run typecheck`; both passed after removing one unused test import.
 - [x] **Step 6: Review** the final diff and verify no route, UI, persistence, configuration, dependency, migration, or generated files were added.
 
+### Task 3: Require manager approval before exposing S6 to planning
+
+**Files:**
+- Modify: `lib/planning/intent-translator.ts`
+- Test: `lib/planning/intent-translator.test.ts`
+
+**Interface:**
+- `getApprovedShiftRotationPreference(translation: PlanningIntentTranslation, managerApproved: boolean): boolean | undefined` returns the translated S6 value only for a recognized result with explicit manager approval. It returns `undefined` for rejection, ambiguity, or unsupported intent.
+
+- [x] **Step 1: Write tests** that approved recognized results return both `true` and `false`, while rejected, ambiguous, and unsupported results return `undefined`.
+- [x] **Step 2: Run** `npm test -- --run lib/planning/intent-translator.test.ts`; the new tests failed because the approval helper did not exist.
+- [x] **Step 3: Implement** the deterministic approval helper in `lib/planning/intent-translator.ts`.
+- [x] **Step 4: Run** the focused contract tests and the complete project verification set.
+- [x] **Step 5: Review** the diff; the helper returns a value only when given explicit approval, and no runtime caller was added.
+
 ## Verification Record
 
-- `npm test`: 69 files passed, 3 skipped; 474 tests passed, 6 skipped.
+- `npm test`: 69 files passed, 3 skipped; 479 tests passed, 6 skipped.
 - `npm run lint`: passed.
 - `npm run typecheck`: passed.
 - `npm run build`: passed.

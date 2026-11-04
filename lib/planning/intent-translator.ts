@@ -34,3 +34,12 @@ export function isPlanningIntentTranslation(value: unknown): value is PlanningIn
   return (candidate.status === "ambiguous" || candidate.status === "unsupported")
     && hasExactKeys(candidate, ["version", "status"]);
 }
+
+/** Expose an AI-derived S6 value to planning only after explicit manager approval. */
+export function getApprovedShiftRotationPreference(
+  translation: PlanningIntentTranslation,
+  managerApproved: boolean,
+): boolean | undefined {
+  if (!managerApproved || translation.status !== "recognized") return undefined;
+  return translation.enabled;
+}

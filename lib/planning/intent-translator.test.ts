@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { isPlanningIntentTranslation } from "./intent-translator";
+import { getApprovedShiftRotationPreference, isPlanningIntentTranslation } from "./intent-translator";
 
 describe("isPlanningIntentTranslation", () => {
   it.each([
@@ -24,5 +24,24 @@ describe("isPlanningIntentTranslation", () => {
     [],
   ])("rejects invalid or extended output %j", (value) => {
     expect(isPlanningIntentTranslation(value)).toBe(false);
+  });
+});
+
+describe("getApprovedShiftRotationPreference", () => {
+  it.each([true, false])("returns the recognized S6 value %s after manager approval", (enabled) => {
+    expect(getApprovedShiftRotationPreference({
+      version: 1,
+      status: "recognized",
+      intent: "shift_rotation_preference",
+      enabled,
+    }, true)).toBe(enabled);
+  });
+
+  it.each([
+    [{ version: 1, status: "recognized", intent: "shift_rotation_preference", enabled: true }, false],
+    [{ version: 1, status: "ambiguous" }, true],
+    [{ version: 1, status: "unsupported" }, true],
+  ] as const)("does not apply a rejected or unresolved translation %j", (translation, managerApproved) => {
+    expect(getApprovedShiftRotationPreference(translation, managerApproved)).toBeUndefined();
   });
 });
