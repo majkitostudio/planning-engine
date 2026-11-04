@@ -126,6 +126,12 @@ testovacím předpokladem, nikoli schváleným provozním pravidlem.
 - Při opakované kontrole byl nalezen další pracovní strom `jolly-pixel` v
   odpojeném stavu. Jeho pracovní strom byl čistý a commit `6077301` je již
   předkem `main`; strom zůstává zachován.
+- Dvě zachované zálohy obsahují starší změny. První zachycuje průběžný audit,
+  jehož body byly přeneseny nebo aktualizovány v této roadmapě; druhá obsahuje
+  starší měsíční dokumentaci a podobu formuláře. Současný měsíční směr a
+  obrazovka jsou mezitím řešeny novější implementací; zastaralý popis v
+  `package.json` byl opraven samostatně. Zálohy nebyly aplikovány ani smazány;
+  úplná shoda jejich vizuálních úprav se současným UI nebyla prokázána.
 - Porovnání stromu `cline/9dbfe`: upravené testovací soubory jsou totožné s
   `main` a změny exportů a importu již `main` obsahuje. Nesledovaný starší
   `ai-provider.ts` se od současného liší; jeho převzetí by odstranilo novější

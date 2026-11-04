@@ -58,12 +58,12 @@ stav `VERIFIED` bez dalšího sjednocení s aktuálním zadáním projektu.
 - Email uvádí šest zaměstnanců na částečný úvazek. To potvrzuje, že v reálném
   provozu existují, ale nemění rozhodnutí, že jsou mimo první funkční řez.
 
-### Rozpor k vyřešení před použitím emailu jako specifikace
+### Historický rozpor v podkladech
 
 Email uvádí víkendovou ranní směnu 7:45–18:00 a odpolední 10:45–21:00.
-Aktuální projektové rozhodnutí (`VERIFIED`) uvádí 7:45–16:30 a 12:45–21:00.
-Dokud manager nepotvrdí, která varianta platí pro tento projekt, zůstávají
-stávající potvrzené časy beze změny a email je pouze zdrojem otevřené otázky.
+Pozdější rozhodnutí pro měsíční MVP z 31. 10. 2026 potvrzuje pro tento projekt
+7:45–16:30 a 12:45–21:00. Dřívější email zůstává historickým podkladem;
+neprokazuje aktuální časy používané mimo tento projekt.
 
 Email zároveň popisuje pravidlo 35 hodin po šesti pracovních dnech, které se
 se stávajícím rozhodnutím shoduje. Pravidlo „kdo pošle požadavek dříve, má
@@ -81,7 +81,8 @@ mění zadání:
   plánování.
 - **Manažer návrh potvrzuje.** Aplikace může uložit nepotvrzený návrh, ale bez
   potvrzení jej nesmí aplikovat jako potvrzený rozpis.
-- **První funkční verze:** jeden týden, zaměstnanci na plný úvazek.
+- **Původní první funkční verze:** jeden týden, zaměstnanci na plný úvazek;
+  rozsah pilotu byl později změněn na celý měsíc, viz rozhodnutí výše.
 - **Potvrzené časy směn:** ranní 7:45–16:30 (i víkend), odpolední ve všední den
   13:15–21:00, víkendová odpolední 12:45–21:00. Víkendový začátek 12:45 je
   záměrný kvůli půlhodinové obědové přestávce.
