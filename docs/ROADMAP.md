@@ -194,6 +194,14 @@ testovacím předpokladem, nikoli schváleným provozním pravidlem.
   obecné `503` (to vyplývá z kódu, API při tomto pokusu voláno nebylo).
   Doplnit bezpečné opakování a srozumitelný stav pro uživatele, ověřit i souběh
   různých verzí a reakci rozhraní. Pokus použil izolovanou PostgreSQL 16.
+- `VERIFIED` / starší týdenní potvrzení — Na `275c364` bylo v izolované
+  PostgreSQL pětkrát současně potvrzeno totéž syntetické ID přímým voláním
+  `PrismaPlanningPersistence.confirmRun()`. V každé dvojici obě volání vrátila
+  první potvrzení a vznikly dvě auditní události. Záměrně se použila odlišná
+  syntetická přiřazení; tento přímý test neprováděl aplikační validaci ani
+  neověřil dopad přes API. Transakce čte stav a poté aktualizuje bez podmínky,
+  že záznam dosud není potvrzen. Prověřit také souběh náhrad a zajistit
+  atomické jediné potvrzení a jediný auditní zápis.
 - `VERIFIED` (omezený rozsah) — Stránky Návaznost směn a Zaměstnanci zobrazily
   prázdný stav; navigace mezi nimi fungovala. Tlačítko Budoucí funkce přijalo
   klávesový fokus. Nejde o úplný test přístupnosti ani mobilního zobrazení.
