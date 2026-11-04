@@ -24,7 +24,7 @@ export interface MonthlyHistoryReader {
     findMany(args: { where: { confirmedAt: { not: null }; weekStart: { gte: string; lte: string } }; select: { weekStart: true; confirmedAt: true; input: true; confirmedPlan: true } }): Promise<readonly HistoryRow[]>;
   };
   readonly monthlyPlanningRun?: {
-    findMany(args: { where: { confirmedAt: { not: null }; month: { in: string[] } }; select: { month: true; confirmedAt: true; input: true; draft: true } }): Promise<readonly MonthlyHistoryRow[]>;
+    findMany(args: { where: { confirmedAt: { not: null }; deletedAt: null; month: { in: string[] } }; select: { month: true; confirmedAt: true; input: true; draft: true } }): Promise<readonly MonthlyHistoryRow[]>;
   };
   readonly rosterHistoryImport?: {
     findMany(args: {
@@ -84,7 +84,7 @@ export async function loadMonthlyBoundary(month: string, employeeIds: readonly s
   }
   if (db.monthlyPlanningRun) {
     const months = [addDays(dates[0], -1).slice(0, 7), addDays(dates[dates.length - 1], 1).slice(0, 7)];
-    const monthlyRows = await db.monthlyPlanningRun.findMany({ where: { confirmedAt: { not: null }, month: { in: months } }, select: { month: true, confirmedAt: true, input: true, draft: true } });
+    const monthlyRows = await db.monthlyPlanningRun.findMany({ where: { confirmedAt: { not: null }, deletedAt: null, month: { in: months } }, select: { month: true, confirmedAt: true, input: true, draft: true } });
     for (const row of monthlyRows) {
       if (!row.confirmedAt || !months.includes(row.month)) continue;
       const monthDates = datesInMonth(row.month);

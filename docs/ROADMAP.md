@@ -80,14 +80,22 @@ testovacím předpokladem, nikoli schváleným provozním pravidlem.
 
 ### Správa rozpisů
 
-- `PLANNED` — Přidat správu vytvořených rozpisů s možností jednotlivě
-  vybraný rozpis smazat. Funkci zahrnout do finalizace před závěrečným
-  testováním MVP.
+- `IMPLEMENTED` — Manažer ve zvoleném měsíci vidí uložené návrhy a potvrzené
+  rozpisy a může jednotlivý záznam odstranit. Smazání ponechá původní snapshot
+  v databázi, zaznamená akci v auditu a vyřadí záznam z aktivních rozpisů.
+  Stav zobrazený při rozhodnutí se před odstraněním znovu ověří.
 - `VERIFIED` (rozhodnutí uživatele 5. 11. 2026) — Manažer může nevyhovující
   měsíční rozpis odstranit a pro stejný měsíc vytvořit nový. Odstraněný rozpis
   proto nesmí nový rozpis pro daný měsíc blokovat.
-- `OPEN QUESTION` — Před implementací určit pravidla pro mazání potvrzených
-  rozpisů, zachování historie a auditu a dopad na návazné plánování.
+- `VERIFIED` (5. 11. 2026, syntetická izolovaná PostgreSQL) — Po odstranění
+  potvrzeného rozpisu lze vytvořit a potvrdit jiný pro stejný měsíc; původní
+  snapshot a audit zůstávají uložené. Odstraněný rozpis se již nepoužije jako
+  aktivní návaznost; chybějící podklady se při další kontrole přiznají jako
+  neúplné. V prohlížeči bylo ověřeno jednotlivé odstranění návrhu, audit a
+  vytvoření dalšího návrhu; jeho potvrzení zůstalo blokované chybějící návazností.
+- `NOT VERIFIED` — Souvislý průchod v prohlížeči přes potvrzení nového rozpisu
+  po odstranění starého a následnou kontrolu sousedních měsíců zbývá před
+  závěrečným ověřením MVP. Pro databázový režim je nutné nasadit novou migraci.
 
 ### Rozhraní manažera — `IMPLEMENTED`, ověřeno částečně
 
@@ -543,10 +551,14 @@ označíme za hotovou až po opravě a doloženém ověření jejího rozsahu.
      validaci měsíční historie; nedovolit potvrzení návrhu s takovou návazností.
    - [x] Doplnit odpovídající obranu a Python testy přímo do solveru.
 6. **P1 — Správa rozpisů.**
-   - [ ] Navrhnout a implementovat seznam rozpisů s možností smazat jednotlivý
+   - [x] Navrhnout a implementovat seznam rozpisů s možností smazat jednotlivý
      rozpis.
-   - [ ] Před mazáním potvrzených rozpisů stanovit zachování historie, auditu a
-     podkladů pro návazné plánování.
+   - [x] Zachovat snapshot a audit odstraněného potvrzeného rozpisu; z aktivních
+     návazností jej vyřadit a chybějící podklady nepovažovat za ověřené.
+   - `VERIFIED` — Cílené testy, syntetický průchod prohlížečem a tři integrační
+     testy na izolované PostgreSQL pokrývají odstranění, audit, opětovné
+     potvrzení jiného rozpisu a neúplnou návaznost po odstranění. Závěrečný
+     souvislý průchod MVP zůstává položkou 9.
 7. **P1 — AI a citlivý text.**
    - [ ] Rozhodnout o souladu současného lokálního plánovače s potvrzeným záměrem
      AI a o bezpečném zpracování pokynů.

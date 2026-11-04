@@ -41,7 +41,7 @@ export interface ReplacementRunSnapshot {
 
 export interface PlanningAuditEvent {
   readonly id: string;
-  readonly action: "planning.confirmed" | "planning.replacement_confirmed";
+  readonly action: "planning.confirmed" | "planning.replacement_confirmed" | "planning.removed";
   readonly entityType: "planning_run" | "replacement_run" | "monthly_planning_run";
   readonly entityId: string;
   readonly actorId: string | null;
@@ -506,7 +506,7 @@ export class PrismaPlanningPersistence implements PlanningPersistence {
   async listAuditEvents(): Promise<readonly PlanningAuditEvent[]> {
     const rows = await this.db.auditEvent.findMany({
       where: {
-        action: { in: ["planning.confirmed", "planning.replacement_confirmed"] },
+        action: { in: ["planning.confirmed", "planning.replacement_confirmed", "planning.removed"] },
         entityType: { in: ["planning_run", "replacement_run", "monthly_planning_run"] },
       },
       orderBy: { createdAt: "desc" },

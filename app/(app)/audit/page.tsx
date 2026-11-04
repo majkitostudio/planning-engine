@@ -11,7 +11,7 @@ import {
 import { getPlanningPersistenceRuntime } from "@/lib/planning/persistence-runtime";
 
 export const metadata: Metadata = {
-  title: "Audit potvrzení",
+  title: "Audit rozpisů",
 };
 
 export const runtime = "nodejs";
@@ -62,9 +62,9 @@ export default async function PlanningAuditPage() {
             <Icon name="clipboard" width={22} height={22} />
           </span>
           <div>
-            <h1 className="page-head__title">Audit potvrzení</h1>
+            <h1 className="page-head__title">Audit rozpisů</h1>
             <p className="page-head__sub">
-              Historie již potvrzených návrhů. Nejde o plný audit všech změn.
+              Historie potvrzení a odstranění měsíčních rozpisů. Nejde o plný audit všech změn.
             </p>
           </div>
         </div>
@@ -77,9 +77,9 @@ export default async function PlanningAuditPage() {
         <div className="card__head">
           <div>
             <h2 className="card__title" id="audit-list-title">
-              Potvrzené návrhy
+              Záznamy rozpisů
             </h2>
-            <p className="card__sub">Záznam vzniká až po výslovném potvrzení managerem.</p>
+            <p className="card__sub">Záznam vzniká při potvrzení návrhu nebo odstranění měsíčního rozpisu manažerem.</p>
           </div>
           <Badge variant="neutral" dot={false}>
             {audit.entries.length}
@@ -95,14 +95,14 @@ export default async function PlanningAuditPage() {
         ) : (
           <ul className="data-list">
             {audit.entries.map((entry) => (
-              <li className="data-row" key={entry.proposalId}>
+              <li className="data-row" key={`${entry.proposalId}:${entry.action ?? "confirmed"}:${entry.confirmedAt}`}>
                 <span className="step-index" aria-hidden="true">
                   <Icon name="check" width={15} height={15} />
                 </span>
                 <span className="data-row__main">
                   <span className="data-row__title">{entry.month !== undefined ? `Měsíc ${entry.month ?? "neuveden"}` : `Týden od ${entry.weekStart ?? "neuveden"}`}</span>
                   <span className="data-row__sub">
-                    Potvrdil(a): {entry.confirmedByEmail ?? "neuvedeno"}
+                    {entry.action === "removed" ? "Odstranil(a)" : "Potvrdil(a)"}: {entry.confirmedByEmail ?? "neuvedeno"}
                   </span>
                 </span>
                 <span className="data-row__meta">

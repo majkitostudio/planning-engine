@@ -13,6 +13,7 @@ import { datesInMonth } from "@/lib/planning/domain/month";
 import { monthlyInstructionMessage, monthlyValidationMessage } from "@/lib/planning/monthly-view";
 import { isUnavailableMonthlyDraftStatus } from "@/lib/planning/monthly-recovery";
 import { removalActionLabel, shouldFocusStepHeading } from "@/lib/accessibility-labels";
+import { MonthlyRunsManager } from "./monthly-runs-manager";
 
 export interface MonthlyView {
   readonly id: string;
@@ -27,7 +28,7 @@ type BoundaryReadiness = { readonly key: string; readonly status: "loading" | "a
 const DAYS = ["Pondělí", "Úterý", "Středa", "Čtvrtek", "Pátek", "Sobota", "Neděle"];
 const STEPS = ["Zaměstnanci", "Absence a dostupnost", "Obsazení", "Doplňující pokyny", "Souhrn a návrh"] as const;
 
-export function MonthlyPlanningPanel({ month, canManage, planningMode, initialStaffing, staffingProfileStatus, onResult }: { month: string; canManage: boolean; planningMode: MonthlyView["mode"] | null; initialStaffing: readonly StaffingSetting[] | null; staffingProfileStatus: StaffingProfileStatus; onResult: (month: string, result: MonthlyView | null) => void }) {
+export function MonthlyPlanningPanel({ month, canManage, planningMode, initialStaffing, staffingProfileStatus, onResult, onRemoved }: { month: string; canManage: boolean; planningMode: MonthlyView["mode"] | null; initialStaffing: readonly StaffingSetting[] | null; staffingProfileStatus: StaffingProfileStatus; onResult: (month: string, result: MonthlyView | null) => void; onRemoved: (month: string, id: string) => void }) {
   const [employees, setEmployees] = useState<MonthlyFormData["employees"]>([]);
   const [name, setName] = useState("");
   const [absences, setAbsences] = useState<Absence[]>([]);
@@ -201,6 +202,7 @@ export function MonthlyPlanningPanel({ month, canManage, planningMode, initialSt
   return <section className="card monthly-planning-panel" aria-labelledby="monthly-title">
     <div className="monthly-form-heading"><div><p className="eyebrow">Celý kalendářní měsíc</p><h2 id="monthly-title">Návrh rozpisu · {month}</h2></div><span className="monthly-step-count">Krok {step + 1} z {STEPS.length}</span></div>
     <p>Návrh se ukládá odděleně. Rozpis se změní až po potvrzení manažerem.</p>
+    {canManage ? <MonthlyRunsManager month={month} canManage={canManage} refreshKey={`${view?.id ?? ""}:${confirmed}`} onRemoved={(id) => { revision.current++; if (view?.id === id) { setView(null); setConfirmed(false); setRestored(false); } onRemoved(month, id); }} /> : null}
     {employees.length ? <div className="monthly-history-status" role="status"><strong>Návazné podklady</strong>{activeBoundary?.status === "loading" ? <span>Kontroluji sedm dní před měsícem a po něm…</span> : activeBoundary?.status === "unavailable" || !activeBoundary ? <span>Stav návaznosti se nepodařilo načíst. Před potvrzením proběhne serverová kontrola.</span> : <span>Před měsícem: {activeBoundary.before ? "k dispozici" : "chybí nebo jsou neúplné"} · Po měsíci: {activeBoundary.after ? "k dispozici" : "chybí nebo jsou neúplné"}{!activeBoundary.after ? " · Budoucí rozpis nemusí existovat; nic se nedoplňuje odhadem." : ""}</span>}<a href="/navaznost-smen">Zkontrolovat nebo vložit podklady</a></div> : null}
     {!canManage ? <p role="note">Vytvoření a potvrzení návrhu je dostupné manažerovi.</p> : null}
     <nav className="monthly-progress" aria-label="Postup zadání měsíčního návrhu">{STEPS.map((label, index) => <button key={label} type="button" className="monthly-progress__step" aria-current={step === index ? "step" : undefined} aria-label={`Krok ${index + 1}: ${label}`} onClick={() => changeStep(index)}><span className="monthly-progress__number">{index + 1}</span><span className="monthly-progress__label">{label}</span></button>)}</nav>

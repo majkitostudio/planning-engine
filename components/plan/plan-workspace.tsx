@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Icon } from "@/components/icons";
 import { MonthlyPlanningPanel, type MonthlyView } from "@/components/plan/monthly-planning-panel";
 import { MonthlyRosterTable } from "@/components/plan/monthly-roster-table";
@@ -61,10 +61,16 @@ export function PlanWorkspace({
   const [confirmedViews, setConfirmedViews] = useState<Record<string, MonthlyView | null>>({});
   const [loadErrors, setLoadErrors] = useState<Record<string, boolean>>({});
   const [visitedMonths, setVisitedMonths] = useState<string[]>(() => [monthKey(currentMonthStart())]);
+  const loadRevision = useRef(0);
   const onMonthlyResult = useCallback((month: string, result: MonthlyView | null) => {
     setDraftViews((current) => { const next = { ...current }; if (!result || result.confirmed) delete next[month]; else next[month] = result; return next; });
     if (result?.confirmed) setConfirmedViews((current) => ({ ...current, [month]: result }));
     if (result) setLoadErrors((current) => ({ ...current, [month]: false }));
+  }, []);
+  const onMonthlyRemoved = useCallback((month: string, id: string) => {
+    loadRevision.current++;
+    setDraftViews((current) => { if (current[month]?.id !== id) return current; const next = { ...current }; delete next[month]; return next; });
+    setConfirmedViews((current) => current[month]?.id === id ? { ...current, [month]: null } : current);
   }, []);
 
   const weekDates = useMemo(() => getWeekDates(weekStart), [weekStart]);
@@ -78,14 +84,16 @@ export function PlanWorkspace({
   const showingMonthlyView = monthlyView && weekDates.some((date) => formatIsoDate(date).startsWith(`${monthlyView.input.month}-`));
   useEffect(() => {
     const controller = new AbortController();
+    const revision = loadRevision.current;
     void fetch(`/api/planning/monthly?month=${encodeURIComponent(visibleMonthValue)}`, { signal: controller.signal })
       .then((response) => { if (!response.ok) throw new Error("Načtení rozpisu selhalo."); return response.json(); })
       .then((result) => {
+        if (loadRevision.current !== revision) return;
         if (!result?.ok) throw new Error("Načtení rozpisu selhalo.");
         setConfirmedViews((current) => ({ ...current, [visibleMonthValue]: result.view ?? null }));
         setLoadErrors((current) => ({ ...current, [visibleMonthValue]: false }));
       })
-      .catch(() => { if (!controller.signal.aborted) setLoadErrors((current) => ({ ...current, [visibleMonthValue]: true })); });
+      .catch(() => { if (!controller.signal.aborted && loadRevision.current === revision) setLoadErrors((current) => ({ ...current, [visibleMonthValue]: true })); });
     return () => controller.abort();
   }, [visibleMonthValue]);
   function selectCalendarDate(day: number) {
@@ -143,7 +151,7 @@ export function PlanWorkspace({
         </button>
       </div>
 
-      {visitedMonths.map((month) => <div key={month} hidden={month !== visibleMonthValue}><MonthlyPlanningPanel month={month} canManage={canManage} planningMode={runtime.configured ? runtime.mode : null} initialStaffing={initialStaffing} staffingProfileStatus={staffingProfileStatus} onResult={onMonthlyResult} /></div>)}
+      {visitedMonths.map((month) => <div key={month} hidden={month !== visibleMonthValue}><MonthlyPlanningPanel month={month} canManage={canManage} planningMode={runtime.configured ? runtime.mode : null} initialStaffing={initialStaffing} staffingProfileStatus={staffingProfileStatus} onResult={onMonthlyResult} onRemoved={onMonthlyRemoved} /></div>)}
 
       <div className="week-banner">
         <h2>Týden {isoWeekNumber(weekStart)}</h2>

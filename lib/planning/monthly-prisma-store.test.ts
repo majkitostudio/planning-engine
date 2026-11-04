@@ -47,6 +47,12 @@ beforeEach(() => { vi.clearAllMocks(); findUnique.mockResolvedValue(row); findFi
 afterEach(() => vi.unstubAllEnvs());
 
 describe("databázové potvrzení měsíčního návrhu", () => {
+  it("odstranění zaznamená ve stejné transakci jako audit", async () => {
+    const result = await new PrismaMonthlyStore(db).remove("p", manager, new Date("2026-11-02T00:00:00Z"), false);
+    expect(result).toEqual({ ok: true });
+    expect(updateMany).toHaveBeenCalledWith(expect.objectContaining({ where: { id: "p", deletedAt: null, confirmedAt: null } }));
+    expect(createAudit).toHaveBeenCalledWith(expect.objectContaining({ data: expect.objectContaining({ action: "planning.removed", entityId: "p" }) }));
+  });
   it("potvrdí úplný částečný návrh jen se shodnými aktuálními podklady", async () => {
     const snapshot = { imports: [], days: datesInMonth("2026-11").map((date) => ({ employeeId: "e1", date, status: date < "2026-11-15" ? "off" as const : "unknown" as const })) };
     const partialInput = { ...input, planningRange: { startDate: "2026-11-15", endDate: "2026-11-30" }, rosterHistory: snapshot };
@@ -71,7 +77,7 @@ describe("databázové potvrzení měsíčního návrhu", () => {
   it("znovu ověří návrh a uloží potvrzení a audit v jedné transakci", async () => {
     const result = await new PrismaMonthlyStore(db).confirm("p", manager, new Date("2026-11-01T00:00:00Z"));
     expect(result).toMatchObject({ ok: true, alreadyConfirmed: false });
-    expect(updateMany).toHaveBeenCalledWith(expect.objectContaining({ where: { id: "p", confirmedAt: null } }));
+    expect(updateMany).toHaveBeenCalledWith(expect.objectContaining({ where: { id: "p", confirmedAt: null, deletedAt: null } }));
     expect(createAudit).toHaveBeenCalledOnce();
     expect(db.$transaction).toHaveBeenCalledWith(expect.any(Function), expect.objectContaining({ isolationLevel: "Serializable" }));
   });
@@ -79,6 +85,11 @@ describe("databázové potvrzení měsíčního návrhu", () => {
     const result = await new PrismaMonthlyStore(db).confirm("p", { ...manager, role: "viewer" }, new Date());
     expect(result).toMatchObject({ ok: false, code: "forbidden" });
     expect(db.$transaction).not.toHaveBeenCalled();
+  });
+  it("nedovolí znovu potvrdit odstraněný návrh", async () => {
+    findUnique.mockResolvedValue({ ...row, deletedAt: new Date("2026-11-02T00:00:00Z") });
+    expect(await new PrismaMonthlyStore(db).confirm("p", manager, new Date())).toEqual({ ok: false, code: "not_found" });
+    expect(updateMany).not.toHaveBeenCalled();
   });
   it("odmítne potvrzení při již potvrzeném jiném návrhu stejného měsíce", async () => {
     findFirst.mockResolvedValue({ id: "other" });

@@ -51,6 +51,11 @@ function makeSnapshot(): PlanningRunSnapshot {
 }
 
 describe("planning audit service", () => {
+  it("rozliší odstranění měsíčního rozpisu od potvrzení", async () => {
+    const persistence = new InMemoryPlanningPersistence();
+    vi.spyOn(persistence, "listAuditEvents").mockResolvedValue([{ id: "a", action: "planning.removed", entityType: "monthly_planning_run", entityId: "month-1", actorId: "m", createdAt: "2026-11-02T00:00:00.000Z", details: { month: "2026-11", email: "manager@example.test" } }]);
+    expect(await readPlanningAudit(persistence, manager)).toMatchObject({ ok: true, entries: [{ proposalId: "month-1", month: "2026-11", action: "removed", confirmedByEmail: "manager@example.test" }] });
+  });
   it("zobrazuje měsíc a identitu u měsíčního potvrzení", async () => {
     const persistence = new InMemoryPlanningPersistence();
     vi.spyOn(persistence, "listAuditEvents").mockResolvedValue([{ id: "a", action: "planning.confirmed", entityType: "monthly_planning_run", entityId: "month-1", actorId: "m", createdAt: "2026-11-01T00:00:00.000Z", details: { month: "2026-11", email: "manager@example.test" } }]);

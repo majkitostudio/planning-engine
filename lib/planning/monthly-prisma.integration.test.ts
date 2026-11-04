@@ -4,6 +4,7 @@ import { prisma } from "../db";
 import { datesInMonth } from "./domain/month";
 import { addDays, weekdayIndex } from "./domain/time";
 import { PrismaMonthlyStore } from "./monthly-prisma-store";
+import { loadMonthlyBoundary } from "./monthly-history-service";
 import type { MonthlyPlanningInput } from "./domain/month-input";
 import type { PlanningActor } from "../auth/actor";
 
@@ -42,6 +43,34 @@ describe.skipIf(!enabled)("měsíční rozpis v izolované PostgreSQL", () => {
     expect(await store.confirm(winner.run.id, manager, new Date())).toMatchObject({ ok: true, alreadyConfirmed: true });
     expect(await store.getConfirmed(month)).toMatchObject({ ok: true, run: { id: winner.run.id } });
     expect(await prisma.auditEvent.count({ where: { entityType: "monthly_planning_run", entityId: { in: [id, competingId] }, action: "planning.confirmed" } })).toBe(1);
+    expect(await store.remove(winner.run.id, manager, new Date("2026-11-02T00:00:00Z"), false)).toEqual({ ok: false, code: "changed" });
+    expect(await store.remove(winner.run.id, manager, new Date("2026-11-02T00:00:00Z"), true)).toEqual({ ok: true });
+    expect(await store.get(winner.run.id)).toBeNull();
+    expect(await store.getConfirmed(month)).toEqual({ ok: true, run: null });
+    expect(await prisma.monthlyPlanningRun.findUnique({ where: { id: winner.run.id } })).toMatchObject({ deletedAt: expect.any(Date), draft });
+    expect(await prisma.auditEvent.count({ where: { entityType: "monthly_planning_run", entityId: winner.run.id, action: "planning.removed" } })).toBe(1);
+    const replacementId = `${id}-replacement`;
+    await store.create({ id: replacementId, input, draft, providerName: "simulated", mode: "simulated" });
+    const raceId = `${id}-race`;
+    await store.create({ id: raceId, input, draft, providerName: "simulated", mode: "simulated" });
+    const [raceConfirm, raceRemove] = await Promise.all([
+      store.confirm(raceId, manager, new Date("2026-11-03T00:00:00Z")),
+      store.remove(raceId, manager, new Date("2026-11-03T00:00:00Z"), false),
+    ]);
+    if (raceConfirm.ok) {
+      expect(raceRemove).toEqual({ ok: false, code: "changed" });
+      expect(await store.remove(raceId, manager, new Date("2026-11-03T00:00:00Z"), true)).toEqual({ ok: true });
+    } else {
+      expect(raceRemove).toEqual({ ok: true });
+      expect(await store.get(raceId)).toBeNull();
+    }
+    expect(await store.confirm(replacementId, manager, new Date("2026-11-03T00:00:00Z"))).toMatchObject({ ok: true, alreadyConfirmed: false });
+    expect(await store.getConfirmed(month)).toMatchObject({ ok: true, run: { id: replacementId } });
+    const rollbackId = `${id}-rollback`;
+    await store.create({ id: rollbackId, input, draft, providerName: "simulated", mode: "simulated" });
+    await expect(store.remove(rollbackId, { ...manager, userId: `${manager.userId}-other` }, new Date(), false)).rejects.toThrow();
+    expect(await store.get(rollbackId)).toMatchObject({ id: rollbackId, confirmed: null });
+    expect(await prisma.auditEvent.count({ where: { entityType: "monthly_planning_run", entityId: rollbackId, action: "planning.removed" } })).toBe(0);
   });
 
   it("odmítne bývalého manažera po změně role i při zastaralé session", async () => {
@@ -55,9 +84,28 @@ describe.skipIf(!enabled)("měsíční rozpis v izolované PostgreSQL", () => {
     try {
       const actor: PlanningActor = { userId: accountId, email: `${suffix}@example.test`, displayName: "Syntetický uživatel", role: "manager" };
       expect(await new PrismaMonthlyStore(prisma).confirm("does-not-matter", actor, new Date())).toMatchObject({ ok: false, code: "forbidden" });
+      expect(await new PrismaMonthlyStore(prisma).remove("does-not-matter", actor, new Date(), false)).toMatchObject({ ok: false, code: "forbidden" });
     } finally {
       if (previousMode === undefined) delete process.env.PLANNING_AUTH_MODE;
       else process.env.PLANNING_AUTH_MODE = previousMode;
     }
+  });
+
+  it("odstraněný potvrzený měsíc nezakryje chybějící návaznost", async () => {
+    const url = new URL(process.env.DATABASE_URL ?? "");
+    if (url.hostname !== "localhost" || url.port !== "55439" || url.pathname !== "/planning_monthly_test") throw new Error("Integrační test vyžaduje výhradně vyhrazenou izolovanou databázi.");
+    const suffix = randomUUID();
+    const year = 2100 + Number.parseInt(suffix.slice(0, 6), 16) % 7000;
+    const month = `${year}-11`;
+    const nextMonth = `${year}-12`;
+    const employeeId = `boundary-${suffix}`;
+    const id = `boundary-run-${suffix}`;
+    const manager: PlanningActor = { userId: `manager-${suffix}`, email: `${suffix}@example.test`, displayName: "Syntetický manažer", role: "manager" };
+    const input = { month, employees: [{ id: employeeId, displayName: "Syntetický zaměstnanec", employmentType: "full_time" }], absences: [], availability: [], staffingRequirements: [], instructions: "" };
+    const draft = { month, assignments: [], explanations: [], alternatives: [], assumptions: [], instructionsOutcome: "" };
+    await prisma.monthlyPlanningRun.create({ data: { id, month, input, draft, mode: "simulated", providerName: "simulated", confirmedAt: new Date("2026-11-01T00:00:00Z") } });
+    expect((await loadMonthlyBoundary(nextMonth, [employeeId], prisma)).before.complete).toBe(true);
+    expect(await new PrismaMonthlyStore(prisma).remove(id, manager, new Date(), true)).toEqual({ ok: true });
+    expect((await loadMonthlyBoundary(nextMonth, [employeeId], prisma)).before.complete).toBe(false);
   });
 });

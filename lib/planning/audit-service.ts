@@ -2,6 +2,7 @@ import { canConfirmPlanning, type PlanningActor } from "../auth/actor";
 import type { PlanningPersistence } from "./persistence";
 
 export interface PlanningAuditEntry {
+  readonly action?: "removed";
   readonly proposalId: string;
   readonly weekStart: string | null;
   readonly month?: string | null;
@@ -15,7 +16,7 @@ export type PlanningAuditResult =
 
 /**
  * Čtecí audit je v prvním řezu dostupný jen managerovi, stejně jako potvrzení.
- * Vrací výhradně již uložené události `planning.confirmed`.
+ * Vrací uložená potvrzení a odstranění měsíčních rozpisů.
  */
 export async function readPlanningAudit(
   persistence: PlanningPersistence,
@@ -29,6 +30,7 @@ export async function readPlanningAudit(
     ok: true,
     entries: events.map((event) => ({
       proposalId: event.entityId,
+      ...(event.action === "planning.removed" ? { action: "removed" as const } : {}),
       weekStart: event.details.weekStart ?? null,
       ...(event.entityType === "monthly_planning_run" ? { month: event.details.month ?? null } : {}),
       confirmedByEmail: event.details.email ?? null,

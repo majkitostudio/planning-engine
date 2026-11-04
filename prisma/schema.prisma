@@ -64,6 +64,7 @@ model MonthlyPlanningRun {
   confirmedAt   DateTime?
   confirmedById String?
   confirmedBy   AppUser? @relation("MonthlyPlanningRunConfirmedBy", fields: [confirmedById], references: [id], onDelete: SetNull)
+  deletedAt     DateTime?
   createdAt     DateTime @default(now())
 
   @@index([month])
