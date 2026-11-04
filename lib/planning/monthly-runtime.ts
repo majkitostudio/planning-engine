@@ -11,6 +11,10 @@ import type { MonthlyDraftRecord } from "./monthly-store";
 
 const memory = new InMemoryMonthlyStore();
 const missingBoundary = { before: { complete: false, assignments: [] }, after: { complete: false, assignments: [] } } as const;
+const monthlyGeminiUnavailable = {
+  configured: false as const,
+  reason: "Externí Gemini pro měsíční vstupy je vypnuté, dokud není schválen rozsah a ochrana údajů. Použijte místní plánovač.",
+};
 
 export type MonthlyProviderRuntime =
   | { readonly configured: true; readonly mode: MonthlyPlanningMode }
@@ -18,9 +22,11 @@ export type MonthlyProviderRuntime =
 
 export function getMonthlyProviderRuntime(env: Readonly<Record<string, string | undefined>> = process.env): MonthlyProviderRuntime {
   const explicit = env.PLANNING_MONTHLY_PROVIDER?.trim();
-  if (explicit === "ortools" || explicit === "simulated" || explicit === "gemini") return { configured: true, mode: explicit };
+  if (explicit === "gemini") return monthlyGeminiUnavailable;
+  if (explicit === "ortools" || explicit === "simulated") return { configured: true, mode: explicit };
   if (explicit) return { configured: false, reason: "PLANNING_MONTHLY_PROVIDER má neznámou hodnotu. Povolené jsou „simulated“, „gemini“ a „ortools“." };
   const planning = getPlanningRuntime(env);
+  if (planning.configured && planning.mode === "gemini") return monthlyGeminiUnavailable;
   return planning.configured ? { configured: true, mode: planning.mode } : { configured: false, reason: planning.reason };
 }
 

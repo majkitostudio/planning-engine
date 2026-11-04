@@ -4,6 +4,16 @@ import { getMonthlyPersistenceRuntime, getMonthlyProviderRuntime, getMonthlyRunt
 afterEach(() => vi.unstubAllEnvs());
 
 describe("měsíční provozní konfigurace", () => {
+  it.each([
+    { PLANNING_MONTHLY_PROVIDER: "gemini", PLANNING_PROVIDER: "" },
+    { PLANNING_PROVIDER: "gemini" },
+  ])("nepovolí externí Gemini pro měsíční vstupy bez schváleného rozsahu dat (%o)", (env) => {
+    expect(getMonthlyProviderRuntime(env)).toMatchObject({
+      configured: false,
+      reason: expect.stringContaining("ochran"),
+    });
+  });
+
   it("umožní výslovně zapnout OR-Tools jen pro měsíční plánování", () => {
     expect(getMonthlyProviderRuntime({ PLANNING_MONTHLY_PROVIDER: "ortools", PLANNING_PROVIDER: "" })).toEqual({ configured: true, mode: "ortools" });
   });
