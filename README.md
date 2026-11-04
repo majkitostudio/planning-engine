@@ -22,10 +22,10 @@ potvrzení se návrh neaplikuje jako potvrzený plán.
 Toto je **rozpracovaný technický základ s demo UI**. Nejedná se o hotovou ani
 produkční aplikaci.
 
-- Měsíční plánování používá samostatný lokální OR-Tools provider. Syntetický
-  průchod v izolované PostgreSQL ověřil vytvoření návrhu, ruční úpravu,
-  celoměsíční opětovnou kontrolu a obnovení poslední verze; všechny zůstaly
-  nepotvrzené. Podrobnosti a omezení jsou v [`docs/ROADMAP.md`](docs/ROADMAP.md).
+- Měsíční plánování používá lokální OR-Tools, podporuje návazné podklady a
+  doplánování souvislé části měsíce. Manažerská obrazovka již nenabízí ruční
+  úpravu návrhu. Syntetická ověření a jejich meze jsou v
+  [`docs/ROADMAP.md`](docs/ROADMAP.md); nenahrazují závěrečné testování MVP.
 - Plánovací jádro, doménový kontrakt, deterministická validace, AI kontrakt,
   Gemini adaptér, orchestrátor **a napojení demo UI (Fáze 2)** jsou `IMPLEMENTED` a pokryté testy.
 - Reálné volání Gemini je `VERIFIED` integračním testem s lokální konfigurací;
