@@ -175,8 +175,11 @@ testovacím předpokladem, nikoli schváleným provozním pravidlem.
   a po opravě prošel. Týká se i měsíčního kontraktu. U starších uložených
   měsíčních návrhů je prázdné ID při načtení povoleno kvůli kompatibilitě;
   jednotkové testy pokrývají načtení návrhu, potvrzeného měsíce i jeho
-  návaznosti. Skutečný výskyt takových záznamů nebyl prověřen. Jedinečnost a ID
-  tvořené jen mezerami tato dílčí oprava neřeší. Celý starý soubor ani
+  návaznosti. Na `a858a8f` prošel i přímý test na izolované PostgreSQL 16:
+  synteticky vložený starší potvrzený záznam šel načíst a vytvoření nového se
+  stejným neplatným ID bylo odmítnuto. Nešlo o potvrzení rozpisu přes UI ani
+  test návaznosti na databázi. Skutečný výskyt takových záznamů nebyl prověřen.
+  Jedinečnost a ID tvořené jen mezerami tato dílčí oprava neřeší. Celý starý soubor ani
   pracovní strom nebyly přepsány.
 - Hlavní README a rozcestník dokumentace byly sladěny s odstraněním ručních
   úprav z manažerské obrazovky; další historické souhrny vyžadují kontrolu.
