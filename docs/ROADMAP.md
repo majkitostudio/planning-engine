@@ -203,6 +203,15 @@ testovacím předpokladem, nikoli schváleným provozním pravidlem.
   pouze syntetické testovací záznamy a testovací kontejner byl ukončen.
   Stejná kontrola byla 4. 11. zopakována na sjednoceném `main` (`5cd5d80`)
   se stejným výsledkem; testovací databáze byla opět izolovaná.
+- `VERIFIED` / vymezený souběh — Na `2974130` prošly znovu všechny migrace a
+  oba testy `monthly-prisma.integration.test.ts` v nové izolované PostgreSQL
+  16. Dva současně potvrzované syntetické návrhy téhož měsíce skončily jedním
+  potvrzením, jedním konfliktem a jedinou auditní událostí; opakované potvrzení
+  vítěze bylo idempotentní. Test dále odmítl viewer a zastaralou manažerskou
+  roli změněnou v databázi. Používá přímé volání úložiště a prázdné testovací
+  směny; nedokazuje všechny souběhy ani kompletní průchod přes prohlížeč.
+  Samostatný historický průchod s obsazeným návrhem a potvrzením popisuje
+  `DOMAIN_SPECIFICATION.md`; při tomto auditu nebyl zopakován.
 - `VERIFIED` / oprava nutná — Již vydaná relace po resetu a následné změně
   hesla znovu umožní přístup. Integrační test použil syntetický účet a
   izolovanou PostgreSQL: stejná relace dostala z chráněného API před resetem
