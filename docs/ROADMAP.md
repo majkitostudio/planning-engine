@@ -481,6 +481,13 @@ označíme za hotovou až po opravě a doloženém ověření jejího rozsahu.
      `d21c8e8` skončil úspěšně. Běžný testovací job zůstává bez databázové služby.
    - [ ] Opravit zjištěné problémy s klávesnicí, popisky, fokusem, chybou
      neexistujícího návrhu a ztrátou rozepsaných vstupů; ověřit čtečkou obrazovky.
+     - [x] Zavřená mobilní navigace se po zavírací animaci vyřadí z pořadí
+       klávesnice; při zavření se fokus vrací na tlačítko menu. Regresní test
+       ověřuje přechod otevřeno → zavřeno; chování v prohlížeči zůstává
+       `NOT VERIFIED`.
+     - [ ] Ověřit mobilní průchod klávesnicí a čtečkou obrazovky; opravit
+       zbývající popisky, fokus kroků, chybu chybějícího návrhu a ochranu
+       rozepsaných vstupů.
    - [ ] Posoudit vývojové závislosti a ověřit kompatibilní aktualizace.
 9. **P2 — Závěrečné ověření MVP.**
    - [ ] Provést syntetický průchod návrh → kontrola → potvrzení → obnovení,

@@ -7,7 +7,10 @@ import { useEffect, useRef, useState, type ReactNode } from "react";
 import { Icon, type IconName } from "@/components/icons";
 import { Avatar } from "@/components/ui/avatar";
 import { BrandMark } from "@/components/ui/brand-mark";
-import { shouldInitiallyOpenFutureFeatures } from "@/lib/navigation";
+import {
+  shouldInitiallyOpenFutureFeatures,
+  shouldReturnFocusAfterMenuClose,
+} from "@/lib/navigation";
 
 type NavItem = {
   href: string;
@@ -60,6 +63,8 @@ export function AppShell({
   const [futureOpen, setFutureOpen] = useState(() =>
     shouldInitiallyOpenFutureFeatures(pathname),
   );
+  const menuButtonRef = useRef<HTMLButtonElement>(null);
+  const previousSidebarOpen = useRef(sidebarOpen);
   const collapseButtonRef = useRef<HTMLButtonElement>(null);
   const restoreButtonRef = useRef<HTMLButtonElement>(null);
   const [panel, setPanel] = useState<Panel>(null);
@@ -74,6 +79,13 @@ export function AppShell({
     setSidebarOpen(false);
     setPanel(null);
   }
+
+  useEffect(() => {
+    if (shouldReturnFocusAfterMenuClose(previousSidebarOpen.current, sidebarOpen)) {
+      menuButtonRef.current?.focus();
+    }
+    previousSidebarOpen.current = sidebarOpen;
+  }, [sidebarOpen]);
 
   // Esc zavře vše otevřené.
   useEffect(() => {
@@ -221,6 +233,7 @@ export function AppShell({
         <header className="topbar">
           <button
             type="button"
+            ref={menuButtonRef}
             className="menu-btn"
             aria-label={sidebarOpen ? "Zavřít menu" : "Otevřít menu"}
             aria-expanded={sidebarOpen}
