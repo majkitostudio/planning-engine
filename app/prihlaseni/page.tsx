@@ -8,8 +8,13 @@ export const metadata: Metadata = {
   title: "Přihlášení",
 };
 
-export default async function LoginPage() {
+export default async function LoginPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ passwordChanged?: string }>;
+}) {
   await connection();
+  const params = await searchParams;
   const authRuntime = getActiveAuthRuntimeConfig();
   const authConfigured = authRuntime.ok;
   const authMode = authRuntime.ok ? authRuntime.mode : "local";
@@ -28,7 +33,11 @@ export default async function LoginPage() {
 
         <h1 className="login__title">Přihlášení</h1>
 
-        <LoginForm authConfigured={authConfigured} authMode={authMode} />
+        <LoginForm
+          authConfigured={authConfigured}
+          authMode={authMode}
+          passwordChanged={params.passwordChanged === "1"}
+        />
       </div>
     </div>
   );

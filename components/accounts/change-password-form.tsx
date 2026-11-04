@@ -1,5 +1,6 @@
 "use client";
 
+import { signOut } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
@@ -33,8 +34,8 @@ export function ChangePasswordForm() {
       setCurrentPassword("");
       setNewPassword("");
       setConfirmation("");
-      router.replace("/");
-      router.refresh();
+      await signOut({ redirect: false });
+      router.replace("/prihlaseni?passwordChanged=1");
     } catch {
       setError("Heslo se nepodařilo změnit. Zkuste to znovu.");
     } finally {

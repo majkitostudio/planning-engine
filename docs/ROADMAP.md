@@ -9,12 +9,12 @@
 
 Zjištění kontroly ze 4. 11. 2026; podrobnosti a hranice jednotlivých ověření jsou v části
 [Další kontrola a postup](#další-kontrola-a-postup-před-uzavřením-mvp).
-Nález neznamená, že je opravený. Před širším použitím je potřeba zejména:
+Opravené nálezy i otevřené kroky jsou označené samostatně. Před širším použitím je potřeba zejména:
 
 | Priorita | Zjištění a další krok |
 | --- | --- |
-| Vysoká | Starší týdenní a náhradové API umožnilo vieweru přepsat část potvrzeného týdenního záznamu. Opravit role a ochranu uložených podkladů; prověřit návaznosti a souběh potvrzení. |
-| Vysoká | Starší relace se po resetu a změně hesla znovu stala použitelnou. Zajistit její zneplatnění a doplnit integrační ověření. |
+| Vysoká | ČÁSTEČNĚ OPRAVENO — zápis přes starší API vyžaduje managera a chrání uložený záznam; zbývá ověřit atomické souběžné potvrzení (P0 bod 3). |
+| Vysoká | OPRAVENO — starší relace se po resetu, změně hesla, změně role i deaktivaci odmítají podle verze relace; ověřeno také proti izolované PostgreSQL. |
 | Vysoká | Formulář může označit výchozí obsazení za uložený profil i při prázdné databázi. Rozlišit skutečný zdroj hodnot a jejich potvrzení manažerem. |
 | Další | Opravit zjištěné chyby přístupnosti, neexistující návrh, časovou změnu a nesoulad limitu 200 zaměstnanců; ověřit výkon na reprezentativních syntetických zadáních. |
 | Dokončení MVP | Rozhodnout o pravidlech mazání a implementovat správu jednotlivých rozpisů; doplnit Python a izolované databázové testy do CI a dokončit kontrolu uživatelského toku. |
@@ -339,13 +339,13 @@ testovacím předpokladem, nikoli schváleným provozním pravidlem.
   nespouští Python testy solveru ani integrační testy s databází.
 - `VERIFIED` / GitHub CI — Stejné kontroly prošly také na `21a36b7` v běhu
   41872633722 po poslední změně kódu. Omezení pokrytí Pythonu a databáze trvá.
-- `VERIFIED` / oprava nutná — Již vydaná relace po resetu a následné změně
+- `VERIFIED` / historický nález, později opravený — Již vydaná relace po resetu a následné změně
   hesla znovu umožní přístup. Integrační test použil syntetický účet a
   izolovanou PostgreSQL: stejná relace dostala z chráněného API před resetem
   `200`, při vynucené změně `403` a po změně hesla opět `200`. Reset byl
   napodoben přímou změnou testovacího účtu v databázi; změnu hesla provedla
-  aplikační služba. Aktualizace relace neporovnává verzi hesla. Prověřit a
-  implementovat zneplatnění starých relací včetně testu celého přihlášení.
+  aplikační služba. Tento stav zachycuje původní audit z 4. 11. 2026; opravu
+  a nové ověření shrnuje bod 2 v aktuálním To‑Do níže.
 - `IMPLEMENTED` / `OPEN QUESTION` — Měsíční běh odmítá externí Gemini a
   OR-Tools nedostává volné pokyny ani skutečná jména. Text pokynů se však
   ukládá se vstupem návrhu do databáze, i když jej OR-Tools nevyhodnocuje.
@@ -395,11 +395,19 @@ označíme za hotovou až po opravě a doloženém ověření jejího rozsahu.
      zachovaný plán a jediná auditní událost. Testovací databáze byla po ověření
      zastavena a odstraněna.
 2. **P0 — Zneplatnění starých přihlášení.**
-   - [ ] Po resetu hesla, změně hesla, změně role nebo deaktivaci účtu odmítnout
+   - [x] Po resetu hesla, změně hesla, změně role nebo deaktivaci účtu odmítnout
      dříve vydanou relaci.
-   - [ ] Rozhodnout a otestovat, zda se uživatel po vlastní změně hesla znovu
-     přihlásí, nebo bezpečně získá novou relaci; zahrnout starý token bez nové
-     verze relace.
+   - [x] Po vlastní změně hesla vyžadovat nové přihlášení; starý token bez
+     verze relace odmítnout.
+   - `VERIFIED` (4. 11. 2026) — Přidána `AppUser.sessionVersion` (výchozí 0).
+     Reset hesla, jeho vlastní změna, změna role a aktivního stavu verzi zvýší.
+     Databázové JWT se při každém obnovení porovná s aktuální verzí; chybějící
+     nebo zastaralý token se odmítne. Po vlastní změně hesla se uživatel odhlásí
+     a přihlásí znovu. Cílené auth testy: 21 prošlo; celý Vitest: 490 prošlo,
+     8 přeskočeno; lint, typecheck, Prisma validace a build prošly. Integrační
+     test nad jednorázovou PostgreSQL 16 ověřil reset, nové dočasné heslo,
+     povinnou změnu hesla, změnu role i deaktivaci. Databáze byla po testu
+     zastavena a odstraněna.
 3. **P0 — Jediné atomické potvrzení.**
    - [ ] Zajistit, aby souběžné potvrzení týdenního rozpisu i operativní náhrady
      vytvořilo právě jedno potvrzení a jednu auditní událost.

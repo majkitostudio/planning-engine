@@ -22,6 +22,7 @@ interface TestUser {
   active: boolean;
   passwordHash: string | null;
   mustChangePassword: boolean;
+  sessionVersion: number;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -209,6 +210,38 @@ describe("database account service", () => {
     expect(auditEvents).toHaveLength(0);
   });
 
+  it("invalidates other sessions when a user changes a temporary password", async () => {
+    const temporaryPassword = "Synthetic Temporary Password";
+    users[0] = makeUser({
+      id: actor.userId,
+      email: actor.email,
+      role: "manager",
+      passwordHash: await hashPassword(temporaryPassword),
+      mustChangePassword: true,
+      sessionVersion: 1,
+    });
+
+    await changeAccountPassword(actor.userId, temporaryPassword, "Synthetic New Password", db);
+
+    expect(users[0].mustChangePassword).toBe(false);
+    expect(users[0].sessionVersion).toBe(2);
+  });
+
+  it("invalidates sessions when an account role changes", async () => {
+    users[0].passwordHash = "credentialed";
+    users.push(makeUser({
+      id: "second-manager",
+      email: "second-manager@example.test",
+      role: "manager",
+      passwordHash: "credentialed",
+    }));
+
+    await updateAccount("second-manager", { role: "viewer" }, actor, db);
+
+    expect(users[1].role).toBe("viewer");
+    expect(users[1].sessionVersion).toBe(1);
+  });
+
   it("resets an account to a hashed temporary password and audits without the secret", async () => {
     const temporaryPassword = "Synthetic Reset Temporary Password";
     users.push(makeUser({ id: "viewer-reset", email: "viewer@example.test" }));
@@ -218,6 +251,7 @@ describe("database account service", () => {
     expect(summary.mustChangePassword).toBe(true);
     expect(summary).not.toHaveProperty("passwordHash");
     expect(users[1]?.mustChangePassword).toBe(true);
+    expect(users[1]?.sessionVersion).toBe(1);
     await expect(verifyPassword(temporaryPassword, users[1]?.passwordHash ?? ""))
       .resolves.toBe(true);
     expect(JSON.stringify(auditEvents)).not.toContain(temporaryPassword);
@@ -241,22 +275,23 @@ describe("database account service", () => {
       $transaction: async (callback: (tx: unknown) => Promise<void>) => callback({
         appUser: {
           findUnique: async () => ({ ...account }),
-          update: async ({ data }: { data: Partial<TestUser> }) => {
-            Object.assign(account, data);
+          update: async ({ data }: { data: Record<string, unknown> }) => {
+            applyUpdate(account, data);
             return account;
           },
           updateMany: async ({ where, data }: {
             where: { id: string; passwordHash: string; active: boolean };
-            data: Partial<TestUser>;
+            data: Record<string, unknown>;
           }) => {
             Object.assign(account, {
               passwordHash: managerResetHash,
               mustChangePassword: true,
+              sessionVersion: 1,
             });
             if (account.id !== where.id || account.passwordHash !== where.passwordHash || account.active !== where.active) {
               return { count: 0 };
             }
-            Object.assign(account, data);
+            applyUpdate(account, data);
             return { count: 1 };
           },
         },
@@ -274,6 +309,7 @@ describe("database account service", () => {
     ).rejects.toMatchObject({ code: "account_changed" });
     expect(account.passwordHash).toBe(managerResetHash);
     expect(account.mustChangePassword).toBe(true);
+    expect(account.sessionVersion).toBe(1);
     expect(events).toHaveLength(0);
   });
 });
@@ -288,6 +324,7 @@ function makeUser(overrides: Partial<TestUser> = {}): TestUser {
     active: true,
     passwordHash: null,
     mustChangePassword: true,
+    sessionVersion: 0,
     createdAt: new Date("2026-10-01T00:00:00.000Z"),
     updatedAt: new Date("2026-10-01T00:00:00.000Z"),
     ...overrides,
@@ -331,12 +368,26 @@ function createTestDatabase(
         data,
       }: {
         where: { id: string };
-        data: Partial<TestUser>;
+        data: Record<string, unknown>;
       }) => {
         const record = records.find((user) => user.id === where.id);
         if (!record) throw new Error("record not found");
-        Object.assign(record, data);
+        applyUpdate(record, data);
         return record;
+      },
+      updateMany: async ({
+        where,
+        data,
+      }: {
+        where: { id: string; passwordHash: string; active: boolean };
+        data: Record<string, unknown>;
+      }) => {
+        const record = records.find((user) => user.id === where.id);
+        if (!record || record.passwordHash !== where.passwordHash || record.active !== where.active) {
+          return { count: 0 };
+        }
+        applyUpdate(record, data);
+        return { count: 1 };
       },
       count: async ({
         where,
@@ -365,4 +416,18 @@ function createTestDatabase(
   };
 
   return database as unknown as PrismaClient;
+}
+
+function applyUpdate(record: TestUser, data: Record<string, unknown>): void {
+  const target = record as unknown as Record<string, unknown>;
+  for (const [key, value] of Object.entries(data)) {
+    if (typeof value === "object" && value !== null && "increment" in value) {
+      target[key] = (
+        (target[key] as number) +
+        Number((value as { increment: number }).increment)
+      );
+    } else {
+      target[key] = value;
+    }
+  }
 }

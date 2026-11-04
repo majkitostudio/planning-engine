@@ -6,6 +6,7 @@ declare module "next-auth" {
   interface User {
     role: AuthRole;
     mustChangePassword?: boolean;
+    sessionVersion?: number;
   }
 
   interface Session {
@@ -21,5 +22,6 @@ declare module "next-auth/jwt" {
   interface JWT {
     role?: AuthRole;
     mustChangePassword?: boolean;
+    sessionVersion?: number;
   }
 }

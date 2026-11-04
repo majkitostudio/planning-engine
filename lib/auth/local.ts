@@ -54,6 +54,7 @@ export interface LocalAuthenticatedUser {
   readonly name: string;
   readonly role: AuthRole;
   readonly mustChangePassword?: boolean;
+  readonly sessionVersion?: number;
 }
 
 export type DatabaseAuthRuntimeConfigResult =
@@ -220,6 +221,7 @@ export async function verifyDatabaseCredentials(
     name: account.displayName,
     role: account.role,
     mustChangePassword: account.mustChangePassword,
+    sessionVersion: account.sessionVersion,
   };
 }
 
@@ -238,7 +240,15 @@ export async function refreshDatabaseCredentialsUser(
     name: account.displayName,
     role: account.role,
     mustChangePassword: account.mustChangePassword,
+    sessionVersion: account.sessionVersion,
   };
+}
+
+export function isDatabaseSessionVersionCurrent(
+  tokenVersion: unknown,
+  currentVersion: unknown,
+): boolean {
+  return Number.isInteger(tokenVersion) && Number.isInteger(currentVersion) && tokenVersion === currentVersion;
 }
 
 function hasMatchingSecret(

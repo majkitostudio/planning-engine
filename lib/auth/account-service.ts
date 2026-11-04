@@ -15,6 +15,10 @@ export interface AccountSummary {
   readonly createdAt: Date;
 }
 
+export interface AuthenticatedAccount extends AccountSummary {
+  readonly sessionVersion: number;
+}
+
 export type AccountServiceErrorCode =
   | "invalid_email"
   | "invalid_name"
@@ -194,6 +198,7 @@ export async function updateAccount(
     displayName?: string;
     role?: AccountRole;
     active?: boolean;
+    sessionVersion?: { increment: number };
   } = {};
 
   if (input.displayName !== undefined) {
@@ -241,6 +246,13 @@ export async function updateAccount(
         }
       }
 
+      if (
+        (data.role !== undefined && data.role !== current.role) ||
+        (data.active !== undefined && data.active !== current.active)
+      ) {
+        data.sessionVersion = { increment: 1 };
+      }
+
       const account = await tx.appUser.update({ where: { id }, data });
       await writeAccountAudit(tx, "account.updated", account, actor, {
         ...(data.role ? { role: data.role } : {}),
@@ -271,7 +283,7 @@ export async function resetAccountPassword(
 
     const account = await tx.appUser.update({
       where: { id },
-      data: { passwordHash, mustChangePassword: true },
+      data: { passwordHash, mustChangePassword: true, sessionVersion: { increment: 1 } },
     });
     await writeAccountAudit(tx, "account.password_reset", account, actor);
     return toAccountSummary(account);
@@ -308,7 +320,11 @@ export async function changeAccountPassword(
 
     const result = await tx.appUser.updateMany({
       where: { id, passwordHash: current.passwordHash, active: true },
-      data: { passwordHash: newPasswordHash, mustChangePassword: false },
+      data: {
+        passwordHash: newPasswordHash,
+        mustChangePassword: false,
+        sessionVersion: { increment: 1 },
+      },
     });
     if (result.count !== 1) {
       throw new AccountServiceError(
@@ -332,7 +348,7 @@ export async function authenticateAccount(
   email: string,
   password: string,
   db: PrismaClient,
-): Promise<AccountSummary | null> {
+): Promise<AuthenticatedAccount | null> {
   const normalizedEmail = normalizeEmail(email);
   if (!normalizedEmail) return null;
 
@@ -346,16 +362,16 @@ export async function authenticateAccount(
   ) {
     return null;
   }
-  return toAccountSummary(account);
+  return { ...toAccountSummary(account), sessionVersion: account.sessionVersion };
 }
 
 export async function refreshAccountSession(
   id: string,
   db: PrismaClient,
-): Promise<AccountSummary | null> {
+): Promise<AuthenticatedAccount | null> {
   const account = await db.appUser.findUnique({ where: { id } });
   if (!account?.active || !account.passwordHash) return null;
-  return toAccountSummary(account);
+  return { ...toAccountSummary(account), sessionVersion: account.sessionVersion };
 }
 
 function validateIdentity(email: string, displayName: string) {

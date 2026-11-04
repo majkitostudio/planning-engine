@@ -11,6 +11,7 @@ import {
   verifyLocalCredentials,
   verifyDatabaseCredentials,
   refreshDatabaseCredentialsUser,
+  isDatabaseSessionVersionCurrent,
   type ActiveAuthRuntimeConfig,
 } from "./lib/auth/local";
 import { needsForcedPasswordChange, shouldProtectPagePath } from "./lib/auth/protection";
@@ -75,6 +76,9 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         if (typeof user.mustChangePassword === "boolean") {
           token.mustChangePassword = user.mustChangePassword;
         }
+        if (typeof user.sessionVersion === "number") {
+          token.sessionVersion = user.sessionVersion;
+        }
         return token;
       }
 
@@ -86,10 +90,14 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           prisma,
         );
         if (!current) return {};
+        if (!isDatabaseSessionVersionCurrent(token.sessionVersion, current.sessionVersion)) {
+          return {};
+        }
         token.email = current.email;
         token.name = current.name;
         token.role = current.role;
         token.mustChangePassword = current.mustChangePassword;
+        token.sessionVersion = current.sessionVersion;
         return token;
       }
 

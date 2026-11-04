@@ -7,9 +7,11 @@ import type { AuthMode } from "@/lib/auth/local";
 export function LoginForm({
   authConfigured,
   authMode,
+  passwordChanged = false,
 }: {
   authConfigured: boolean;
   authMode: AuthMode;
+  passwordChanged?: boolean;
 }) {
   const [error, setError] = useState(false);
   const [email, setEmail] = useState("");
@@ -38,6 +40,11 @@ export function LoginForm({
 
   return (
     <div>
+      {passwordChanged ? (
+        <p className="form-notice form-notice--visible" role="status">
+          Heslo bylo změněno. Přihlaste se znovu novým heslem.
+        </p>
+      ) : null}
       <form className="login__form" onSubmit={(event) => void handleSignIn(event)}>
         {authMode === "local" || authMode === "database" ? (
           <>

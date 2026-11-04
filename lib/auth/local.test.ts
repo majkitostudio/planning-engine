@@ -134,6 +134,7 @@ describe("database-managed auth", () => {
       name: "Database Manager",
       role: "manager",
       mustChangePassword: true,
+      sessionVersion: 0,
     });
   });
 
@@ -180,6 +181,14 @@ describe("database-managed auth", () => {
       ),
     ).resolves.toBeNull();
   });
+
+  it("rejects database sessions with a missing or stale session version", async () => {
+    const { isDatabaseSessionVersionCurrent } = await import("./local");
+
+    expect(isDatabaseSessionVersionCurrent(0, 0)).toBe(true);
+    expect(isDatabaseSessionVersionCurrent(0, 1)).toBe(false);
+    expect(isDatabaseSessionVersionCurrent(undefined, 1)).toBe(false);
+  });
 });
 
 interface FakeAuthAccount {
@@ -191,6 +200,7 @@ interface FakeAuthAccount {
   active: boolean;
   passwordHash: string | null;
   mustChangePassword: boolean;
+  sessionVersion: number;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -205,6 +215,7 @@ async function makeCredentialAccount(): Promise<FakeAuthAccount> {
     active: true,
     passwordHash: await hashPassword("synthetic manager password"),
     mustChangePassword: true,
+    sessionVersion: 0,
     createdAt: new Date("2026-10-30T00:00:00.000Z"),
     updatedAt: new Date("2026-10-30T00:00:00.000Z"),
   };
