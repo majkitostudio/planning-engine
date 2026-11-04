@@ -472,8 +472,13 @@ označíme za hotovou až po opravě a doloženém ověření jejího rozsahu.
      AI.
 8. **P1 — Kvalita a přístupnost.**
    - [x] Spouštět Python testy solveru v CI.
-   - [ ] Doplnit databázové integrační testy do CI s izolovanou testovací
+   - [x] Doplnit databázové integrační testy do CI s izolovanou testovací
      databází.
+   - `VERIFIED` (4. 11. 2026) — Samostatný CI job používá PostgreSQL 16,
+     aplikuje uložené migrace a spouští pouze čtyři databázové integrační sady
+     proti vyhrazené databázi `planning_monthly_test`. Lokálně i v GitHub Actions
+     prošly všechny 4 soubory a 6 testů; běh CI `41916140404` na commitu
+     `d21c8e8` skončil úspěšně. Běžný testovací job zůstává bez databázové služby.
    - [ ] Opravit zjištěné problémy s klávesnicí, popisky, fokusem, chybou
      neexistujícího návrhu a ztrátou rozepsaných vstupů; ověřit čtečkou obrazovky.
    - [ ] Posoudit vývojové závislosti a ověřit kompatibilní aktualizace.
