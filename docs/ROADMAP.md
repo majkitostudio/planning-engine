@@ -140,6 +140,12 @@ testovacím předpokladem, nikoli schváleným provozním pravidlem.
 
 ### Další kontrola a postup před uzavřením MVP
 
+- `VERIFIED` / oprava nutná — Import přijme vlastní místní čas směny
+  `2026-03-29 02:30`, který v Praze při přechodu na letní čas neexistuje.
+  Přímý syntetický test převodu jej zpětně zobrazil jako `03:30`. Přesný dopad
+  na výsledek kontroly odpočinku nebyl v aplikačním průchodu ověřen. Před
+  používáním vlastních časů vyřešit neexistující i nejednoznačné místní časy a
+  doplnit testy obou změn času; pevně potvrzené časy směn jsou mimo toto okno.
 - `VERIFIED` / vysoká priorita — Starší týdenní a náhradové API dovolilo
   přihlášenému vieweru vytvořit uložený syntetický běh a poté přes zvolený
   identifikátor přepsat jeho obsah návrhem náhrady. V izolované PostgreSQL
