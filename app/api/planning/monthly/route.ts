@@ -25,6 +25,6 @@ export async function GET(request: Request) {
     if (!result.run) return NextResponse.json({ ok: true, view: null });
     const run = result.run;
     const boundary = await current.loadBoundary(month, run.input.employees.map((employee) => employee.id));
-    return NextResponse.json({ ok: true, view: { id: run.id, mode: run.mode, input: run.input, draft: run.draft, confirmed: true, validation: validateMonthlyDraft(run.input, run.draft, boundary, run.mode) } });
+    return NextResponse.json({ ok: true, view: { id: run.id, mode: run.mode, input: run.input, draft: run.draft, confirmed: true, validation: validateMonthlyDraft(run.input, run.draft, boundary, run.mode, run.input.rosterHistory) } });
   } catch { return NextResponse.json({ ok: false, message: "Potvrzený rozpis se nepodařilo načíst." }, { status: 503 }); }
 }

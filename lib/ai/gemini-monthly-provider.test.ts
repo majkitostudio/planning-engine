@@ -9,6 +9,14 @@ const draft = { month: "2026-11", assignments: [{ employeeId: "e1", date: "2026-
 afterEach(() => vi.unstubAllGlobals());
 
 describe("Gemini měsíční návrh", () => {
+  it("neodešle externímu poskytovateli rozpracované podklady rosteru", async () => {
+    const fetchMock = vi.fn();
+    vi.stubGlobal("fetch", fetchMock);
+    const provider = new GeminiPlanningProvider({ apiKey: "test" });
+    const rosterHistory = { imports: [{ id: "private-import", version: 1, fingerprint: "a".repeat(64) }], days: [{ employeeId: "e1", date: "2026-11-01", status: "off" as const }] };
+    await expect(provider.generateMonthlyPlan({ ...input, rosterHistory }, boundary)).rejects.toMatchObject({ code: "failed" });
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
   it("předá jeden měsíc, vstupy, historii i volný pokyn a vrátí jeden návrh", async () => {
     const fetchMock = vi.fn().mockResolvedValue({ ok: true, json: async () => ({ candidates: [{ content: { parts: [{ text: JSON.stringify(draft) }] } }] }) });
     vi.stubGlobal("fetch", fetchMock);

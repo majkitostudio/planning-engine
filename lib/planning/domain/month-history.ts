@@ -2,6 +2,7 @@ import { CONFIRMED_SHIFT_DEFINITIONS, getShiftWindow } from "./confirmed";
 import { datesInMonth } from "./month";
 import { addDays, isIsoDate, isLocalTime, isWeekendDate } from "./time";
 import type { MonthlyBoundaryAssignment, MonthlyBoundaryData } from "./month-validation";
+import type { MonthlyRosterDay, MonthlyRosterSnapshot } from "./month-input";
 import type { ExistingAssignment, IsoDate, ShiftKind } from "./types";
 
 /** Potvrzený rozpis se známým rozsahem a seznamem zahrnutých zaměstnanců. */
@@ -14,6 +15,9 @@ export interface ConfirmedHistoryPeriod {
 
 /** Výslovně převzaté buňky; absence záznamu pro den znamená neznámý den. */
 export interface RosterHistoryPeriod {
+  readonly id?: string;
+  readonly version?: number;
+  readonly fingerprint?: string;
   readonly start: IsoDate;
   readonly end: IsoDate;
   readonly employeeIds: readonly string[];
@@ -81,6 +85,38 @@ function importedFact(date: string, item: RosterHistoryPeriod["entries"][number]
     return window.start === startTime && window.end === endTime;
   });
   return { status: "shift", startTime, endTime, ...(shiftKind ? { shiftKind } : {}) };
+}
+
+/** Vytvoří měsíční snapshot bez jmen pro pevné dny mimo doplňovaný úsek. */
+export function resolveMonthlyRosterHistory(
+  month: string,
+  employeeIds: readonly string[],
+  rosterPeriods: readonly RosterHistoryPeriod[],
+): MonthlyRosterSnapshot {
+  const dates = datesInMonth(month);
+  const ids = [...new Set(employeeIds)];
+  const periods = rosterPeriods.filter((period) => validateRosterPeriod(period)
+    && isIsoDate(period.start) && isIsoDate(period.end)
+    && period.start <= dates[dates.length - 1] && period.end >= dates[0]
+    && period.employeeIds.some((employeeId) => ids.includes(employeeId)));
+  const imports = periods.flatMap((period) => period.id && period.version && period.fingerprint
+    ? [{ id: period.id, version: period.version, fingerprint: period.fingerprint }]
+    : []).sort((a, b) => a.id.localeCompare(b.id));
+  const days: MonthlyRosterDay[] = [];
+  for (const employeeId of ids) for (const date of dates) {
+    const facts: HistoryFact[] = [];
+    for (const period of periods) {
+      if (!period.employeeIds.includes(employeeId) || !inPeriod(date, period.start, period.end)) continue;
+      const entry = period.entries.find((item) => item.employeeId === employeeId && item.date === date);
+      if (entry) facts.push(importedFact(date, entry));
+    }
+    const keys = new Set(facts.map(factKey));
+    if (keys.size === 0) days.push({ employeeId, date, status: "unknown" });
+    else if (keys.size > 1) days.push({ employeeId, date, status: "conflict" });
+    else if (facts[0].status === "off") days.push({ employeeId, date, status: "off" });
+    else days.push({ employeeId, date, status: "shift", startTime: facts[0].startTime, endTime: facts[0].endTime, ...(facts[0].shiftKind ? { shiftKind: facts[0].shiftKind } : {}) });
+  }
+  return { imports, days };
 }
 
 /**

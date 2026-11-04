@@ -39,7 +39,7 @@ function anonymizeMonthlyInput(input: MonthlyPlanningInput) {
   return {
     aliases,
     input: {
-      ...input,
+      month: input.month,
       employees: input.employees.map((employee) => ({
         id: aliases.get(employee.id)!,
         displayName: `Zaměstnanec ${aliases.get(employee.id)!.slice("employee_".length)}`,
@@ -47,6 +47,8 @@ function anonymizeMonthlyInput(input: MonthlyPlanningInput) {
       })),
       absences: input.absences.map((absence, index) => ({ ...absence, id: `absence_${index + 1}`, employeeId: aliases.get(absence.employeeId)! })),
       availability: input.availability.map((item) => ({ ...item, employeeId: aliases.get(item.employeeId)! })),
+      staffingRequirements: input.staffingRequirements,
+      ...(input.shiftRotationPreference === undefined ? {} : { shiftRotationPreference: input.shiftRotationPreference }),
       instructions,
     },
     boundary: (value: MonthlyBoundaryData): MonthlyBoundaryData => ({
@@ -177,6 +179,9 @@ export class GeminiPlanningProvider implements PlanningModelProvider {
     boundary: MonthlyBoundaryData,
     options?: { readonly signal?: AbortSignal },
   ): Promise<MonthlyPlanDraft> {
+    if (input.planningRange || input.rosterHistory) {
+      throw new AiProviderError("failed", "Měsíční podklady rosteru tento externí poskytovatel nepodporuje.");
+    }
     const anonymized = anonymizeMonthlyInput(input);
     const prompt = [
       "Připrav jeden návrh směn pro celý zvolený kalendářní měsíc, včetně návazností na dodané okolní rozpisy.",

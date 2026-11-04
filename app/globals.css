@@ -2678,6 +2678,13 @@ textarea {
   background: var(--surface-2);
 }
 
+.monthly-range { flex: 1 0 100%; display: grid; gap: 8px; min-width: 0; }
+.monthly-range > label { display: flex; align-items: center; gap: 8px; }
+.monthly-range p { margin: 0; max-width: 72ch; }
+.monthly-range__dates { display: flex; flex-wrap: wrap; gap: 12px; }
+.monthly-range__dates label { display: grid; gap: 5px; flex: 0 1 210px; min-width: 160px; }
+.monthly-range__dates input { width: 100%; }
+
 .monthly-planning-panel legend {
   padding: 0 6px;
   color: var(--ink);

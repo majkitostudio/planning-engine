@@ -46,6 +46,7 @@ export function validateMonthlyPlan(input: MonthlyPlanningInput, assignments: re
   const afterComplete = boundary?.after?.complete === true && Array.isArray(boundary.after.assignments);
   const before = Array.isArray(boundary?.before?.assignments) ? boundary.before.assignments : [];
   const after = Array.isArray(boundary?.after?.assignments) ? boundary.after.assignments : [];
+  const range = input.planningRange;
   const isValidAssignment = (a: unknown): a is ProposedAssignment => {
     if (typeof a !== "object" || a === null) return false;
     const item = a as Record<string, unknown>;
@@ -73,43 +74,73 @@ export function validateMonthlyPlan(input: MonthlyPlanningInput, assignments: re
   }
   const valid: ProposedAssignment[] = [];
   const seen = new Set<string>();
+  const checkAssignmentConstraints = (item: MonthlyBoundaryAssignment) => {
+    if (input.absences.some((absence) => absence.employeeId === item.employeeId && absence.status === "approved" && absence.from <= item.date && absence.to >= item.date)) problems.push({ code: "ABSENCE_APPROVED", message: "Směna zasahuje do schválené absence.", date: item.date, employeeId: item.employeeId });
+    if (!item.shiftKind) return;
+    const availability = input.availability.find((entry) => entry.employeeId === item.employeeId && entry.date === item.date && entry.shiftKind === item.shiftKind);
+    if (availability?.available === false) problems.push({ code: "AVAILABILITY_UNAVAILABLE", message: "Zaměstnanec není na směnu dostupný.", date: item.date, employeeId: item.employeeId, shiftKind: item.shiftKind });
+    else if (!availability) unverified.push({ code: "AVAILABILITY_MISSING", message: "Dostupnost zaměstnance není pro směnu známá.", date: item.date, employeeId: item.employeeId, shiftKind: item.shiftKind });
+  };
   if (!Array.isArray(assignments)) problems.push({ code: "PROPOSAL_INVALID", message: "Návrh neobsahuje seznam směn." });
   for (const a of Array.isArray(assignments) ? assignments : []) {
     if (!isValidAssignment(a) || a.date < first || a.date > last) {
       problems.push({ code: "ASSIGNMENT_INVALID", message: "Návrh obsahuje neplatnou směnu nebo směnu mimo měsíc." });
       continue;
     }
+    if (range && (a.date < range.startDate || a.date > range.endDate)) {
+      problems.push({ code: "ASSIGNMENT_OUTSIDE_RANGE", message: "Návrh obsahuje směnu mimo zvolený úsek doplánování.", date: a.date, employeeId: a.employeeId });
+      continue;
+    }
     const key = `${a.employeeId}|${a.date}|${a.shiftKind}`;
     if (seen.has(key)) { problems.push({ code: "ASSIGNMENT_DUPLICATE", message: "Směna je uvedena vícekrát.", date: a.date, employeeId: a.employeeId }); continue; }
     seen.add(key);
     valid.push(a);
-    if (input.absences.some((absence) => absence.employeeId === a.employeeId && absence.status === "approved" && absence.from <= a.date && absence.to >= a.date)) problems.push({ code: "ABSENCE_APPROVED", message: "Směna zasahuje do schválené absence.", date: a.date, employeeId: a.employeeId });
-    const availability = input.availability.find((item) => item.employeeId === a.employeeId && item.date === a.date && item.shiftKind === a.shiftKind);
-    if (availability?.available === false) problems.push({ code: "AVAILABILITY_UNAVAILABLE", message: "Zaměstnanec není na směnu dostupný.", date: a.date, employeeId: a.employeeId, shiftKind: a.shiftKind });
-    else if (!availability) unverified.push({ code: "AVAILABILITY_MISSING", message: "Dostupnost zaměstnance není pro směnu známá.", date: a.date, employeeId: a.employeeId, shiftKind: a.shiftKind });
+    checkAssignmentConstraints(a);
   }
+  const fixedRosterAssignments: MonthlyBoundaryAssignment[] = [];
+  if (range) {
+    if (!input.rosterHistory) unverified.push({ code: "ROSTER_HISTORY_MISSING", message: "Pro doplánování části měsíce chybí aktuální měsíční podklady rosteru." });
+    else for (const item of input.rosterHistory.days) {
+      const inside = item.date >= range.startDate && item.date <= range.endDate;
+      if (item.status === "conflict") {
+        problems.push({ code: "ROSTER_HISTORY_CONFLICT", message: "Podklady rosteru si pro tento den odporují.", date: item.date, employeeId: item.employeeId });
+      } else if (inside && item.status !== "unknown") {
+        problems.push({ code: "ROSTER_RANGE_OVERLAP", message: "Zvolený úsek obsahuje již zaznamenaný den; vyřešte překryv nebo změňte rozsah.", date: item.date, employeeId: item.employeeId });
+      } else if (!inside && item.status === "unknown") {
+        unverified.push({ code: "ROSTER_HISTORY_OUTSIDE_RANGE_UNKNOWN", message: "Pevné dny mimo doplňovaný úsek nejsou úplně pokryté rosterem.", date: item.date, employeeId: item.employeeId });
+      } else if (!inside && item.status === "shift") {
+        fixedRosterAssignments.push({ employeeId: item.employeeId, date: item.date, startTime: item.startTime as LocalTime, endTime: item.endTime as LocalTime, ...(item.shiftKind ? { shiftKind: item.shiftKind } : {}) });
+        checkAssignmentConstraints(item);
+      }
+    }
+  }
+  const monthWork = [...valid, ...fixedRosterAssignments];
   const weeks = monthWeekStarts(input.month);
   const partialWeekNeedsHistory = (week: string) => {
     const monthDays = datesInWeek(week).filter((date) => date >= first && date <= last);
     return input.employees.some((employee) => {
-      const worked = new Set(valid.filter((item) => item.employeeId === employee.id).map((item) => item.date));
+      const worked = new Set(monthWork.filter((item) => item.employeeId === employee.id).map((item) => item.date));
       const off = monthDays.filter((date) => !worked.has(date));
       return !off.some((date) => off.includes(addDays(date, 1)));
     });
   };
   const beforeWeek = weeks[0];
   const afterWeek = weeks[weeks.length - 1];
-  const beforeNeeded = valid.some((item) => item.date <= addDays(first, 5)) || (beforeWeek < first && partialWeekNeedsHistory(beforeWeek));
-  const afterNeeded = valid.some((item) => item.date >= addDays(last, -5)) || (addDays(afterWeek, 6) > last && partialWeekNeedsHistory(afterWeek));
+  const beforeNeeded = monthWork.some((item) => item.date <= addDays(first, 5)) || (beforeWeek < first && partialWeekNeedsHistory(beforeWeek));
+  const afterNeeded = monthWork.some((item) => item.date >= addDays(last, -5)) || (addDays(afterWeek, 6) > last && partialWeekNeedsHistory(afterWeek));
   if ((!beforeComplete && beforeNeeded) || (!afterComplete && afterNeeded)) {
     unverified.push({ code: "BOUNDARY_HISTORY_INCOMPLETE", message: "Pro kontrolu odpočinku nebo víkendového volna chybí potřebné podklady před měsícem nebo po něm." });
   }
   for (const date of dates) for (const kind of ["morning", "afternoon"] as const) {
     const requirement = input.staffingRequirements.find((item) => item.date === date && item.shiftKind === kind);
     if (!requirement) { unverified.push({ code: "COVERAGE_REQUIREMENT_MISSING", message: "Chybí požadované obsazení směny.", date, shiftKind: kind }); continue; }
-    if (valid.filter((item) => item.date === date && item.shiftKind === kind).length < requirement.requiredEmployees) problems.push({ code: "COVERAGE_UNDERSTAFFED", message: "Směna není dostatečně obsazena.", date, shiftKind: kind });
+    const fixed = fixedRosterAssignments.filter((item) => item.date === date);
+    const unclassified = fixed.some((item) => !item.shiftKind);
+    if (unclassified) unverified.push({ code: "COVERAGE_SHIFT_UNCLASSIFIED", message: "Převzatá směna má vlastní čas a nelze ji přiřadit k rannímu či odpolednímu obsazení.", date, shiftKind: kind });
+    const count = valid.filter((item) => item.date === date && item.shiftKind === kind).length + fixed.filter((item) => item.shiftKind === kind).length;
+    if (!unclassified && count < requirement.requiredEmployees) problems.push({ code: "COVERAGE_UNDERSTAFFED", message: "Směna není dostatečně obsazena.", date, shiftKind: kind });
   }
-  const all: MonthlyBoundaryAssignment[] = [...boundaryAssignments, ...valid];
+  const all: MonthlyBoundaryAssignment[] = [...boundaryAssignments, ...fixedRosterAssignments, ...valid];
   for (const employee of input.employees) {
     const work = all.filter((item) => item.employeeId === employee.id);
     const workDates = [...new Set(work.map((item) => item.date))].sort();

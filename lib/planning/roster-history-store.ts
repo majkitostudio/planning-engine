@@ -123,24 +123,24 @@ export class PrismaRosterHistoryStore {
         }
       }
 
-      const existing = await tx.rosterHistoryImport.findUnique({
-        where: { fingerprint },
-        select: { id: true, version: true },
-      });
-      if (existing) return { ok: true, id: existing.id, version: existing.version, duplicate: true } as const;
-
       const latest = await tx.rosterHistoryImport.findFirst({
         where: { scopeKey },
         orderBy: { version: "desc" },
-        select: { version: true },
+        select: { id: true, version: true, fingerprint: true },
       });
+      if (latest && (latest.fingerprint === fingerprint || latest.fingerprint === hash({ fingerprint, version: latest.version }))) {
+        return { ok: true, id: latest.id, version: latest.version, duplicate: true } as const;
+      }
+      const existing = await tx.rosterHistoryImport.findUnique({ where: { fingerprint }, select: { id: true } });
+      const version = (latest?.version ?? 0) + 1;
+      const versionFingerprint = existing ? hash({ fingerprint, version }) : fingerprint;
       const createdBy = await ensurePlanningActorRecord(tx, actor);
       const record = await tx.rosterHistoryImport.create({
         data: {
           id: randomUUID(),
           scopeKey,
-          fingerprint,
-          version: (latest?.version ?? 0) + 1,
+          fingerprint: versionFingerprint,
+          version,
           periodStart: input.startDate,
           periodEnd: input.endDate,
           source: input.source,

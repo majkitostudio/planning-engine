@@ -42,6 +42,64 @@ def month_with_requirements(month, employees, required_dates):
 
 
 class SolverInputTests(unittest.TestCase):
+    def test_partial_month_preserves_fixed_days_and_returns_only_new_assignments(self):
+        payload = sample()
+        payload["input"]["planningRange"] = {"startDate": "2026-11-15", "endDate": "2026-11-30"}
+        payload["input"]["fixedDays"] = [
+            {"employeeId": "synthetic-1", "date": f"2026-11-{day:02}", "status": "shift", "startTime": "07:45", "endTime": "16:30", "shiftKind": "morning"}
+            if day == 2 else {"employeeId": "synthetic-1", "date": f"2026-11-{day:02}", "status": "off"}
+            for day in range(1, 15)
+        ]
+        for requirement in payload["input"]["staffingRequirements"]:
+            requirement["requiredEmployees"] = int(requirement["date"] == "2026-11-16" and requirement["shiftKind"] == "morning")
+        result = solve(payload)
+        self.assertEqual(result["status"], "feasible")
+        self.assertEqual(result["assignments"], [{"employeeId": "synthetic-1", "date": "2026-11-16", "shiftKind": "morning"}])
+
+    def test_partial_month_uses_custom_fixed_times_for_rest(self):
+        payload = sample()
+        payload["input"]["planningRange"] = {"startDate": "2026-11-15", "endDate": "2026-11-30"}
+        payload["input"]["fixedDays"] = [
+            {"employeeId": "synthetic-1", "date": f"2026-11-{day:02}", "status": "shift", "startTime": "08:05", "endTime": "20:00"}
+            if day >= 9 else {"employeeId": "synthetic-1", "date": f"2026-11-{day:02}", "status": "off"}
+            for day in range(1, 15)
+        ]
+        for requirement in payload["input"]["staffingRequirements"]:
+            requirement["requiredEmployees"] = int(requirement["date"] == "2026-11-15" and requirement["shiftKind"] == "morning")
+        self.assertEqual(solve(payload)["status"], "infeasible")
+
+    def test_partial_month_rejects_missing_fixed_day(self):
+        payload = sample()
+        payload["input"]["planningRange"] = {"startDate": "2026-11-15", "endDate": "2026-11-30"}
+        payload["input"]["fixedDays"] = []
+        self.assertEqual(solve(payload)["status"], "invalid_input")
+
+    def test_partial_month_uses_actual_custom_end_time_across_range_boundary(self):
+        payload = sample()
+        payload["input"]["planningRange"] = {"startDate": "2026-11-12", "endDate": "2026-11-30"}
+        payload["input"]["fixedDays"] = [
+            {"employeeId": "synthetic-1", "date": f"2026-11-{day:02}", "status": "shift", "startTime": "08:05", "endTime": "20:00"}
+            if day >= 6 else {"employeeId": "synthetic-1", "date": f"2026-11-{day:02}", "status": "off"}
+            for day in range(1, 12)
+        ]
+        for requirement in payload["input"]["staffingRequirements"]:
+            requirement["requiredEmployees"] = int(requirement["date"] == "2026-11-13" and requirement["shiftKind"] == "morning")
+        self.assertEqual(solve(payload)["status"], "feasible")
+        payload["input"]["fixedDays"][-1]["endTime"] = "21:00"
+        self.assertEqual(solve(payload)["status"], "infeasible")
+
+    def test_partial_month_counts_fixed_weekend_work_in_same_week(self):
+        payload = sample()
+        payload["input"]["planningRange"] = {"startDate": "2026-11-09", "endDate": "2026-11-13"}
+        payload["input"]["fixedDays"] = [
+            {"employeeId": "synthetic-1", "date": f"2026-11-{day:02}", "status": "shift", "startTime": "08:05", "endTime": "20:00"}
+            if day == 14 else {"employeeId": "synthetic-1", "date": f"2026-11-{day:02}", "status": "off"}
+            for day in range(1, 31) if not 9 <= day <= 13
+        ]
+        for requirement in payload["input"]["staffingRequirements"]:
+            requirement["requiredEmployees"] = int(requirement["date"] in {f"2026-11-{day:02}" for day in range(9, 14)} and requirement["shiftKind"] == "morning")
+        self.assertEqual(solve(payload)["status"], "infeasible")
+
     def test_exactly_35_hours_of_rest_meets_the_minimum(self):
         previous_end = dt.datetime(2026, 1, 1, 21, tzinfo=dt.timezone.utc)
 

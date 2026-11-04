@@ -46,6 +46,39 @@ def _validate(payload):
     _require(all(isinstance(person, str) and person for person in people) and len(set(people)) == len(people))
     people_set = set(people)
 
+    planning_range = data.get("planningRange")
+    range_start, range_end = first, last
+    fixed = {}
+    if planning_range is not None:
+        _require(isinstance(planning_range, dict))
+        range_start = dt.date.fromisoformat(planning_range.get("startDate", ""))
+        range_end = dt.date.fromisoformat(planning_range.get("endDate", ""))
+        _require(first <= range_start <= range_end <= last)
+        fixed_days = data.get("fixedDays")
+        _require(isinstance(fixed_days, list))
+        for item in fixed_days:
+            _require(isinstance(item, dict) and item.get("employeeId") in people_set and item.get("date") in date_set)
+            day = dt.date.fromisoformat(item["date"])
+            _require(day < range_start or day > range_end)
+            key = (item["employeeId"], day)
+            _require(key not in fixed and item.get("status") in ("off", "shift"))
+            if item["status"] == "off":
+                _require(all(field not in item for field in ("startTime", "endTime", "shiftKind")))
+                fixed[key] = None
+            else:
+                start, end = item.get("startTime"), item.get("endTime")
+                _require(isinstance(start, str) and re.fullmatch(r"(?:[01]\d|2[0-3]):[0-5]\d", start))
+                _require(isinstance(end, str) and re.fullmatch(r"(?:[01]\d|2[0-3]):[0-5]\d", end) and start < end)
+                kind = item.get("shiftKind", "custom")
+                _require(kind in (*KINDS, "custom"))
+                if kind != "custom":
+                    expected = ("07:45", "16:30") if kind == "morning" else (("12:45", "21:00") if day.weekday() >= 5 else ("13:15", "21:00"))
+                    _require((start, end) == expected)
+                fixed[key] = (kind, dt.time.fromisoformat(start), dt.time.fromisoformat(end))
+        _require(len(fixed) == len(people) * sum(day < range_start or day > range_end for day in dates))
+    else:
+        _require("fixedDays" not in data)
+
     requirements = {}
     staffing = data.get("staffingRequirements")
     _require(isinstance(staffing, list) and len(staffing) == len(dates) * len(KINDS))
@@ -110,12 +143,12 @@ def _validate(payload):
 
     timeout = payload.get("timeoutSeconds", 30)
     _require(isinstance(timeout, (int, float)) and not isinstance(timeout, bool) and 0.05 <= timeout <= 30)
-    return data, first, last, dates, people, requirements, availability, history, history_complete, shift_rotation, float(timeout)
+    return data, first, last, dates, people, requirements, availability, history, history_complete, shift_rotation, float(timeout), range_start, range_end, fixed
 
 
 def solve(payload):
     try:
-        data, first, last, dates, people, requirements, availability, history, history_complete, shift_rotation, timeout = _validate(payload)
+        data, first, last, dates, people, requirements, availability, history, history_complete, shift_rotation, timeout, range_start, range_end, fixed = _validate(payload)
     except (InvalidInput, TypeError, ValueError, KeyError, OverflowError):
         return {"status": "invalid_input"}
 
@@ -124,18 +157,26 @@ def solve(payload):
         (person, day, kind): model.new_bool_var(f"x_{person_index}_{day_index}_{kind_index}")
         for person_index, person in enumerate(people)
         for day_index, day in enumerate(dates)
+        if range_start <= day <= range_end
         for kind_index, kind in enumerate(KINDS)
     }
 
     def shift(person, day, kind):
         if day < first or day > last:
             return int(history.get((person, day, kind), False))
+        if day < range_start or day > range_end:
+            entry = fixed.get((person, day))
+            return int(entry is not None and entry[0] == kind)
+        if kind == "custom":
+            return 0
         return choices[(person, day, kind)]
 
     def works(person, day):
-        return sum(shift(person, day, kind) for kind in KINDS)
+        return sum(shift(person, day, kind) for kind in (*KINDS, "custom"))
 
     for day in dates:
+        if day < range_start or day > range_end:
+            continue
         for kind in KINDS:
             model.add(sum(shift(person, day, kind) for person in people) == requirements[(day.isoformat(), kind)])
         for person in people:
@@ -154,8 +195,10 @@ def solve(payload):
     except ZoneInfoNotFoundError:
         return {"status": "unavailable"}
 
-    def moment(day, kind, end):
-        if kind == "morning":
+    def moment(person, day, kind, end):
+        if kind == "custom":
+            clock = fixed[(person, day)][2 if end else 1]
+        elif kind == "morning":
             clock = dt.time(16, 30) if end else dt.time(7, 45)
         elif end:
             clock = dt.time(21, 0)
@@ -173,9 +216,13 @@ def solve(payload):
                 next_day = sixth + dt.timedelta(days=distance)
                 if next_day < first or start > last:
                     continue
-                for streak_kind in KINDS:
-                    for next_kind in KINDS:
-                        if not _has_minimum_rest(moment(sixth, streak_kind, True), moment(next_day, next_kind, False)):
+                for streak_kind in (*KINDS, "custom"):
+                    if streak_kind == "custom" and not shift(person, sixth, "custom"):
+                        continue
+                    for next_kind in (*KINDS, "custom"):
+                        if next_kind == "custom" and not shift(person, next_day, "custom"):
+                            continue
+                        if not _has_minimum_rest(moment(person, sixth, streak_kind, True), moment(person, next_day, next_kind, False)):
                             model.add(
                                 sum(works(person, day) for day in streak[:5])
                                 + shift(person, sixth, streak_kind)
@@ -188,7 +235,7 @@ def solve(payload):
             complete = (monday >= first or history_complete["before"]) and (sunday <= last or history_complete["after"])
             if complete:
                 weekend = model.new_bool_var(f"weekend_{people.index(person)}_{monday.isoformat()}")
-                model.add_max_equality(weekend, [shift(person, monday + dt.timedelta(days=index), kind) for index in (5, 6) for kind in KINDS])
+                model.add_max_equality(weekend, [shift(person, monday + dt.timedelta(days=index), kind) for index in (5, 6) for kind in (*KINDS, "custom")])
                 model.add(sum(works(person, monday + dt.timedelta(days=index)) for index in range(7)) <= 5).only_enforce_if(weekend)
             monday += dt.timedelta(days=7)
 
@@ -246,7 +293,7 @@ def solve(payload):
             "status": "feasible",
             "assignments": [
                 {"employeeId": person, "date": day.isoformat(), "shiftKind": kind}
-                for (person, day, kind), variable in choices.items() if solver.value(variable)
+                for (person, day, kind), variable in choices.items() if range_start <= day <= range_end and solver.value(variable)
             ],
         }
     if status == cp_model.INFEASIBLE:

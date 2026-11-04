@@ -110,7 +110,7 @@ describe("uložené podklady návaznosti", () => {
       { importId: expect.any(String), employeeId: "e1", date: "2026-11-03", status: "shift", startTime: "08:05", endTime: "16:45" },
     ]) });
 
-    findByFingerprint.mockResolvedValue({ id: "existing", version: 1 });
+    latestInScope.mockResolvedValue({ id: "existing", version: 1, fingerprint: createImport.mock.calls[0][0].data.fingerprint });
     await expect(store.save(actor, base)).resolves.toEqual({ ok: true, id: "existing", version: 1, duplicate: true });
     expect(createImport).toHaveBeenCalledOnce();
   });
@@ -121,6 +121,19 @@ describe("uložené podklady návaznosti", () => {
     const result = await new PrismaRosterHistoryStore(db).save(actor, { ...base, entries: [base.entries[0]] });
 
     expect(result).toMatchObject({ ok: true, version: 5, duplicate: false });
+  });
+
+  it("obnoví starší podobu jako novou verzi a její opakování je idempotentní", async () => {
+    findByFingerprint.mockResolvedValue({ id: "old", version: 1 });
+    latestInScope.mockResolvedValue({ id: "newer", version: 2, fingerprint: "different" });
+    const store = new PrismaRosterHistoryStore(db);
+    const restored = await store.save(actor, base);
+    expect(restored).toMatchObject({ ok: true, version: 3, duplicate: false });
+    const created = createImport.mock.calls[0][0].data;
+    expect(created.fingerprint).not.toBe("different");
+    latestInScope.mockResolvedValue({ id: "restored", version: 3, fingerprint: created.fingerprint });
+    await expect(store.save(actor, base)).resolves.toEqual({ ok: true, id: "restored", version: 3, duplicate: true });
+    expect(createImport).toHaveBeenCalledOnce();
   });
 
   it("zakáže viewerovi ukládat podklady bez otevření transakce", async () => {

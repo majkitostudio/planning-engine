@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { validateMonthlyInput } from "./month-input";
+import { datesInMonth } from "./month";
 
 const input = {
   month: "2026-02",
@@ -13,6 +14,27 @@ const input = {
 describe("monthly planning input", () => {
   it("accepts valid input and keeps advisory instructions", () => {
     expect(validateMonthlyInput(input)).toEqual({ ok: true, value: input });
+  });
+
+  it("accepts only a continuous range inside the selected month", () => {
+    expect(validateMonthlyInput({ ...input, planningRange: { startDate: "2026-02-14", endDate: "2026-02-28" } }).ok).toBe(true);
+    for (const planningRange of [
+      { startDate: "2026-01-31", endDate: "2026-02-10" },
+      { startDate: "2026-02-20", endDate: "2026-02-19" },
+      { startDate: "2026-02-30", endDate: "2026-02-30" },
+      { startDate: "2026-02-01", endDate: "2026-03-01" },
+    ]) expect(validateMonthlyInput({ ...input, planningRange }).ok).toBe(false);
+  });
+
+  it("validates a server roster snapshot as one explicit cell per employee and month day", () => {
+    const snapshot = {
+      imports: [{ id: "import-1", version: 1, fingerprint: "a".repeat(64) }],
+      days: datesInMonth("2026-02").map((date) => ({ employeeId: "e1", date, status: "off" as const })),
+    };
+    expect(validateMonthlyInput({ ...input, planningRange: { startDate: "2026-02-15", endDate: "2026-02-28" }, rosterHistory: snapshot }).ok).toBe(true);
+    expect(validateMonthlyInput({ ...input, planningRange: { startDate: "2026-02-15", endDate: "2026-02-28" }, rosterHistory: { ...snapshot, days: snapshot.days.slice(1) } }).ok).toBe(false);
+    expect(validateMonthlyInput({ ...input, planningRange: { startDate: "2026-02-15", endDate: "2026-02-28" }, rosterHistory: { ...snapshot, days: [...snapshot.days, snapshot.days[0]] } }).ok).toBe(false);
+    expect(validateMonthlyInput({ ...input, rosterHistory: { imports: [], days: [] } }).ok).toBe(false);
   });
 
   it.each([

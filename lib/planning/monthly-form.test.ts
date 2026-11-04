@@ -2,6 +2,12 @@ import { describe, expect, it } from "vitest";
 import { buildMonthlyFormInput, monthlyFormReadiness, staffingFormValues, partialAbsenceAvailability } from "./monthly-form";
 
 describe("vstupy měsíčního formuláře", () => {
+  it("přenese zvolený úsek plánování a odmítne neplatné hranice", () => {
+    const form = { month: "2026-11", employees: [{ id: "e1", name: "Test" }], absences: [], availability: [], staffing: Array(14).fill("0"), instructions: "", planningRange: { startDate: "2026-11-15", endDate: "2026-11-30" } };
+    const result = buildMonthlyFormInput(form);
+    expect(result.ok && result.value.planningRange).toEqual(form.planningRange);
+    expect(buildMonthlyFormInput({ ...form, planningRange: { startDate: "2026-11-30", endDate: "2026-12-01" } }).ok).toBe(false);
+  });
   it("částečná absence omezí jen vybranou směnu po celé období a překryvy nesmí vytvořit duplicity", () => {
     const entries = partialAbsenceAvailability("2026-11", [
       { employeeId: "e1", from: "2026-10-31", to: "2026-11-02", shiftKind: "morning" },

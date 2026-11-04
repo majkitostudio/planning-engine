@@ -19,6 +19,48 @@ const boundary = {
 } as const;
 
 describe("MonthlyOrtoolsProvider", () => {
+  it("předá pevné dny jen mimo rozsah s anonymními identifikátory", async () => {
+    let sent = "";
+    const provider = new MonthlyOrtoolsProvider(async (payload) => {
+      sent = payload;
+      return JSON.stringify({ status: "feasible", assignments: [{ employeeId: "employee-0", date: "2026-11-16", shiftKind: "morning" }] });
+    });
+    const partial: MonthlyPlanningInput = {
+      ...input,
+      planningRange: { startDate: "2026-11-15", endDate: "2026-11-30" },
+      rosterHistory: { imports: [], days: datesInMonth("2026-11").map((date) => date === "2026-11-02"
+        ? { employeeId: "private-id", date, status: "shift" as const, startTime: "08:05", endTime: "20:00" }
+        : { employeeId: "private-id", date, status: date < "2026-11-15" ? "off" as const : "unknown" as const }) },
+    };
+    await provider.generateMonthlyPlan(partial, boundary);
+    const data = JSON.parse(sent).input;
+    expect(data.planningRange).toEqual(partial.planningRange);
+    expect(data.fixedDays).toHaveLength(14);
+    expect(data.fixedDays.find((day: { date: string }) => day.date === "2026-11-02")).toEqual({ employeeId: "employee-0", date: "2026-11-02", status: "shift", startTime: "08:05", endTime: "20:00" });
+    expect(sent).not.toContain("private-id");
+  });
+
+  it("odmítne neznámé pevné dny nebo směny od řešiče mimo zadaný úsek", async () => {
+    const partial = { ...input, planningRange: { startDate: "2026-11-15", endDate: "2026-11-30" }, rosterHistory: { imports: [], days: datesInMonth("2026-11").map((date) => ({ employeeId: "private-id", date, status: date < "2026-11-15" ? "off" as const : "unknown" as const })) } };
+    const malformed = { ...partial, rosterHistory: { ...partial.rosterHistory, days: partial.rosterHistory.days.map((day) => day.date === "2026-11-01" ? { ...day, status: "unknown" as const } : day) } };
+    const provider = new MonthlyOrtoolsProvider(async () => JSON.stringify({ status: "feasible", assignments: [{ employeeId: "employee-0", date: "2026-11-02", shiftKind: "morning" }] }));
+    await expect(provider.generateMonthlyPlan(malformed, boundary)).rejects.toThrow();
+    await expect(provider.generateMonthlyPlan(partial, boundary)).rejects.toMatchObject({ code: "solver_invalid_output" });
+  });
+
+  it.skipIf(!process.env.PLANNING_PYTHON_EXECUTABLE)("propojí skutečný lokální řešič s pevnými směnami a doplněným úsekem", async () => {
+    const dates = datesInMonth("2026-11");
+    const partial: MonthlyPlanningInput = {
+      ...input,
+      planningRange: { startDate: "2026-11-15", endDate: "2026-11-30" },
+      rosterHistory: { imports: [], days: dates.map((date) => date === "2026-11-02"
+        ? { employeeId: "private-id", date, status: "shift" as const, startTime: "08:05", endTime: "20:00" }
+        : { employeeId: "private-id", date, status: date < "2026-11-15" ? "off" as const : "unknown" as const }) },
+      staffingRequirements: dates.flatMap((date) => (["morning", "afternoon"] as const).map((shiftKind) => ({ date, shiftKind, requiredEmployees: Number(date === "2026-11-16" && shiftKind === "morning") }))),
+    };
+    const result = await new MonthlyOrtoolsProvider().generateMonthlyPlan(partial, boundary);
+    expect(result.assignments).toEqual([{ employeeId: "private-id", date: "2026-11-16", shiftKind: "morning" }]);
+  }, 35000);
   it("sends only anonymized scheduling input and maps returned IDs back", async () => {
     let sent = "";
     const execute = vi.fn(async (payload: string) => {
@@ -112,5 +154,5 @@ describe("MonthlyOrtoolsProvider", () => {
     expect(validation.problems).toEqual([]);
     expect(validation.status).toBe("not_verified");
     expect(validation.canConfirm).toBe(false);
-  });
+  }, 35000);
 });

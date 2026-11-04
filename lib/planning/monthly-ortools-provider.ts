@@ -2,6 +2,7 @@ import { spawn } from "node:child_process";
 import { join } from "node:path";
 import type { MonthlyBoundaryData } from "./domain/month-validation";
 import type { MonthlyPlanningInput } from "./domain/month-input";
+import { validateMonthlyInput } from "./domain/month-input";
 import { MonthlyProviderError, type MonthlyPlanDraft, type MonthlyPlanningProvider } from "./monthly-planning";
 
 type SolverAssignment = { employeeId: string; date: string; shiftKind: "morning" | "afternoon" };
@@ -67,6 +68,22 @@ export class MonthlyOrtoolsProvider implements MonthlyPlanningProvider {
     const employeeTokens = new Map(input.employees.map((employee, index) => [employee.id, `employee-${index}`]));
     const employeeIds = new Map([...employeeTokens].map(([id, token]) => [token, id]));
     const tokenize = (employeeId: string) => employeeTokens.get(employeeId) ?? "";
+    const range = input.planningRange;
+    let fixedDays: object[] | undefined;
+    if (range) {
+      if (!validateMonthlyInput(input).ok || !input.rosterHistory) throw new Error("Chybí platné podklady pro doplánování.");
+      fixedDays = [];
+      for (const day of input.rosterHistory.days) {
+        const inside = day.date >= range.startDate && day.date <= range.endDate;
+        if (inside) {
+          if (day.status !== "unknown") throw new Error("Doplňovaný úsek se překrývá s existujícími podklady.");
+          continue;
+        }
+        if (day.status === "shift") fixedDays.push({ employeeId: tokenize(day.employeeId), date: day.date, status: "shift", startTime: day.startTime, endTime: day.endTime, ...(day.shiftKind ? { shiftKind: day.shiftKind } : {}) });
+        else if (day.status === "off") fixedDays.push({ employeeId: tokenize(day.employeeId), date: day.date, status: "off" });
+        else throw new Error("Pevné dny nejsou jednoznačně známé.");
+      }
+    }
     const solverBoundary = (side: MonthlyBoundaryData["before"]) => {
       const assignments = side.assignments.filter((assignment) => assignment.shiftKind);
       return {
@@ -82,6 +99,7 @@ export class MonthlyOrtoolsProvider implements MonthlyPlanningProvider {
         absences: input.absences.map(({ employeeId, from, to, type, status }) => ({ employeeId: tokenize(employeeId), from, to, type, status })),
         availability: input.availability.map(({ employeeId, date, shiftKind, available }) => ({ employeeId: tokenize(employeeId), date, shiftKind, available })),
         staffingRequirements: input.staffingRequirements,
+        ...(range ? { planningRange: range, fixedDays } : {}),
         ...(input.shiftRotationPreference === undefined ? {} : { shiftRotationPreference: input.shiftRotationPreference }),
       },
       boundary: {
@@ -105,7 +123,7 @@ export class MonthlyOrtoolsProvider implements MonthlyPlanningProvider {
     if (response.status !== "feasible") throw new MonthlyProviderError("solver_invalid_output");
     if (!Array.isArray(response.assignments) || response.assignments.some((item) =>
       !item || typeof item !== "object" || typeof item.employeeId !== "string" || !employeeIds.has(item.employeeId)
-      || typeof item.date !== "string" || (item.shiftKind !== "morning" && item.shiftKind !== "afternoon"))) {
+      || typeof item.date !== "string" || (range && (item.date < range.startDate || item.date > range.endDate)) || (item.shiftKind !== "morning" && item.shiftKind !== "afternoon"))) {
       throw new MonthlyProviderError("solver_invalid_output");
     }
 

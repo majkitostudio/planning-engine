@@ -15,8 +15,65 @@ const input: MonthlyPlanningInput = {
 };
 const assignment = (date: string): ProposedAssignment => ({ employeeId: "e1", date, shiftKind: "morning" });
 const completeBoundary = { before: { complete: true, assignments: [] }, after: { complete: true, assignments: [] } };
+const rangeSnapshot = (insideStatus: "unknown" | "off" | "shift" = "unknown", outsideStatus: "off" | "unknown" = "off") => ({
+  imports: [{ id: "import-1", version: 1, fingerprint: "a".repeat(64) }],
+  days: datesInMonth("2026-11").map((date) => date >= "2026-11-15" && date <= "2026-11-28"
+    ? insideStatus === "shift" && date === "2026-11-20"
+      ? { employeeId: "e1", date, status: "shift" as const, startTime: "07:45", endTime: "16:30", shiftKind: "morning" as const }
+      : { employeeId: "e1", date, status: insideStatus === "shift" ? "unknown" as const : insideStatus }
+    : { employeeId: "e1", date, status: outsideStatus }),
+});
 
 describe("měsíční validace", () => {
+  it("vyžaduje okolní historii i pro pevnou převzatou směnu na začátku měsíce", () => {
+    const month = "2021-02";
+    const dates = datesInMonth(month);
+    const rosterHistory = { imports: [], days: dates.map((date) => date === "2021-02-01"
+      ? { employeeId: "e1", date, status: "shift" as const, startTime: "07:45", endTime: "16:30", shiftKind: "morning" as const }
+      : { employeeId: "e1", date, status: date >= "2021-02-15" ? "unknown" as const : "off" as const }) };
+    const result = validateMonthlyPlan({ ...input, month, planningRange: { startDate: "2021-02-15", endDate: "2021-02-28" }, rosterHistory, staffingRequirements: dates.flatMap((date) => (["morning", "afternoon"] as const).map((shiftKind) => ({ date, shiftKind, requiredEmployees: 0 }))) }, [], { before: { complete: false, assignments: [] }, after: { complete: false, assignments: [] } });
+    expect(result.unverified.some((finding) => finding.code === "BOUNDARY_HISTORY_INCOMPLETE")).toBe(true);
+    expect(result.canConfirm).toBe(false);
+  });
+  it("vyžaduje známé pevné dny mimo rozsah a neumožní přepsat existující buňku", () => {
+    const partial = { ...input, planningRange: { startDate: "2026-11-15", endDate: "2026-11-28" }, rosterHistory: rangeSnapshot() };
+    const missing = validateMonthlyPlan({ ...partial, rosterHistory: rangeSnapshot("unknown", "unknown") }, [], completeBoundary);
+    const overlap = validateMonthlyPlan({ ...partial, rosterHistory: rangeSnapshot("shift") }, [], completeBoundary);
+    const outside = validateMonthlyPlan(partial, [assignment("2026-11-02")], completeBoundary);
+    const pending = validateMonthlyPlan(partial, [], completeBoundary);
+
+    expect(missing.unverified.some((finding) => finding.code === "ROSTER_HISTORY_OUTSIDE_RANGE_UNKNOWN")).toBe(true);
+    expect(overlap.problems.some((finding) => finding.code === "ROSTER_RANGE_OVERLAP")).toBe(true);
+    expect(outside.problems.some((finding) => finding.code === "ASSIGNMENT_OUTSIDE_RANGE")).toBe(true);
+    expect(pending.canConfirm).toBe(true);
+  });
+  it("zachová vlastní časy pevných směn a nepředstírá jejich zařazení do obsazení", () => {
+    const customDates = new Set(["2026-11-09", "2026-11-10", "2026-11-11", "2026-11-12", "2026-11-13", "2026-11-14"]);
+    const snapshot = {
+      imports: [],
+      days: datesInMonth("2026-11").map((date) => customDates.has(date)
+        ? { employeeId: "e1", date, status: "shift" as const, startTime: "08:05", endTime: "20:00" }
+        : date >= "2026-11-15" && date <= "2026-11-28"
+          ? { employeeId: "e1", date, status: "unknown" as const }
+          : { employeeId: "e1", date, status: "off" as const }),
+    };
+    const staffingRequirements = input.staffingRequirements.map((item) => customDates.has(item.date) && item.shiftKind === "morning" ? { ...item, requiredEmployees: 1 } : item);
+    const result = validateMonthlyPlan({ ...input, staffingRequirements, planningRange: { startDate: "2026-11-15", endDate: "2026-11-28" }, rosterHistory: snapshot }, [assignment("2026-11-15")], completeBoundary);
+
+    expect(result.problems.some((finding) => finding.code === "REST_AFTER_SIX_DAYS")).toBe(true);
+    expect(result.unverified.some((finding) => finding.code === "COVERAGE_SHIFT_UNCLASSIFIED")).toBe(true);
+    expect(result.problems.some((finding) => finding.code === "COVERAGE_UNDERSTAFFED" && finding.date === "2026-11-09")).toBe(false);
+  });
+  it("kontroluje převzatou směnu proti schválené absenci a výslovné nedostupnosti", () => {
+    const snapshot = rangeSnapshot();
+    const rosterHistory = { ...snapshot, days: snapshot.days.map((day) => day.date === "2026-11-02"
+      ? { employeeId: "e1", date: day.date, status: "shift" as const, startTime: "07:45", endTime: "16:30", shiftKind: "morning" as const }
+      : day) };
+    const result = validateMonthlyPlan({ ...input, planningRange: { startDate: "2026-11-15", endDate: "2026-11-28" }, rosterHistory,
+      absences: [{ id: "a", employeeId: "e1", from: "2026-11-02", to: "2026-11-02", type: "vacation", status: "approved" }],
+      availability: [{ employeeId: "e1", date: "2026-11-02", shiftKind: "morning", available: false }] }, [], completeBoundary);
+    expect(result.problems.map((finding) => finding.code)).toEqual(expect.arrayContaining(["ABSENCE_APPROVED", "AVAILABILITY_UNAVAILABLE"]));
+  });
   it("povolí dva oddělené dny volna při víkendové práci", () => {
     const days = ["2026-11-02", "2026-11-03", "2026-11-05", "2026-11-07", "2026-11-08"];
     const availability = days.map((date) => ({ employeeId: "e1", date, shiftKind: "morning" as const, available: true }));

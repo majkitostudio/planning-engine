@@ -2,9 +2,10 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { PrismaClient } from "@/prisma/generated/client";
 import { datesInMonth } from "./domain/month";
 import { PrismaMonthlyStore } from "./monthly-prisma-store";
+import { loadMonthlyRosterSnapshot } from "./monthly-history-service";
 import type { PlanningActor } from "../auth/actor";
 
-vi.mock("./monthly-history-service", () => ({ loadMonthlyBoundary: vi.fn().mockResolvedValue({ before: { complete: true, assignments: [] }, after: { complete: true, assignments: [] } }) }));
+vi.mock("./monthly-history-service", () => ({ loadMonthlyBoundary: vi.fn().mockResolvedValue({ before: { complete: true, assignments: [] }, after: { complete: true, assignments: [] } }), loadMonthlyRosterSnapshot: vi.fn() }));
 vi.mock("./persistence", () => ({ ensurePlanningActorRecord: vi.fn().mockResolvedValue({ id: "m" }) }));
 
 const input = { month: "2026-11", employees: [{ id: "e1", displayName: "Test", employmentType: "full_time" }], absences: [], availability: [], instructions: "", staffingRequirements: datesInMonth("2026-11").flatMap((date) => ["morning", "afternoon"].map((shiftKind) => ({ date, shiftKind, requiredEmployees: 0 }))) };
@@ -36,6 +37,27 @@ beforeEach(() => { vi.clearAllMocks(); findUnique.mockResolvedValue(row); findFi
 afterEach(() => vi.unstubAllEnvs());
 
 describe("databázové potvrzení měsíčního návrhu", () => {
+  it("potvrdí úplný částečný návrh jen se shodnými aktuálními podklady", async () => {
+    const snapshot = { imports: [], days: datesInMonth("2026-11").map((date) => ({ employeeId: "e1", date, status: date < "2026-11-15" ? "off" as const : "unknown" as const })) };
+    const partialInput = { ...input, planningRange: { startDate: "2026-11-15", endDate: "2026-11-30" }, rosterHistory: snapshot };
+    findUnique.mockResolvedValue({ ...row, mode: "ortools", providerName: "ortools", input: partialInput });
+    vi.mocked(loadMonthlyRosterSnapshot).mockResolvedValue(snapshot);
+    const result = await new PrismaMonthlyStore(db).confirm("p", manager, new Date());
+    expect(result).toMatchObject({ ok: true, alreadyConfirmed: false, run: { input: { rosterHistory: snapshot } } });
+    expect(updateMany).toHaveBeenCalledOnce();
+    expect(createAudit).toHaveBeenCalledOnce();
+  });
+  it("před potvrzením znovu načte roster v transakci a zablokuje změněné podklady", async () => {
+    const snapshot = { imports: [{ id: "i1", version: 1, fingerprint: "a".repeat(64) }], days: datesInMonth("2026-11").map((date) => ({ employeeId: "e1", date, status: date < "2026-11-15" ? "off" : "unknown" })) };
+    const partialInput = { ...input, planningRange: { startDate: "2026-11-15", endDate: "2026-11-30" }, rosterHistory: snapshot };
+    findUnique.mockResolvedValue({ ...row, mode: "ortools", providerName: "ortools", input: partialInput });
+    vi.mocked(loadMonthlyRosterSnapshot).mockResolvedValue({ ...snapshot, imports: [{ id: "i2", version: 2, fingerprint: "b".repeat(64) }] } as never);
+
+    const result = await new PrismaMonthlyStore(db).confirm("p", manager, new Date());
+    expect(loadMonthlyRosterSnapshot).toHaveBeenCalledWith("2026-11", ["e1"], tx);
+    expect(result).toMatchObject({ ok: false, code: "confirmation_blocked", validation: { unverified: expect.arrayContaining([expect.objectContaining({ code: "ROSTER_HISTORY_CHANGED" })]) } });
+    expect(updateMany).not.toHaveBeenCalled();
+  });
   it("znovu ověří návrh a uloží potvrzení a audit v jedné transakci", async () => {
     const result = await new PrismaMonthlyStore(db).confirm("p", manager, new Date("2026-11-01T00:00:00Z"));
     expect(result).toMatchObject({ ok: true, alreadyConfirmed: false });

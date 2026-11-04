@@ -3,7 +3,7 @@ import { prisma as defaultPrisma } from "../db";
 import { canConfirmPlanning, type PlanningActor } from "../auth/actor";
 import { validateMonthlyInput } from "./domain/month-input";
 import type { MonthlyValidation } from "./domain/month-validation";
-import { loadMonthlyBoundary } from "./monthly-history-service";
+import { loadMonthlyBoundary, loadMonthlyRosterSnapshot } from "./monthly-history-service";
 import { isMonthlyPlanDraft, validateMonthlyDraft } from "./monthly-planning";
 import { ensurePlanningActorRecord } from "./persistence";
 import type { MonthlyDraftRecord, MonthlyReadResult, StoredMonthlyRun } from "./monthly-store";
@@ -66,7 +66,8 @@ export class PrismaMonthlyStore {
       const other = await tx.monthlyPlanningRun.findFirst({ where: { month: run.input.month, confirmedAt: { not: null }, id: { not: id } }, select: { id: true } });
       if (other) return { ok: false, code: "month_conflict" } as const;
       const boundary = await loadMonthlyBoundary(run.input.month, run.input.employees.map((employee) => employee.id), tx);
-      const validation = validateMonthlyDraft(run.input, run.draft, boundary, run.mode);
+      const currentRoster = run.input.planningRange ? await loadMonthlyRosterSnapshot(run.input.month, run.input.employees.map((employee) => employee.id), tx) : undefined;
+      const validation = validateMonthlyDraft(run.input, run.draft, boundary, run.mode, currentRoster);
       if (!validation.canConfirm) return { ok: false, code: "confirmation_blocked", validation } as const;
       const actorRecord = databaseActor ?? await ensurePlanningActorRecord(tx, actor);
       const changed = await tx.monthlyPlanningRun.updateMany({ where: { id, confirmedAt: null }, data: { confirmedAt: now, confirmedById: actorRecord.id } });

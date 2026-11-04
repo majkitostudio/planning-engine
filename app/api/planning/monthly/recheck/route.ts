@@ -22,7 +22,8 @@ export async function POST(request: Request) {
     const run = await current.get(data.id);
     if (!run || run.confirmed) return NextResponse.json({ ok: false, message: "Návrh neexistuje nebo je již potvrzený." }, { status: 409 });
     const boundary = await current.loadBoundary(run.input.month, run.input.employees.map((employee) => employee.id));
-    const result = await reviseMonthlyDraft(current, data.id, randomUUID(), data.assignments, boundary);
+    const roster = run.input.planningRange ? await current.loadRosterSnapshot(run.input.month, run.input.employees.map((employee) => employee.id)) : undefined;
+    const result = await reviseMonthlyDraft(current, data.id, randomUUID(), data.assignments, boundary, roster);
     return NextResponse.json(result, { status: result.ok ? 200 : 400 });
   } catch { return NextResponse.json({ ok: false, message: "Kontrolu nebo uložení návrhu se nepodařilo dokončit." }, { status: 503 }); }
 }

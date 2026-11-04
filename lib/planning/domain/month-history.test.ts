@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { buildMonthlyBoundary } from "./month-history";
+import { buildMonthlyBoundary, resolveMonthlyRosterHistory } from "./month-history";
 
 const novemberEmployee = ["e1"];
 const before = { start: "2026-10-01", end: "2026-10-31", employeeIds: novemberEmployee, assignments: [{ employeeId: "e1", date: "2026-10-31", shiftKind: "morning" as const }] };
@@ -74,5 +74,25 @@ describe("podklady navazujících rozpisů", () => {
 
     expect(missing.before.complete).toBe(false);
     expect(conflict.before.complete).toBe(false);
+  });
+
+  it("vytvoří snapshot bez jmen s explicitními dny, neznámem a rozporem", () => {
+    const one = {
+      id: "import-1", version: 1, fingerprint: "a".repeat(64), start: "2026-11-01", end: "2026-11-03", employeeIds: ["e1"],
+      entries: [
+        { employeeId: "e1", date: "2026-11-01", status: "off" as const },
+        { employeeId: "e1", date: "2026-11-02", status: "shift" as const, startTime: "08:05", endTime: "16:45" },
+      ],
+    };
+    const two = {
+      id: "import-2", version: 1, fingerprint: "b".repeat(64), start: "2026-11-02", end: "2026-11-02", employeeIds: ["e1"],
+      entries: [{ employeeId: "e1", date: "2026-11-02", status: "off" as const }],
+    };
+    const snapshot = resolveMonthlyRosterHistory("2026-11", ["e1"], [one, two]);
+
+    expect(snapshot.imports).toHaveLength(2);
+    expect(snapshot.days.find((day) => day.date === "2026-11-01")).toMatchObject({ status: "off" });
+    expect(snapshot.days.find((day) => day.date === "2026-11-02")).toMatchObject({ status: "conflict" });
+    expect(snapshot.days.find((day) => day.date === "2026-11-03")).toMatchObject({ status: "unknown" });
   });
 });

@@ -19,4 +19,16 @@ describe("měsíční provozní konfigurace", () => {
     expect(getMonthlyPersistenceRuntime().configured).toBe(true);
     expect(getMonthlyRuntime().configured).toBe(false);
   });
+
+  it("v paměťovém režimu vrátí chybějící podklady měsíce jako neznámé", async () => {
+    vi.stubEnv("NODE_ENV", "test");
+    vi.stubEnv("PLANNING_PERSISTENCE", "memory");
+    const runtime = getMonthlyPersistenceRuntime();
+    expect(runtime.configured).toBe(true);
+    if (!runtime.configured) return;
+    const snapshot = await runtime.loadRosterSnapshot("2026-02", ["e1"]);
+    expect(snapshot.imports).toEqual([]);
+    expect(snapshot.days).toHaveLength(28);
+    expect(snapshot.days.every((day) => day.employeeId === "e1" && day.status === "unknown")).toBe(true);
+  });
 });

@@ -1,5 +1,5 @@
 import { AiProviderError, isPlanDraft } from "./ai-provider";
-import { validateMonthlyInput, type MonthlyPlanningInput } from "./domain/month-input";
+import { validateMonthlyInput, type MonthlyPlanningInput, type MonthlyRosterSnapshot } from "./domain/month-input";
 import { validateMonthlyPlan, type MonthlyBoundaryData, type MonthlyValidation } from "./domain/month-validation";
 import type { PlanDraft } from "./domain/types";
 
@@ -32,8 +32,19 @@ export function isMonthlyPlanDraft(value: unknown, month: string): value is Mont
 }
 
 /** Simulovaný scénář nemůže předstírat, že záměrně neověřené podklady prošly kontrolou. */
-export function validateMonthlyDraft(input: MonthlyPlanningInput, draft: MonthlyPlanDraft, boundary: MonthlyBoundaryData, mode: string): MonthlyValidation {
-  const validation = validateMonthlyPlan(input, draft.assignments, boundary);
+function rosterSnapshotKey(snapshot: MonthlyRosterSnapshot): string {
+  const imports = snapshot.imports.map((item) => JSON.stringify([item.id, item.version, item.fingerprint])).sort();
+  const days = snapshot.days.map((day) => JSON.stringify(day.status === "shift"
+    ? [day.employeeId, day.date, day.status, day.startTime, day.endTime, day.shiftKind ?? null]
+    : [day.employeeId, day.date, day.status])).sort();
+  return JSON.stringify([imports, days]);
+}
+
+export function validateMonthlyDraft(input: MonthlyPlanningInput, draft: MonthlyPlanDraft, boundary: MonthlyBoundaryData, mode: string, currentRoster?: MonthlyRosterSnapshot): MonthlyValidation {
+  let validation = validateMonthlyPlan(input, draft.assignments, boundary);
+  if (input.planningRange && (!input.rosterHistory || !currentRoster || rosterSnapshotKey(input.rosterHistory) !== rosterSnapshotKey(currentRoster))) {
+    validation = { ...validation, status: validation.status === "invalid" ? "invalid" : "not_verified", unverified: [...validation.unverified, { code: "ROSTER_HISTORY_CHANGED", message: "Podklady rosteru se změnily nebo je nelze znovu ověřit. Vytvořte návrh z aktuálních podkladů." }], canConfirm: false };
+  }
   if (mode === "simulated" && draft.simulationScenario === "partial") return { ...validation, status: "invalid", problems: [...validation.problems, { code: "SIMULATED_PARTIAL", message: "SIMULATED: scénář představuje částečný návrh, který nelze potvrdit." }], canConfirm: false };
   if (mode !== "simulated" || draft.simulationScenario !== "unverified") return validation;
   return { ...validation, status: validation.status === "invalid" ? "invalid" : "not_verified", unverified: [...validation.unverified, { code: "SIMULATED_UNVERIFIED", message: "SIMULATED: scénář záměrně představuje neověřené podklady." }], canConfirm: false };
@@ -47,6 +58,20 @@ export type MonthlyPlanningOutcome =
 export async function executeMonthlyPlanning(input: MonthlyPlanningInput, boundary: MonthlyBoundaryData, provider: MonthlyPlanningProvider): Promise<MonthlyPlanningOutcome> {
   const validated = validateMonthlyInput(input);
   if (!validated.ok) return { ok: false, code: "invalid_input", message: validated.message };
+  const range = validated.value.planningRange;
+  if (range) {
+    const roster = validated.value.rosterHistory;
+    if (provider.name !== "ortools" || !roster) return { ok: false, code: "invalid_input", message: "Doplánování vyžaduje lokální plánovač a aktuální podklady rosteru." };
+    const incomplete = roster.days.find((day) => {
+      const inside = day.date >= range.startDate && day.date <= range.endDate;
+      return inside ? day.status !== "unknown" : day.status !== "off" && day.status !== "shift";
+    });
+    if (incomplete) {
+      const name = validated.value.employees.find((employee) => employee.id === incomplete.employeeId)?.displayName ?? "Zaměstnanec";
+      const reason = incomplete.status === "conflict" ? "podklady si odporují" : incomplete.date >= range.startDate && incomplete.date <= range.endDate ? "ve vybraném úseku už je převzatý den" : "mimo vybraný úsek chybí údaj o směně nebo volnu";
+      return { ok: false, code: "invalid_input", message: `${name}, ${incomplete.date}: ${reason}. Opravte podklady na stránce Návaznost směn nebo změňte období.` };
+    }
+  }
   let draft: unknown;
   try { draft = await provider.generateMonthlyPlan(validated.value, boundary); }
   catch (error) {
@@ -63,5 +88,5 @@ export async function executeMonthlyPlanning(input: MonthlyPlanningInput, bounda
     return { ok: false, code: "ai_failed", message: "Návrh od zvoleného plánovače se nepodařilo získat." };
   }
   if (!isMonthlyPlanDraft(draft, input.month)) return { ok: false, code: "ai_invalid_output", message: "Zvolený plánovač vrátil neplatný návrh nebo nesprávný měsíc." };
-  return { ok: true, draft, validation: validateMonthlyDraft(input, draft, boundary, provider.name) };
+  return { ok: true, draft, validation: validateMonthlyDraft(input, draft, boundary, provider.name, range ? input.rosterHistory : undefined) };
 }

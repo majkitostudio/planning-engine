@@ -1,6 +1,6 @@
 import { datesInMonth } from "./domain/month";
 import { weekdayIndex } from "./domain/time";
-import { validateMonthlyInput, type MonthlyAvailability, type MonthlyPlanningInput } from "./domain/month-input";
+import { validateMonthlyInput, type MonthlyAvailability, type MonthlyPlanningInput, type MonthlyPlanningRange } from "./domain/month-input";
 import type { Absence, ShiftKind } from "./domain/types";
 import type { StaffingSetting } from "./staffing-settings";
 
@@ -31,6 +31,7 @@ export interface MonthlyFormData {
   readonly staffing: readonly string[];
   readonly instructions: string;
   readonly shiftRotationPreference?: boolean;
+  readonly planningRange?: MonthlyPlanningRange;
 }
 
 export interface MonthlyFormReadiness {
@@ -110,6 +111,7 @@ export function buildMonthlyFormInput(form: MonthlyFormData): { ok: true; value:
     staffingRequirements: dates.flatMap((date) => (["morning", "afternoon"] as ShiftKind[]).map((shiftKind, index) => ({ date, shiftKind, requiredEmployees: Number(form.staffing[weekdayIndex(date) * 2 + index]) }))),
     instructions: form.instructions,
     ...(form.shiftRotationPreference === undefined ? {} : { shiftRotationPreference: form.shiftRotationPreference }),
+    ...(form.planningRange === undefined ? {} : { planningRange: form.planningRange }),
   };
   return validateMonthlyInput(input);
 }

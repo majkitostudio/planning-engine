@@ -23,7 +23,8 @@ export async function GET(request: Request) {
     const run = await current.get(id);
     if (!run || run.confirmed || run.input.month !== month) return NextResponse.json({ ok: false, message: "Uložený nepotvrzený návrh nebyl nalezen." }, { status: 404 });
     const boundary = await current.loadBoundary(month, run.input.employees.map((employee) => employee.id));
-    const result = await recoverMonthlyDraft(current, id, month, boundary);
+    const roster = run.input.planningRange ? await current.loadRosterSnapshot(month, run.input.employees.map((employee) => employee.id)) : undefined;
+    const result = await recoverMonthlyDraft(current, id, month, boundary, roster);
     return NextResponse.json(result, { status: result.ok ? 200 : 404 });
   } catch { return NextResponse.json({ ok: false, message: "Návrh se nepodařilo načíst a zkontrolovat." }, { status: 503 }); }
 }
