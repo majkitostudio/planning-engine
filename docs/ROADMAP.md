@@ -123,6 +123,13 @@ testovacím předpokladem, nikoli schváleným provozním pravidlem.
   které Windows Git označuje jako nedostupné, jsou přístupné z Ubuntu a jejich
   pracovní stromy byly při kontrole čisté; jejich commity jsou zahrnuté v `main`.
   Označení Windows Git tedy samo o sobě neprokazuje, že je lze odstranit.
+- Porovnání stromu `cline/9dbfe`: upravené testovací soubory jsou totožné s
+  `main` a změny exportů a importu již `main` obsahuje. Nesledovaný starší
+  `ai-provider.ts` se od současného liší; jeho převzetí by odstranilo novější
+  rozhraní náhrad. Navíc starší verze odmítá prázdné ID alternativy, současná
+  strukturální kontrola dovoluje libovolný řetězec. `OPEN QUESTION` — ověřit
+  požadavek na neprázdné ID a případně jej ošetřit cíleně s testem; starý
+  soubor ani pracovní strom při auditu nemažou ani nepřepisují.
 - Hlavní README a rozcestník dokumentace byly sladěny s odstraněním ručních
   úprav z manažerské obrazovky; další historické souhrny vyžadují kontrolu.
 - GitHub CI v aktuálním workflow samostatně nespouští Python testy solveru ani
