@@ -104,8 +104,8 @@
 ## Závěrečné ověření a předání
 
 - [x] Spustit `npm run lint`, `npm run typecheck`, `npm test`, `npm run build`, `npm run db:validate` a relevantní Python testy; zaznamenat skutečné výsledky a přeskočené testy do autoritativní specifikace.
-- [ ] Prověřit simulované vstupy z rosteru, nejednoznačné párování, překrývající se zdroje, neznámé versus volno, časovou návaznost, nedostupnost AI a solveru, chybějící budoucí podklady a ochranu potvrzení.
-- [ ] Aktualizovat jeden relevantní autoritativní dokument pro každé změněné rozhodnutí a odkazy na něj; rozlišit `PLANNED`, `IMPLEMENTED` a `VERIFIED`. Zkontrolovat diff a neznámé výstupy, zachovat existující nesledované podklady.
+- [x] Prověřit simulované vstupy z rosteru, nejednoznačné párování, překrývající se zdroje, neznámé versus volno, časovou návaznost, nedostupnost AI a solveru, chybějící budoucí podklady a ochranu potvrzení. Testy používají syntetická data; databázový průchod zůstává `NOT VERIFIED`.
+- [x] Aktualizovat jeden relevantní autoritativní dokument pro každé změněné rozhodnutí a odkazy na něj; rozlišit `PLANNED`, `IMPLEMENTED` a `VERIFIED`. Zkontrolovat diff a neznámé výstupy, zachovat existující nesledované podklady.
 - [ ] Commitovat samostatné ucelené a ověřené kroky podle projektových pravidel. Neprovádět produkční migraci, export, přenos osobních údajů externí AI, potvrzení reálného rozpisu ani nasazení bez příslušného výslovného schválení.
 
 ## Rozhodnutí k potvrzení před závislou prací
