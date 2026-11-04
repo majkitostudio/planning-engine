@@ -5,6 +5,13 @@ Technický repozitář: `planning-engine`
 Rozcestník dokumentace. Každý dokument má jednu hlavní odpovědnost a podrobnosti
 jiných dokumentů neopakuje.
 
+Složky `superpowers/plans/` a `superpowers/specs/` zachovávají dobové plány
+a návrhy jako historii rozhodování. Jejich popisy dokončenosti, příkazy ani
+seznamy úkolů nejsou samy o sobě aktuálním stavem aplikace. Schválená doménová
+rozhodnutí platí podle jejich aktuálního znění v `DOMAIN_DECISIONS.md` a
+`DOMAIN_SPECIFICATION.md`; aktuální implementaci a ověření uvádí `ROADMAP.md`.
+Dokumenty se nemažou jen proto, že některé jejich kroky zastaraly.
+
 ## Kde co hledat
 
 | Dokument | Odpovídá na | Stav |
