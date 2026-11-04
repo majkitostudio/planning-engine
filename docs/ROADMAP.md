@@ -187,6 +187,15 @@ testovacím předpokladem, nikoli schváleným provozním pravidlem.
   vzor byl pozorován při předchozím přechodu myší z prvního kroku. Přesunout
   fokus po změně kroku na jeho nadpis nebo první vhodný prvek a ověřit pořadí
   v běžném sestavení i se čtečkou; pokus běžel ve vývojovém režimu.
+- `VERIFIED` / přepínání měsíců a přístupnost — Ve vývojové aplikaci na
+  `5f3fe9f` zůstal po přepnutí z listopadu na prosinec a zpět zachovaný
+  rozpracovaný syntetický zaměstnanec v listopadovém formuláři; prosincový
+  formulář byl samostatně prázdný. Při zobrazení prosince však strom
+  přístupnosti označil oblast návrhu listopadem a pole pro jméno interním ID
+  místo viditelného popisku. Komponenty navštívených měsíců zůstávají v DOM a
+  opakují stejná ID nadpisů a polí. Zajistit jedinečná ID pro každý měsíc a
+  ověřit je v prohlížeči i se čtečkou; po obnovení stránky tento pokus stav
+  formuláře netestoval. Použita byla izolovaná syntetická databáze.
 - `VERIFIED` / UX oprava — Při odkazu prohlížeče na již neexistující návrh
   server vrátil `404`; stránka nabídla opětovné načtení, po kterém se stejná
   chyba zopakovala. Rozlišit chybějící návrh od dočasné chyby spojení a
