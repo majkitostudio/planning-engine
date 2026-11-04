@@ -140,6 +140,14 @@ testovacím předpokladem, nikoli schváleným provozním pravidlem.
 
 ### Další kontrola a postup před uzavřením MVP
 
+- `VERIFIED` / UX oprava — Při odkazu prohlížeče na již neexistující návrh
+  server vrátil `404`; stránka nabídla opětovné načtení, po kterém se stejná
+  chyba zopakovala. Rozlišit chybějící návrh od dočasné chyby spojení a
+  nabídnout bezpečný postup pro pokračování bez automatického mazání dat.
+  Ověřeno v izolovaném prohlížeči a prázdné testovací databázi.
+- `VERIFIED` (omezený rozsah) — Stránky Návaznost směn a Zaměstnanci zobrazily
+  prázdný stav; navigace mezi nimi fungovala. Tlačítko Budoucí funkce přijalo
+  klávesový fokus. Nejde o úplný test přístupnosti ani mobilního zobrazení.
 - `VERIFIED` / oprava nutná — Import přijme vlastní místní čas směny
   `2026-03-29 02:30`, který v Praze při přechodu na letní čas neexistuje.
   Přímý syntetický test převodu jej zpětně zobrazil jako `03:30`. Přesný dopad
