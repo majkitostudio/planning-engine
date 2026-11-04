@@ -3,6 +3,10 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { parseRosterCsv, type RosterImportDay, type RosterImportResult } from "@/lib/planning/roster-import";
 import { rosterHistoryEmptyState } from "@/lib/planning/roster-history-view";
+import {
+  rosterHistoryControlLabel,
+  rosterHistoryEmployeeContext,
+} from "@/lib/accessibility-labels";
 
 type Employee = { readonly id: string; readonly displayName: string };
 type SavedImport = { readonly id: string; readonly periodStart: string; readonly periodEnd: string; readonly source: string; readonly version: number; readonly createdAt: string; readonly employeeCount: number; readonly knownDayCount: number };
@@ -176,7 +180,12 @@ export function RosterHistoryPanel({ canManage, initialMonth }: { readonly canMa
       {preview && counts ? <section className="roster-history__preview" aria-labelledby="roster-preview-title">
         <div className="roster-history__preview-head"><div><h3 id="roster-preview-title">Náhled {month}</h3><p>{counts.employees} řádků zaměstnanců · {counts.shifts} směn · {counts.off} dnů volna · {counts.unknown} neznámých buněk</p></div></div>
         <p className="roster-history__hint">Každý řádek zaměstnance rozbalte. Opravte párování a neznámé buňky. U neznámého času aplikace žádnou směnu sama nevymyslí.</p>
-        {preview.employees.map((employee, employeeIndex) => <details className="roster-history__employee" key={`${employee.sourceName}-${employeeIndex}`}>
+        {preview.employees.map((employee, employeeIndex) => {
+          const employeeContext = rosterHistoryEmployeeContext(
+            employees.find((reference) => reference.id === employeeMapping[employeeIndex])?.displayName,
+            employee.sourceName,
+          );
+          return <details className="roster-history__employee" key={`${employee.sourceName}-${employeeIndex}`}>
           <summary><span>{employee.sourceName}</span><span className={`roster-history__match roster-history__match--${employee.match}`}>{employee.match === "exact" ? "Jednoznačná shoda" : employee.match === "ambiguous" ? "Vyberte osobu" : "Bez shody"}</span></summary>
           <label className="roster-history__field">Zaměstnanec<select className="input" value={employeeMapping[employeeIndex] ?? ""} disabled={!canManage || busy} onChange={(event) => setEmployeeMapping((current) => ({ ...current, [employeeIndex]: event.target.value }))}>
             <option value="">Vyberte zaměstnance</option>{employees.map((reference) => <option key={reference.id} value={reference.id}>{reference.displayName}</option>)}
@@ -187,13 +196,14 @@ export function RosterHistoryPanel({ canManage, initialMonth }: { readonly canMa
             const dayLabel = day.status === "unknown" ? (day.sourceCell || (day.reason === "blank" ? "Prázdná buňka" : "Nerozpoznaná hodnota")) : day.sourceCell;
             return <div className={`roster-history__day${value.status === "unknown" ? " roster-history__day--unknown" : ""}`} key={date}>
               <strong>{date}</strong><span className="roster-history__source-cell">{dayLabel}</span>
-              <label className="roster-history__status">Stav<select className="input" value={value.status} disabled={!canManage || busy} onChange={(event) => setDayEdits((current) => ({ ...current, [key]: { ...value, status: event.target.value as EditableDay["status"] } }))}>
+              <label className="roster-history__status">Stav<select className="input" aria-label={rosterHistoryControlLabel("Stav", employeeContext, date)} value={value.status} disabled={!canManage || busy} onChange={(event) => setDayEdits((current) => ({ ...current, [key]: { ...value, status: event.target.value as EditableDay["status"] } }))}>
                 <option value="unknown">Neznámý</option><option value="off">Volno</option><option value="shift">Směna</option>
               </select></label>
-              {value.status === "shift" ? <div className="roster-history__times"><label>Od<input className="input" type="time" value={value.startTime} disabled={!canManage || busy} onChange={(event) => setDayEdits((current) => ({ ...current, [key]: { ...value, startTime: event.target.value } }))} /></label><label>Do<input className="input" type="time" value={value.endTime} disabled={!canManage || busy} onChange={(event) => setDayEdits((current) => ({ ...current, [key]: { ...value, endTime: event.target.value } }))} /></label></div> : null}
+              {value.status === "shift" ? <div className="roster-history__times"><label>Od<input className="input" type="time" aria-label={rosterHistoryControlLabel("Od, začátek směny", employeeContext, date)} value={value.startTime} disabled={!canManage || busy} onChange={(event) => setDayEdits((current) => ({ ...current, [key]: { ...value, startTime: event.target.value } }))} /></label><label>Do<input className="input" type="time" aria-label={rosterHistoryControlLabel("Do, konec směny", employeeContext, date)} value={value.endTime} disabled={!canManage || busy} onChange={(event) => setDayEdits((current) => ({ ...current, [key]: { ...value, endTime: event.target.value } }))} /></label></div> : null}
             </div>;
           })}</div>
-        </details>)}
+          </details>;
+        })}
         {mappingValid ? null : <p className="roster-history__error" role="status">Každý řádek musí být spárován s jiným zaměstnancem.</p>}
         {!editValid ? <p className="roster-history__error" role="status">Doplňte platný čas u každé buňky označené jako směna.</p> : null}
         <div className="roster-history__actions"><button type="button" className="btn btn--primary" disabled={!canManage || busy || !mappingValid || !editValid} onClick={() => void savePreview()}>{busy ? "Ukládám…" : "Uložit zkontrolované podklady"}</button><button type="button" className="btn btn--secondary" disabled={busy} onClick={clearSource}>Zrušit náhled a vymazat obsah</button></div>

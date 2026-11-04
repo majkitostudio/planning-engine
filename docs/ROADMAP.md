@@ -501,9 +501,14 @@ označíme za hotovou až po opravě a doloženém ověření jejího rozsahu.
        otevření a přeskočení skrytého odkazu klávesou Tab. Fokus v běžícím
        `AppShell` a čtečka obrazovky zůstávají `NOT VERIFIED`; lokální přihlášení
        nebylo dostupné.
-     - [ ] Ověřit mobilní průchod klávesnicí a čtečkou obrazovky; opravit
-       zbývající popisky, fokus kroků, chybu chybějícího návrhu a ochranu
-       rozepsaných vstupů.
+     - [x] Rozlišit popisky tlačítek pro odebrání zaměstnanců a absencí; pole
+       historie pojmenovat typem pole, přiřazeným zaměstnancem a dnem. Pokud
+       řádek ještě není přiřazen, použije se název zdrojového řádku. Tři cílené
+       testy ověřují formát popisků a mapované jméno; úplné testy, lint,
+       typecheck a build prošly. Výsledný DOM a čtečka obrazovky zůstávají
+       `NOT VERIFIED`.
+     - [ ] Ověřit mobilní průchod klávesnicí a čtečkou obrazovky; opravit fokus
+       kroků, chybu chybějícího návrhu a ochranu rozepsaných vstupů.
    - [ ] Posoudit vývojové závislosti a ověřit kompatibilní aktualizace.
 9. **P2 — Závěrečné ověření MVP.**
    - [ ] Provést syntetický průchod návrh → kontrola → potvrzení → obnovení,
