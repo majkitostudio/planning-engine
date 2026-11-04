@@ -448,6 +448,17 @@ označíme za hotovou až po opravě a doloženém ověření jejího rozsahu.
      kontrolu ve WSL. Samotný `AGENTS.md` je pracovní instrukce, nikoli Git hook
      ani centrální hlídač; každý worktree má samostatný stav, takže čistý `main`
      neprokazuje čistotu ostatních stromů.
+   - `VERIFIED` (5. 11. 2026, kontrola na `292300e`) — Vzdálený `origin`
+     obsahuje pouze `main`; špičky všech dostupných lokálních větví jsou v
+     aktuálním `main`. Čtyři dříve nedostupné WSL pracovní stromy byly
+     zkontrolovány přímo v Ubuntu: jejich sledované i nesledované změny jsou
+     čisté. Ignorované `node_modules`, `.next`, generované soubory a podklady
+     `.superpowers/sdd` zůstaly zachované. `cline/9dbfe` zůstává jediným
+     dostupným stromem s necommitnutými změnami mimo `main`; jeho rozdíl byl
+     prověřen výše. Dvě zálohy `git stash` i nesledované `design-qa.md` a
+     `output/` zůstávají zachované. Celkový P0 úklid proto není dokončen:
+     obsah záloh a zachovaných podkladů nebyl určen k odstranění a stromy ani
+     větve nebyly naslepo smazány.
 1. **P0 — Starší API a ochrana rozpisů.**
    - [x] Vyžadovat roli managera pro zápis přes týdenní `/run` a `/replacement`;
      viewer zůstává pouze pro čtení.
