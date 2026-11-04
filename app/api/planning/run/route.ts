@@ -1,8 +1,9 @@
 import { NextResponse } from "next/server";
 
-import { requirePlanningActor } from "@/lib/auth/route-access";
+import { requirePlanningManager } from "@/lib/auth/route-access";
 import type { PlanningRunApiResponse } from "@/lib/planning/api-types";
 import { getPlanningPersistenceRuntime } from "@/lib/planning/persistence-runtime";
+import { PlanningPersistenceConflictError } from "@/lib/planning/persistence";
 import { getPlanningRuntime } from "@/lib/planning/server-config";
 import { executePlanningRun } from "@/lib/planning/run-service";
 import { isSimulatedScenarioId } from "@/lib/planning/simulated/scenarios";
@@ -11,7 +12,7 @@ export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
 
 export async function POST(request: Request) {
-  const actorAccess = await requirePlanningActor();
+  const actorAccess = await requirePlanningManager();
   if (!actorAccess.ok) {
     return NextResponse.json<PlanningRunApiResponse>(
       {
@@ -100,7 +101,19 @@ export async function POST(request: Request) {
   if (result.ok) {
     try {
       await persistenceRuntime.persistence.saveRun(result.snapshot, actorAccess.actor);
-    } catch {
+    } catch (error) {
+      if (error instanceof PlanningPersistenceConflictError) {
+        return NextResponse.json<PlanningRunApiResponse>(
+          {
+            ok: false,
+            rejected: {
+              code: "record_conflict",
+              message: "Rozpis s tímto identifikátorem už existuje a nebyl změněn.",
+            },
+          },
+          { status: 409 },
+        );
+      }
       return NextResponse.json<PlanningRunApiResponse>(
         {
           ok: false,

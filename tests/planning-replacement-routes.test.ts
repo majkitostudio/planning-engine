@@ -1,9 +1,11 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { auth } from "@/auth";
+import { POST as createWeeklyRun } from "../app/api/planning/run/route";
 import { POST as createReplacement } from "../app/api/planning/replacement/route";
 import { POST as confirmReplacement } from "../app/api/planning/replacement/confirm/route";
 import { getPlanningPersistenceRuntime } from "../lib/planning/persistence-runtime";
+import { SIMULATED_WEEK_START } from "../lib/planning/simulated/scenarios";
 import { getSimulatedReplacementScenario } from "../lib/planning/simulated/replacement-scenarios";
 
 vi.mock("@/auth", () => ({
@@ -75,6 +77,60 @@ describe("replacement route handlers", () => {
     );
 
     expect(response.status).toBe(401);
+  });
+
+  it("viewer nesmí vytvořit návrh operativní náhrady", async () => {
+    authMock.mockResolvedValue({
+      user: {
+        id: "replacement-viewer",
+        email: "viewer@aaauto.cz",
+        name: "Viewer",
+        role: "viewer",
+      },
+    });
+
+    const response = await createReplacement(
+      jsonRequest("http://localhost/api/planning/replacement", validBody()),
+    );
+    const body = await responseJson<{ ok: false; rejected: { code: string } }>(response);
+
+    expect(response.status).toBe(403);
+    expect(body.rejected.code).toBe("forbidden");
+  });
+
+  it("kolize ID nesmí přepsat uložený týdenní rozpis", async () => {
+    const weeklyResponse = await createWeeklyRun(
+      jsonRequest("http://localhost/api/planning/run", {
+        scenario: "complete",
+        weekStart: SIMULATED_WEEK_START,
+      }),
+    );
+    const weeklyBody = await responseJson<{
+      ok: true;
+      view: { proposalId: string };
+    }>(weeklyResponse);
+    expect(weeklyResponse.status).toBe(200);
+    const runtime = getPlanningPersistenceRuntime();
+    if (!runtime.configured) throw new Error("Test persistence není nakonfigurovaná.");
+    const savedWeekly = await runtime.persistence.getRun(weeklyBody.view.proposalId);
+    expect(savedWeekly).not.toBeNull();
+
+    const response = await createReplacement(
+      jsonRequest(
+        "http://localhost/api/planning/replacement",
+        validBody({ requestId: weeklyBody.view.proposalId }),
+      ),
+    );
+    const body = await responseJson<{ ok: false; rejected: { code: string } }>(response);
+
+    expect(response.status).toBe(409);
+    expect(body.rejected.code).toBe("record_conflict");
+    await expect(runtime.persistence.getRun(weeklyBody.view.proposalId)).resolves.toEqual(
+      savedWeekly,
+    );
+    await expect(
+      runtime.persistence.getReplacementRun(weeklyBody.view.proposalId),
+    ).resolves.toBeNull();
   });
 
   it("viewer nesmí potvrdit operativní náhradu", async () => {

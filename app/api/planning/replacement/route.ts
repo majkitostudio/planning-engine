@@ -1,9 +1,10 @@
 import { NextResponse } from "next/server";
 
-import { requirePlanningActor } from "@/lib/auth/route-access";
+import { requirePlanningManager } from "@/lib/auth/route-access";
 import type { PlanningReplacementApiResponse } from "@/lib/planning/api-types";
 import type { PlanningInput } from "@/lib/planning/domain/types";
 import { getPlanningPersistenceRuntime } from "@/lib/planning/persistence-runtime";
+import { PlanningPersistenceConflictError } from "@/lib/planning/persistence";
 import { applyStaffingSettings } from "@/lib/planning/staffing-settings";
 import { createPlanningProvider } from "@/lib/planning/provider-factory";
 import { createReplacementOptions } from "@/lib/planning/replacement-service";
@@ -19,7 +20,7 @@ export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
 
 export async function POST(request: Request) {
-  const actorAccess = await requirePlanningActor();
+  const actorAccess = await requirePlanningManager();
   if (!actorAccess.ok) {
     return NextResponse.json<PlanningReplacementApiResponse>(
       { ok: false, rejected: { code: actorAccess.code, message: actorAccess.message } },
@@ -171,7 +172,14 @@ export async function POST(request: Request) {
       snapshot,
       actorAccess.actor,
     );
-  } catch {
+  } catch (error) {
+    if (error instanceof PlanningPersistenceConflictError) {
+      return rejection(
+        "record_conflict",
+        "Rozpis s tímto identifikátorem už existuje a nebyl změněn.",
+        409,
+      );
+    }
     return rejection(
       "persistence_failed",
       "Výsledek operativní náhrady se nepodařilo uložit.",

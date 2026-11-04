@@ -10,6 +10,7 @@ export type PlanningActorAccess =
       readonly status: 401 | 403 | 503;
       readonly code:
         | "unauthorized"
+        | "forbidden"
         | "password_change_required"
         | "auth_not_configured"
         | "auth_invalid_config"
@@ -54,5 +55,17 @@ export async function requirePlanningActor(): Promise<PlanningActorAccess> {
     status: 401,
     code: "unauthorized",
     message: "Pro použití plánovacího API je nutné přihlášení.",
+  };
+}
+
+export async function requirePlanningManager(): Promise<PlanningActorAccess> {
+  const access = await requirePlanningActor();
+  if (!access.ok || access.actor.role === "manager") return access;
+
+  return {
+    ok: false,
+    status: 403,
+    code: "forbidden",
+    message: "Tuto akci může provést pouze manažer.",
   };
 }

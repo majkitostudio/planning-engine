@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
 import { toPlanningActor } from "../auth/actor";
 import { getSimulatedScenario } from "./simulated/scenarios";
@@ -9,6 +9,8 @@ import {
   createInMemoryPersistenceState,
   ensurePlanningActorRecord,
   InMemoryPlanningPersistence,
+  PrismaPlanningPersistence,
+  PlanningPersistenceConflictError,
   type PlanningRunSnapshot,
   type ReplacementRunSnapshot,
 } from "./persistence";
@@ -107,6 +109,27 @@ describe("planning persistence", () => {
 
     const restarted = new InMemoryPlanningPersistence(state);
     await expect(restarted.getRun(snapshot.proposalId)).resolves.toEqual(snapshot);
+  });
+
+  it("odmítne přepsat již uložený týdenní návrh se stejným ID", async () => {
+    const persistence = new InMemoryPlanningPersistence();
+    const saved = makeSnapshot("collision-id");
+    await persistence.saveRun(saved, actor);
+    const confirmed = await persistence.confirmRun(
+      saved.proposalId,
+      saved.result.proposal.plan.assignments,
+      actor,
+      new Date("2026-10-28T12:00:00.000Z"),
+    );
+    if (!confirmed) throw new Error("Syntetický návrh se nepodařilo potvrdit.");
+    const existing = confirmed.snapshot;
+    const conflicting = { ...existing, scenarioLabel: "Jiný vstup" };
+
+    await expect(persistence.saveRun(conflicting, actor)).rejects.toBeInstanceOf(
+      PlanningPersistenceConflictError,
+    );
+    await expect(persistence.getRun(saved.proposalId)).resolves.toEqual(existing);
+    expect(persistence.getAuditEvents()).toHaveLength(1);
   });
 
   it("potvrzení uloží jednou a opakování je idempotentní", async () => {
@@ -234,6 +257,19 @@ describe("replacement persistence", () => {
     expect(snapshot.confirmedPlan).toBeNull();
   });
 
+  it("odmítne kolizi ID s existujícím týdenním záznamem", async () => {
+    const persistence = new InMemoryPlanningPersistence();
+    const weekly = makeSnapshot("shared-id");
+    const replacement = makeReplacementSnapshot("shared-id");
+    await persistence.saveRun(weekly, actor);
+
+    await expect(persistence.saveReplacementRun(replacement, actor)).rejects.toBeInstanceOf(
+      PlanningPersistenceConflictError,
+    );
+    await expect(persistence.getRun(weekly.proposalId)).resolves.toEqual(weekly);
+    await expect(persistence.getReplacementRun(replacement.replacementId)).resolves.toBeNull();
+  });
+
   it("potvrdí vybranou variantu jako novou verzi a opakování je idempotentní", async () => {
     const persistence = new InMemoryPlanningPersistence();
     const snapshot = makeReplacementSnapshot();
@@ -278,6 +314,28 @@ describe("replacement persistence", () => {
           selectedOptionId: option.id,
         }),
       }),
+    );
+  });
+});
+
+describe("Prisma planning persistence", () => {
+  it("převede kolizi ID u týdenních i náhradových záznamů na konflikt", async () => {
+    const create = vi.fn().mockRejectedValue({ code: "P2002" });
+    const transaction = { planningRunRecord: { create } };
+    const persistence = new PrismaPlanningPersistence({
+      $transaction: async (operation: (tx: typeof transaction) => unknown) =>
+        operation(transaction),
+    } as never);
+
+    await expect(persistence.saveRun(makeSnapshot("existing-id"))).rejects.toBeInstanceOf(
+      PlanningPersistenceConflictError,
+    );
+    await expect(
+      persistence.saveReplacementRun(makeReplacementSnapshot("existing-id")),
+    ).rejects.toBeInstanceOf(PlanningPersistenceConflictError);
+    expect(create).toHaveBeenCalledTimes(2);
+    expect(create).toHaveBeenCalledWith(
+      expect.objectContaining({ data: expect.objectContaining({ proposalId: "existing-id" }) }),
     );
   });
 });

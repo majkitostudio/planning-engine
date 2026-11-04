@@ -74,6 +74,13 @@ export interface PersistedReplacementConfirmation {
   readonly alreadyConfirmed: boolean;
 }
 
+export class PlanningPersistenceConflictError extends Error {
+  constructor() {
+    super("Plánovací záznam s tímto identifikátorem již existuje.");
+    this.name = "PlanningPersistenceConflictError";
+  }
+}
+
 export interface PlanningPersistence {
   saveRun(snapshot: PlanningRunSnapshot, actor?: PlanningActor): Promise<void>;
   getRun(proposalId: string): Promise<PlanningRunSnapshot | null>;
@@ -130,6 +137,12 @@ export class InMemoryPlanningPersistence implements PlanningPersistence {
     actor?: PlanningActor,
   ): Promise<void> {
     void actor;
+    if (
+      this.state.runs.has(snapshot.proposalId) ||
+      this.state.replacementRuns.has(snapshot.proposalId)
+    ) {
+      throw new PlanningPersistenceConflictError();
+    }
     this.state.runs.set(snapshot.proposalId, snapshot);
   }
 
@@ -142,6 +155,12 @@ export class InMemoryPlanningPersistence implements PlanningPersistence {
     actor?: PlanningActor,
   ): Promise<void> {
     void actor;
+    if (
+      this.state.runs.has(snapshot.replacementId) ||
+      this.state.replacementRuns.has(snapshot.replacementId)
+    ) {
+      throw new PlanningPersistenceConflictError();
+    }
     this.state.replacementRuns.set(snapshot.replacementId, snapshot);
   }
 
@@ -311,6 +330,15 @@ function shiftKindOrder(shiftKind: StaffingSetting["shiftKind"]): number {
   return shiftKind === "morning" ? 0 : 1;
 }
 
+function isUniqueConstraintViolation(error: unknown): boolean {
+  return (
+    typeof error === "object" &&
+    error !== null &&
+    "code" in error &&
+    error.code === "P2002"
+  );
+}
+
 export class PrismaPlanningPersistence implements PlanningPersistence {
   constructor(private readonly db: PrismaClient = defaultPrisma) {}
 
@@ -320,36 +348,32 @@ export class PrismaPlanningPersistence implements PlanningPersistence {
   ): Promise<void> {
     await this.db.$transaction(async (tx) => {
       if (actor) await ensurePlanningActorRecord(tx, actor);
-
-      await tx.planningRunRecord.upsert({
-        where: { proposalId: snapshot.proposalId },
-        create: {
-          proposalId: snapshot.proposalId,
-          scenarioId: snapshot.scenarioId,
-          scenarioLabel: snapshot.scenarioLabel,
-          providerName: snapshot.providerName,
-          mode: snapshot.mode,
-          weekStart: snapshot.result.weekStart,
-          input: toInputJson(snapshot.input),
-          result: toInputJson(snapshot.result),
-          confirmedPlan: snapshot.confirmedPlan
-            ? toInputJson(snapshot.confirmedPlan)
-            : Prisma.JsonNull,
-          confirmedAt: snapshot.confirmedAt
-            ? new Date(snapshot.confirmedAt)
-            : null,
-          confirmedById: snapshot.confirmedById,
-        },
-        update: {
-          scenarioId: snapshot.scenarioId,
-          scenarioLabel: snapshot.scenarioLabel,
-          providerName: snapshot.providerName,
-          mode: snapshot.mode,
-          weekStart: snapshot.result.weekStart,
-          input: toInputJson(snapshot.input),
-          result: toInputJson(snapshot.result),
-        },
-      });
+      try {
+        await tx.planningRunRecord.create({
+          data: {
+            proposalId: snapshot.proposalId,
+            scenarioId: snapshot.scenarioId,
+            scenarioLabel: snapshot.scenarioLabel,
+            providerName: snapshot.providerName,
+            mode: snapshot.mode,
+            weekStart: snapshot.result.weekStart,
+            input: toInputJson(snapshot.input),
+            result: toInputJson(snapshot.result),
+            confirmedPlan: snapshot.confirmedPlan
+              ? toInputJson(snapshot.confirmedPlan)
+              : Prisma.JsonNull,
+            confirmedAt: snapshot.confirmedAt
+              ? new Date(snapshot.confirmedAt)
+              : null,
+            confirmedById: snapshot.confirmedById,
+          },
+        });
+      } catch (error) {
+        if (isUniqueConstraintViolation(error)) {
+          throw new PlanningPersistenceConflictError();
+        }
+        throw error;
+      }
     });
   }
 
@@ -368,36 +392,32 @@ export class PrismaPlanningPersistence implements PlanningPersistence {
   ): Promise<void> {
     await this.db.$transaction(async (tx) => {
       if (actor) await ensurePlanningActorRecord(tx, actor);
-
-      await tx.planningRunRecord.upsert({
-        where: { proposalId: snapshot.replacementId },
-        create: {
-          proposalId: snapshot.replacementId,
-          scenarioId: snapshot.scenarioId,
-          scenarioLabel: snapshot.scenarioLabel,
-          providerName: snapshot.providerName,
-          mode: snapshot.mode,
-          weekStart: snapshot.result.request.weekStart,
-          input: toInputJson(snapshot.input),
-          result: toInputJson(replacementEnvelope(snapshot)),
-          confirmedPlan: snapshot.confirmedPlan
-            ? toInputJson(snapshot.confirmedPlan)
-            : Prisma.JsonNull,
-          confirmedAt: snapshot.confirmedAt
-            ? new Date(snapshot.confirmedAt)
-            : null,
-          confirmedById: snapshot.confirmedById,
-        },
-        update: {
-          scenarioId: snapshot.scenarioId,
-          scenarioLabel: snapshot.scenarioLabel,
-          providerName: snapshot.providerName,
-          mode: snapshot.mode,
-          weekStart: snapshot.result.request.weekStart,
-          input: toInputJson(snapshot.input),
-          result: toInputJson(replacementEnvelope(snapshot)),
-        },
-      });
+      try {
+        await tx.planningRunRecord.create({
+          data: {
+            proposalId: snapshot.replacementId,
+            scenarioId: snapshot.scenarioId,
+            scenarioLabel: snapshot.scenarioLabel,
+            providerName: snapshot.providerName,
+            mode: snapshot.mode,
+            weekStart: snapshot.result.request.weekStart,
+            input: toInputJson(snapshot.input),
+            result: toInputJson(replacementEnvelope(snapshot)),
+            confirmedPlan: snapshot.confirmedPlan
+              ? toInputJson(snapshot.confirmedPlan)
+              : Prisma.JsonNull,
+            confirmedAt: snapshot.confirmedAt
+              ? new Date(snapshot.confirmedAt)
+              : null,
+            confirmedById: snapshot.confirmedById,
+          },
+        });
+      } catch (error) {
+        if (isUniqueConstraintViolation(error)) {
+          throw new PlanningPersistenceConflictError();
+        }
+        throw error;
+      }
     });
   }
 

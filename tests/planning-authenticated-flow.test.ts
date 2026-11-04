@@ -102,7 +102,7 @@ describe("authenticated planning flow", () => {
     });
   });
 
-  it("viewer může návrh spustit, ale nesmí jej potvrdit", async () => {
+  it("viewer nesmí spustit ani potvrdit týdenní návrh", async () => {
     authMock.mockResolvedValue(viewerSession);
 
     const runResponse = await runPlanning(
@@ -111,17 +111,18 @@ describe("authenticated planning flow", () => {
         weekStart: SIMULATED_WEEK_START,
       }),
     );
-    const runBody = await responseJson<{ ok: true; view: { proposalId: string } }>(runResponse);
+    const runBody = await responseJson<{ ok: false; rejected: { code: string } }>(runResponse);
     const confirmResponse = await confirmPlanning(
       jsonRequest("http://localhost/api/planning/confirm", {
-        proposalId: runBody.view.proposalId,
+        proposalId: "viewer-cannot-create-this-proposal",
       }),
     );
     const confirmBody = await responseJson<{ ok: false; rejected: { code: string } }>(
       confirmResponse,
     );
 
-    expect(runResponse.status).toBe(200);
+    expect(runResponse.status).toBe(403);
+    expect(runBody).toMatchObject({ ok: false, rejected: { code: "forbidden" } });
     expect(confirmResponse.status).toBe(403);
     expect(confirmBody).toMatchObject({ ok: false, rejected: { code: "forbidden" } });
   });
