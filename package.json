@@ -2,7 +2,7 @@
   "name": "planning-engine",
   "version": "0.1.0",
   "private": true,
-  "description": "Plánovací Engine — plánovač týdenních rozpisů směn call centra AAAAuto.",
+  "description": "Plánovací Engine — plánovač měsíčních rozpisů směn call centra AAAAuto.",
   "scripts": {
     "dev": "next dev",
     "build": "next build",
