@@ -483,8 +483,11 @@ označíme za hotovou až po opravě a doloženém ověření jejího rozsahu.
      neexistujícího návrhu a ztrátou rozepsaných vstupů; ověřit čtečkou obrazovky.
      - [x] Zavřená mobilní navigace se po zavírací animaci vyřadí z pořadí
        klávesnice; při zavření se fokus vrací na tlačítko menu. Regresní test
-       ověřuje přechod otevřeno → zavřeno; chování v prohlížeči zůstává
-       `NOT VERIFIED`.
+       ověřuje přechod otevřeno → zavřeno. V prohlížeči při 390 × 844 px
+       načtené styly potvrdily skrytí zavřené navigace, její zobrazení po
+       otevření a přeskočení skrytého odkazu klávesou Tab. Fokus v běžícím
+       `AppShell` a čtečka obrazovky zůstávají `NOT VERIFIED`; lokální přihlášení
+       nebylo dostupné.
      - [ ] Ověřit mobilní průchod klávesnicí a čtečkou obrazovky; opravit
        zbývající popisky, fokus kroků, chybu chybějícího návrhu a ochranu
        rozepsaných vstupů.
