@@ -16,3 +16,7 @@ export function rosterHistoryEmployeeContext(
 ): string {
   return selectedEmployeeName || sourceName;
 }
+
+export function shouldFocusStepHeading(previousStep: number, currentStep: number): boolean {
+  return previousStep !== currentStep;
+}

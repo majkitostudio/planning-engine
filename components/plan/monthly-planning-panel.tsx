@@ -11,7 +11,7 @@ import type { MonthlyValidation } from "@/lib/planning/domain/month-validation";
 import { addDays } from "@/lib/planning/domain/time";
 import { datesInMonth } from "@/lib/planning/domain/month";
 import { monthlyInstructionMessage, monthlyValidationMessage } from "@/lib/planning/monthly-view";
-import { removalActionLabel } from "@/lib/accessibility-labels";
+import { removalActionLabel, shouldFocusStepHeading } from "@/lib/accessibility-labels";
 
 export interface MonthlyView {
   readonly id: string;
@@ -48,8 +48,17 @@ export function MonthlyPlanningPanel({ month, canManage, planningMode, initialSt
   const [confirmed, setConfirmed] = useState(false);
   const [restored, setRestored] = useState(false);
   const [boundaryReadiness, setBoundaryReadiness] = useState<BoundaryReadiness | null>(null);
+  const stepHeadingRef = useRef<HTMLLegendElement>(null);
+  const previousStep = useRef(step);
   const revision = useRef(0);
   const storageKey = `planning-monthly-draft:${month}`;
+
+  useEffect(() => {
+    if (shouldFocusStepHeading(previousStep.current, step)) {
+      stepHeadingRef.current?.focus();
+    }
+    previousStep.current = step;
+  }, [step]);
 
   useEffect(() => {
     if (!canManage) return;
@@ -172,7 +181,7 @@ export function MonthlyPlanningPanel({ month, canManage, planningMode, initialSt
     <nav className="monthly-progress" aria-label="Postup zadání měsíčního návrhu">{STEPS.map((label, index) => <button key={label} type="button" className="monthly-progress__step" aria-current={step === index ? "step" : undefined} aria-label={`Krok ${index + 1}: ${label}`} onClick={() => changeStep(index)}><span className="monthly-progress__number">{index + 1}</span><span className="monthly-progress__label">{label}</span></button>)}</nav>
     <form onClick={(event) => { if (event.target instanceof HTMLElement && event.target.closest('button[type="button"]')) clearResult(); }} onChange={clearResult} onSubmit={(event) => void submit(event)}>
       <fieldset disabled={!canManage || busy}>
-        <legend>{step + 1}. {STEPS[step]}</legend>
+        <legend ref={stepHeadingRef} tabIndex={-1}>{step + 1}. {STEPS[step]}</legend>
         {step === 0 ? <>
           {planningMode === "ortools" ? <div className="monthly-range"><label><input type="checkbox" checked={partialMonth} onChange={(event) => setPartialMonth(event.target.checked)} /> Doplnit jen část měsíce</label>{partialMonth ? <><p className="monthly-muted">Mimo vybraný úsek musí být pro všechny vybrané zaměstnance uložené a jednoznačné podklady na stránce <Link href="/navaznost-smen">Návaznost směn</Link>. Ve vybraném úseku nesmí být převzaté dny. Potvrzení je možné až po úspěšné kontrole celého měsíce.</p><div className="monthly-range__dates"><label>Plánovat od<input className="input" type="date" min={`${month}-01`} max={datesInMonth(month).at(-1)} value={rangeStart} onChange={(event) => setRangeStart(event.target.value)} /></label><label>Plánovat do<input className="input" type="date" min={`${month}-01`} max={datesInMonth(month).at(-1)} value={rangeEnd} onChange={(event) => setRangeEnd(event.target.value)} /></label></div></> : null}</div> : null}
           <div className="monthly-form-actions"><button className="btn btn--secondary" type="button" onClick={() => void loadEmployeeList()}>Načíst seznam zaměstnanců</button><button className="btn btn--secondary" type="button" onClick={() => void loadPreviousEmployees()}>Načíst z předchozího měsíce</button></div>

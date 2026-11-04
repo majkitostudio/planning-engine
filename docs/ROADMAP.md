@@ -507,8 +507,12 @@ označíme za hotovou až po opravě a doloženém ověření jejího rozsahu.
        testy ověřují formát popisků a mapované jméno; úplné testy, lint,
        typecheck a build prošly. Výsledný DOM a čtečka obrazovky zůstávají
        `NOT VERIFIED`.
-     - [ ] Ověřit mobilní průchod klávesnicí a čtečkou obrazovky; opravit fokus
-       kroků, chybu chybějícího návrhu a ochranu rozepsaných vstupů.
+     - [x] Po změně kroku měsíčního formuláře přesunout fokus na legendu
+       aktivního kroku, včetně skoku do souhrnu při chybějících vstupech.
+       Cílený test ověřuje přechodový predikát; úplné testy, lint, typecheck a
+       build prošly. Skutečný fokus v prohlížeči zůstává `NOT VERIFIED`.
+     - [ ] Ověřit mobilní ovládání a fokus se čtečkou obrazovky; opravit chybu
+       chybějícího návrhu a ochranu rozepsaných vstupů.
    - [ ] Posoudit vývojové závislosti a ověřit kompatibilní aktualizace.
 9. **P2 — Závěrečné ověření MVP.**
    - [ ] Provést syntetický průchod návrh → kontrola → potvrzení → obnovení,

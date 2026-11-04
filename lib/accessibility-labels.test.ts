@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   removalActionLabel,
+  shouldFocusStepHeading,
   rosterHistoryEmployeeContext,
   rosterHistoryControlLabel,
 } from "@/lib/accessibility-labels";
@@ -25,5 +26,10 @@ describe("accessibility labels", () => {
       .toBe("Přiřazená osoba");
     expect(rosterHistoryEmployeeContext(undefined, "Název zdrojového řádku"))
       .toBe("Název zdrojového řádku");
+  });
+
+  it("moves step-heading focus only when the active step changes", () => {
+    expect(shouldFocusStepHeading(0, 1)).toBe(true);
+    expect(shouldFocusStepHeading(1, 1)).toBe(false);
   });
 });
