@@ -83,6 +83,9 @@ testovacím předpokladem, nikoli schváleným provozním pravidlem.
 - `PLANNED` — Přidat správu vytvořených rozpisů s možností jednotlivě
   vybraný rozpis smazat. Funkci zahrnout do finalizace před závěrečným
   testováním MVP.
+- `VERIFIED` (rozhodnutí uživatele 5. 11. 2026) — Manažer může nevyhovující
+  měsíční rozpis odstranit a pro stejný měsíc vytvořit nový. Odstraněný rozpis
+  proto nesmí nový rozpis pro daný měsíc blokovat.
 - `OPEN QUESTION` — Před implementací určit pravidla pro mazání potvrzených
   rozpisů, zachování historie a auditu a dopad na návazné plánování.
 
