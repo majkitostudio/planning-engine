@@ -172,10 +172,12 @@ testovacím předpokladem, nikoli schváleným provozním pravidlem.
   zjištění se tedy jejich nově vytvořených výstupů v této podobě netýká.
   `IMPLEMENTED` / `VERIFIED` — Ze staršího souboru byla cíleně převzata
   kontrola, která odmítá prázdné ID alternativy; doplněný test nejprve selhal
-  a po opravě prošel. Týká se i měsíčního kontraktu. Starší uložený návrh s
-  prázdným ID nyní nemusí projít načtením; jeho případný výskyt nebyl na
-  skutečných datech prověřen. Jedinečnost a ID tvořené jen mezerami tato dílčí
-  oprava neřeší. Celý starý soubor ani pracovní strom nebyly přepsány.
+  a po opravě prošel. Týká se i měsíčního kontraktu. U starších uložených
+  měsíčních návrhů je prázdné ID při načtení povoleno kvůli kompatibilitě;
+  jednotkové testy pokrývají načtení návrhu, potvrzeného měsíce i jeho
+  návaznosti. Skutečný výskyt takových záznamů nebyl prověřen. Jedinečnost a ID
+  tvořené jen mezerami tato dílčí oprava neřeší. Celý starý soubor ani
+  pracovní strom nebyly přepsány.
 - Hlavní README a rozcestník dokumentace byly sladěny s odstraněním ručních
   úprav z manažerské obrazovky; další historické souhrny vyžadují kontrolu.
 - GitHub CI v aktuálním workflow samostatně nespouští Python testy solveru ani

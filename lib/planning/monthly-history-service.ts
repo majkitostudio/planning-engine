@@ -92,7 +92,7 @@ export async function loadMonthlyBoundary(month: string, employeeIds: readonly s
       const draft = isRecord(row.draft) ? row.draft : {};
       if (Object.hasOwn(input, "planningRange")) {
         const parsed = validateMonthlyInput(input);
-        if (!parsed.ok || parsed.value.month !== row.month || !parsed.value.planningRange || !parsed.value.rosterHistory || !isMonthlyPlanDraft(row.draft, row.month)) continue;
+        if (!parsed.ok || parsed.value.month !== row.month || !parsed.value.planningRange || !parsed.value.rosterHistory || !isMonthlyPlanDraft(row.draft, row.month, { allowLegacyEmptyAlternativeId: true })) continue;
         const range = parsed.value.planningRange;
         if (row.draft.assignments.some((assignment) => assignment.date < range.startDate || assignment.date > range.endDate)) continue;
         const ids = parsed.value.employees.map((employee) => employee.id);

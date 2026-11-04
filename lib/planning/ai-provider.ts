@@ -81,7 +81,7 @@ export interface RunPlanningOptions {
  * Tato funkce provádí čistou kontrolu struktury bez závislosti na konkrétním
  * PlanningInput, jak je vyžadováno pro dvoustupňovou validaci.
  */
-export function isPlanDraft(value: unknown): value is PlanDraft {
+export function isPlanDraft(value: unknown, options: { allowLegacyEmptyAlternativeId?: boolean } = {}): value is PlanDraft {
   if (typeof value !== "object" || value === null) return false;
   const record = value as Record<string, unknown>;
 
@@ -119,7 +119,7 @@ export function isPlanDraft(value: unknown): value is PlanDraft {
   for (const alternative of record.alternatives) {
     if (typeof alternative !== "object" || alternative === null) return false;
     const alt = alternative as Record<string, unknown>;
-    if (typeof alt.id !== "string" || alt.id.length === 0) return false;
+    if (typeof alt.id !== "string" || (alt.id.length === 0 && !options.allowLegacyEmptyAlternativeId)) return false;
     if (typeof alt.summary !== "string") return false;
     if (typeof alt.impact !== "string") return false;
     if (!Array.isArray(alt.assignments)) return false;

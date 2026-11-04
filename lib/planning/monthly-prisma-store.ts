@@ -13,7 +13,7 @@ type ConfirmResult = { ok: true; alreadyConfirmed: boolean; run: StoredMonthlyRu
 
 function fromRow(row: StoredRow): StoredMonthlyRun | null {
   const input = validateMonthlyInput(row.input);
-  if (!input.ok || input.value.month !== row.month || !isMonthlyPlanDraft(row.draft, row.month) || (row.mode !== "simulated" && row.mode !== "gemini" && row.mode !== "ortools") || (!!row.confirmedAt !== !!row.confirmedById)) return null;
+  if (!input.ok || input.value.month !== row.month || !isMonthlyPlanDraft(row.draft, row.month, { allowLegacyEmptyAlternativeId: true }) || (row.mode !== "simulated" && row.mode !== "gemini" && row.mode !== "ortools") || (!!row.confirmedAt !== !!row.confirmedById)) return null;
   return { id: row.id, input: input.value, draft: row.draft, mode: row.mode, providerName: row.providerName, confirmed: row.confirmedAt && row.confirmedById ? { by: row.confirmedById, at: row.confirmedAt.toISOString() } : null };
 }
 

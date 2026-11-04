@@ -33,6 +33,16 @@ it("načte uložený OR-Tools návrh jako vlastní režim", async () => {
   expect(await new PrismaMonthlyStore(reader).get("p")).toMatchObject({ mode: "ortools", providerName: "ortools" });
 });
 
+it("načte starší uložený návrh s prázdným ID alternativy", async () => {
+  const legacy = { ...row, draft: { ...draft, alternatives: [{ id: "", summary: "Starší alternativa", impact: "Dopad", assignments: [] }] } };
+  findUnique.mockResolvedValue(legacy);
+  findMany.mockResolvedValue([{ ...legacy, confirmedAt: new Date("2026-11-01T00:00:00Z"), confirmedById: "m" }]);
+  const reader = { monthlyPlanningRun: { findUnique, findMany } } as unknown as PrismaClient;
+  const store = new PrismaMonthlyStore(reader);
+  expect(await store.get("p")).toMatchObject({ id: "p" });
+  expect(await store.getConfirmed("2026-11")).toMatchObject({ ok: true, run: { id: "p" } });
+});
+
 beforeEach(() => { vi.clearAllMocks(); findUnique.mockResolvedValue(row); findFirst.mockResolvedValue(null); updateMany.mockResolvedValue({ count: 1 }); });
 afterEach(() => vi.unstubAllEnvs());
 

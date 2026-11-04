@@ -23,10 +23,10 @@ export class MonthlyProviderError extends Error {
   }
 }
 
-export function isMonthlyPlanDraft(value: unknown, month: string): value is MonthlyPlanDraft {
+export function isMonthlyPlanDraft(value: unknown, month: string, options: { allowLegacyEmptyAlternativeId?: boolean } = {}): value is MonthlyPlanDraft {
   if (typeof value !== "object" || value === null || Array.isArray(value)) return false;
   const draft = value as Record<string, unknown>;
-  if (draft.month !== month || typeof draft.instructionsOutcome !== "string" || (draft.simulationScenario !== undefined && draft.simulationScenario !== "complete" && draft.simulationScenario !== "partial" && draft.simulationScenario !== "unverified") || !isPlanDraft({ ...draft, weekStart: `${month}-01` })) return false;
+  if (draft.month !== month || typeof draft.instructionsOutcome !== "string" || (draft.simulationScenario !== undefined && draft.simulationScenario !== "complete" && draft.simulationScenario !== "partial" && draft.simulationScenario !== "unverified") || !isPlanDraft({ ...draft, weekStart: `${month}-01` }, options)) return false;
   const normalized = draft as unknown as MonthlyPlanDraft;
   return [...normalized.assignments, ...normalized.alternatives.flatMap((alternative) => alternative.assignments)].every((assignment) => assignment.shiftKind === "morning" || assignment.shiftKind === "afternoon");
 }

@@ -33,7 +33,7 @@ describe("načtení sousedních potvrzených rozpisů", () => {
         : { employeeId: "e1", date, status: date <= "2026-10-20" ? "unknown" : "off" };
     });
     const monthlyInput = { month: "2026-10", employees: [{ id: "e1", displayName: "Test", employmentType: "full_time" }], absences: [], availability: [], staffingRequirements: [], instructions: "", planningRange: { startDate: "2026-10-01", endDate: "2026-10-20" }, rosterHistory: { imports: [], days } };
-    const row = { month: "2026-10", confirmedAt: new Date("2026-11-01T00:00:00Z"), input: monthlyInput, draft: { month: "2026-10", assignments: [], explanations: [], alternatives: [], assumptions: [], instructionsOutcome: "" } };
+    const row = { month: "2026-10", confirmedAt: new Date("2026-11-01T00:00:00Z"), input: monthlyInput, draft: { month: "2026-10", assignments: [], explanations: [], alternatives: [{ id: "", summary: "Starší alternativa", impact: "Dopad", assignments: [] }], assumptions: [], instructionsOutcome: "" } };
     const db = { planningRunRecord: { findMany: vi.fn().mockResolvedValue([]) }, monthlyPlanningRun: { findMany: vi.fn().mockResolvedValue([row]) } };
     const boundary = await loadMonthlyBoundary("2026-11", ["e1"], db);
     expect(boundary.before.complete).toBe(true);
