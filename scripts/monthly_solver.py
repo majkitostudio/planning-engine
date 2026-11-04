@@ -22,6 +22,17 @@ def _has_minimum_rest(previous_end, next_start):
     return next_start - previous_end >= MINIMUM_REST
 
 
+def _is_unambiguous_local_datetime(day, clock, zone):
+    local = dt.datetime.combine(day, clock)
+    instants = set()
+    for fold in (0, 1):
+        candidate = local.replace(tzinfo=zone, fold=fold)
+        instant = candidate.astimezone(dt.timezone.utc)
+        if instant.astimezone(zone).replace(tzinfo=None) == local:
+            instants.add(instant)
+    return len(instants) == 1
+
+
 def _require(condition):
     if not condition:
         raise InvalidInput
@@ -51,6 +62,7 @@ def _validate(payload):
     fixed = {}
     if planning_range is not None:
         _require(isinstance(planning_range, dict))
+        zone = ZoneInfo("Europe/Prague")
         range_start = dt.date.fromisoformat(planning_range.get("startDate", ""))
         range_end = dt.date.fromisoformat(planning_range.get("endDate", ""))
         _require(first <= range_start <= range_end <= last)
@@ -71,6 +83,9 @@ def _validate(payload):
                 _require(isinstance(end, str) and re.fullmatch(r"(?:[01]\d|2[0-3]):[0-5]\d", end) and start < end)
                 kind = item.get("shiftKind", "custom")
                 _require(kind in (*KINDS, "custom"))
+                if kind == "custom":
+                    _require(_is_unambiguous_local_datetime(day, dt.time.fromisoformat(start), zone))
+                    _require(_is_unambiguous_local_datetime(day, dt.time.fromisoformat(end), zone))
                 if kind != "custom":
                     expected = ("07:45", "16:30") if kind == "morning" else (("12:45", "21:00") if day.weekday() >= 5 else ("13:15", "21:00"))
                     _require((start, end) == expected)
@@ -149,6 +164,8 @@ def _validate(payload):
 def solve(payload):
     try:
         data, first, last, dates, people, requirements, availability, history, history_complete, shift_rotation, timeout, range_start, range_end, fixed = _validate(payload)
+    except ZoneInfoNotFoundError:
+        return {"status": "unavailable"}
     except (InvalidInput, TypeError, ValueError, KeyError, OverflowError):
         return {"status": "invalid_input"}
 

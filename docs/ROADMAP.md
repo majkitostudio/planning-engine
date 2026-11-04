@@ -183,9 +183,9 @@ testovacím předpokladem, nikoli schváleným provozním pravidlem.
   pracovní strom nebyly přepsány.
 - Hlavní README a rozcestník dokumentace byly sladěny s odstraněním ručních
   úprav z manažerské obrazovky; další historické souhrny vyžadují kontrolu.
-- GitHub CI v aktuálním workflow samostatně nespouští Python testy solveru ani
-  databázové integrační testy. Jejich pokrytí a bezpečné testovací prostředí
-  je potřeba doplnit před závěrečným ověřením MVP.
+- GitHub CI nyní spouští Python testy solveru. Databázové integrační testy
+  stále nejsou součástí CI; před jejich doplněním je třeba připravit izolovanou
+  testovací databázi.
 
 ### Další kontrola a postup před uzavřením MVP
 
@@ -204,12 +204,11 @@ testovacím předpokladem, nikoli schváleným provozním pravidlem.
   klasifikace používá ohraničenou cache do 4096 položek, její výkon ale nebyl
   benchmarkován.
   Potvrzené standardní směny těmito přechody neprocházejí. `scripts/monthly_solver.py`
-  zatím nemá stejnou samostatnou kontrolu a může při přímém volání použít
-  výchozí interpretaci `ZoneInfo`; doplnit ji a přidat Python testy. Na tomto
-  počítači nejsou dostupné OR-Tools ani databáze časových pásem pro Python,
-  takže tento okraj solveru nebylo možné lokálně ověřit. Vzorkovací kontrola
-  zatím není ověřena pro libovolná historická časová pásma nebo jejich neobvyklé
-  změny.
+  nyní samostatně odmítá nejednoznačné i neexistující vlastní časy při přímém
+  volání. V izolovaném Python 3.14 prostředí s připnutými závislostmi prošlo
+  všech 23 testů solveru. Workflow CI nyní spouští tuto sadu také; výsledek
+  vzdáleného běhu je třeba ověřit. Vzorkovací kontrola zatím není ověřena pro
+  libovolná historická časová pásma nebo jejich neobvyklé změny.
 - `VERIFIED` / omezený výkonnostní pokus — Přímé volání lokálního solveru pro
   listopad 2026 a 101 syntetických zaměstnanců s testovacím obsazením 15/7 ve
   všední dny a 7/3 o víkendu vrátilo `unknown` po 20,94 s při limitu řešení
@@ -458,7 +457,7 @@ označíme za hotovou až po opravě a doloženém ověření jejího rozsahu.
      nepovažovat za doloženou provozní kapacitu.
    - [x] Blokovat neexistující i nejednoznačné místní časy při importu a
      validaci měsíční historie; nedovolit potvrzení návrhu s takovou návazností.
-   - [ ] Doplnit odpovídající obranu a Python testy přímo do solveru.
+   - [x] Doplnit odpovídající obranu a Python testy přímo do solveru.
 6. **P1 — Správa rozpisů.**
    - [ ] Navrhnout a implementovat seznam rozpisů s možností smazat jednotlivý
      rozpis.
@@ -471,8 +470,9 @@ označíme za hotovou až po opravě a doloženém ověření jejího rozsahu.
      dokud to není schválené, neposílat skutečná jména, rozpisy ani pokyny externí
      AI.
 8. **P1 — Kvalita a přístupnost.**
-   - [ ] Doplnit Python testy solveru a databázové integrační testy do CI s
-     izolovanou testovací databází.
+   - [x] Spouštět Python testy solveru v CI.
+   - [ ] Doplnit databázové integrační testy do CI s izolovanou testovací
+     databází.
    - [ ] Opravit zjištěné problémy s klávesnicí, popisky, fokusem, chybou
      neexistujícího návrhu a ztrátou rozepsaných vstupů; ověřit čtečkou obrazovky.
    - [ ] Posoudit vývojové závislosti a ověřit kompatibilní aktualizace.

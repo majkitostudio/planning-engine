@@ -1,7 +1,8 @@
 import datetime as dt
 import unittest
+from zoneinfo import ZoneInfo
 
-from monthly_solver import _has_minimum_rest, solve
+from monthly_solver import _has_minimum_rest, _is_unambiguous_local_datetime, solve
 
 
 def sample():
@@ -42,6 +43,35 @@ def month_with_requirements(month, employees, required_dates):
 
 
 class SolverInputTests(unittest.TestCase):
+    def test_custom_local_times_adjacent_to_clock_change_remain_valid(self):
+        zone = ZoneInfo("Europe/Prague")
+
+        self.assertTrue(_is_unambiguous_local_datetime(dt.date(2026, 3, 29), dt.time(3, 30), zone))
+        self.assertTrue(_is_unambiguous_local_datetime(dt.date(2026, 10, 25), dt.time(1, 30), zone))
+        self.assertTrue(_is_unambiguous_local_datetime(dt.date(2026, 10, 25), dt.time(3, 30), zone))
+
+    def test_partial_month_rejects_nonexistent_and_ambiguous_custom_local_times(self):
+        cases = [
+            ("2026-03", "2026-03-30", "2026-03-31", "2026-03-29"),
+            ("2026-10", "2026-10-26", "2026-10-31", "2026-10-25"),
+        ]
+
+        for month, range_start, range_end, transition_day in cases:
+            with self.subTest(day=transition_day):
+                payload = month_with_requirements(month, 1, set())
+                payload["input"]["planningRange"] = {"startDate": range_start, "endDate": range_end}
+                year, number = map(int, month.split("-"))
+                day_count = __import__("calendar").monthrange(year, number)[1]
+                payload["input"]["fixedDays"] = [
+                    {"employeeId": "synthetic-0", "date": f"{month}-{day:02}", "status": "shift", "startTime": "02:30", "endTime": "04:00"}
+                    if f"{month}-{day:02}" == transition_day
+                    else {"employeeId": "synthetic-0", "date": f"{month}-{day:02}", "status": "off"}
+                    for day in range(1, day_count + 1)
+                    if not range_start <= f"{month}-{day:02}" <= range_end
+                ]
+
+                self.assertEqual(solve(payload)["status"], "invalid_input")
+
     def test_partial_month_preserves_fixed_days_and_returns_only_new_assignments(self):
         payload = sample()
         payload["input"]["planningRange"] = {"startDate": "2026-11-15", "endDate": "2026-11-30"}
