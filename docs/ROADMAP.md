@@ -7,7 +7,7 @@
 
 ## Stručný přehled auditu
 
-Audit probíhá; podrobnosti a hranice jednotlivých ověření jsou v části
+Zjištění kontroly ze 4. 11. 2026; podrobnosti a hranice jednotlivých ověření jsou v části
 [Další kontrola a postup](#další-kontrola-a-postup-před-uzavřením-mvp).
 Nález neznamená, že je opravený. Před širším použitím je potřeba zejména:
 
@@ -337,6 +337,8 @@ testovacím předpokladem, nikoli schváleným provozním pravidlem.
 - `VERIFIED` / GitHub CI — Na `e8ba5cf` prošel běh 41869577350: lint,
   typecheck, Vitest, validace Prisma schématu a build. Workflow samostatně
   nespouští Python testy solveru ani integrační testy s databází.
+- `VERIFIED` / GitHub CI — Stejné kontroly prošly také na `21a36b7` v běhu
+  41872633722 po poslední změně kódu. Omezení pokrytí Pythonu a databáze trvá.
 - `VERIFIED` / oprava nutná — Již vydaná relace po resetu a následné změně
   hesla znovu umožní přístup. Integrační test použil syntetický účet a
   izolovanou PostgreSQL: stejná relace dostala z chráněného API před resetem
