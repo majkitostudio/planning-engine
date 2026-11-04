@@ -157,11 +157,13 @@ testovacím předpokladem, nikoli schváleným provozním pravidlem.
   pouze syntetické testovací záznamy a testovací kontejner byl ukončen.
   Stejná kontrola byla 4. 11. zopakována na sjednoceném `main` (`5cd5d80`)
   se stejným výsledkem; testovací databáze byla opět izolovaná.
-- `NOT VERIFIED` — Přezkoumat zneplatnění již vydaných relací po změně nebo
-  resetu hesla. Aktualizace relace načítá aktuální účet, ale neporovnává verzi
-  hesla. Syntetický test funkce `refreshAccountSession()` s náhradou databáze
-  vrátil účet před změnou i po změně hesla; dopad na vydanou prohlížečovou
-  relaci je potřeba potvrdit samostatným integračním testem a vyřešit.
+- `VERIFIED` / oprava nutná — Již vydaná relace po resetu a následné změně
+  hesla znovu umožní přístup. Integrační test použil syntetický účet a
+  izolovanou PostgreSQL: stejná relace dostala z chráněného API před resetem
+  `200`, při vynucené změně `403` a po změně hesla opět `200`. Reset byl
+  napodoben přímou změnou testovacího účtu v databázi; změnu hesla provedla
+  aplikační služba. Aktualizace relace neporovnává verzi hesla. Prověřit a
+  implementovat zneplatnění starých relací včetně testu celého přihlášení.
 - `NOT VERIFIED` — Prověřit ochranu přihlášení před opakovanými pokusy a pokrytí
   autentizace, oprávnění a práce s osobními údaji při bezpečnostní kontrole.
 - `VERIFIED` — `npm audit --omit=dev` na `main` nahlásil 4. 11. 2026 nula
