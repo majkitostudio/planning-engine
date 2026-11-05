@@ -8,7 +8,7 @@ pro prezentaci vedení firmy. Každá položka má kritérium dokončení.
 - [ ] Ověřit přihlášení managera a vieweru (ověřeno v prohlížeči).
 - [ ] Ověřit, že všechny stránky se načtou bez 500 chyb (ověřeno průchodem).
 - [ ] Ověřit, že žádná stránka nezobrazuje „undefined“ nebo prázdné hodnoty.
-- [ ] Odstranit debug výstupy a console.log z produkčního kódu (ověřit).
+- [x] Odstranit debug výstupy a console.log z produkčního kódu (ověřeno — jediný výskyt je v bootstrap skriptu).
 
 ## Fáze 1 — Hlavní tok (Rozpis směn)
 - [ ] Přidat zaměstnance (plné úvazky) z reálného seznamu (anonymizované).
