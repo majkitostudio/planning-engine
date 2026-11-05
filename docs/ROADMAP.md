@@ -93,9 +93,17 @@ testovacím předpokladem, nikoli schváleným provozním pravidlem.
   aktivní návaznost; chybějící podklady se při další kontrole přiznají jako
   neúplné. V prohlížeči bylo ověřeno jednotlivé odstranění návrhu, audit a
   vytvoření dalšího návrhu; jeho potvrzení zůstalo blokované chybějící návazností.
-- `NOT VERIFIED` — Souvislý průchod v prohlížeči přes potvrzení nového rozpisu
-  po odstranění starého a následnou kontrolu sousedních měsíců zbývá před
-  závěrečným ověřením MVP. Pro databázový režim je nutné nasadit novou migraci.
+- `VERIFIED` (5. 11. 2026, syntetická izolovaná PostgreSQL, simulovaný provider)
+  — V prohlížeči manažer zadal měsíc a obsazení, vytvořil návrh s pěti směnami,
+  potvrdil jej a po obnovení znovu načetl. Podobsazený návrh měl potvrzení
+  vypnuté a server přímý pokus odmítl (409). Manažer potvrzený rozpis odstranil,
+  vytvořil a potvrdil nový pro stejný měsíc a znovu jej načetl. Databáze
+  obsahovala jeden aktivní a jeden odstraněný potvrzený rozpis, dvě události
+  potvrzení a jednu odstranění. Prosincová předchozí návaznost byla po
+  odstranění neúplná; po novém potvrzení zůstal rozpor se syntetickým týdenním
+  podkladem. Po jeho výslovném sjednocení byla návaznost úplná. Nejde o ověření
+  OR-Tools ani reálné provozní kapacity; pro databázový režim je nutné nasadit
+  migraci odstranění rozpisů.
 - `VERIFIED` — GitHub CI běh `41936907000` na `6b225e3` úspěšně dokončil
   lint, typecheck, testy a build, Python testy solveru i izolované databázové
   integrační testy. Úspěch CI nenahrazuje výše uvedený průchod prohlížečem.
@@ -110,6 +118,8 @@ testovacím předpokladem, nikoli schváleným provozním pravidlem.
 - `VERIFIED` — CI běh `41945604185` na `082f543` úspěšně dokončil lint,
   typecheck, testy, build, Python solver i databázové integrační testy. Samotný
   úspěch nedokazuje, jakou odpověď Google Fonts v předchozím běhu vrátil.
+- `VERIFIED` — CI běh `41960947471` na `63dae80` úspěšně dokončil všechny
+  tři joby včetně buildu, Python testů a databázových integračních testů.
 - `OPEN QUESTION` — `npm audit` po aktualizaci hlásí osm středních nálezů
   v řetězci vývojového lint nástroje, odvozených od zranitelnosti `minimatch`.
   Automaticky nabízená oprava by vrátila `eslint-config-next` na hlavní verzi 15;
@@ -579,12 +589,9 @@ označíme za hotovou až po opravě a doloženém ověření jejího rozsahu.
      zastaralý návrh odmítlo bez potvrzeného rozpisu. Již potvrzené návrhy
      zůstávají idempotentní; nepotvrzené starší návrhy bez uložených konkrétních
      hodnot je nutné vytvořit znovu. Čtyři databázové soubory prošly s 8 testy.
-   - `VERIFIED` (5. 11. 2026, kontrola zdrojového kódu) — GET nastavení skládá
-     úplných 14 buněk z uložených hodnot a výchozích minim; formulář při
-     výslovném uložení odešle všech 14 a API je uloží. Operativní náhrada při
-     chybějícím cílovém požadavku v plánovacím vstupu volá fallback nad prázdným
-     profilem. Jde o popis implementace, nikoli o rozhodnutí, že uložené
-     výchozí hodnoty jsou schválené nebo že fallback je provozně povolen.
+   - Historická kontrola před následnou opravou zjistila fallback při chybějícím
+     cílovém obsazení. Současné chování vyžaduje uloženou hodnotu, jak je
+     popsáno a ověřeno výše.
 5. **P1 — Pravidla a limity plánování.**
    - [ ] Uzavřít potřebná doménová rozhodnutí a ověřit návaznosti, nepokryté dny,
      absence a částečný měsíc.
