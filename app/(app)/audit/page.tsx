@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 
 import { Icon } from "@/components/icons";
 import { Badge } from "@/components/ui/badge";
@@ -17,7 +18,18 @@ export const metadata: Metadata = {
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-export default async function PlanningAuditPage() {
+const PAGE_SIZE = 20;
+
+export default async function PlanningAuditPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ month?: string; action?: string; page?: string }>;
+}) {
+  const params = await searchParams;
+  const filterMonth = params.month?.trim() || "";
+  const filterAction = params.action === "removed" ? "removed" : params.action === "confirmed" ? "confirmed" : "";
+  const page = Math.max(1, parseInt(params.page || "1", 10) || 1);
+
   const actorAccess = await requirePlanningActor();
 
   if (!actorAccess.ok) {
@@ -54,6 +66,43 @@ export default async function PlanningAuditPage() {
     );
   }
 
+  // Enrich with run details (mode, assignment count) — best effort.
+  const enriched = await Promise.all(
+    audit.entries.map(async (entry) => {
+      let mode: string | null = null;
+      let assignmentCount: number | null = null;
+      try {
+        const run = await persistenceRuntime.persistence.getRun(entry.proposalId);
+        if (run) {
+          mode = run.mode ?? null;
+          assignmentCount = run.result?.proposal?.plan?.assignments?.length ?? null;
+        }
+      } catch {
+        // ignore — show what we have
+      }
+      return { ...entry, mode, assignmentCount };
+    }),
+  );
+
+  // Filter
+  let filtered = enriched;
+  if (filterMonth) {
+    filtered = filtered.filter((e) => e.month === filterMonth);
+  }
+  if (filterAction === "confirmed") {
+    filtered = filtered.filter((e) => e.action !== "removed");
+  } else if (filterAction === "removed") {
+    filtered = filtered.filter((e) => e.action === "removed");
+  }
+
+  // Pagination
+  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+  const currentPage = Math.min(page, totalPages);
+  const start = (currentPage - 1) * PAGE_SIZE;
+  const pageEntries = filtered.slice(start, start + PAGE_SIZE);
+
+  const months = [...new Set(audit.entries.map((e) => e.month).filter(Boolean))].sort();
+
   return (
     <>
       <div className="page-head">
@@ -73,6 +122,36 @@ export default async function PlanningAuditPage() {
         </Badge>
       </div>
 
+      <section className="card" aria-labelledby="audit-filters">
+        <div className="card__head">
+          <div>
+            <h2 className="card__title" id="audit-filters">Filtry</h2>
+            <p className="card__sub">Filtrujte záznamy podle měsíce a akce.</p>
+          </div>
+        </div>
+        <form method="GET" action="/audit" className="monthly-entry-grid">
+          <label>
+            Měsíc
+            <select className="input" name="month" defaultValue={filterMonth}>
+              <option value="">Všechny měsíce</option>
+              {months.map((m) => (
+                <option key={m} value={m!}>{m}</option>
+              ))}
+            </select>
+          </label>
+          <label>
+            Akce
+            <select className="input" name="action" defaultValue={filterAction}>
+              <option value="">Všechny akce</option>
+              <option value="confirmed">Potvrzeno</option>
+              <option value="removed">Odstraněno</option>
+            </select>
+          </label>
+          <input type="hidden" name="page" value="1" />
+          <button type="submit" className="btn btn--secondary">Filtrovat</button>
+        </form>
+      </section>
+
       <section className="card" aria-labelledby="audit-list-title">
         <div className="card__head">
           <div>
@@ -82,19 +161,19 @@ export default async function PlanningAuditPage() {
             <p className="card__sub">Záznam vzniká při potvrzení návrhu nebo odstranění měsíčního rozpisu manažerem.</p>
           </div>
           <Badge variant="neutral" dot={false}>
-            {audit.entries.length}
+            {filtered.length}
           </Badge>
         </div>
 
-        {audit.entries.length === 0 ? (
+        {pageEntries.length === 0 ? (
           <EmptyState
             icon="clipboard"
             title="Zatím není co zobrazit"
-            description="Dosud nebyl potvrzen žádný návrh plánování."
+            description="Dosud nebyl potvrzen žádný návrh plánování, nebo filtr neodpovídá žádnému záznamu."
           />
         ) : (
           <ul className="data-list">
-            {audit.entries.map((entry) => (
+            {pageEntries.map((entry) => (
               <li className="data-row" key={`${entry.proposalId}:${entry.action ?? "confirmed"}:${entry.confirmedAt}`}>
                 <span className="step-index" aria-hidden="true">
                   <Icon name="check" width={15} height={15} />
@@ -103,16 +182,36 @@ export default async function PlanningAuditPage() {
                   <span className="data-row__title">{entry.month !== undefined ? `Měsíc ${entry.month ?? "neuveden"}` : `Týden od ${entry.weekStart ?? "neuveden"}`}</span>
                   <span className="data-row__sub">
                     {entry.action === "removed" ? "Odstranil(a)" : "Potvrdil(a)"}: {entry.confirmedByEmail ?? "neuvedeno"}
+                    {entry.mode ? ` · režim: ${entry.mode}` : ""}
+                    {entry.assignmentCount !== null ? ` · ${entry.assignmentCount} směn` : ""}
                   </span>
                 </span>
                 <span className="data-row__meta">
                   <time dateTime={entry.confirmedAt}>{entry.confirmedAt}</time>
                 </span>
-                <span className="data-row__tag">{entry.proposalId}</span>
+                <span className="data-row__tag">{entry.proposalId.slice(-6)}</span>
               </li>
             ))}
           </ul>
         )}
+
+        {totalPages > 1 ? (
+          <div className="monthly-step-controls" style={{ marginTop: 12 }}>
+            {currentPage > 1 ? (
+              <Link className="btn btn--secondary" href={`/audit?${new URLSearchParams({ ...(filterMonth ? { month: filterMonth } : {}), ...(filterAction ? { action: filterAction } : {}), page: String(currentPage - 1) }).toString()}`}>
+                Předchozí
+              </Link>
+            ) : null}
+            <span style={{ alignSelf: "center", fontSize: 13, color: "var(--muted)" }}>
+              Strana {currentPage} / {totalPages}
+            </span>
+            {currentPage < totalPages ? (
+              <Link className="btn btn--secondary" href={`/audit?${new URLSearchParams({ ...(filterMonth ? { month: filterMonth } : {}), ...(filterAction ? { action: filterAction } : {}), page: String(currentPage + 1) }).toString()}`}>
+                Následující
+              </Link>
+            ) : null}
+          </div>
+        ) : null}
       </section>
     </>
   );
@@ -127,7 +226,7 @@ function AuditMessage({ title, message }: { title: string; message: string }) {
             <Icon name="clipboard" width={22} height={22} />
           </span>
           <div>
-            <h1 className="page-head__title">Audit potvrzení</h1>
+            <h1 className="page-head__title">Audit rozpisů</h1>
             <p className="page-head__sub">Čtecí pohled nad uloženými potvrzeními.</p>
           </div>
         </div>
