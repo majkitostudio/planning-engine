@@ -36,7 +36,7 @@ pro prezentaci vedení firmy. Každá položka má kritérium dokončení.
 - [ ] Stránka Pravidla — ověřit, že seznam potvrzených pravidel je úplný a správný.
 - [x] Stránka Analyzy — implementován read-only přehled potvrzených rozpisů (souhrn + seznam).
 - [ ] Stránka Dovolené — zřetelně označit jako „připravované“.
-- [ ] Audit — zobrazit alespoň jeden potvrzený záznam (vytvořit testovací rozpis).
+- [x] Audit — rozšířen o filtr, stránkování a detaily (režim, počet směn). Testovací záznam vyžaduje zápis do DB.
 - [ ] Správa účtů — vytvořit testovací viewer účet pro demo.
 
 ## Fáze 4 — Technická připravenost
