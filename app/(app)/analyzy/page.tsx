@@ -10,7 +10,7 @@ export default function AnalyticsPage() {
     <SectionPlaceholder
       icon="chart"
       title="Analýzy"
-      description="Přehledy pokrytí, vytížení a dalších ukazatelů. Výpočty budou dostupné po napojení dat."
+      description="Přehledy pokrytí, vytížení a dalších ukazatelů z potvrzených rozpisů. Implementace analytiky je plánována (Milník 2)."
     />
   );
 }

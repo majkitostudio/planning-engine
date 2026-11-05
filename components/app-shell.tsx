@@ -180,7 +180,7 @@ export function AppShell({
               <span className="nav-link__icon" aria-hidden="true">
                 <Icon name="chevronRight" width={19} height={19} />
               </span>
-              <span className="nav-link__label">Budoucí funkce</span>
+              <span className="nav-link__label">Další sekce</span>
             </summary>
             <ul className="nav-list sidebar__future-list">
               {visibleNavItems.filter((item) => item.href !== "/planovani" && item.href !== "/navaznost-smen" && item.href !== "/zamestnanci").map(renderNavItem)}
