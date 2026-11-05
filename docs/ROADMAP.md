@@ -104,6 +104,9 @@ testovacím předpokladem, nikoli schváleným provozním pravidlem.
   a Python job prošly. Chyba odpovídá [hlášení Next.js](https://github.com/vercel/next.js/issues/99114),
   ale konkrétní odpověď Google Fonts není z logu doložená. Opravu je nutné
   samostatně ověřit; předchozí úspěšný běh neznamená aktuálně zelené CI.
+  Projekt aktualizoval Next.js na 16.4.5; oprava známé chyby je zahrnuta od
+  [verze 16.4.3](https://github.com/vercel/next.js/releases/tag/v16.4.3).
+  Lokálně s novou verzí prošly lint, typecheck, build a 526 testů (12 přeskočeno).
 
 ### Rozhraní manažera — `IMPLEMENTED`, ověřeno částečně
 
