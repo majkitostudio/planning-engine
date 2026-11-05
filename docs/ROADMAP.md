@@ -674,8 +674,11 @@ označíme za hotovou až po opravě a doloženém ověření jejího rozsahu.
        ověřil obnovení nedokončených údajů, měsíců, chyby úložiště i souběh oken.
        Pro bezpečný souběžný zápis je nutná podpora Web Locks a zabezpečený
        kontext prohlížeče (HTTPS nebo localhost); bez ní se ukládání zablokuje
-       a zobrazí se upozornění. Data v prohlížeči nejsou šifrovaná a jsou
-       dostupná uživatelům zařízení.
+       a zobrazí se upozornění. Při odchodu před dokončením zápisu aplikace
+       požádá prohlížeč o varování před ztrátou; zobrazení závisí na prohlížeči.
+       Syntetický průchod ověřil vyvolání varování při čekání na zámek i jeho
+       zrušení po uložení. Data v prohlížeči nejsou šifrovaná a jsou dostupná
+       uživatelům zařízení.
      - [ ] Ověřit mobilní ovládání a fokus skutečnou čtečkou obrazovky.
    - [ ] Posoudit vývojové závislosti a ověřit kompatibilní aktualizace.
 9. **P2 — Závěrečné ověření MVP.**

@@ -54,10 +54,15 @@ export function MonthlyPlanningPanel({ month, canManage, formOwnerId, planningMo
   const [boundaryReadiness, setBoundaryReadiness] = useState<BoundaryReadiness | null>(null);
   const [formStorage, setFormStorage] = useState<"loading" | "empty" | "ready" | "saved" | "cleared" | "unavailable" | "invalid" | "conflict">("loading");
   const [formRestored, setFormRestored] = useState(false);
+  const [formEditCounter, setFormEditCounter] = useState(0);
   const formRaw = useRef<string | null>(null);
   const formWrites = useRef<Promise<void>>(Promise.resolve());
   const formGeneration = useRef(0);
   const forceFormWrite = useRef(false);
+  const pendingFormWrites = useRef(0);
+  const formChanged = useRef(false);
+  const formEditRevision = useRef(0);
+  const skipRestoredWrite = useRef(false);
   const stepHeadingRef = useRef<HTMLLegendElement>(null);
   const previousStep = useRef(step);
   const revision = useRef(0);
@@ -77,8 +82,8 @@ export function MonthlyPlanningPanel({ month, canManage, formOwnerId, planningMo
           setStaffing([...data.staffing]); setInstructions(data.instructions); setShiftRotationPreference(data.shiftRotationPreference);
           setPartialMonth(data.partialMonth); setRangeStart(data.rangeStart); setRangeEnd(data.rangeEnd);
           setEmployeeId(data.employeeId); setDate(data.date); setEndDate(data.endDate); setAbsenceShift(data.absenceShift); setStep(data.step);
-          setFormRestored(true); setFormStorage("ready");
-        } else setFormStorage(loaded.status);
+          skipRestoredWrite.current = true; setFormRestored(true); setFormStorage(navigator.locks ? "saved" : "unavailable");
+        } else setFormStorage(loaded.status === "empty" && !navigator.locks ? "unavailable" : loaded.status);
       } catch { setFormStorage("unavailable"); }
     });
     return () => { active = false; };
@@ -86,19 +91,29 @@ export function MonthlyPlanningPanel({ month, canManage, formOwnerId, planningMo
 
   useEffect(() => {
     if (!canManage || !formOwnerId || (formStorage !== "ready" && formStorage !== "saved")) return;
+    if (skipRestoredWrite.current) {
+      skipRestoredWrite.current = false;
+      if (formEditCounter === 0) return;
+    }
     const value = { employees, name, absences, partialAbsences, staffing, instructions, shiftRotationPreference, partialMonth, rangeStart, rangeEnd, employeeId, date, endDate, absenceShift, step };
     const generation = formGeneration.current;
+    const editedAt = formEditCounter;
+    let saved = false;
+    pendingFormWrites.current++;
     formWrites.current = formWrites.current.then(async () => {
       if (generation !== formGeneration.current) return;
       try {
         const result = await saveMonthlyFormAtomically(localStorage, navigator.locks, formOwnerId, month, value, formRaw.current, forceFormWrite.current, () => generation === formGeneration.current);
         if (generation !== formGeneration.current) return;
-        if (result.status === "saved") { formRaw.current = result.raw; forceFormWrite.current = false; setFormStorage((current) => current === "ready" ? "saved" : current); }
+        if (result.status === "saved") { formRaw.current = result.raw; forceFormWrite.current = false; saved = true; setFormStorage((current) => current === "ready" ? "saved" : current); }
         else if (result.status === "conflict") { formGeneration.current++; setFormStorage("conflict"); }
         else if (result.status === "unavailable") setFormStorage("unavailable");
       } catch { if (generation === formGeneration.current) setFormStorage("unavailable"); }
+    }).finally(() => {
+      pendingFormWrites.current--;
+      if (saved && pendingFormWrites.current === 0 && editedAt === formEditRevision.current) formChanged.current = false;
     });
-  }, [canManage, formOwnerId, month, formStorage, employees, name, absences, partialAbsences, staffing, instructions, shiftRotationPreference, partialMonth, rangeStart, rangeEnd, employeeId, date, endDate, absenceShift, step]);
+  }, [canManage, formOwnerId, month, formStorage, employees, name, absences, partialAbsences, staffing, instructions, shiftRotationPreference, partialMonth, rangeStart, rangeEnd, employeeId, date, endDate, absenceShift, step, formEditCounter]);
 
   useEffect(() => {
     if (!canManage || !formOwnerId) return;
@@ -109,6 +124,17 @@ export function MonthlyPlanningPanel({ month, canManage, formOwnerId, planningMo
     window.addEventListener("storage", onStorage);
     return () => window.removeEventListener("storage", onStorage);
   }, [canManage, formOwnerId, month]);
+
+  useEffect(() => {
+    if (!canManage) return;
+    const warnIfUnsaved = (event: BeforeUnloadEvent) => {
+      if (pendingFormWrites.current === 0 && !formChanged.current) return;
+      event.preventDefault();
+      event.returnValue = "";
+    };
+    window.addEventListener("beforeunload", warnIfUnsaved);
+    return () => window.removeEventListener("beforeunload", warnIfUnsaved);
+  }, [canManage]);
 
   useEffect(() => {
     if (shouldFocusStepHeading(previousStep.current, step)) {
@@ -223,9 +249,9 @@ export function MonthlyPlanningPanel({ month, canManage, formOwnerId, planningMo
   async function submit(event: FormEvent) {
     event.preventDefault();
     setError("");
-    if (readiness.missing.length) { setStep(4); setError("Doplňte povinné vstupy uvedené v souhrnu před vytvořením návrhu."); return; }
+    if (readiness.missing.length) { changeStep(4); setError("Doplňte povinné vstupy uvedené v souhrnu před vytvořením návrhu."); return; }
     const prepared = buildMonthlyFormInput(formData);
-    if (!prepared.ok) { setStep(4); setError(prepared.message); return; }
+    if (!prepared.ok) { changeStep(4); setError(prepared.message); return; }
     revision.current++; setBusy(true); setView(null); setConfirmed(false); setRestored(false); onResult(month, null);
     try {
       const response = await fetch("/api/planning/monthly/run", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ input: prepared.value, ...(planningMode === "simulated" ? { scenario: "complete" } : {}) }) });
@@ -245,8 +271,20 @@ export function MonthlyPlanningPanel({ month, canManage, formOwnerId, planningMo
       setConfirmed(true); onResult(month, { ...view, confirmed: true });
     } catch { setError("Spojení se serverem selhalo."); } finally { setBusy(false); }
   }
-  function changeStep(next: number) { setStep(Math.max(0, Math.min(STEPS.length - 1, next))); setError(""); }
+  function changeStep(next: number) {
+    const target = Math.max(0, Math.min(STEPS.length - 1, next));
+    if (canManage && target !== step) {
+      formChanged.current = true;
+      formEditRevision.current++;
+      setFormEditCounter(formEditRevision.current);
+      if (formStorage === "cleared" || formStorage === "empty") setFormStorage("ready");
+    }
+    setStep(target); setError("");
+  }
   function clearResult() {
+    formChanged.current = true;
+    formEditRevision.current++;
+    setFormEditCounter(formEditRevision.current);
     if (formStorage === "cleared" || formStorage === "empty") setFormStorage("ready");
     revision.current++;
     if (!view) return;
@@ -264,6 +302,7 @@ export function MonthlyPlanningPanel({ month, canManage, formOwnerId, planningMo
       formRaw.current = null;
     } catch { setFormStorage("unavailable"); return; } finally { setBusy(false); }
     setFormStorage("cleared"); setFormRestored(false);
+    formChanged.current = false;
     setEmployees([]); setName(""); setAbsences([]); setPartialAbsences([]); setStaffing(staffingFormValues(initialStaffing));
     setInstructions(""); setShiftRotationPreference(false); setPartialMonth(false); setRangeStart(`${month}-01`); setRangeEnd(datesInMonth(month).at(-1)!);
     setEmployeeId(""); setDate(""); setEndDate(""); setAbsenceShift("full_day"); setStep(0); setError("");
