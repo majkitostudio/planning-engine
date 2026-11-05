@@ -70,6 +70,27 @@ describe("vstupy měsíčního formuláře", () => {
       expect(result.value.instructions).toBe("Pokyn");
     }
   });
+  it("převede měsíční fond a omluvené hodiny včetně české desetinné čárky", () => {
+    const form = { month: "2026-11", employees: [{ id: "e1", name: "Test" }], absences: [], availability: [], staffing: Array(14).fill("0"), instructions: "", workFunds: [{ employeeId: "e1", hours: "168", excusedHours: "8,5" }] };
+    const result = buildMonthlyFormInput(form);
+    expect(result.ok).toBe(true);
+    if (result.ok) expect(result.value.workFunds).toEqual([{ employeeId: "e1", hours: 168, excusedHours: 8.5 }]);
+    expect(buildMonthlyFormInput({ ...form, workFunds: [{ employeeId: "e1", hours: "", excusedHours: "0" }] }).ok).toBe(false);
+    expect(buildMonthlyFormInput({ ...form, workFunds: [{ employeeId: "e1", hours: "-1", excusedHours: "0" }] }).ok).toBe(false);
+    expect(buildMonthlyFormInput({ ...form, workFunds: [{ employeeId: "e1", hours: "168", excusedHours: "" }] }).ok).toBe(false);
+    expect(buildMonthlyFormInput({ ...form, workFunds: [{ employeeId: "e1", hours: "168", excusedHours: "0" }, { employeeId: "e1", hours: "160", excusedHours: "0" }] }).ok).toBe(false);
+  });
+
+  it("vyžaduje fond pro každého zaměstnance, pokud je zadání fondu otevřené", () => {
+    const employees = [{ id: "e1", name: "Test" }];
+    const base = { month: "2026-11", employees, absences: [], availability: [], staffing: Array(14).fill("0"), instructions: "" };
+    expect(monthlyFormReadiness({ ...base, workFunds: [{ employeeId: "e1", hours: "168", excusedHours: "0" }] })).toMatchObject({ filledWorkFundCount: 1 });
+    const empty = monthlyFormReadiness({ ...base, workFunds: [{ employeeId: "e1", hours: "", excusedHours: "" }] });
+    expect(empty.filledWorkFundCount).toBe(0);
+    expect(empty.missing).toContain("Zadejte měsíční fond a omluvené hodiny pro Test.");
+    expect(monthlyFormReadiness(base).filledWorkFundCount).toBe(0);
+  });
+
   it("předá výslovně zvolenou preferenci střídání jako strukturovaný vstup", () => {
     const result = buildMonthlyFormInput({ month: "2026-11", employees: [{ id: "e1", name: "Test" }], absences: [], availability: [], staffing: Array.from({ length: 14 }, () => "0"), instructions: "", shiftRotationPreference: true });
     expect(result.ok).toBe(true);

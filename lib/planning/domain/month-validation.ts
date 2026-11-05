@@ -28,16 +28,21 @@ export interface MonthlyValidation {
   readonly problems: readonly MonthlyFinding[];
   readonly unverified: readonly MonthlyFinding[];
   readonly preferenceFindings: readonly MonthlyFinding[];
+  /** Nezávazná kontrola měsíčního fondu; nikdy sama neblokuje potvrzení. */
+  readonly workFundFindings: readonly MonthlyFinding[];
   readonly canConfirm: boolean;
 }
+
+const formatFundHours = (seconds: number) => String(Math.round(seconds / 36) / 100).replace(".", ",");
 
 /** Kontroluje celý měsíční návrh; samotný výsledek nepotvrzuje rozpis. */
 export function validateMonthlyPlan(input: MonthlyPlanningInput, assignments: readonly ProposedAssignment[], boundary: MonthlyBoundaryData): MonthlyValidation {
   const problems: MonthlyFinding[] = [];
   const unverified: MonthlyFinding[] = [];
   const preferenceFindings: MonthlyFinding[] = [];
+  const workFundFindings: MonthlyFinding[] = [];
   const parsed = validateMonthlyInput(input);
-  if (!parsed.ok) return { status: "invalid", problems: [{ code: "INPUT_INVALID", message: parsed.message }], unverified, preferenceFindings, canConfirm: false };
+  if (!parsed.ok) return { status: "invalid", problems: [{ code: "INPUT_INVALID", message: parsed.message }], unverified, preferenceFindings, workFundFindings, canConfirm: false };
   const dates = datesInMonth(input.month);
   const first = dates[0];
   const last = dates[dates.length - 1];
@@ -180,6 +185,24 @@ export function validateMonthlyPlan(input: MonthlyPlanningInput, assignments: re
       if (off.length < 2) problems.push({ code: "WEEKEND_TWO_DAYS_OFF", message: "Při víkendové práci chybí dva dny volna v týdnu.", date: week, employeeId: employee.id });
     }
 
+    const fund = input.workFunds?.find((item) => item.employeeId === employee.id);
+    if (!fund) {
+      workFundFindings.push({ code: "WORK_FUND_MISSING", message: "Pracovní fond zaměstnance není zadán; naplnění fondu nelze ověřit.", employeeId: employee.id });
+    } else {
+      const plannedSeconds = Math.round(work
+        .filter((item) => item.date >= first && item.date <= last)
+        .reduce((sum, item) => {
+          const span = shiftInterval(item);
+          return sum + (span.endMs - span.startMs);
+        }, 0) / 1000);
+      const targetSeconds = Math.round(fund.hours * 3600);
+      const excusedSeconds = Math.round(fund.excusedHours * 3600);
+      const totalSeconds = plannedSeconds + excusedSeconds;
+      const detail = `naplánováno ${formatFundHours(plannedSeconds)} h a omluveno ${formatFundHours(excusedSeconds)} h z fondu ${formatFundHours(targetSeconds)} h`;
+      if (totalSeconds < targetSeconds) workFundFindings.push({ code: "WORK_FUND_UNDER", message: `Fond práce není naplněn: ${detail}.`, employeeId: employee.id });
+      else if (totalSeconds > targetSeconds) workFundFindings.push({ code: "WORK_FUND_OVER", message: `Fond práce je překročen: ${detail}.`, employeeId: employee.id });
+    }
+
     if (input.shiftRotationPreference) {
       const employeeWork = work.filter((item) => item.employeeId === employee.id).sort((a, b) => a.date.localeCompare(b.date));
       const monthWork = employeeWork.filter((item) => item.date >= first && item.date <= last);
@@ -202,5 +225,5 @@ export function validateMonthlyPlan(input: MonthlyPlanningInput, assignments: re
     }
   }
   const status = problems.length ? "invalid" : unverified.length ? "not_verified" : "valid";
-  return { status, problems, unverified, preferenceFindings, canConfirm: status === "valid" };
+  return { status, problems, unverified, preferenceFindings, workFundFindings, canConfirm: status === "valid" };
 }

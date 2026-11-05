@@ -97,27 +97,37 @@ mění zadání:
 - **Obsazení směn:** konfigurovatelný vstup, ne historická konstanta.
 - **Countdown CRM:** budoucí architektonický směr, nyní žádná integrace.
 
-## Pracovní fond zaměstnanců (`VERIFIED` rozhodnutí, `OPEN QUESTION` parametry, 5. 11. 2026)
+## Pracovní fond zaměstnanců (`VERIFIED` rozhodnutí a parametry, `IMPLEMENTED`, 5. 11. 2026)
 
 Uživatel potvrdil, že aplikace má hlídat fond práce každého zaměstnance.
-Samotné rozhodnutí neurčuje výši fondu, jednotku ani způsob započtení absencí
-a svátků. Tyto parametry zůstávají `OPEN QUESTION`; do implementace se nesmí
-dosadit odhad ani „rozumná“ výchozí hodnota. Současný pilot podporuje pouze
-zaměstnance na plný úvazek a neobsahuje kalendář svátků.
+Parametry byly doplněny takto:
 
-Nejmenší konzistentní doplnění k rozhodnutí:
+- Fond se zadává v hodinách za celý kalendářní měsíc, pro každého zaměstnance
+  zvlášť. Aplikace výchozí výši nedopočítává ani nedosazuje.
+- Manažer zadává také hodiny, které se mají do fondu započítat jako omluvené
+  (například schválená absence nebo svátek). Aplikace je sama neodvozuje.
+- Plánovaná pracovní doba se počítá z potvrzených časů směn a z přiřazení
+  v daném měsíci; přestávky zůstávají mimo výpočet (OQ24).
+- Nedostatečné i nadměrné naplnění se zobrazí jako samostatný nález. Je to
+  nezávazné upozornění a neblokuje potvrzení.
+- Chybějící fond se označí jako neověřený, nikoli jako splněný; ani tento nález
+  sám neblokuje potvrzení.
+- Pilot zůstává pouze pro zaměstnance na plný úvazek. Částečné úvazky jsou mimo
+  rozsah.
+- Technický strop 1000 hodin na vstup je pouze ochrana proti zjevně chybnému
+  zadání, nikoli doménové pravidlo ani pracovněprávní limit.
+- Formulář vyžaduje fond a omluvené hodiny pro každého vybraného zaměstnance.
+  Chybějící údaj zůstává možný u starších nebo přímých vstupů a validace jej
+  označí jako neověřený.
 
-- manažer zadá fond výslovně pro každého zaměstnance a zvolené období;
-- plánovač i nezávislá validace používají stejnou vypočtenou pracovní dobu
-  z potvrzených časů směn, přičemž přestávky zůstávají mimo výpočet (OQ24);
-- chybějící fond se označí jako neověřený, nikoli jako splněný;
-- nedostatečné i nadměrné naplnění se zobrazí jako samostatný nález, aby se
-  nepletlo s neproveditelným obsazením.
-
-Před implementací je nutné potvrdit jednotku a výši fondu, zda se do fondu
-započítává schválená absence a svátek, zda se má podpůrně rozšířit i na částečné
-úvazky a zda má nedostatečné naplnění potvrzení blokovat, nebo být pouze
-upozorněním.
+`IMPLEMENTED` (5. 11. 2026): volitelný vstup `workFunds` v měsíčním zadání,
+deterministická kontrola `workFundFindings` (`WORK_FUND_MISSING`,
+`WORK_FUND_UNDER`, `WORK_FUND_OVER`), pole ve formuláři a v lokálním uložení,
+přenos anonymizovaných fondů do lokálního solveru a jeho měkký cíl. Měkké
+vážení v solveru (jedna minuta odchylky odpovídá jednomu opakování směny) je
+volba implementace, nikoli potvrzené doménové pravidlo; tvrdé pokrytí a
+potvrzená pravidla mají přednost. Ověření a přesné výsledky jsou v
+[`ROADMAP.md`](ROADMAP.md).
 
 ## Současná implementace měsíčního MVP (`IMPLEMENTED`, 3. 11. 2026)
 
@@ -390,7 +400,7 @@ Zaškrtněte, co má být **povinné**:
 | Směna | role/dovednost | H4 | [ ] |
 | Zaměstnanec | identifikátor (jméno) | základní evidence | [ ] |
 | Zaměstnanec | role/dovednost | H4 | [ ] |
-| Zaměstnanec | úvazek / hodinový fond | H5 | [ ] |
+| Zaměstnanec | úvazek / hodinový fond | H13 (měsíční fond) | [x] |
 | Přiřazení | směna + zaměstnanec | základní evidence | [ ] |
 | Přiřazení | zamčené (nelze přepsat) | H7 | [ ] |
 | Dostupnost | časové okno | H3 | [ ] |

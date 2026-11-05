@@ -222,4 +222,52 @@ describe("měsíční validace", () => {
     expect(result.unverified.some((finding) => finding.code === "BOUNDARY_HISTORY_INVALID")).toBe(true);
     expect(result.canConfirm).toBe(false);
   });
+
+  it("počítá měsíční fond z potvrzených časů a odchylku hlásí nezávazně", () => {
+    const date = "2026-11-02";
+    const withAvailability = { ...input, availability: [{ employeeId: "e1", date, shiftKind: "morning" as const, available: true }] };
+    const validate = (workFunds: { employeeId: string; hours: number; excusedHours: number }[]) =>
+      validateMonthlyPlan({ ...withAvailability, workFunds }, [assignment(date)], completeBoundary);
+
+    const exact = validate([{ employeeId: "e1", hours: 8.75, excusedHours: 0 }]);
+    expect(exact.workFundFindings).toEqual([]);
+    expect(exact.canConfirm).toBe(true);
+
+    const withExcused = validate([{ employeeId: "e1", hours: 9, excusedHours: 0.25 }]);
+    expect(withExcused.workFundFindings).toEqual([]);
+    expect(withExcused.canConfirm).toBe(true);
+
+    const under = validate([{ employeeId: "e1", hours: 9, excusedHours: 0 }]);
+    expect(under.workFundFindings.map((finding) => finding.code)).toContain("WORK_FUND_UNDER");
+    expect(under.canConfirm).toBe(true);
+
+    const over = validate([{ employeeId: "e1", hours: 8, excusedHours: 0 }]);
+    expect(over.workFundFindings.map((finding) => finding.code)).toContain("WORK_FUND_OVER");
+    expect(over.canConfirm).toBe(true);
+  });
+
+  it("označí chybějící fond jako neověřený, ale neblokuje potvrzení", () => {
+    const date = "2026-11-02";
+    const result = validateMonthlyPlan({ ...input, availability: [{ employeeId: "e1", date, shiftKind: "morning" as const, available: true }] }, [assignment(date)], completeBoundary);
+
+    expect(result.workFundFindings.some((finding) => finding.code === "WORK_FUND_MISSING")).toBe(true);
+    expect(result.canConfirm).toBe(true);
+  });
+
+  it("započítá do fondu i převzatou směnu s vlastními časy mimo doplňovaný úsek", () => {
+    const rosterHistory = {
+      imports: [],
+      days: datesInMonth("2026-11").map((date) => date === "2026-11-02"
+        ? { employeeId: "e1", date, status: "shift" as const, startTime: "08:05", endTime: "20:00" }
+        : { employeeId: "e1", date, status: date < "2026-11-15" ? "off" as const : "unknown" as const }),
+    };
+    const result = validateMonthlyPlan({
+      ...input,
+      planningRange: { startDate: "2026-11-15", endDate: "2026-11-30" },
+      rosterHistory,
+      workFunds: [{ employeeId: "e1", hours: 715 / 60, excusedHours: 0 }],
+    }, [], completeBoundary);
+
+    expect(result.workFundFindings).toEqual([]);
+  });
 });

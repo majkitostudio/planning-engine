@@ -651,11 +651,25 @@ označíme za hotovou až po opravě a doloženém ověření jejího rozsahu.
    - [x] Blokovat neexistující i nejednoznačné místní časy při importu a
      validaci měsíční historie; nedovolit potvrzení návrhu s takovou návazností.
    - [x] Doplnit odpovídající obranu a Python testy přímo do solveru.
-   - [ ] Hlídat pracovní fond každého zaměstnance. Rozhodnutí uživatele je
-     `VERIFIED` (5. 11. 2026), ale jednotka, výše, započtení absencí a svátků,
-     rozsah na částečné úvazky i závažnost nedostatečného naplnění jsou
-     `OPEN QUESTION`. Implementace je proto `BLOCKED`; návrh nejmenšího
-     konzistentního doplnění je v [`DOMAIN_DECISIONS.md`](DOMAIN_DECISIONS.md).
+   - [x] Hlídat pracovní fond každého zaměstnance.
+   - `VERIFIED` (rozhodnutí a parametry uživatele 5. 11. 2026) — Fond se
+     zadává v hodinách za kalendářní měsíc pro každého zaměstnance zvlášť;
+     manažer zadává i omluvené hodiny (schválená absence, svátek). Odchylka
+     i chybějící údaj jsou nezávazné a neblokují potvrzení. Chybějící fond se
+     označí jako neověřený. Pilot zůstává pouze pro plné úvazky. Technický
+     strop 1000 h je jen kontrola vstupu. Viz
+     [`DOMAIN_DECISIONS.md`](DOMAIN_DECISIONS.md).
+   - `IMPLEMENTED` — Volitelný vstup `workFunds`, deterministická kontrola
+     `workFundFindings` (`WORK_FUND_MISSING`, `WORK_FUND_UNDER`,
+     `WORK_FUND_OVER`), pole formuláře a lokální uložení, anonymizovaný přenos
+     do lokálního solveru a jeho měkký cíl. Měkké vážení solveru je volba
+     implementace, nikoli doménové pravidlo.
+   - `VERIFIED` (5. 11. 2026, syntetická data) — Přesné naplnění, podstřelení,
+     překročení, omluvené hodiny, chybějící fond, převzatá směna s vlastními
+     časy, česká desetinná čárka, povinnost vyplnění ve formuláři, ukládání
+     včetně staršího snapshotu bez fondu, anonymizace v provideru a měkký cíl
+     solveru jsou pokryté testy. Celý Vitest: 543 prošlo, 14 přeskočeno;
+     testy Python solveru: 25 prošlo. Prošly také lint a typecheck.
 7. **P1 — Správa rozpisů.**
    - [x] Navrhnout a implementovat seznam rozpisů s možností smazat jednotlivý
      rozpis.

@@ -1,11 +1,12 @@
 import type { Absence, ShiftKind } from "./domain/types";
-import type { MonthlyFormData, PartialAbsence } from "./monthly-form";
+import type { MonthlyFormData, MonthlyFormWorkFund, PartialAbsence } from "./monthly-form";
 
 export interface MonthlyFormSnapshot {
   readonly employees: MonthlyFormData["employees"];
   readonly name: string;
   readonly absences: readonly Absence[];
   readonly partialAbsences: readonly (PartialAbsence & { id: string })[];
+  readonly workFunds?: readonly MonthlyFormWorkFund[];
   readonly staffing: readonly string[];
   readonly instructions: string;
   readonly shiftRotationPreference: boolean;
@@ -34,6 +35,7 @@ function isSnapshot(value: unknown): value is MonthlyFormSnapshot {
   if (!Array.isArray(value.staffing) || value.staffing.length !== 14 || !value.staffing.every((item) => typeof item === "string")) return false;
   if (!Array.isArray(value.employees) || !value.employees.every((item) => record(item) && strings(item, ["id", "name"]))) return false;
   if (!Array.isArray(value.absences) || !value.absences.every((item) => record(item) && strings(item, ["id", "employeeId", "from", "to"]) && ["other", "sick", "vacation"].includes(String(item.type)) && ["approved", "pending", "rejected"].includes(String(item.status)))) return false;
+  if (value.workFunds !== undefined && (!Array.isArray(value.workFunds) || !value.workFunds.every((item) => record(item) && strings(item, ["employeeId", "hours", "excusedHours"])))) return false;
   return Array.isArray(value.partialAbsences) && value.partialAbsences.every((item) => record(item) && strings(item, ["id", "employeeId", "from", "to"]) && (item.shiftKind === "morning" || item.shiftKind === "afternoon"));
 }
 

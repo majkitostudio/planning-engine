@@ -1,6 +1,6 @@
 import { datesInMonth } from "./domain/month";
 import { weekdayIndex } from "./domain/time";
-import { validateMonthlyInput, type MonthlyAvailability, type MonthlyPlanningInput, type MonthlyPlanningRange } from "./domain/month-input";
+import { validateMonthlyInput, type MonthlyAvailability, type MonthlyPlanningInput, type MonthlyPlanningRange, type MonthlyWorkFund } from "./domain/month-input";
 import type { Absence, ShiftKind } from "./domain/types";
 import type { StaffingProfileStatus, StaffingSetting } from "./staffing-settings";
 
@@ -22,6 +22,13 @@ export function partialAbsenceAvailability(month: string, absences: readonly Par
   return [...entries.values()];
 }
 
+export interface MonthlyFormWorkFund {
+  readonly employeeId: string;
+  /** Textová hodnota z formuláře; prázdný řetězec znamená nevyplněno. */
+  readonly hours: string;
+  readonly excusedHours: string;
+}
+
 export interface MonthlyFormData {
   readonly month: string;
   readonly employees: readonly { id: string; name: string }[];
@@ -32,6 +39,8 @@ export interface MonthlyFormData {
   readonly instructions: string;
   readonly shiftRotationPreference?: boolean;
   readonly planningRange?: MonthlyPlanningRange;
+  /** Volitelné fondy; při uvedení se vyžaduje záznam pro každého vybraného zaměstnance. */
+  readonly workFunds?: readonly MonthlyFormWorkFund[];
 }
 
 export interface MonthlyFormReadiness {
@@ -40,8 +49,17 @@ export interface MonthlyFormReadiness {
   readonly absenceCount: number;
   readonly availabilityCount: number;
   readonly filledStaffingCount: number;
+  readonly filledWorkFundCount: number;
   readonly missing: readonly string[];
   readonly warnings: readonly string[];
+}
+
+/** Přijímá kladné desetinné číslo s tečkou i českou čárkou; prázdná hodnota není nula. */
+function parseWorkFundHours(value: string): number | null {
+  const trimmed = value.trim();
+  if (!/^\d+(?:[.,]\d+)?$/.test(trimmed)) return null;
+  const hours = Number(trimmed.replace(",", "."));
+  return Number.isFinite(hours) ? hours : null;
 }
 
 /** Souhrn povinných polí před odesláním celoměsíčního návrhu. */
@@ -51,6 +69,24 @@ export function monthlyFormReadiness(form: MonthlyFormData): MonthlyFormReadines
   if (form.employees.length === 0) missing.push("Přidejte alespoň jednoho zaměstnance.");
   const filledStaffingCount = form.staffing.filter((value) => /^\d+$/.test(value) && Number.isSafeInteger(Number(value))).length;
   if (form.staffing.length !== 14 || filledStaffingCount !== 14) missing.push("Vyplňte požadované obsazení pro všech 7 dnů a obě směny.");
+  const fundById = new Map<string, MonthlyFormWorkFund>();
+  let duplicateFund = false;
+  for (const fund of form.workFunds ?? []) {
+    if (fundById.has(fund.employeeId)) duplicateFund = true;
+    else fundById.set(fund.employeeId, fund);
+  }
+  const filledWorkFundCount = form.employees.filter((employee) => {
+    const fund = fundById.get(employee.id);
+    return fund !== undefined && parseWorkFundHours(fund.hours) !== null && parseWorkFundHours(fund.excusedHours) !== null;
+  }).length;
+  if (form.workFunds !== undefined) {
+    if (duplicateFund) missing.push("Pracovní fond stejného zaměstnance je zadaný vícekrát.");
+    for (const employee of form.employees) {
+      if (!fundById.has(employee.id) || parseWorkFundHours(fundById.get(employee.id)!.hours) === null || parseWorkFundHours(fundById.get(employee.id)!.excusedHours) === null) {
+        missing.push(`Zadejte měsíční fond a omluvené hodiny pro ${employee.name}.`);
+      }
+    }
+  }
   const prepared = buildMonthlyFormInput(form);
   if (!prepared.ok && !missing.includes(prepared.message)) missing.push(prepared.message);
   const warnings: string[] = [];
@@ -65,6 +101,7 @@ export function monthlyFormReadiness(form: MonthlyFormData): MonthlyFormReadines
     absenceCount: form.absences.length,
     availabilityCount: form.availability.length,
     filledStaffingCount,
+    filledWorkFundCount,
     missing: [...new Set(missing)],
     warnings,
   };
@@ -97,6 +134,18 @@ export function buildMonthlyFormInput(form: MonthlyFormData): { ok: true; value:
   let dates: string[];
   try { dates = datesInMonth(form.month); } catch { return { ok: false, message: "Vyberte platný měsíc." }; }
   if (form.staffing.length !== 14 || form.staffing.some((value) => !/^\d+$/.test(value) || !Number.isSafeInteger(Number(value)))) return { ok: false, message: "Vyplňte nezáporný počet pro každou směnu v týdnu." };
+  const workFunds: MonthlyWorkFund[] = [];
+  if (form.workFunds !== undefined) {
+    const seen = new Set<string>();
+    for (const fund of form.workFunds) {
+      const hours = parseWorkFundHours(fund.hours);
+      const excusedHours = parseWorkFundHours(fund.excusedHours);
+      if (seen.has(fund.employeeId)) return { ok: false, message: "Pracovní fond stejného zaměstnance je zadaný vícekrát." };
+      if (hours === null || excusedHours === null) return { ok: false, message: "Zadejte nezáporný měsíční fond a omluvené hodiny v hodinách." };
+      seen.add(fund.employeeId);
+      workFunds.push({ employeeId: fund.employeeId, hours, excusedHours });
+    }
+  }
   const availability = new Map<string, MonthlyAvailability>();
   const key = (entry: MonthlyAvailability) => `${entry.employeeId}|${entry.date}|${entry.shiftKind}`;
   for (const employee of form.employees) {
@@ -128,6 +177,7 @@ export function buildMonthlyFormInput(form: MonthlyFormData): { ok: true; value:
     instructions: form.instructions,
     ...(form.shiftRotationPreference === undefined ? {} : { shiftRotationPreference: form.shiftRotationPreference }),
     ...(form.planningRange === undefined ? {} : { planningRange: form.planningRange }),
+    ...(workFunds.length === 0 ? {} : { workFunds }),
   };
   return validateMonthlyInput(input);
 }

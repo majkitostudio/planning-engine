@@ -5,6 +5,7 @@ const snapshot: MonthlyFormSnapshot = {
   employees: [{ id: "synthetic-1", name: "Test A" }], name: "Rozepsané jméno",
   absences: [{ id: "a1", employeeId: "synthetic-1", from: "2026-11-01", to: "2026-11-02", type: "other", status: "approved" }],
   partialAbsences: [{ id: "a2", employeeId: "synthetic-1", from: "2026-11-03", to: "2026-11-03", shiftKind: "morning" }],
+  workFunds: [{ employeeId: "synthetic-1", hours: "168", excusedHours: "0" }],
   staffing: ["1", "", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0"],
   instructions: "Testovací pokyn", shiftRotationPreference: true, partialMonth: true,
   rangeStart: "2026-11-05", rangeEnd: "2026-11-20", employeeId: "synthetic-1",
@@ -33,6 +34,8 @@ describe("lokální rozpracované zadání", () => {
   it("poškozené údaje nerozpozná jako platné a při odmítnutém úložišti vrátí chybu", async () => {
     const broken = { getItem: () => '{"version":1,"data":{"employees":null}}', setItem: () => { throw new Error("quota"); }, removeItem: () => { throw new Error("blocked"); } };
     expect(loadMonthlyForm(broken, "manager-a", "2026-11")).toMatchObject({ status: "invalid" });
+    const invalidFunds = { getItem: () => JSON.stringify({ version: 1, data: { ...snapshot, workFunds: [{ employeeId: "synthetic-1", hours: "1" }] } }), setItem: () => {}, removeItem: () => {} };
+    expect(loadMonthlyForm(invalidFunds, "manager-a", "2026-11")).toMatchObject({ status: "invalid" });
     expect((await saveMonthlyFormAtomically(broken, uncontendedLock, "manager-a", "2026-11", snapshot, null, true)).status).toBe("unavailable");
     expect((await saveMonthlyFormAtomically(broken, uncontendedLock, "manager-a", "2026-11", null, null, true)).status).toBe("unavailable");
     expect((await saveMonthlyFormAtomically(broken, undefined, "manager-a", "2026-11", snapshot, null)).status).toBe("unavailable");
@@ -54,6 +57,16 @@ describe("lokální rozpracované zadání", () => {
     ]);
     expect([first.status, second.status].sort()).toEqual(["conflict", "saved"]);
     expect(loadMonthlyForm(store, "manager-a", "2026-11")).toMatchObject({ status: "found", value: { name: "první" } });
+  });
+
+  it("načte i starší uložené zadání bez pracovního fondu", async () => {
+    const store = storage();
+    const legacy = { ...snapshot, workFunds: undefined };
+    const saved = await saveMonthlyFormAtomically(store, uncontendedLock, "manager-a", "2026-11", legacy, null);
+    expect(saved.status).toBe("saved");
+    const loaded = loadMonthlyForm(store, "manager-a", "2026-11");
+    expect(loaded).toMatchObject({ status: "found" });
+    if (loaded.status === "found") expect(loaded.value).not.toHaveProperty("workFunds");
   });
 
   it("bez podpory koordinace nezapisuje, ale dovolí vymazat beze změny uložená data", async () => {

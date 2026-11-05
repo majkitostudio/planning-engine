@@ -31,6 +31,20 @@ describe("monthly planning input", () => {
     expect(validateMonthlyInput(input)).toEqual({ ok: true, value: input });
   });
 
+  it("validuje volitelný měsíční fond včetně omluvených hodin", () => {
+    expect(validateMonthlyInput({ ...input, workFunds: [{ employeeId: "e1", hours: 168, excusedHours: 8.5 }] }).ok).toBe(true);
+    for (const workFunds of [
+      [{ employeeId: "e1", hours: -1, excusedHours: 0 }],
+      [{ employeeId: "e1", hours: 168, excusedHours: -1 }],
+      [{ employeeId: "e1", hours: Number.NaN, excusedHours: 0 }],
+      [{ employeeId: "e1", hours: Number.POSITIVE_INFINITY, excusedHours: 0 }],
+      [{ employeeId: "e1", hours: 168 }],
+      [{ employeeId: "e1", hours: 168, excusedHours: 0 }, { employeeId: "e1", hours: 160, excusedHours: 0 }],
+      [{ employeeId: "jiný", hours: 168, excusedHours: 0 }],
+      "168",
+    ]) expect(validateMonthlyInput({ ...input, workFunds })).toEqual({ ok: false, message: "Pracovní fond je neplatný." });
+  });
+
   it("accepts only a continuous range inside the selected month", () => {
     expect(validateMonthlyInput({ ...input, planningRange: { startDate: "2026-02-14", endDate: "2026-02-28" } }).ok).toBe(true);
     for (const planningRange of [

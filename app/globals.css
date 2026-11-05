@@ -2269,6 +2269,9 @@ textarea {
 .monthly-entry-list { display: grid; gap: 8px; margin: 0; padding: 0; list-style: none; }
 .monthly-entry-list li { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 10px 12px; border: 1px solid var(--border); border-radius: 7px; background: var(--surface); }
 .monthly-entry-list li > span:first-child { min-width: 0; overflow-wrap: anywhere; }
+.monthly-work-fund-fields { display: flex; flex-wrap: wrap; gap: 10px; align-items: end; }
+.monthly-work-fund-fields label { display: grid; gap: 4px; font-size: .85rem; }
+.monthly-work-fund-fields input { width: 110px; }
 .monthly-checkbox { display: flex !important; margin-top: 5px; }
 .monthly-entry-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
 .monthly-staffing-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 9px; }

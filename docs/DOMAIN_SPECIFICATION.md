@@ -409,6 +409,7 @@ musí být vynuceno deterministickou validací, ne jen instrukcí pro AI.
 | H10 | Potřebné obsazení je splněno, nebo je nedostatek přiznán | `VERIFIED` (cíl) | Zda je nedostatek tvrdá chyba, je `OPEN QUESTION`. |
 | H11 | Bez potvrzení manažera se nic neukládá | `VERIFIED` (proces) | Netýká se obsahu plánu. |
 | H12 | Operativní náhrada nesmí prodlužovat, zkracovat ani dělit pevnou směnu; přesčas se nepoužívá | `VERIFIED` (interní) | Náhrada se vybírá pouze z celých existujících směn. |
+| H13 | Měsíční fond práce je nezávazný cíl; odchylka ani chybějící údaj neblokují potvrzení | `VERIFIED` (rozhodnutí uživatele 5. 11. 2026) | Fond v hodinách zadává manažer včetně omluvených hodin; plánovaná doba se počítá z potvrzených časů směn. |
 
 `OPEN QUESTION`:
 
@@ -417,6 +418,14 @@ musí být vynuceno deterministickou validací, ne jen instrukcí pro AI.
 11. Existují další pravidla mimo seznam (svátky, jazyky, kontinuita týmu)?
 OQ21 je uzavřena: pracovní den je kalendářní den s alespoň jednou směnou;
 více směn v jednom dni se započítá jednou.
+
+Měsíční fond práce podle H13 není tvrdý maximální limit H5. Manažer zadává
+fond i omluvené hodiny výslovně pro každého zaměstnance; aplikace je
+nedopočítává. Deterministická validace spočítá naplánovanou dobu z potvrzených
+časů směn, zobrazí nedostatečné i nadměrné naplnění a chybějící fond označí
+jako neověřený. Tyto nálezy zůstávají nezávazné a samy neblokují potvrzení.
+Lokální OR-Tools používá odchylku od fondu jako měkký cíl; jde o volbu
+implementace, nikoli o potvrzené doménové pravidlo.
 
 ## 6. Měkké preference (kandidáti, `ASSUMPTION`)
 

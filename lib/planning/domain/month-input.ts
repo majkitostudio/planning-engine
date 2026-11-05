@@ -25,6 +25,15 @@ export interface MonthlyRosterSnapshot {
   readonly days: readonly MonthlyRosterDay[];
 }
 
+/** Měsíční fond práce, který zadává manažer; aplikace výchozí hodnotu nedopočítává. */
+export interface MonthlyWorkFund {
+  readonly employeeId: string;
+  /** Měsíční fond práce v hodinách. */
+  readonly hours: number;
+  /** Manažerem zadané hodiny započtené jako omluvené (např. schválená absence nebo svátek). */
+  readonly excusedHours: number;
+}
+
 export interface MonthlyPlanningInput {
   readonly month: string;
   readonly employees: readonly Employee[];
@@ -35,6 +44,8 @@ export interface MonthlyPlanningInput {
   readonly instructions: string;
   /** Schválené přání: střídat sousední pracovní směny i přes dny volna. */
   readonly shiftRotationPreference?: boolean;
+  /** Volitelný měsíční fond práce; chybějící záznam znamená neověřené naplnění. */
+  readonly workFunds?: readonly MonthlyWorkFund[];
   /** Souvislý úsek, který má plánovač vytvořit; absence zachovává celý měsíc. */
   readonly planningRange?: MonthlyPlanningRange;
   /** Serverem načtený podklad mimo rozsah plánování; surový roster se nepřikládá. */
@@ -43,6 +54,8 @@ export interface MonthlyPlanningInput {
 
 type InputResult = { readonly ok: true; readonly value: MonthlyPlanningInput } | { readonly ok: false; readonly message: string };
 export const MAX_MONTHLY_EMPLOYEES = 200;
+/** Technický strop pro jeden měsíc; nejde o pracovněprávní ani doménové pravidlo. */
+export const MAX_WORK_FUND_HOURS = 1000;
 const invalid = (message: string): InputResult => ({ ok: false, message });
 const record = (v: unknown): v is Record<string, unknown> => typeof v === "object" && v !== null && !Array.isArray(v);
 const shift = (v: unknown): v is ShiftKind => v === "morning" || v === "afternoon";
@@ -97,6 +110,16 @@ export function validateMonthlyInput(value: unknown): InputResult {
   }
   if (!Array.isArray(value.absences) || !Array.isArray(value.availability) || !Array.isArray(value.staffingRequirements) || typeof value.instructions !== "string") return invalid("Vstup nemá platný tvar.");
   if (value.shiftRotationPreference !== undefined && typeof value.shiftRotationPreference !== "boolean") return invalid("Preference střídání směn není platná.");
+  if (value.workFunds !== undefined) {
+    if (!Array.isArray(value.workFunds)) return invalid("Pracovní fond je neplatný.");
+    const fundIds = new Set<string>();
+    for (const fund of value.workFunds) {
+      if (!record(fund) || typeof fund.employeeId !== "string" || !ids.has(fund.employeeId) || fundIds.has(fund.employeeId)
+        || typeof fund.hours !== "number" || !Number.isFinite(fund.hours) || fund.hours < 0 || fund.hours > MAX_WORK_FUND_HOURS
+        || typeof fund.excusedHours !== "number" || !Number.isFinite(fund.excusedHours) || fund.excusedHours < 0 || fund.excusedHours > MAX_WORK_FUND_HOURS) return invalid("Pracovní fond je neplatný.");
+      fundIds.add(fund.employeeId);
+    }
+  }
   if (value.planningRange !== undefined) {
     if (!record(value.planningRange) || !isIsoDate(value.planningRange.startDate) || !isIsoDate(value.planningRange.endDate)
       || value.planningRange.startDate > value.planningRange.endDate

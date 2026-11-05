@@ -3,6 +3,7 @@
 import calendar
 import datetime as dt
 import json
+import math
 import re
 import sys
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
@@ -11,6 +12,7 @@ from ortools.sat.python import cp_model
 
 KINDS = ("morning", "afternoon")
 MAX_EMPLOYEES = 200
+MAX_WORK_FUND_HOURS = 1000
 MINIMUM_REST = dt.timedelta(hours=35)
 
 
@@ -132,6 +134,20 @@ def _validate(payload):
     shift_rotation = data.get("shiftRotationPreference", False)
     _require(type(shift_rotation) is bool)
 
+    work_funds = data.get("workFunds")
+    funds = {}
+    if work_funds is not None:
+        _require(isinstance(work_funds, list))
+        for item in work_funds:
+            _require(isinstance(item, dict) and item.get("employeeId") in people_set)
+            hours, excused = item.get("hours"), item.get("excusedHours")
+            _require(isinstance(hours, (int, float)) and not isinstance(hours, bool))
+            _require(isinstance(excused, (int, float)) and not isinstance(excused, bool))
+            _require(math.isfinite(hours) and 0 <= hours <= MAX_WORK_FUND_HOURS)
+            _require(math.isfinite(excused) and 0 <= excused <= MAX_WORK_FUND_HOURS)
+            _require(item["employeeId"] not in funds)
+            funds[item["employeeId"]] = (float(hours), float(excused))
+
     history = {}
     history_complete = {}
     for side in ("before", "after"):
@@ -158,12 +174,12 @@ def _validate(payload):
 
     timeout = payload.get("timeoutSeconds", 30)
     _require(isinstance(timeout, (int, float)) and not isinstance(timeout, bool) and 0.05 <= timeout <= 30)
-    return data, first, last, dates, people, requirements, availability, history, history_complete, shift_rotation, float(timeout), range_start, range_end, fixed
+    return data, first, last, dates, people, requirements, availability, history, history_complete, shift_rotation, funds, float(timeout), range_start, range_end, fixed
 
 
 def solve(payload):
     try:
-        data, first, last, dates, people, requirements, availability, history, history_complete, shift_rotation, timeout, range_start, range_end, fixed = _validate(payload)
+        data, first, last, dates, people, requirements, availability, history, history_complete, shift_rotation, funds, timeout, range_start, range_end, fixed = _validate(payload)
     except ZoneInfoNotFoundError:
         return {"status": "unavailable"}
     except (InvalidInput, TypeError, ValueError, KeyError, OverflowError):
@@ -256,6 +272,7 @@ def solve(payload):
                 model.add(sum(works(person, monday + dt.timedelta(days=index)) for index in range(7)) <= 5).only_enforce_if(weekend)
             monday += dt.timedelta(days=7)
 
+    penalties = []
     if shift_rotation:
         rotation_penalties = []
         for person in people:
@@ -295,8 +312,39 @@ def solve(payload):
                     else:
                         previous_afternoon = following
                 day += dt.timedelta(days=1)
-        if rotation_penalties:
-            model.minimize(sum(rotation_penalties))
+        penalties.extend(rotation_penalties)
+
+    # Měkký cíl fondu: jedna minuta odchylky má stejnou váhu jako jedno
+    # opakování směny. Nejde o doménové pravidlo, pouze o transparentní volbu
+    # implementace; tvrdé pokrytí a potvrzená pravidla mají vždy přednost.
+    fund_penalties = []
+    if funds:
+        horizon_seconds = len(dates) * 24 * 3600
+
+        def duration_seconds(person, day, kind):
+            return int((moment(person, day, kind, True) - moment(person, day, kind, False)).total_seconds())
+
+        for person in people:
+            if person not in funds:
+                continue
+            hours, excused = funds[person]
+            target_seconds = max(0, round((hours - excused) * 3600))
+            worked = 0
+            for day in dates:
+                if range_start <= day <= range_end:
+                    for kind in KINDS:
+                        worked += duration_seconds(person, day, kind) * choices[(person, day, kind)]
+                else:
+                    entry = fixed.get((person, day))
+                    if entry is not None:
+                        worked += duration_seconds(person, day, entry[0])
+            deviation = model.new_int_var(0, target_seconds + horizon_seconds, f"fund_deviation_{people.index(person)}")
+            model.add(deviation >= worked - target_seconds)
+            model.add(deviation >= target_seconds - worked)
+            fund_penalties.append(deviation)
+
+    if penalties or fund_penalties:
+        model.minimize(sum(penalties) * 60 + sum(fund_penalties))
 
     solver = cp_model.CpSolver()
     solver.parameters.max_time_in_seconds = timeout

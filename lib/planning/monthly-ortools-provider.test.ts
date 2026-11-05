@@ -83,6 +83,19 @@ describe("MonthlyOrtoolsProvider", () => {
     expect(draft.instructionsOutcome).toMatch(/nebyly.*vyhodnoceny/i);
   });
 
+  it("předá měsíční fond anonymně a zachová omluvené hodiny", async () => {
+    let sent = "";
+    const provider = new MonthlyOrtoolsProvider(async (payload) => {
+      sent = payload;
+      return JSON.stringify({ status: "feasible", assignments: [] });
+    });
+
+    await provider.generateMonthlyPlan({ ...input, workFunds: [{ employeeId: "private-id", hours: 168, excusedHours: 8.5 }] }, boundary);
+
+    expect(JSON.parse(sent).input.workFunds).toEqual([{ employeeId: "employee-0", hours: 168, excusedHours: 8.5 }]);
+    expect(sent).not.toContain("private-id");
+  });
+
   it.each([
     ["infeasible", "solver_infeasible"],
     ["unknown", "solver_timeout"],

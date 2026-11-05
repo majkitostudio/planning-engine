@@ -273,6 +273,40 @@ class SolverInputTests(unittest.TestCase):
 
         self.assertEqual(solve(payload)["status"], "feasible")
 
+    def test_fund_objective_prefers_employee_with_matching_fund(self):
+        payload = month_with_requirements("2026-11", 2, {
+            ("2026-11-02", "morning"),
+            ("2026-11-04", "morning"),
+        })
+        payload["input"]["workFunds"] = [
+            {"employeeId": "synthetic-0", "hours": 17.5, "excusedHours": 0},
+            {"employeeId": "synthetic-1", "hours": 0, "excusedHours": 0},
+        ]
+
+        result = solve(payload)
+
+        self.assertEqual(result["status"], "feasible")
+        self.assertEqual({item["employeeId"] for item in result["assignments"]}, {"synthetic-0"})
+
+    def test_rejects_invalid_work_fund(self):
+        cases = [
+            [{"employeeId": "unknown", "hours": 1, "excusedHours": 0}],
+            [{"employeeId": "synthetic-1", "hours": -1, "excusedHours": 0}],
+            [{"employeeId": "synthetic-1", "hours": 1, "excusedHours": -1}],
+            [{"employeeId": "synthetic-1", "hours": True, "excusedHours": 0}],
+            [{"employeeId": "synthetic-1", "hours": "1", "excusedHours": 0}],
+            [{"employeeId": "synthetic-1", "hours": 1001, "excusedHours": 0}],
+            [
+                {"employeeId": "synthetic-1", "hours": 1, "excusedHours": 0},
+                {"employeeId": "synthetic-1", "hours": 2, "excusedHours": 0},
+            ],
+        ]
+        for work_funds in cases:
+            with self.subTest(work_funds=work_funds):
+                payload = sample()
+                payload["input"]["workFunds"] = work_funds
+                self.assertEqual(solve(payload)["status"], "invalid_input")
+
     def test_finds_full_29_employee_november_test_month(self):
         payload = month_with_requirements("2026-11", 29, set())
         for requirement in payload["input"]["staffingRequirements"]:

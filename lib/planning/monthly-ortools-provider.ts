@@ -101,6 +101,7 @@ export class MonthlyOrtoolsProvider implements MonthlyPlanningProvider {
         staffingRequirements: input.staffingRequirements,
         ...(range ? { planningRange: range, fixedDays } : {}),
         ...(input.shiftRotationPreference === undefined ? {} : { shiftRotationPreference: input.shiftRotationPreference }),
+        ...(input.workFunds === undefined ? {} : { workFunds: input.workFunds.map(({ employeeId, hours, excusedHours }) => ({ employeeId: tokenize(employeeId), hours, excusedHours })) }),
       },
       boundary: {
         before: solverBoundary(boundary.before),
