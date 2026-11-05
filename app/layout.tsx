@@ -18,8 +18,8 @@ const mono = IBM_Plex_Mono({
 
 export const metadata: Metadata = {
   title: {
-    default: "PPPlánovací Engine",
-    template: "%s · PPPlánovací Engine",
+    default: "Plánovací Engine",
+    template: "%s · Plánovací Engine",
   },
   description: "Plánování rozpisů směn.",
 };
