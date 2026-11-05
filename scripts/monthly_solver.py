@@ -173,7 +173,7 @@ def _validate(payload):
         by_person_day.add(key)
 
     timeout = payload.get("timeoutSeconds", 30)
-    _require(isinstance(timeout, (int, float)) and not isinstance(timeout, bool) and 0.05 <= timeout <= 30)
+    _require(isinstance(timeout, (int, float)) and not isinstance(timeout, bool) and 0.05 <= timeout <= 300)
     return data, first, last, dates, people, requirements, availability, history, history_complete, shift_rotation, funds, float(timeout), range_start, range_end, fixed
 
 

@@ -10,7 +10,15 @@ type SolverResponse = { status: "feasible"; assignments: SolverAssignment[] }
   | { status: "infeasible" | "unknown" | "unavailable" | "invalid_input" | "error" };
 type SolverExecutor = (payload: string) => Promise<string>;
 
-const SOLVER_TIMEOUT_MS = 25_000;
+const DEFAULT_SOLVER_TIMEOUT_MS = 120_000;
+const MAX_SOLVER_TIMEOUT_MS = 300_000;
+
+function getSolverTimeoutMs(): number {
+  const raw = process.env.PLANNING_SOLVER_TIMEOUT_MS?.trim();
+  const parsed = raw ? Number(raw) : NaN;
+  if (!Number.isFinite(parsed) || parsed <= 0) return DEFAULT_SOLVER_TIMEOUT_MS;
+  return Math.min(parsed, MAX_SOLVER_TIMEOUT_MS);
+}
 const MAX_OUTPUT_CHARS = 2_000_000;
 
 function executeLocalSolver(payload: string): Promise<string> {
@@ -33,12 +41,13 @@ function executeLocalSolver(payload: string): Promise<string> {
       clearTimeout(timer);
       callback();
     };
+    const solverTimeoutMs = getSolverTimeoutMs();
     const timer = setTimeout(() => {
       finish(() => {
         child.kill();
         reject(new MonthlyProviderError("solver_timeout"));
       });
-    }, SOLVER_TIMEOUT_MS);
+    }, solverTimeoutMs);
 
     child.stdout.setEncoding("utf8");
     child.stdout.on("data", (chunk: string) => {
@@ -107,7 +116,7 @@ export class MonthlyOrtoolsProvider implements MonthlyPlanningProvider {
         before: solverBoundary(boundary.before),
         after: solverBoundary(boundary.after),
       },
-      timeoutSeconds: 20,
+      timeoutSeconds: Math.min(getSolverTimeoutMs() / 1000, 300),
     };
 
     let response: SolverResponse;
