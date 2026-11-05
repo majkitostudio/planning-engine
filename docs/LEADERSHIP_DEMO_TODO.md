@@ -34,7 +34,7 @@ pro prezentaci vedení firmy. Každá položka má kritérium dokončení.
 
 ## Fáze 3 — Obsah pro prezentaci
 - [ ] Stránka Pravidla — ověřit, že seznam potvrzených pravidel je úplný a správný.
-- [x] Stránka Analyzy — zatím placeholder s odkazem na Audit; read-only přehled je Milník 2.
+- [x] Stránka Analyzy — implementován read-only přehled potvrzených rozpisů (souhrn + seznam).
 - [ ] Stránka Dovolené — zřetelně označit jako „připravované“.
 - [ ] Audit — zobrazit alespoň jeden potvrzený záznam (vytvořit testovací rozpis).
 - [ ] Správa účtů — vytvořit testovací viewer účet pro demo.
