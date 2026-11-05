@@ -1,6 +1,6 @@
 # Aktuální stav a další kroky — Plánovací Engine
 
-> Stav aktualizován 4. 11. 2026 při postupném sjednocování větví. Historické
+> Stav aktualizován 5. 11. 2026 při postupném sjednocování větví. Historické
 > testy níže jsou výslovně označeny; aktuální kontroly jsou v závěru dokumentu.
 > Význam stavových popisků
 > vysvětluje [`docs/README.md`](README.md#stavové-popisky).
@@ -17,11 +17,11 @@ Opravené nálezy i otevřené kroky jsou označené samostatně. Před širší
 | Vysoká | OPRAVENO — starší relace se po resetu, změně hesla, změně role i deaktivaci odmítají podle verze relace; ověřeno také proti izolované PostgreSQL. |
 | Vysoká | Částečně opraveno — nastavení, API a měsíční formulář rozlišují uložené hodnoty od výchozích; stále je třeba rozhodnout, zda samotné uložení celé tabulky znamená schválení výchozích hodnot a jak se má chovat operativní náhrada při chybějícím profilu. |
 | Další | Částečně opraveno — nejednoznačné a neexistující místní časy i vstup nad 200 zaměstnanců jsou blokovány. Pokračovat v opravách přístupnosti, chyby chybějícího návrhu a ověřit výkon plánování. |
-| Dokončení MVP | Otevřené — rozhodnout o pravidlech mazání a implementovat správu jednotlivých rozpisů; dokončit syntetický uživatelský průchod. Python i izolované databázové testy již běží v CI. |
+| Dokončení MVP | Správa jednotlivých rozpisů je implementovaná a částečně ověřená; zbývá souvislý syntetický průchod včetně potvrzení nového rozpisu a návazností. Python i izolované databázové testy běží v CI. |
 
-Všechny nalezené commitované větve jsou zahrnuté v `main`. Zachované zálohy,
-nesledované výstupy a starý pracovní strom s necommitovaným souborem nejsou
-automaticky převzaté ani odstraněné. Postup prací je v
+Všechny dostupné commitované špičky jsou zahrnuté v `main`. Zachované zálohy,
+nesledované výstupy a dosud neuklizené pracovní stromy nejsou automaticky
+převzaté ani odstraněné. Postup prací je v
 [doporučeném pořadí](#doporučené-pořadí-dokončení-před-závěrečným-testováním).
 
 ## Stav měsíčního MVP
@@ -96,6 +96,9 @@ testovacím předpokladem, nikoli schváleným provozním pravidlem.
 - `NOT VERIFIED` — Souvislý průchod v prohlížeči přes potvrzení nového rozpisu
   po odstranění starého a následnou kontrolu sousedních měsíců zbývá před
   závěrečným ověřením MVP. Pro databázový režim je nutné nasadit novou migraci.
+- `VERIFIED` — GitHub CI běh `41936907000` na `6b225e3` úspěšně dokončil
+  lint, typecheck, testy a build, Python testy solveru i izolované databázové
+  integrační testy. Úspěch CI nenahrazuje výše uvedený průchod prohlížečem.
 
 ### Rozhraní manažera — `IMPLEMENTED`, ověřeno částečně
 
@@ -485,6 +488,14 @@ označíme za hotovou až po opravě a doloženém ověření jejího rozsahu.
      podklady nebo lokální `.env.local`, a proto nebyly odstraněny. Zbylá
      složka `cline/9dbfe` je osiřelý, částečně odstraněný checkout; jeho přesný
      pracovní diff byl před odstraněním zachován v pojmenovaném stash.
+   - `VERIFIED` (5. 11. 2026, porovnání s `6b225e3`) — Záloha
+     `audit-roadmap-20261104` mění jen historickou roadmapu; aktuální text její
+     zjištění obsahuje nebo nahrazuje novějšími. Záloha
+     `bezpecna-zaloha-pred-sjednocenim-20261103` mění 11 sledovaných souborů;
+     její tři původně nesledované podklady jsou obsahově totožné s `main`.
+     Starší CSS cílí na selektory, které současný formulář nepoužívá. Úplná
+     shoda původního vizuálního záměru se současným UI nebyla prokázána, proto
+     obě zálohy zůstávají zachované a nebyly aplikovány.
 1. **P0 — Starší API a ochrana rozpisů.**
    - [x] Vyžadovat roli managera pro zápis přes týdenní `/run` a `/replacement`;
      viewer zůstává pouze pro čtení.
