@@ -190,6 +190,10 @@ function makeReplacementSnapshot(
     providerName: "simulated-fixture/single-absence",
     mode: "simulated",
     staffingSource: "saved",
+    staffingBasis: [
+      { dayOfWeek: 0, shiftKind: "morning", requiredEmployees: 23 },
+      { dayOfWeek: 1, shiftKind: "afternoon", requiredEmployees: 8 },
+    ],
     input,
     basePlan: scenario.basePlan,
     result: tamperedResult,
@@ -200,6 +204,18 @@ function makeReplacementSnapshot(
 }
 
 describe("confirmPersistedReplacementRun", () => {
+  it("nepotvrdí náhradu, pokud se potřebné obsazení od vytvoření návrhu změnilo", async () => {
+    const persistence = new InMemoryPlanningPersistence();
+    const snapshot = makeReplacementSnapshot();
+    await persistence.saveReplacementRun(snapshot, replacementActor);
+    await persistence.saveStaffingSettings([{ dayOfWeek: 0, shiftKind: "morning", requiredEmployees: 23 }, { dayOfWeek: 1, shiftKind: "afternoon", requiredEmployees: 999 }]);
+
+    const result = await confirmPersistedReplacementRun(persistence, snapshot.replacementId, snapshot.result.options[0]!.id, replacementActor);
+
+    expect(result).toMatchObject({ ok: false, code: "replacement_confirmation_blocked" });
+    expect((await persistence.getReplacementRun(snapshot.replacementId))?.confirmedPlan).toBeNull();
+    expect(await persistence.listAuditEvents()).toHaveLength(0);
+  });
   it("nepotvrdí starší návrh, u kterého nelze doložit zdroj obsazení", async () => {
     const persistence = new InMemoryPlanningPersistence();
     const snapshot = makeReplacementSnapshot();
@@ -207,6 +223,15 @@ describe("confirmPersistedReplacementRun", () => {
     await persistence.saveReplacementRun({ ...snapshot, staffingSource: undefined }, replacementActor);
     const result = await confirmPersistedReplacementRun(persistence, snapshot.replacementId, option.id, replacementActor, Date.UTC(2026, 9, 29, 8));
     expect(result).toMatchObject({ ok: false, code: "replacement_confirmation_blocked", blockers: expect.arrayContaining([expect.objectContaining({ code: "replacement_not_verified", message: expect.stringContaining("obsazení") })]) });
+    expect((await persistence.getReplacementRun(snapshot.replacementId))?.confirmedPlan).toBeNull();
+  });
+  it("nepotvrdí starší návrh bez záznamu konkrétních použitých hodnot", async () => {
+    const persistence = new InMemoryPlanningPersistence();
+    const snapshot = makeReplacementSnapshot();
+    await persistence.saveStaffingSettings(snapshot.staffingBasis!);
+    await persistence.saveReplacementRun({ ...snapshot, staffingBasis: undefined }, replacementActor);
+    const result = await confirmPersistedReplacementRun(persistence, snapshot.replacementId, snapshot.result.options[0]!.id, replacementActor);
+    expect(result).toMatchObject({ ok: false, code: "replacement_confirmation_blocked" });
     expect((await persistence.getReplacementRun(snapshot.replacementId))?.confirmedPlan).toBeNull();
   });
   it("nepotvrdí starší snapshot s chybějícím požadavkem na obsazení cílové směny", async () => {
@@ -223,7 +248,9 @@ describe("confirmPersistedReplacementRun", () => {
     const persistence = new InMemoryPlanningPersistence();
     const snapshot = makeReplacementSnapshot();
     const option = snapshot.result.options[0]!;
+    await persistence.saveStaffingSettings([...snapshot.staffingBasis!, { dayOfWeek: 6, shiftKind: "morning", requiredEmployees: 99 }]);
     await persistence.saveReplacementRun(snapshot, replacementActor);
+    await persistence.saveStaffingSettings([...snapshot.staffingBasis!, { dayOfWeek: 6, shiftKind: "morning", requiredEmployees: 100 }]);
 
     const first = await confirmPersistedReplacementRun(
       persistence,
@@ -232,6 +259,7 @@ describe("confirmPersistedReplacementRun", () => {
       replacementActor,
       Date.UTC(2026, 9, 29, 8),
     );
+    await persistence.saveStaffingSettings([{ dayOfWeek: 1, shiftKind: "afternoon", requiredEmployees: 999 }]);
     const second = await confirmPersistedReplacementRun(
       persistence,
       snapshot.replacementId,
@@ -248,6 +276,7 @@ describe("confirmPersistedReplacementRun", () => {
     const persistence = new InMemoryPlanningPersistence();
     const snapshot = makeReplacementSnapshot({ candidateOnVacation: true });
     const option = snapshot.result.options[0]!;
+    await persistence.saveStaffingSettings(snapshot.staffingBasis!);
     await persistence.saveReplacementRun(snapshot, replacementActor);
 
     const withoutAcceptance = await confirmPersistedReplacementRun(

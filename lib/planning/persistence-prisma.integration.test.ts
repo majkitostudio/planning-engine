@@ -35,15 +35,47 @@ describe.skipIf(!enabled)("týdenní persistence v izolované PostgreSQL", () =>
       confirmedPlan: null, confirmedAt: null, confirmedById: null,
     });
     const persistence = new PrismaPlanningPersistence(prisma);
-    const current = { ...makeSnapshot(`source-current-${suffix}`), staffingSource: "saved" as const };
+    const staffingBasis = [
+      { dayOfWeek: 0, shiftKind: "morning" as const, requiredEmployees: 23 },
+      { dayOfWeek: 1, shiftKind: "afternoon" as const, requiredEmployees: 8 },
+    ];
+    const current = { ...makeSnapshot(`source-current-${suffix}`), staffingSource: "saved" as const, staffingBasis };
+    const stale = { ...makeSnapshot(`source-stale-${suffix}`), staffingSource: "saved" as const, staffingBasis };
     const legacy = makeSnapshot(`source-legacy-${suffix}`);
+    await persistence.saveStaffingSettings(staffingBasis);
     await persistence.saveReplacementRun(current, actor);
+    await persistence.saveReplacementRun(stale, actor);
     await persistence.saveReplacementRun(legacy, actor);
     expect(await persistence.getReplacementRun(current.replacementId)).toMatchObject({ staffingSource: "saved" });
     expect(await persistence.getReplacementRun(legacy.replacementId)).not.toHaveProperty("staffingSource");
     expect(await confirmPersistedReplacementRun(persistence, legacy.replacementId, legacy.result.options[0]!.id, actor)).toMatchObject({ ok: false, code: "replacement_confirmation_blocked", blockers: expect.arrayContaining([expect.objectContaining({ code: "replacement_not_verified" })]) });
     expect(await confirmPersistedReplacementRun(persistence, current.replacementId, current.result.options[0]!.id, actor)).toMatchObject({ ok: true, alreadyConfirmed: false });
     expect(await persistence.getReplacementRun(current.replacementId)).toMatchObject({ staffingSource: "saved" });
+    let releaseUpdate!: () => void;
+    let reportUpdateStarted!: () => void;
+    const updateStarted = new Promise<void>((resolve) => { reportUpdateStarted = resolve; });
+    const updateReleased = new Promise<void>((resolve) => { releaseUpdate = resolve; });
+    const update = prisma.$transaction(async (tx) => {
+      await tx.staffingRequirementSetting.update({ where: { dayOfWeek_shiftKind: { dayOfWeek: 1, shiftKind: "afternoon" } }, data: { requiredEmployees: 9 } });
+      reportUpdateStarted();
+      await updateReleased;
+    });
+    await updateStarted;
+    const confirmation = confirmPersistedReplacementRun(persistence, stale.replacementId, stale.result.options[0]!.id, actor);
+    try {
+      let waiting = false;
+      for (let attempt = 0; attempt < 50 && !waiting; attempt++) {
+        const locks = await prisma.$queryRaw<Array<{ count: bigint }>>`SELECT count(*) AS count FROM pg_locks WHERE relation = '"StaffingRequirementSetting"'::regclass AND mode = 'ShareLock' AND NOT granted`;
+        waiting = Number(locks[0]?.count ?? 0) > 0;
+        if (!waiting) await new Promise((resolve) => setTimeout(resolve, 40));
+      }
+      expect(waiting).toBe(true);
+    } finally {
+      releaseUpdate();
+      await update;
+    }
+    expect(await confirmation).toMatchObject({ ok: false, code: "replacement_confirmation_blocked" });
+    expect((await persistence.getReplacementRun(stale.replacementId))?.confirmedPlan).toBeNull();
   });
   it("odmítne kolizi s potvrzeným týdenním záznamem bez změny uložených dat", async () => {
     const url = new URL(process.env.DATABASE_URL ?? "");

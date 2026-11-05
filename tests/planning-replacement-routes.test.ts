@@ -90,6 +90,9 @@ describe("replacement route handlers", () => {
     await persistence.persistence.saveStaffingSettings(getCompleteStaffingSettings([]).map((setting) => setting.dayOfWeek === 1 && setting.shiftKind === "afternoon" ? { ...setting, requiredEmployees: 0 } : setting));
     const response = await createReplacement(jsonRequest("http://localhost/api/planning/replacement", validBody()));
     expect(response.status).toBe(200);
+    const body = await responseJson<{ replacementId: string }>(response);
+    const snapshot = await persistence.persistence.getReplacementRun(body.replacementId);
+    expect(snapshot?.staffingBasis).toContainEqual({ dayOfWeek: 1, shiftKind: "afternoon", requiredEmployees: 0 });
   });
 
   it("nevyžaduje hodnotu pro neaktivní směnu syntetického scénáře", async () => {
@@ -288,6 +291,25 @@ describe("replacement route handlers", () => {
     expect(second.status).toBe(200);
     expect(secondBody.alreadyConfirmed).toBe(true);
     expect(secondBody.confirmedPlan).toEqual(firstBody.confirmedPlan);
+  });
+
+  it("při změně použitého obsazení odmítne potvrzení bez zápisu auditu", async () => {
+    const created = await responseJson<{ replacementId: string; result: { options: readonly { id: string; validation: { status: string } }[] } }>(
+      await createReplacement(jsonRequest("http://localhost/api/planning/replacement", validBody())),
+    );
+    const option = created.result.options.find((item) => item.validation.status === "valid");
+    if (!option) throw new Error("Fixture nemá validní variantu.");
+    const runtime = getPlanningPersistenceRuntime();
+    if (!runtime.configured) throw new Error("Test persistence není nakonfigurovaná.");
+    await runtime.persistence.saveStaffingSettings(getCompleteStaffingSettings([]).map((item) =>
+      item.dayOfWeek === 1 && item.shiftKind === "afternoon" ? { ...item, requiredEmployees: item.requiredEmployees + 1 } : item,
+    ));
+    const before = await runtime.persistence.listAuditEvents();
+    const response = await confirmReplacement(jsonRequest("http://localhost/api/planning/replacement/confirm", { replacementId: created.replacementId, optionId: option.id }));
+    expect(response.status).toBe(409);
+    expect(await responseJson(response)).toMatchObject({ ok: false, rejected: { code: "replacement_confirmation_blocked" } });
+    expect((await runtime.persistence.getReplacementRun(created.replacementId))?.confirmedPlan).toBeNull();
+    expect(await runtime.persistence.listAuditEvents()).toEqual(before);
   });
 
   it("zablokuje potvrzení neplatné varianty", async () => {

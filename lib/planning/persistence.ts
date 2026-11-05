@@ -32,6 +32,7 @@ export interface ReplacementRunSnapshot {
   readonly providerName: string;
   readonly mode: PlanningProviderMode;
   readonly staffingSource?: "saved";
+  readonly staffingBasis?: readonly StaffingSetting[];
   readonly input: PlanningInput;
   readonly basePlan: ConfirmedPlan;
   readonly result: ReplacementRunResult;
@@ -80,6 +81,23 @@ export class PlanningPersistenceConflictError extends Error {
     super("Plánovací záznam s tímto identifikátorem již existuje.");
     this.name = "PlanningPersistenceConflictError";
   }
+}
+
+export class StaffingSettingsChangedError extends Error {}
+
+function isStaffingBasisItem(value: unknown): value is StaffingSetting {
+  if (!value || typeof value !== "object") return false;
+  const item = value as Record<string, unknown>;
+  return Number.isInteger(item.dayOfWeek) && Number(item.dayOfWeek) >= 0 && Number(item.dayOfWeek) <= 6 &&
+    (item.shiftKind === "morning" || item.shiftKind === "afternoon") &&
+    Number.isInteger(item.requiredEmployees) && Number(item.requiredEmployees) >= 0;
+}
+
+function assertStaffingUnchanged(snapshot: ReplacementRunSnapshot, settings: readonly StaffingSetting[]) {
+  if (snapshot.staffingSource !== "saved") return;
+  if (!snapshot.staffingBasis?.length || snapshot.staffingBasis.some((basis) =>
+    !settings.some((setting) => setting.dayOfWeek === basis.dayOfWeek && setting.shiftKind === basis.shiftKind && setting.requiredEmployees === basis.requiredEmployees),
+  )) throw new StaffingSettingsChangedError();
 }
 
 export interface PlanningPersistence {
@@ -274,6 +292,8 @@ export class InMemoryPlanningPersistence implements PlanningPersistence {
     if (current.confirmedPlan) {
       return { snapshot: current, alreadyConfirmed: true };
     }
+
+    assertStaffingUnchanged(current, [...this.state.staffingSettings.values()]);
 
     const confirmedPlan: ConfirmedPlan = {
       proposalId: replacementId,
@@ -603,6 +623,9 @@ export class PrismaPlanningPersistence implements PlanningPersistence {
     confirmedOption?: ReplacementOption,
   ): Promise<PersistedReplacementConfirmation | null> {
     return this.db.$transaction(async (tx) => {
+      // A table lock also covers rows that do not exist yet and prevents a
+      // profile update between this check and committing the confirmation.
+      await tx.$executeRaw`LOCK TABLE "StaffingRequirementSetting" IN SHARE MODE`;
       const row = await tx.planningRunRecord.findUnique({
         where: { proposalId: replacementId },
       });
@@ -617,6 +640,12 @@ export class PrismaPlanningPersistence implements PlanningPersistence {
 
       const actorRecord = await ensurePlanningActorRecord(tx, actor);
       const current = replacementSnapshotFromRecord(row);
+      const settings = await tx.staffingRequirementSetting.findMany();
+      assertStaffingUnchanged(current, settings.map((setting) => ({
+        dayOfWeek: setting.dayOfWeek,
+        shiftKind: setting.shiftKind as StaffingSetting["shiftKind"],
+        requiredEmployees: setting.requiredEmployees,
+      })));
       const confirmedPlan: ConfirmedPlan = {
         proposalId: replacementId,
         weekStart: current.result.request.weekStart,
@@ -762,6 +791,7 @@ function replacementEnvelope(snapshot: ReplacementRunSnapshot) {
   return {
     kind: "replacement" as const,
     ...(snapshot.staffingSource === "saved" ? { staffingSource: "saved" as const } : {}),
+    ...(snapshot.staffingBasis ? { staffingBasis: snapshot.staffingBasis } : {}),
     basePlan: snapshot.basePlan,
     result: snapshot.result,
   };
@@ -783,6 +813,7 @@ function replacementSnapshotFromRecord(
   const envelope = row.result as unknown as {
     kind: "replacement";
     staffingSource?: unknown;
+    staffingBasis?: unknown;
     basePlan: ConfirmedPlan;
     result: ReplacementRunResult;
   };
@@ -793,6 +824,8 @@ function replacementSnapshotFromRecord(
     providerName: row.providerName,
     mode: row.mode as PlanningProviderMode,
     ...(envelope.staffingSource === "saved" ? { staffingSource: "saved" as const } : {}),
+    ...(Array.isArray(envelope.staffingBasis) && envelope.staffingBasis.every(isStaffingBasisItem)
+      ? { staffingBasis: envelope.staffingBasis } : {}),
     input: row.input as unknown as PlanningInput,
     basePlan: envelope.basePlan,
     result: envelope.result,

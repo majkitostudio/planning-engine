@@ -13,6 +13,7 @@ import {
 import type { PlanningActor } from "../auth/actor";
 import type { PlanningPersistence } from "./persistence";
 import type { ReplacementRunSnapshot } from "./persistence";
+import { StaffingSettingsChangedError } from "./persistence";
 import type { PlanningRunRegistry, StoredPlanningRun } from "./run-registry";
 import { evaluateReplacementOption } from "./replacement-service";
 import { timeOffChangeId } from "./replacement-service";
@@ -270,15 +271,22 @@ export async function confirmPersistedReplacementRun(
     };
   }
 
-  const persisted = await persistence.confirmReplacementRun(
-    replacementId,
-    selectedOptionId,
-    confirmedOption?.draft.assignments ?? option.draft.assignments,
-    actor,
-    new Date(confirmedAtMs),
-    suppliedAcceptances,
-    confirmedOption,
-  );
+  let persisted;
+  try {
+    persisted = await persistence.confirmReplacementRun(
+      replacementId,
+      selectedOptionId,
+      confirmedOption?.draft.assignments ?? option.draft.assignments,
+      actor,
+      new Date(confirmedAtMs),
+      suppliedAcceptances,
+      confirmedOption,
+    );
+  } catch (error) {
+    if (!(error instanceof StaffingSettingsChangedError)) throw error;
+    const message = "Potřebné obsazení se změnilo nebo jej nelze ověřit. Zkontrolujte nastavení a vytvořte náhradu znovu.";
+    return { ok: false, code: "replacement_confirmation_blocked", message, blockers: [{ code: "replacement_not_verified", message }] };
+  }
   if (!persisted) {
     return {
       ok: false,

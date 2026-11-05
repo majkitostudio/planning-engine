@@ -15,7 +15,7 @@ Opravené nálezy i otevřené kroky jsou označené samostatně. Před širší
 | --- | --- |
 | Vysoká | OPRAVENO — zápis přes starší API vyžaduje managera a chrání uložený záznam; souběžné potvrzení atomicky uloží právě jeden plán a auditní událost. |
 | Vysoká | OPRAVENO — starší relace se po resetu, změně hesla, změně role i deaktivaci odmítají podle verze relace; ověřeno také proti izolované PostgreSQL. |
-| Vysoká | Nastavení rozlišuje uložené a výchozí hodnoty. Manažer schvaluje uložením celou tabulku; náhrada při chybějícím potřebném obsazení žádá o doplnění. Zbývá prověřit změnu profilu mezi vytvořením náhrady a jejím potvrzením. |
+| Vysoká | Nastavení rozlišuje uložené a výchozí hodnoty. Manažer schvaluje uložením celou tabulku; náhrada vyžaduje uložené obsazení a při jeho změně před potvrzením žádá o nový návrh. |
 | Další | Částečně opraveno — nejednoznačné a neexistující místní časy i vstup nad 200 zaměstnanců jsou blokovány. Pokračovat v opravách přístupnosti, chyby chybějícího návrhu a ověřit výkon plánování. |
 | Dokončení MVP | Správa jednotlivých rozpisů je implementovaná a částečně ověřená; zbývá souvislý syntetický průchod včetně potvrzení nového rozpisu a návazností. Python i izolované databázové testy běží v CI. |
 
@@ -560,9 +560,8 @@ označíme za hotovou až po opravě a doloženém ověření jejího rozsahu.
      dosazené výchozí hodnoty.
    - [x] Prověřit další použití výchozího profilu a rozhodnout o fallbacku při
      operativní náhradě.
-   - [ ] Prověřit a řešit změnu profilu mezi vytvořením náhrady a jejím
-     potvrzením: současné potvrzení znovu kontroluje uložený snapshot, nikoli
-     aktuální nastavení obsazení.
+   - [x] Zabránit potvrzení náhrady po změně použitého profilu obsazení, včetně
+     souběhu změny nastavení s potvrzením.
    - `VERIFIED` (rozhodnutí uživatele 5. 11. 2026) — Uložením se schvaluje celá
      zobrazená tabulka; při chybějícím potřebném obsazení náhrada žádá o jeho
      doplnění. Viz [`DOMAIN_DECISIONS.md`](DOMAIN_DECISIONS.md).
@@ -575,6 +574,11 @@ označíme za hotovou až po opravě a doloženém ověření jejího rozsahu.
      vytvořilo. Prošlo 526 testů, 12 bylo přeskočeno; čtyři integrační soubory
      na izolované PostgreSQL prošly s 8 testy. Prošly také lint, typecheck,
      validace Prisma schématu a lokální build.
+   - `VERIFIED` (5. 11. 2026, izolovaná PostgreSQL a syntetická data) — Při
+     souběžné změně použité hodnoty potvrzení počkalo na dokončení změny a
+     zastaralý návrh odmítlo bez potvrzeného rozpisu. Již potvrzené návrhy
+     zůstávají idempotentní; nepotvrzené starší návrhy bez uložených konkrétních
+     hodnot je nutné vytvořit znovu. Čtyři databázové soubory prošly s 8 testy.
    - `VERIFIED` (5. 11. 2026, kontrola zdrojového kódu) — GET nastavení skládá
      úplných 14 buněk z uložených hodnot a výchozích minim; formulář při
      výslovném uložení odešle všech 14 a API je uloží. Operativní náhrada při

@@ -6,6 +6,7 @@ import type { PlanningInput } from "@/lib/planning/domain/types";
 import { getPlanningPersistenceRuntime } from "@/lib/planning/persistence-runtime";
 import { PlanningPersistenceConflictError } from "@/lib/planning/persistence";
 import { applyStaffingSettings } from "@/lib/planning/staffing-settings";
+import type { StaffingSetting } from "@/lib/planning/staffing-settings";
 import { weekdayIndex } from "@/lib/planning/domain/time";
 import { createPlanningProvider } from "@/lib/planning/provider-factory";
 import { createReplacementOptions } from "@/lib/planning/replacement-service";
@@ -112,6 +113,7 @@ export async function POST(request: Request) {
   }
 
   let input: PlanningInput;
+  let staffingBasis: readonly StaffingSetting[];
   try {
     const savedSettings = await persistenceRuntime.persistence.getStaffingSettings();
     const needed = [
@@ -124,6 +126,9 @@ export async function POST(request: Request) {
     if (missing) {
       return rejection("staffing_missing", `Chybí uložené potřebné obsazení pro ${missing.date}, ${missing.shiftKind === "morning" ? "ranní" : "odpolední"} směnu. Doplňte jej v nastavení obsazení a zkuste náhradu znovu.`, 409);
     }
+    staffingBasis = savedSettings.filter((setting) => needed.some((requirement) =>
+      setting.dayOfWeek === weekdayIndex(requirement.date) && setting.shiftKind === requirement.shiftKind,
+    ));
     input = applyStaffingSettings(scenario.input, savedSettings, incident);
   } catch {
     return rejection(
@@ -171,6 +176,7 @@ export async function POST(request: Request) {
     providerName: "simulated-fixture/single-absence",
     mode: "simulated" as const,
     staffingSource: "saved" as const,
+    staffingBasis,
     input,
     basePlan: scenario.basePlan,
     result,
