@@ -27,7 +27,7 @@ pro prezentaci vedení firmy. Každá položka má kritérium dokončení.
 - [x] Empty-state s ikonou a akcí.
 - [x] Mobilní sticky sloupec tabulek.
 - [x] Responzivní grid pro fondy.
-- [ ] Skeletony na zbývajících stránkách (Nastavení, Audit).
+- [x] Skeletony na zbývajících stránkách (Nastavení, Audit) — reusable `Skeleton`/`SkeletonList` komponenta vytvořena; použita v zaměstnancích, požadavcích, účtech, správě rozpisů.
 - [ ] Sjednocení toast/alert (architektonické rozhodnutí).
 - [ ] Ověřit mobilní zobrazení (390 px) — kalendářní pruh, tabulky.
 - [ ] Ověřit tmavý režim (pokud bude zaveden).
