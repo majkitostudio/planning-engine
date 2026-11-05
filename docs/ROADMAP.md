@@ -680,7 +680,8 @@ označíme za hotovou až po opravě a doloženém ověření jejího rozsahu.
       `prisma migrate deploy`; následný `migrate status` hlásí schema up to
       date. Existujících 30 zaměstnanců zůstalo `full_time`. Transakční test
       zápisu/čtení `part_time` proběhl a byl vrácen zpět (bez testovacích řádků).
-      Nejde o ověření provozní připravenosti nasazení.
+      Přímý TLS socket test ověřil šifrování a validní certifikát (TLS 1.3).
+      Nejde o ověření záloh, monitoringu, obnovy ani provozní připravenosti nasazení.
     - [x] Solver timeout konfigurovatelný (env `PLANNING_SOLVER_TIMEOUT_MS`,
       výchozí 120 s, strop 300 s). Rozhodnutí manažera 5. 11. 2026.
     - [x] UI/UX polish — 4 vlny implementovány (přechody, hover/active, focus
