@@ -400,12 +400,12 @@ musí být vynuceno deterministickou validací, ne jen instrukcí pro AI.
 | H1 | Každé přiřazení je jeden zaměstnanec na jedné směně; směna může mít víc přiřazení podle obsazení | `VERIFIED` (význam) | Nahrazuje starší „max. jeden na směnu“. |
 | H2 | Zaměstnanec nesmí být ve dvou směnách, které se překrývají | `VERIFIED` (integrita) | Základní invariant návrhu. |
 | H3 | Schválená absence blokuje přiřazení | `VERIFIED` | Jiná omezení dostupnosti jsou `OPEN QUESTION`. |
-| H4 | Směnu smí obsadit jen zaměstnanec s požadovanou rolí/dovedností | `ASSUMPTION` | Role nejsou potvrzené. |
-| H5 | Maximální počet hodin nebo směn za období | `OPEN QUESTION` | Právní baseline je zdroj evidence; konkrétní profil není potvrzený. |
+| H4 | Směnu smí obsadit jen zaměstnanec s požadovanou rolí/dovedností | `VERIFIED` (rozhodnutí manažera 5. 11. 2026) | Ne — všichni zaměstnanci mohou obsadit libovolnou směnu. Role se neevidují. |
+| H5 | Maximální počet hodin nebo směn za období | `VERIFIED` (rozhodnutí manažera 5. 11. 2026) | Žádný tvrdý limit. Fond práce zůstává nezávazným cílem (H13). |
 | H6 | Po šesti po sobě jdoucích pracovních dnech alespoň 35 h nepřetržitého odpočinku | `VERIFIED` | Pracovní den je kalendářní den s alespoň jednou směnou (OQ21). |
-| H7 | Uzamčené přiřazení nelze přepsat | `OPEN QUESTION` | První řez nemá potvrzené zamykání. |
+| H7 | Uzamčené přiřazení nelze přepsat | `VERIFIED` (rozhodnutí manažera 5. 11. 2026) | Ne — manažer nemůže přiřazení zamknout; solver může přepsat cokoli. |
 | H8 | Zaměstnanec pracující o víkendu má v témže týdnu dva dny volna | `VERIFIED` | Výklad „během týdne“ = pondělí–nedělí je `ASSUMPTION`. |
-| H9 | První verze pouze plné úvazky | `VERIFIED` (rozsah) | Není pravidlo pro plánování, ale omezení rozsahu. |
+| H9 | První verze pouze plné úvazky | `VERIFIED` (rozsah) → `PARTIALLY SUPERSEDED` (5. 11. 2026) | Pilot nyní podporuje i částečné úvazky (rozhodnutí manažera); implementace je plánovaný milník (Milník 7). Do té doby platí omezení plných úvazků. |
 | H10 | Potřebné obsazení je splněno, nebo je nedostatek přiznán | `VERIFIED` (cíl) | Zda je nedostatek tvrdá chyba, je `OPEN QUESTION`. |
 | H11 | Bez potvrzení manažera se nic neukládá | `VERIFIED` (proces) | Netýká se obsahu plánu. |
 | H12 | Operativní náhrada nesmí prodlužovat, zkracovat ani dělit pevnou směnu; přesčas se nepoužívá | `VERIFIED` (interní) | Náhrada se vybírá pouze z celých existujících směn. |
@@ -413,9 +413,9 @@ musí být vynuceno deterministickou validací, ne jen instrukcí pro AI.
 
 `OPEN QUESTION`:
 
-9. Která z kandidátních pravidel (H4, H5, H7) jsou skutečně tvrdá?
-10. Jaké jsou konkrétní limity (max. hodiny, jiný odpočinek než 35 h po 6 dnech)?
-11. Existují další pravidla mimo seznam (svátky, jazyky, kontinuita týmu)?
+9. Která z kandidátních pravidel (H4, H5, H7) jsou skutečně tvrdá? — **UZAVŘENO (5. 11. 2026):** H4 = ne, H5 = žádný tvrdý limit, H7 = ne.
+10. Jaké jsou konkrétní limity (max. hodiny, jiný odpočinek než 35 h po 6 dnech)? — částečně otevřené (max. hodin není, odpočinek potvrzen).
+11. Existují další pravidla mimo seznam (svátky, jazyky, kontinuita týmu)? — **UZAVŘENO (5. 11. 2026):** žádná další pravidla.
 OQ21 je uzavřena: pracovní den je kalendářní den s alespoň jednou směnou;
 více směn v jednom dni se započítá jednou.
 
@@ -441,8 +441,10 @@ implementace, nikoli o potvrzené doménové pravidlo.
 Preference S6 může manager výslovně zapnout pro měsíční návrh. Lokální OR-Tools
 ji optimalizuje a nezávislá validace zobrazí opakování nebo chybějící
 návaznost. Nejde o tvrdé pravidlo a tyto nálezy samy neblokují potvrzení.
-Další měkké preference a jejich váhy se do MVP nepřidávají. Manager rozhoduje,
-zda požadavku vyhoví; aplikace pouze ukáže dopad na obsazení a navrhne pokrytí.
+Další měkké preference (S1–S5) se do pilotu nepřidávají — potvrzeno
+managerem 5. 11. 2026. Zůstává pouze S6 (střídání ranní/odpolední). Manager
+rozhoduje, zda požadavku vyhoví; aplikace pouze ukáže dopad na obsazení a
+navrhne pokrytí.
 U operativní náhrady platí aktuální minimum nastavené pro konkrétní datum a
 směnu, ověřená tvrdá pravidla a co nejmenší dopad na další lidi. Deterministická
 validace nesmí žádnou měkkou preferenci vydávat za splněný nárok.

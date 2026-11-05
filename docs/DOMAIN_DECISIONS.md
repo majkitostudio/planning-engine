@@ -129,6 +129,30 @@ volba implementace, nikoli potvrzené doménové pravidlo; tvrdé pokrytí a
 potvrzená pravidla mají přednost. Ověření a přesné výsledky jsou v
 [`ROADMAP.md`](ROADMAP.md).
 
+## Rozhodnutí manažera — druhé kolo (5. 11. 2026)
+
+- **Částečné úvazky:** `VERIFIED` rozhodnutí přidat podporu. Pilot dosud
+  podporuje pouze plné úvazky; rozšíření je plánovaný milník (Milník 7) a
+  vyžaduje fond v hodinách místo pevného času a úpravu datového modelu.
+- **Role a dovednosti (H4):** `VERIFIED` — ne, všichni zaměstnanci mohou
+  obsadit libovolnou směnu. Role se neevidují.
+- **Maximální počet hodin nebo směn (H5):** `VERIFIED` — žádný tvrdý limit.
+  Fond práce zůstává nezávazným cílem (H13).
+- **Zamykání přiřazení (H7):** `VERIFIED` — ne, manažer nemůže přiřazení
+  zamknout; solver může přepsat cokoli.
+- **Měkké preference (S1–S5):** `VERIFIED` — žádné další preference se do
+  pilotu nepřidávají. Zůstává pouze S6 (střídání ranní/odpolední).
+- **Další pravidla mimo seznam (svátky, jazyky, kontinuita):** `VERIFIED` —
+  žádná další pravidla. Kalendář svátků se nezavádí.
+- **Notifikace v UI:** `VERIFIED` — ponechat lokální `Alert`; globální toast
+  se nezavádí.
+- **Analytika:** `VERIFIED` — read-only přehled z potvrzených rozpisů
+  (pokrytí, vytížení, neobsazené směny); bez exportu.
+- **Solver timeout:** `VERIFIED` — výchozí 120 s, konfigurovatelné přes env
+  `PLANNING_SOLVER_TIMEOUT_MS`.
+- **Produkční připravenost:** `VERIFIED` rozhodnutí ponechat `NOT VERIFIED`;
+  ověření později se schválením.
+
 ## Současná implementace měsíčního MVP (`IMPLEMENTED`, 3. 11. 2026)
 
 Níže uvedené popisuje implementaci, nikoli doloženou změnu schváleného záměru
@@ -317,9 +341,9 @@ první řez stát.
 | OQ3 | Které entity skutečně potřebujeme? | doménové typy | `PARTIALLY ANSWERED` — minimální kontrakt navržen |
 | OQ4 | Které atributy jsou povinné? | doménové typy a formuláře | `PARTIALLY ANSWERED` — kontrakt navržen |
 | OQ5 | Pobočka / umístění call centra? | datový model, filtry | `OPEN QUESTION` — první řez předpokládá plochý seznam |
-| OQ9 | Která pravidla jsou tvrdá? | první pravidla v jádře | `PARTIALLY ANSWERED` — odpočet 6 dnů a víkend potvrzeny |
+| OQ9 | Která pravidla jsou tvrdá? | první pravidla v jádře | `PARTIALLY ANSWERED` — odpočet 6 dnů a víkend potvrzeny; H4/H5/H7 uzavřeny (5. 11. 2026): H4=ne, H5=žádný tvrdý limit, H7=ne |
 | OQ10 | Jaké konkrétní limity? | implementace limitů (H5, H6) | `VERIFIED` pro pilot — žádné další číselné limity; budoucí profil zůstává otevřený |
-| OQ11 | Existují pravidla mimo seznam? | rozsah prvního řezu | `PARTIALLY ANSWERED` — v pilotu žádná další pravidla; budoucí rozsah otevřený |
+| OQ11 | Existují pravidla mimo seznam? | rozsah prvního řezu | `VERIFIED` (5. 11. 2026) — žádná další pravidla (svátky, jazyky, kontinuita) |
 | OQ15 | Kdo rozhoduje při konfliktu? | tok po nálezu problému | `VERIFIED` — AI navrhne, validace zkontroluje, manažer potvrdí |
 | OQ16 | Neúplný plán, nebo chyba? | stav úplnosti plánu | `VERIFIED` — neúplný návrh se přizná a nabídnou se alternativy |
 | OQ17 | Pořadí obětování preferencí? | navazuje na OQ12–OQ14 | `PARTIALLY ANSWERED` — nejprve pokrytí, potom tvrdá pravidla, potom nejmenší dopad |

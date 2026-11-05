@@ -670,7 +670,17 @@ označíme za hotovou až po opravě a doloženém ověření jejího rozsahu.
      včetně staršího snapshotu bez fondu, anonymizace v provideru a měkký cíl
      solveru jsou pokryté testy. Celý Vitest: 543 prošlo, 14 přeskočeno;
      testy Python solveru: 25 prošlo. Prošly také lint a typecheck.
-7. **P1 — Správa rozpisů.**
+    - [ ] Podpora částečných úvazků (Milník 7). Rozhodnutí manažera 5. 11. 2026:
+      přidat podporu. Implementace vyžaduje fond v hodinách místo pevného času,
+      rozšíření datového modelu, validace a solveru. Do té doby platí omezení
+      plných úvazků.
+    - [x] Solver timeout konfigurovatelný (env `PLANNING_SOLVER_TIMEOUT_MS`,
+      výchozí 120 s, strop 300 s). Rozhodnutí manažera 5. 11. 2026.
+    - [x] UI/UX polish — 4 vlny implementovány (přechody, hover/active, focus
+      ringy, scrollbary, skeletony, empty-state, mobilní sticky sloupec,
+      responzivní grid, prefers-reduced-motion). Viz commity 0db80c1, 65a2edd,
+      70b32ff, 8108ba1, d33ac1c.
+7. **P1 - Správa rozpisů.**
    - [x] Navrhnout a implementovat seznam rozpisů s možností smazat jednotlivý
      rozpis.
    - [x] Zachovat snapshot a audit odstraněného potvrzeného rozpisu; z aktivních
