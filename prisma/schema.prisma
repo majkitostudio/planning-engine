@@ -45,6 +45,8 @@ model AppUser {
   passwordHash    String?
   mustChangePassword Boolean           @default(true)
   sessionVersion  Int                 @default(0)
+  loginFailureCount Int               @default(0)
+  loginLockedUntil DateTime?
   createdAt       DateTime            @default(now())
   updatedAt       DateTime            @updatedAt
   confirmedRuns   PlanningRunRecord[] @relation("PlanningRunConfirmedBy")

@@ -1,0 +1,3 @@
+ALTER TABLE "AppUser"
+  ADD COLUMN "loginFailureCount" INTEGER NOT NULL DEFAULT 0,
+  ADD COLUMN "loginLockedUntil" TIMESTAMP(3);

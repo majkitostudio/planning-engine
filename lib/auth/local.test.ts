@@ -201,6 +201,8 @@ interface FakeAuthAccount {
   passwordHash: string | null;
   mustChangePassword: boolean;
   sessionVersion: number;
+  loginFailureCount: number;
+  loginLockedUntil: Date | null;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -216,13 +218,15 @@ async function makeCredentialAccount(): Promise<FakeAuthAccount> {
     passwordHash: await hashPassword("synthetic manager password"),
     mustChangePassword: true,
     sessionVersion: 0,
+    loginFailureCount: 0,
+    loginLockedUntil: null,
     createdAt: new Date("2026-10-30T00:00:00.000Z"),
     updatedAt: new Date("2026-10-30T00:00:00.000Z"),
   };
 }
 
 function createAuthDatabase(account: FakeAuthAccount) {
-  return {
+  const db = {
     appUser: {
       findFirst: async ({ where }: { where: { email: { equals: string } } }) =>
         account.email.toLowerCase() === where.email.equals.toLowerCase()
@@ -230,6 +234,10 @@ function createAuthDatabase(account: FakeAuthAccount) {
           : null,
       findUnique: async ({ where }: { where: { id: string } }) =>
         where.id === account.id ? account : null,
+      update: async ({ data }: { data: Partial<FakeAuthAccount> }) => Object.assign(account, data),
     },
-  } as unknown as PrismaClient;
+    $queryRaw: async () => [{ id: account.id, now: new Date() }],
+    $transaction: async <T>(callback: (tx: unknown) => Promise<T>) => callback(db),
+  };
+  return db as unknown as PrismaClient;
 }

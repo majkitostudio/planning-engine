@@ -3,6 +3,7 @@
 import { signIn } from "next-auth/react";
 import { useState } from "react";
 import type { AuthMode } from "@/lib/auth/local";
+import { DATABASE_LOGIN_LOCK_MINUTES, DATABASE_LOGIN_MAX_FAILURES } from "@/lib/auth/login-policy";
 
 export function LoginForm({
   authConfigured,
@@ -98,6 +99,7 @@ export function LoginForm({
         <p className="form-notice form-notice--visible" role="alert">
           <strong>Přihlášení se nepodařilo.</strong> Zkontrolujte údaje a
           zkuste to znovu.
+          {authMode === "database" ? ` Po ${DATABASE_LOGIN_MAX_FAILURES} chybných pokusech za sebou se přihlášení k účtu na ${DATABASE_LOGIN_LOCK_MINUTES} minut pozastaví.` : null}
         </p>
       ) : null}
     </div>

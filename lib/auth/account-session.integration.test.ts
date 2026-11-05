@@ -15,6 +15,38 @@ import { hashPassword } from "./password";
 const enabled = process.env.PLANNING_AUTH_SESSION_INTEGRATION === "1";
 
 describe.skipIf(!enabled)("zneplatnění databázových relací v izolované PostgreSQL", () => {
+  it("dočasně omezí opakované chybné přihlášení účtu i při souběhu a úspěchem počítadlo vynuluje", async () => {
+    const url = new URL(process.env.DATABASE_URL ?? "");
+    if (url.hostname !== "localhost" || url.port !== "55439" || url.pathname !== "/planning_monthly_test") throw new Error("Test vyžaduje vyhrazenou izolovanou databázi.");
+    const suffix = randomUUID();
+    const password = "Synthetic Correct Password";
+    const email = `throttle-${suffix}@example.test`;
+    const secondEmail = `unaffected-${suffix}@example.test`;
+    const passwordHash = await hashPassword(password);
+    const users = await Promise.all([email, secondEmail].map((address, index) => prisma.appUser.create({ data: { email: address, displayName: "Syntetický účet", role: index === 0 ? "viewer" : "manager", passwordHash, mustChangePassword: false } })));
+    try {
+      for (let index = 0; index < 9; index++) expect(await authenticateAccount(email, "Synthetic Incorrect Password", prisma)).toBeNull();
+      expect(await authenticateAccount(email, password, prisma)).not.toBeNull();
+      for (let index = 0; index < 9; index++) expect(await authenticateAccount(email, "Synthetic Incorrect Password", prisma)).toBeNull();
+      expect(await authenticateAccount(email, password, prisma)).not.toBeNull();
+      await Promise.all(Array.from({ length: 10 }, () => authenticateAccount(email, "Synthetic Incorrect Password", prisma)));
+      expect(await authenticateAccount(email, password, prisma)).toBeNull();
+      expect(await authenticateAccount(secondEmail, password, prisma)).not.toBeNull();
+      await prisma.$executeRaw`UPDATE "AppUser" SET "loginLockedUntil" = CURRENT_TIMESTAMP - INTERVAL '1 second' WHERE id = ${users[0].id}`;
+      expect(await authenticateAccount(email, password, prisma)).not.toBeNull();
+      for (let index = 0; index < 10; index++) await authenticateAccount(email, "Synthetic Incorrect Password", prisma);
+      expect(await authenticateAccount(email, password, prisma)).toBeNull();
+      await resetAccountPassword(users[0].id, "Synthetic New Temporary Password", { userId: users[1].id, email: secondEmail, displayName: "Syntetický manažer", role: "manager" }, prisma);
+      expect(await authenticateAccount(email, "Synthetic New Temporary Password", prisma)).not.toBeNull();
+      for (let index = 0; index < 10; index++) await authenticateAccount(email, "Synthetic Incorrect Password", prisma);
+      await changeAccountPassword(users[0].id, "Synthetic New Temporary Password", "Synthetic Changed Password", prisma);
+      expect(await authenticateAccount(email, "Synthetic Changed Password", prisma)).not.toBeNull();
+    } finally {
+      await prisma.auditEvent.deleteMany({ where: { actorId: users[1].id, entityId: users[0].id } });
+      await prisma.appUser.deleteMany({ where: { id: { in: users.map((user) => user.id) } } });
+    }
+  }, 30000);
+
   it("odmítne staré verze po resetu, změně hesla a role; deaktivovaný účet odmítne", async () => {
     const url = new URL(process.env.DATABASE_URL ?? "");
     if (

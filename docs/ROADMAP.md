@@ -452,12 +452,22 @@ testovacím předpokladem, nikoli schváleným provozním pravidlem.
   Před praktickým použitím určit přístup, dobu uchování a mazání těchto údajů.
   Překladač pokynů není zapojený; před jeho použitím je nutné samostatně
   schválit ochranu a rozsah předávaného textu.
-- `VERIFIED` (omezený lokální test) — Deset po sobě jdoucích chybných pokusů
-  o přihlášení syntetickým účtem nevrátilo `429`; následné správné přihlášení
-  v lokálním režimu uspělo. Jde o test bez reverzní proxy a nedokazuje stav
-  jiného nasazení. V aplikačním kódu autentizace nebyla nalezena samostatná
-  ochrana proti opakovaným pokusům; před širším použitím navrhnout a ověřit
-  odpovídající omezení, monitoring a ochranu účtů.
+- Historický lokální test před doplněním ochrany ukázal, že deset chybných
+  přihlášení nebylo omezeno. Lokální vývojový režim má toto omezení nadále.
+- `IMPLEMENTED` / `VERIFIED` (syntetická izolovaná PostgreSQL, 5. 11. 2026) —
+  Databázové přihlášení po deseti chybných heslech za sebou účet na 15 minut
+  dočasně zablokuje; úspěšné přihlášení nebo reset hesla počítadlo vyčistí.
+  Po vypršení blokace se počítadlo při dalším pokusu začne počítat znovu.
+  Zámek databázového řádku chrání i souběžné pokusy.
+  Integrační test pokrývá souběh, jiný účet a reset i vlastní změnu hesla;
+  prohlížeč ověřil zamítnutí správného hesla během blokace a informaci uživateli.
+  Pro databázový režim je nutné nasadit novou migraci.
+- `NOT VERIFIED` — Jde pouze o omezení podle existujícího účtu. Útočník může
+  účet úmyslně dočasně blokovat; síťové omezení podle zdroje, ochrana proti
+  zahlcení, monitoring, MFA a celkové zabezpečení nasazení nejsou tímto řešeny.
+  Neexistující účet se neověřuje výpočtem hesla, a proto může být rozpoznatelný
+  podle doby odpovědi. Režim Microsoft Entra má vlastní ověřování mimo tento
+  mechanismus.
 - `VERIFIED` — `npm audit --omit=dev` na `main` nahlásil 4. 11. 2026 nula
   známých zranitelností provozních závislostí. Úplný `npm audit` nahlásil
   16 položek střední závažnosti v řetězci vývojových nástrojů, souvisejících
@@ -577,7 +587,18 @@ označíme za hotovou až po opravě a doloženém ověření jejího rozsahu.
      test nad jednorázovou PostgreSQL 16 ověřil reset, nové dočasné heslo,
      povinnou změnu hesla, změnu role i deaktivaci. Databáze byla po testu
      zastavena a odstraněna.
-3. **P0 — Jediné atomické potvrzení.**
+3. **P0 — Dočasné omezení chybných databázových přihlášení.**
+   - [x] Po deseti chybných heslech za sebou dočasně zablokovat databázový účet
+     a počítadlo chránit i při souběžných pokusech.
+   - [x] Úspěšné přihlášení, reset a vlastní změna hesla počítadlo vyčistí;
+     lokální testovací režim a Microsoft přihlášení zůstávají oddělené.
+   - `VERIFIED` (5. 11. 2026) — Implementace a migrace jsou v kódu. Úplná sada
+     prošla (535 testů, 14 přeskočených), čtyři databázové integrační soubory
+     (9 testů), lint, typecheck, Prisma validace a build. Všechny migrace včetně
+     nové se nasadily na novou izolovanou PostgreSQL. Omezení zůstává jen na
+     úrovni účtu; síťové omezení a ochrana proti cílenému blokování jsou
+     `NOT VERIFIED`.
+4. **P0 — Jediné atomické potvrzení.**
    - [x] Zajistit, aby souběžné potvrzení týdenního rozpisu i operativní náhrady
      vytvořilo právě jedno potvrzení a jednu auditní událost.
    - [x] Ověřit vítězný zápis v databázových integračních testech nad izolovanou
@@ -591,7 +612,7 @@ označíme za hotovou až po opravě a doloženém ověření jejího rozsahu.
      potvrzení a jedna auditní událost v každém toku. Cílené databázové testy:
      3 prošly; celý Vitest: 490 prošlo, 10 přeskočeno; lint, typecheck, Prisma
      validace a build prošly. Izolovaná PostgreSQL 16 byla odstraněna.
-4. **P1 — Pravdivé zdroje obsazení.**
+5. **P1 — Pravdivé zdroje obsazení.**
    - [x] V nastavení, API a měsíčním formuláři rozlišit uložený profil od
      výchozích hodnot; měsíční návrh předvyplňuje jen uložené hodnoty.
    - [x] Určit, zda manažer výslovným uložením celé tabulky schvaluje i
@@ -620,7 +641,7 @@ označíme za hotovou až po opravě a doloženém ověření jejího rozsahu.
    - Historická kontrola před následnou opravou zjistila fallback při chybějícím
      cílovém obsazení. Současné chování vyžaduje uloženou hodnotu, jak je
      popsáno a ověřeno výše.
-5. **P1 — Pravidla a limity plánování.**
+6. **P1 — Pravidla a limity plánování.**
    - [ ] Uzavřít potřebná doménová rozhodnutí a ověřit návaznosti, nepokryté dny,
      absence a částečný měsíc.
    - [x] Sjednotit limit 200 zaměstnanců mezi vstupní kontrolou a solverem;
@@ -630,7 +651,7 @@ označíme za hotovou až po opravě a doloženém ověření jejího rozsahu.
    - [x] Blokovat neexistující i nejednoznačné místní časy při importu a
      validaci měsíční historie; nedovolit potvrzení návrhu s takovou návazností.
    - [x] Doplnit odpovídající obranu a Python testy přímo do solveru.
-6. **P1 — Správa rozpisů.**
+7. **P1 — Správa rozpisů.**
    - [x] Navrhnout a implementovat seznam rozpisů s možností smazat jednotlivý
      rozpis.
    - [x] Zachovat snapshot a audit odstraněného potvrzeného rozpisu; z aktivních
@@ -638,14 +659,14 @@ označíme za hotovou až po opravě a doloženém ověření jejího rozsahu.
    - `VERIFIED` — Cílené testy, syntetický průchod prohlížečem a tři integrační
      testy na izolované PostgreSQL pokrývají odstranění, audit, opětovné
      potvrzení jiného rozpisu a neúplnou návaznost po odstranění. Závěrečný
-     souvislý průchod MVP zůstává položkou 9.
-7. **P1 — AI a citlivý text.**
+     souvislý průchod MVP zůstává položkou 10.
+8. **P1 — AI a citlivý text.**
    - [ ] Rozhodnout o souladu současného lokálního plánovače s potvrzeným záměrem
      AI a o bezpečném zpracování pokynů.
    - [ ] Před praktickým použitím určit přístup, uchování a mazání volného textu;
      dokud to není schválené, neposílat skutečná jména, rozpisy ani pokyny externí
      AI.
-8. **P1 — Kvalita a přístupnost.**
+9. **P1 — Kvalita a přístupnost.**
    - [x] Spouštět Python testy solveru v CI.
    - [x] Doplnit databázové integrační testy do CI s izolovanou testovací
      databází.
@@ -697,7 +718,7 @@ označíme za hotovou až po opravě a doloženém ověření jejího rozsahu.
        uživatelům zařízení.
      - [ ] Ověřit mobilní ovládání a fokus skutečnou čtečkou obrazovky.
    - [ ] Posoudit vývojové závislosti a ověřit kompatibilní aktualizace.
-9. **P2 — Závěrečné ověření MVP.**
+10. **P2 — Závěrečné ověření MVP.**
    - [ ] Provést syntetický průchod návrh → kontrola → potvrzení → obnovení,
      včetně rolí, souběhu, návazností a správy rozpisů.
    - [ ] Reálná data, produkční služby a další nasazení řešit až v samostatně

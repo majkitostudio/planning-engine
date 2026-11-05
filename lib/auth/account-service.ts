@@ -2,6 +2,7 @@ import { Prisma, type PrismaClient } from "@/prisma/generated/client";
 
 import type { PlanningActor } from "./actor";
 import { hashPassword, validatePasswordLength, verifyPassword } from "./password";
+import { DATABASE_LOGIN_LOCK_MINUTES, DATABASE_LOGIN_MAX_FAILURES } from "./login-policy";
 
 export type AccountRole = "manager" | "viewer";
 
@@ -283,7 +284,7 @@ export async function resetAccountPassword(
 
     const account = await tx.appUser.update({
       where: { id },
-      data: { passwordHash, mustChangePassword: true, sessionVersion: { increment: 1 } },
+      data: { passwordHash, mustChangePassword: true, sessionVersion: { increment: 1 }, loginFailureCount: 0, loginLockedUntil: null },
     });
     await writeAccountAudit(tx, "account.password_reset", account, actor);
     return toAccountSummary(account);
@@ -324,6 +325,8 @@ export async function changeAccountPassword(
         passwordHash: newPasswordHash,
         mustChangePassword: false,
         sessionVersion: { increment: 1 },
+        loginFailureCount: 0,
+        loginLockedUntil: null,
       },
     });
     if (result.count !== 1) {
@@ -352,17 +355,41 @@ export async function authenticateAccount(
   const normalizedEmail = normalizeEmail(email);
   if (!normalizedEmail) return null;
 
-  const account = await db.appUser.findFirst({
+  const candidate = await db.appUser.findFirst({
     where: { email: { equals: normalizedEmail, mode: "insensitive" } },
+    select: { id: true },
   });
-  if (
-    !account?.active ||
-    !account.passwordHash ||
-    !(await verifyPassword(password, account.passwordHash))
-  ) {
-    return null;
-  }
-  return { ...toAccountSummary(account), sessionVersion: account.sessionVersion };
+  if (!candidate) return null;
+
+  return db.$transaction(async (tx) => {
+    // Pořadí pokusů určuje databázový zámek, aby se limit nedal obejít souběhem.
+    const [locked] = await tx.$queryRaw<Array<{ id: string }>>`
+      SELECT id FROM "AppUser" WHERE id = ${candidate.id} FOR UPDATE
+    `;
+    if (!locked) return null;
+    const [clock] = await tx.$queryRaw<Array<{ now: Date }>>`SELECT clock_timestamp() AS now`;
+    if (!clock) throw new Error("Databázový čas není dostupný.");
+    const account = await tx.appUser.findUnique({ where: { id: locked.id } });
+    if (!account?.active || !account.passwordHash) return null;
+    if (account.loginLockedUntil && account.loginLockedUntil > clock.now) return null;
+
+    const failures = account.loginLockedUntil ? 0 : account.loginFailureCount;
+    if (!(await verifyPassword(password, account.passwordHash))) {
+      const nextFailures = failures + 1;
+      await tx.appUser.update({
+        where: { id: account.id },
+        data: {
+          loginFailureCount: nextFailures,
+          loginLockedUntil: nextFailures >= DATABASE_LOGIN_MAX_FAILURES ? new Date(clock.now.getTime() + DATABASE_LOGIN_LOCK_MINUTES * 60_000) : null,
+        },
+      });
+      return null;
+    }
+    if (account.loginFailureCount !== 0 || account.loginLockedUntil) {
+      await tx.appUser.update({ where: { id: account.id }, data: { loginFailureCount: 0, loginLockedUntil: null } });
+    }
+    return { ...toAccountSummary(account), sessionVersion: account.sessionVersion };
+  }, { timeout: 30_000 });
 }
 
 export async function refreshAccountSession(
