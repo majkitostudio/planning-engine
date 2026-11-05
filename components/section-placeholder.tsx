@@ -2,14 +2,18 @@ import { Icon, type IconName } from "@/components/icons";
 import { Badge } from "@/components/ui/badge";
 import { EmptyState } from "@/components/ui/empty-state";
 
+import type { ReactNode } from "react";
+
 export function SectionPlaceholder({
   title,
   description,
   icon,
+  action,
 }: {
   title: string;
   description: string;
   icon: IconName;
+  action?: ReactNode;
 }) {
   return (
     <>
@@ -35,6 +39,7 @@ export function SectionPlaceholder({
           icon={icon}
           title="Sekce je připravená, data zatím chybí"
           description="Obsah doplníme po schválení doménového kontraktu a napojení databáze. Zatím jde pouze o připravenou strukturu rozhraní bez skutečných dat."
+          action={action}
         />
       </div>
     </>
