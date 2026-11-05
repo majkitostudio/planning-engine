@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import type { MonthlyRunSummary } from "@/lib/planning/monthly-store";
+import { SkeletonList } from "@/components/ui/skeleton";
 
 export function MonthlyRunsList({ runs, canManage, busy, onRemove }: { runs: readonly MonthlyRunSummary[]; canManage: boolean; busy: boolean; onRemove: (run: MonthlyRunSummary) => void }) {
   if (!runs.length) return <p>Pro tento měsíc zatím nejsou uložené rozpisy.</p>;
@@ -46,6 +47,6 @@ export function MonthlyRunsManager({ month, canManage, refreshKey, onRemoved }: 
 
   return <details><summary>Správa rozpisů pro tento měsíc</summary>
     {error ? <p role="alert">{error}</p> : null}
-    {runs ? <MonthlyRunsList runs={runs} canManage={canManage} busy={busy} onRemove={(run) => void remove(run)} /> : !error ? <p role="status">Načítám uložené rozpisy…</p> : null}
+    {runs ? <MonthlyRunsList runs={runs} canManage={canManage} busy={busy} onRemove={(run) => void remove(run)} /> : !error ? <SkeletonList count={2} height={48} /> : null}
   </details>;
 }
