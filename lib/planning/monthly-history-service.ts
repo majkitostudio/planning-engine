@@ -2,7 +2,7 @@ import { buildMonthlyBoundary, resolveMonthlyRosterHistory, type ConfirmedHistor
 import { datesInMonth } from "./domain/month";
 import { validateMonthlyInput } from "./domain/month-input";
 import { addDays, isIsoDate, weekdayIndex } from "./domain/time";
-import type { ExistingAssignment } from "./domain/types";
+import type { EmploymentType, ExistingAssignment } from "./domain/types";
 import { isMonthlyPlanDraft } from "./monthly-planning";
 
 type HistoryRow = { weekStart: string; confirmedAt: Date | null; input: unknown; confirmedPlan: unknown };
@@ -16,6 +16,7 @@ type RosterHistoryRow = {
   periodEnd: string;
   employees: readonly {
     employeeId: string;
+    employee: { employmentType: EmploymentType };
     entries: readonly { date: string; status: "shift" | "off"; startTime: string | null; endTime: string | null }[];
   }[];
 };
@@ -32,7 +33,7 @@ export interface MonthlyHistoryReader {
       orderBy: { version: "desc" };
       select: {
         id: true; scopeKey: true; fingerprint: true; version: true; periodStart: true; periodEnd: true;
-        employees: { select: { employeeId: true; entries: { select: { date: true; status: true; startTime: true; endTime: true } } } };
+        employees: { select: { employeeId: true; employee: { select: { employmentType: true } }; entries: { select: { date: true; status: true; startTime: true; endTime: true } } } };
       };
     }): Promise<readonly RosterHistoryRow[]>;
   };
@@ -130,7 +131,7 @@ export async function loadMonthlyBoundary(month: string, employeeIds: readonly s
       orderBy: { version: "desc" },
       select: {
         id: true, scopeKey: true, fingerprint: true, version: true, periodStart: true, periodEnd: true,
-        employees: { select: { employeeId: true, entries: { select: { date: true, status: true, startTime: true, endTime: true } } } },
+        employees: { select: { employeeId: true, employee: { select: { employmentType: true } }, entries: { select: { date: true, status: true, startTime: true, endTime: true } } } },
       },
     });
     const latest = new Map<string, RosterHistoryRow>();
@@ -144,6 +145,7 @@ export async function loadMonthlyBoundary(month: string, employeeIds: readonly s
       start: row.periodStart,
       end: row.periodEnd,
       employeeIds: row.employees.map((item) => item.employeeId),
+      employmentTypes: Object.fromEntries(row.employees.map((item) => [item.employeeId, item.employee.employmentType])),
       entries: row.employees.flatMap((item) => item.entries.map((entry) => ({ ...entry, employeeId: item.employeeId }))),
     })));
   }
@@ -158,7 +160,7 @@ export async function loadMonthlyRosterSnapshot(month: string, employeeIds: read
     orderBy: { version: "desc" },
     select: {
       id: true, scopeKey: true, fingerprint: true, version: true, periodStart: true, periodEnd: true,
-      employees: { select: { employeeId: true, entries: { select: { date: true, status: true, startTime: true, endTime: true } } } },
+      employees: { select: { employeeId: true, employee: { select: { employmentType: true } }, entries: { select: { date: true, status: true, startTime: true, endTime: true } } } },
     },
   }) : [];
   const latest = new Map<string, RosterHistoryRow>();
@@ -172,6 +174,7 @@ export async function loadMonthlyRosterSnapshot(month: string, employeeIds: read
     start: row.periodStart,
     end: row.periodEnd,
     employeeIds: row.employees.map((employee) => employee.employeeId),
+    employmentTypes: Object.fromEntries(row.employees.map((employee) => [employee.employeeId, employee.employee.employmentType])),
     entries: row.employees.flatMap((employee) => employee.entries.map((entry) => ({ ...entry, employeeId: employee.employeeId }))),
   }));
   return resolveMonthlyRosterHistory(month, employeeIds, rosterPeriods);

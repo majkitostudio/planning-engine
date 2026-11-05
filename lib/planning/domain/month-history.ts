@@ -22,6 +22,7 @@ export interface RosterHistoryPeriod {
   readonly start: IsoDate;
   readonly end: IsoDate;
   readonly employeeIds: readonly string[];
+  readonly employmentTypes?: Readonly<Record<string, EmploymentType>>;
   readonly entries: readonly {
     readonly employeeId: string;
     readonly date: string;
@@ -55,6 +56,8 @@ function validateConfirmedPeriod(period: ConfirmedHistoryPeriod): boolean {
 
 function validateRosterPeriod(period: RosterHistoryPeriod): boolean {
   if (!inPeriod(period.start, period.start, period.end) || !Array.isArray(period.employeeIds) || !Array.isArray(period.entries)) return false;
+  if (period.employmentTypes !== undefined && (!period.employmentTypes || typeof period.employmentTypes !== "object"
+    || Object.entries(period.employmentTypes).some(([employeeId, type]) => !period.employeeIds.includes(employeeId) || (type !== "full_time" && type !== "part_time")))) return false;
   const seen = new Set<string>();
   for (const item of period.entries) {
     if (!item || typeof item.employeeId !== "string" || !period.employeeIds.includes(item.employeeId)
@@ -81,15 +84,13 @@ function confirmedFact(date: IsoDate, shiftKind: ShiftKind, employmentType: Empl
   return { status: "shift", startTime: window.start, endTime: window.end, shiftKind };
 }
 
-function importedFact(date: string, item: RosterHistoryPeriod["entries"][number]): HistoryFact {
+function importedFact(date: string, item: RosterHistoryPeriod["entries"][number], employmentType: EmploymentType = "full_time"): HistoryFact {
   if (item.status === "off") return { status: "off" };
   const startTime = item.startTime!;
   const endTime = item.endTime!;
   const shiftKind = ( ["morning", "afternoon"] as const).find((kind) => {
-    const fullTime = getConfirmedShiftWindow(kind, isWeekendDate(date), "full_time");
-    const partTime = getConfirmedShiftWindow(kind, isWeekendDate(date), "part_time");
-    return (fullTime.start === startTime && fullTime.end === endTime)
-      || (partTime.start === startTime && partTime.end === endTime);
+    const window = getConfirmedShiftWindow(kind, isWeekendDate(date), employmentType);
+    return window.start === startTime && window.end === endTime;
   });
   return { status: "shift", startTime, endTime, ...(shiftKind ? { shiftKind } : {}) };
 }
@@ -115,7 +116,7 @@ export function resolveMonthlyRosterHistory(
     for (const period of periods) {
       if (!period.employeeIds.includes(employeeId) || !inPeriod(date, period.start, period.end)) continue;
       const entry = period.entries.find((item) => item.employeeId === employeeId && item.date === date);
-      if (entry) facts.push(importedFact(date, entry));
+      if (entry) facts.push(importedFact(date, entry, period.employmentTypes?.[employeeId] ?? "full_time"));
     }
     const keys = new Set(facts.map(factKey));
     if (keys.size === 0) days.push({ employeeId, date, status: "unknown" });
@@ -155,7 +156,7 @@ export function buildMonthlyBoundary(
         for (const period of validRoster) {
           if (!inPeriod(date, period.start, period.end) || !period.employeeIds.includes(employeeId)) continue;
           const entry = period.entries.find((item) => item.employeeId === employeeId && item.date === date);
-          if (entry) facts.push(importedFact(date, entry));
+          if (entry) facts.push(importedFact(date, entry, period.employmentTypes?.[employeeId] ?? "full_time"));
         }
         const keys = new Set(facts.map(factKey));
         if (keys.size !== 1) { complete = false; continue; }

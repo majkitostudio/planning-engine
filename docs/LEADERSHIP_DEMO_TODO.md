@@ -11,15 +11,20 @@ pro prezentaci vedení firmy. Každá položka má kritérium dokončení.
 - [x] Odstranit debug výstupy a console.log z produkčního kódu (ověřeno — jediný výskyt je v bootstrap skriptu).
 
 ## Fáze 1 — Hlavní tok (Rozpis směn) — MANUÁLNÍ KROK
-- [ ] Přidat zaměstnance (plné i poloviční úvazky) z anonymizovaného seznamu.
-- [ ] Zadat absence (dovolená, nemoc) pro listopad.
-- [ ] Zadat potřebné obsazení (15/7 Po–Pá, 7/3 So–Ne — již nastaveno).
-- [ ] Zadat fond práce a omluvené hodiny pro každého.
-- [ ] Vytvořit návrh (OR-Tools) — ověřit, že se vygeneruje bez timeoutu.
-- [ ] Zkontrolovat nálezy (problémy, neověřené, fond) — zobrazit managerovi.
-- [ ] Potvrdit rozpis (pouze pokud `canConfirm === true`).
-- [ ] Ověřit, že potvrzený rozpis se zobrazí v týdenním pohledu.
-  (Tyto kroky provádí manažer v aplikaci; nelze je automatizovat bez produkčního zápisu.)
+- [x] Importovat říjnový roster jako návaznost — 23 přesně spárovaných aktivních
+  zaměstnanců s kompletními explicitními dny 25.–31. 10.; uloženo 625 známých
+  směn/volných dnů, 88 buněk zůstalo neznámých a nebylo převedeno na volno.
+- [x] Načíst staffing profil — 14/14 hodnot: Po–Pá 15/7, So–Ne 7/3.
+- [ ] Potvrdit, kteří současní zaměstnanci mají poloviční úvazek; databázové
+  záznamy jsou zatím `full_time` (výchozí hodnota migrace).
+- [ ] Zadat listopadové absence a dostupnost — tyto údaje nejsou v říjnovém rosteru.
+- [ ] Zadat fond práce a omluvené hodiny pro každého vybraného zaměstnance.
+- [ ] Doplnit chybějící říjnové hranice pro 6 zaměstnanců a pořídit prosincovou
+  návaznost, pokud má být listopadový návrh potvrditelný.
+- [ ] Vytvořit návrh (OR-Tools), zkontrolovat nálezy a potvrdit pouze po
+  manažerském rozhodnutí, pokud `canConfirm === true`.
+  (V databázi již bylo 7 listopadových návrhů; žádný není potvrzený a žádný
+  z nich nebyl tímto testem změněn.)
 
 ## Fáze 2 — Vizuální přesvědčivost (UI/UX)
 - [x] Page-enter animace a hover/active feedback.

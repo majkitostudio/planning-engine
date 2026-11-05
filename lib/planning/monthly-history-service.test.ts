@@ -50,7 +50,7 @@ describe("načtení sousedních potvrzených rozpisů", () => {
     const dates = ["2026-10-25", "2026-10-26", "2026-10-27", "2026-10-28", "2026-10-29", "2026-10-30", "2026-10-31"];
     const roster = (version: number, entries: readonly { date: string; status: "shift" | "off"; startTime: string | null; endTime: string | null }[]) => ({
       scopeKey: "scope", version, periodStart: dates[0], periodEnd: dates[6],
-      employees: [{ employeeId: "e1", entries }],
+      employees: [{ employeeId: "e1", employee: { employmentType: "full_time" as const }, entries }],
     });
     const full = dates.map((date) => ({ date, status: "off" as const, startTime: null, endTime: null }));
     const latestEntries = full.filter((entry) => entry.date !== "2026-10-28");
@@ -71,9 +71,9 @@ describe("načtení podkladů pro doplánování části měsíce", () => {
     const findMany = vi.fn().mockResolvedValue([{
       id: "import-2", scopeKey: "scope", fingerprint: "b".repeat(64), version: 2,
       periodStart: "2026-02-01", periodEnd: "2026-02-28",
-      employees: [{ employeeId: "e1", entries: [
-        { date: "2026-02-01", status: "shift", startTime: "07:45", endTime: "16:30" },
-        { date: "2026-02-02", status: "off", startTime: null, endTime: null },
+      employees: [{ employeeId: "e1", employee: { employmentType: "part_time" as const }, entries: [
+        { date: "2026-02-02", status: "shift", startTime: "07:45", endTime: "15:00" },
+        { date: "2026-02-03", status: "off", startTime: null, endTime: null },
       ] }],
     }, {
       id: "import-1", scopeKey: "scope", fingerprint: "a".repeat(64), version: 1,
@@ -85,9 +85,9 @@ describe("načtení podkladů pro doplánování části měsíce", () => {
     });
 
     expect(snapshot.imports).toEqual([{ id: "import-2", version: 2, fingerprint: "b".repeat(64) }]);
-    expect(snapshot.days.find((day) => day.date === "2026-02-01")).toMatchObject({ status: "shift", shiftKind: "morning" });
-    expect(snapshot.days.find((day) => day.date === "2026-02-02")).toMatchObject({ status: "off" });
-    expect(snapshot.days.find((day) => day.date === "2026-02-03")).toMatchObject({ status: "unknown" });
+    expect(snapshot.days.find((day) => day.date === "2026-02-02")).toMatchObject({ status: "shift", shiftKind: "morning", startTime: "07:45", endTime: "15:00" });
+    expect(snapshot.days.find((day) => day.date === "2026-02-03")).toMatchObject({ status: "off" });
+    expect(snapshot.days.find((day) => day.date === "2026-02-04")).toMatchObject({ status: "unknown" });
     expect(findMany).toHaveBeenCalledOnce();
   });
 });

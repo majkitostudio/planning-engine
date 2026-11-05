@@ -22,6 +22,7 @@ describe("podklady navazujících rozpisů", () => {
     };
     const roster = {
       start: "2026-10-25", end: "2026-10-31", employeeIds: novemberEmployee,
+      employmentTypes: { e1: "part_time" as const },
       entries: dates.map((date) => date === "2026-10-30"
         ? { employeeId: "e1", date, status: "shift" as const, startTime: "07:45", endTime: "15:00" }
         : { employeeId: "e1", date, status: "off" as const }),
@@ -92,6 +93,7 @@ describe("podklady navazujících rozpisů", () => {
   it("rozpozná potvrzený ranní čas polovičního úvazku jako ranní směnu", () => {
     const roster = {
       start: "2026-11-02", end: "2026-11-02", employeeIds: novemberEmployee,
+      employmentTypes: { e1: "part_time" as const },
       entries: [{ employeeId: "e1", date: "2026-11-02", status: "shift" as const, startTime: "07:45", endTime: "15:00" }],
     };
     const result = resolveMonthlyRosterHistory("2026-11", novemberEmployee, [roster]);

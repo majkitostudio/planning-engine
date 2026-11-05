@@ -763,5 +763,15 @@ označíme za hotovou až po opravě a doloženém ověření jejího rozsahu.
       typu úvazku je aplikována a databáze hlásí `up to date`. Outlook/Entra
       přihlášení není pro MVP potřeba. Zálohy, monitoring, obnova a nasazení
       zůstávají `NOT VERIFIED`.
+    - `VERIFIED` (5. 11. 2026, poskytnutý říjnový roster) — Přesně spárováno
+      29 aktivních zaměstnanců; 23 mělo všech 7 dní 25.–31. 10. výslovně
+      známých. Přes manažerskou obrazovku se pro těchto 23 osob uložilo 625
+      explicitních směn/volných dnů; 88 buněk zůstalo neznámých, ostatních
+      6 zaměstnanců nebylo zahrnuto do tohoto rozsahu importu. Kontrola
+      návaznosti pro 23 importovaných: před měsícem `complete=true`, po měsíci
+      `complete=false` (prosincový roster není uložen). Novembrový návrh nebyl
+      vytvořen ani potvrzen: chybí manažersky potvrzené listopadové absence,
+      dostupnost a fondy. V listopadu zůstalo 7 dřívějších návrhů nepotvrzených;
+      při této kontrole nebyly změněny.
     - [ ] Další produkční nasazení a provozní služby řešit po ověření záloh,
       monitoringu, obnovy a konfigurace cílového prostředí.
