@@ -32,6 +32,15 @@ produkční aplikaci.
   kvalita plánovacího výstupu pro produkční provoz zůstává `NOT VERIFIED`.
 - Hlavní UI používá měsíční API pro návrh, novou kontrolu a potvrzení. Starší
   týdenní API zůstává v kódu bez samostatného týdenního UI.
+- UI/UX: implementovány 4 vlny polish (přechody, hover/active, focus ringy,
+  scrollbary, skeletony, empty-state, mobilní sticky sloupec, responzivní grid,
+  prefers-reduced-motion).
+- Solver timeout je konfigurovatelný (`PLANNING_SOLVER_TIMEOUT_MS`, výchozí
+  120 s, strop 300 s).
+- Částečné úvazky (partial contracts) jsou plánované (Milník 7); pilot zatím
+  podporuje pouze plné úvazky.
+- Stránka Analyzy je zatím placeholder s odkazem na Audit (read-only přehled je
+  Milník 2).
 - Auth.js podporuje lokální přihlášení a databázové účty; není napojený na CRM.
   Microsoft Entra ID zůstává plánovanou budoucí autentizační bránou.
 - Potvrzení manažera a auditní zápis jsou `IMPLEMENTED`; aplikace používá
