@@ -1166,6 +1166,16 @@ textarea {
   contain: paint;
 }
 
+@media (max-width: 620px) {
+  .table-wrap table thead th:first-child,
+  .table-wrap table tbody th:first-child {
+    position: sticky;
+    left: 0;
+    background: var(--surface);
+    z-index: 1;
+  }
+}
+
 .settings-form {
   overflow: hidden;
 }
@@ -1826,7 +1836,11 @@ textarea {
 }
 
 .empty__action {
-  margin-top: 8px;
+  margin-top: 12px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: center;
 }
 
 /* --------------------------------------------------------------------------
@@ -3280,6 +3294,16 @@ textarea:focus-visible {
   transition: opacity 0.2s ease;
 }
 
+/* Mobile table scroll */
+.table-scroll {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.table-scroll table {
+  width: 100%;
+}
+
 /* Skeleton loading */
 .skeleton {
   background: linear-gradient(90deg, var(--surface-2) 25%, var(--border) 50%, var(--surface-2) 75%);
@@ -3288,6 +3312,14 @@ textarea:focus-visible {
   border-radius: 6px;
   color: transparent;
   user-select: none;
+}
+
+.skeleton-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 8px;
 }
 
 @keyframes skeleton-shimmer {
