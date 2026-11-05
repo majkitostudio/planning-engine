@@ -1848,58 +1848,6 @@ textarea {
   justify-content: center;
 }
 
-/* Toast notifications */
-.toast-container {
-  position: fixed;
-  bottom: 20px;
-  right: 20px;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  z-index: 1000;
-  max-width: 360px;
-}
-
-.toast {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 10px 12px;
-  border-radius: 8px;
-  border: 1px solid var(--border);
-  background: var(--surface);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-  font-size: 13.5px;
-  animation: toast-enter 0.2s ease-out;
-}
-
-@keyframes toast-enter {
-  from { opacity: 0; transform: translateY(8px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
-.toast--success { border-left: 3px solid var(--green, #22c55e); }
-.toast--error { border-left: 3px solid var(--red, #ef4444); }
-.toast--warning { border-left: 3px solid var(--amber, #f59e0b); }
-.toast--info { border-left: 3px solid var(--accent); }
-
-.toast__icon { flex-shrink: 0; color: var(--muted); }
-.toast__message { flex: 1; min-width: 0; }
-.toast__close {
-  background: none;
-  border: none;
-  cursor: pointer;
-  color: var(--muted);
-  padding: 2px;
-  flex-shrink: 0;
-}
-
-.toast__close:hover { color: var(--ink); }
-
-@media (max-width: 480px) {
-  .toast-container { left: 12px; right: 12px; bottom: 12px; max-width: none; }
-}
-
 /* --------------------------------------------------------------------------
    16. Obecná upozornění, badge, definice
    -------------------------------------------------------------------------- */
@@ -2338,16 +2286,19 @@ textarea {
 .monthly-inline-field > label + input { min-width: 0; }
 .monthly-inline-field > label { grid-column: 1 / -1; }
 .monthly-entry-list { display: grid; gap: 8px; margin: 0; padding: 0; list-style: none; }
-.monthly-entry-list li { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 12px; padding: 10px 12px; border: 1px solid var(--border); border-radius: 7px; background: var(--surface); }
+.monthly-entry-list li { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; align-items: center; gap: 12px; padding: 10px 12px; border: 1px solid var(--border); border-radius: 7px; background: var(--surface); }
 .monthly-entry-list li > span:first-child { min-width: 0; overflow-wrap: anywhere; font-weight: 500; }
 .monthly-work-fund-fields { display: flex; flex-wrap: wrap; gap: 10px; align-items: end; justify-content: flex-end; }
 .monthly-work-fund-fields label { display: grid; gap: 4px; font-size: .85rem; }
 .monthly-work-fund-fields input { width: 110px; }
+.employee-contract-label { display: inline-flex; align-items: center; gap: 6px; margin-inline: 8px; font-size: 12px; color: var(--muted); }
+.employee-contract-label .input { min-height: 36px; padding-block: 4px; }
 
 @media (max-width: 640px) {
   .monthly-entry-list li { grid-template-columns: 1fr; gap: 8px; }
   .monthly-work-fund-fields { justify-content: flex-start; }
   .monthly-work-fund-fields input { width: 100%; }
+  .monthly-entry-list li > .input { width: 100%; }
 }
 .monthly-checkbox { display: flex !important; margin-top: 5px; }
 .monthly-entry-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }

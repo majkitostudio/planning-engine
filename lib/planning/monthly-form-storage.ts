@@ -33,7 +33,7 @@ function isSnapshot(value: unknown): value is MonthlyFormSnapshot {
   if (typeof value.shiftRotationPreference !== "boolean" || typeof value.partialMonth !== "boolean" || !Number.isInteger(value.step) || Number(value.step) < 0 || Number(value.step) > 4) return false;
   if (!["full_day", "morning", "afternoon"].includes(String(value.absenceShift))) return false;
   if (!Array.isArray(value.staffing) || value.staffing.length !== 14 || !value.staffing.every((item) => typeof item === "string")) return false;
-  if (!Array.isArray(value.employees) || !value.employees.every((item) => record(item) && strings(item, ["id", "name"]))) return false;
+  if (!Array.isArray(value.employees) || !value.employees.every((item) => record(item) && strings(item, ["id", "name"]) && (item.employmentType === undefined || item.employmentType === "full_time" || item.employmentType === "part_time"))) return false;
   if (!Array.isArray(value.absences) || !value.absences.every((item) => record(item) && strings(item, ["id", "employeeId", "from", "to"]) && ["other", "sick", "vacation"].includes(String(item.type)) && ["approved", "pending", "rejected"].includes(String(item.status)))) return false;
   if (value.workFunds !== undefined && (!Array.isArray(value.workFunds) || !value.workFunds.every((item) => record(item) && strings(item, ["employeeId", "hours", "excusedHours"])))) return false;
   return Array.isArray(value.partialAbsences) && value.partialAbsences.every((item) => record(item) && strings(item, ["id", "employeeId", "from", "to"]) && (item.shiftKind === "morning" || item.shiftKind === "afternoon"));

@@ -20,7 +20,7 @@ export async function GET(request?: Request) {
   const all = request ? new URL(request.url).searchParams.get("all") === "1" : false;
   const denied = await authorize(all); if (denied) return denied;
   try {
-    const employees = await prisma.planningEmployee.findMany({ where: all ? {} : { active: true }, select: { id: true, displayName: true, active: true }, orderBy: [{ displayName: "asc" }, { id: "asc" }] });
+    const employees = await prisma.planningEmployee.findMany({ where: all ? {} : { active: true }, select: { id: true, displayName: true, employmentType: true, active: true }, orderBy: [{ displayName: "asc" }, { id: "asc" }] });
     return NextResponse.json({ ok: true, employees });
   } catch { return NextResponse.json({ ok: false, message: "Seznam zaměstnanců se nepodařilo načíst." }, { status: 503 }); }
 }
@@ -30,8 +30,10 @@ export async function POST(request: Request) {
   const body = await request.json().catch(() => null);
   const displayName = typeof body?.displayName === "string" ? body.displayName.trim() : "";
   if (!displayName || displayName.length > 200) return NextResponse.json({ ok: false, message: "Vyplňte jméno zaměstnance (nejvýše 200 znaků)." }, { status: 400 });
+  const employmentType = body?.employmentType ?? "full_time";
+  if (employmentType !== "full_time" && employmentType !== "part_time") return NextResponse.json({ ok: false, message: "Vyberte plný nebo poloviční úvazek." }, { status: 400 });
   try {
-    const employee = await prisma.planningEmployee.create({ data: { displayName }, select: { id: true, displayName: true } });
+    const employee = await prisma.planningEmployee.create({ data: { displayName, employmentType }, select: { id: true, displayName: true, employmentType: true } });
     return NextResponse.json({ ok: true, employee }, { status: 201 });
   } catch { return NextResponse.json({ ok: false, message: "Zaměstnance se nepodařilo uložit." }, { status: 503 }); }
 }
@@ -42,8 +44,13 @@ export async function PATCH(request: Request) {
   if (typeof body?.id !== "string" || !body.id.trim()) return NextResponse.json({ ok: false, message: "Vyberte zaměstnance." }, { status: 400 });
   try {
     if (body.active !== undefined && typeof body.active !== "boolean") return NextResponse.json({ ok: false, message: "Neplatný stav zaměstnance." }, { status: 400 });
-    const active = body.active === true;
-    const result = await prisma.planningEmployee.updateMany({ where: { id: body.id, active: !active }, data: { active } });
+    if (body.employmentType !== undefined && body.employmentType !== "full_time" && body.employmentType !== "part_time") return NextResponse.json({ ok: false, message: "Vyberte plný nebo poloviční úvazek." }, { status: 400 });
+    if (body.active === undefined && body.employmentType === undefined) return NextResponse.json({ ok: false, message: "Zadejte změnu stavu nebo úvazku." }, { status: 400 });
+    const active = body.active;
+    const result = await prisma.planningEmployee.updateMany({
+      where: { id: body.id, ...(active === undefined ? {} : { active: !active }) },
+      data: { ...(active === undefined ? {} : { active }), ...(body.employmentType === undefined ? {} : { employmentType: body.employmentType }) },
+    });
     if (!result.count) return NextResponse.json({ ok: false, message: "Zaměstnanec nebyl nalezen nebo už má tento stav." }, { status: 404 });
     return NextResponse.json({ ok: true });
   } catch { return NextResponse.json({ ok: false, message: "Zaměstnance se nepodařilo odebrat." }, { status: 503 }); }

@@ -94,7 +94,10 @@ def _validate(payload):
                     _require(_is_unambiguous_local_datetime(day, dt.time.fromisoformat(start), zone))
                     _require(_is_unambiguous_local_datetime(day, dt.time.fromisoformat(end), zone))
                 if kind != "custom":
-                    expected = ("07:45", "16:30") if kind == "morning" else (("12:45", "21:00") if day.weekday() >= 5 else ("13:15", "21:00"))
+                    if employment_types[item["employeeId"]] == "part_time" and day.weekday() < 5:
+                        expected = ("07:45", "15:00") if kind == "morning" else ("15:00", "21:00")
+                    else:
+                        expected = ("07:45", "16:30") if kind == "morning" else (("12:45", "21:00") if day.weekday() >= 5 else ("13:15", "21:00"))
                     _require((start, end) == expected)
                 fixed[key] = (kind, dt.time.fromisoformat(start), dt.time.fromisoformat(end))
         _require(len(fixed) == len(people) * sum(day < range_start or day > range_end for day in dates))

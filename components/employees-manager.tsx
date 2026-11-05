@@ -2,7 +2,7 @@
 
 import { useEffect, useState, type FormEvent } from "react";
 
-type Employee = { id: string; displayName: string; active: boolean; employmentType?: string };
+type Employee = { id: string; displayName: string; active: boolean; employmentType: "full_time" | "part_time" };
 
 export function EmployeesManager({ canManage }: { canManage: boolean }) {
   const [employees, setEmployees] = useState<Employee[]>([]);
@@ -28,7 +28,7 @@ export function EmployeesManager({ canManage }: { canManage: boolean }) {
       const response = await fetch("/api/employees", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ displayName: name, employmentType }) });
       const result = await response.json();
       if (!response.ok || !result.ok) { setError(result.message || "Zaměstnance se nepodařilo přidat."); return; }
-      setEmployees((current) => [...current, { ...result.employee, active: true }]); setName("");
+       setEmployees((current) => [...current, { ...result.employee, active: true }]); setName(""); setEmploymentType("full_time");
     } catch { setError("Spojení se serverem selhalo."); } finally { setBusy(false); }
   }
 
@@ -42,10 +42,20 @@ export function EmployeesManager({ canManage }: { canManage: boolean }) {
     } catch { setError("Spojení se serverem selhalo."); } finally { setBusy(false); }
   }
 
+  async function changeEmploymentType(id: string, value: "full_time" | "part_time") {
+    setBusy(true); setError("");
+    try {
+      const response = await fetch("/api/employees", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id, employmentType: value }) });
+      const result = await response.json();
+      if (!response.ok || !result.ok) { setError(result.message || "Úvazek se nepodařilo změnit."); return; }
+      setEmployees((current) => current.map((employee) => employee.id === id ? { ...employee, employmentType: value } : employee));
+    } catch { setError("Spojení se serverem selhalo."); } finally { setBusy(false); }
+  }
+
   return <section className="card"><h1>Zaměstnanci</h1>
     <p>Zde spravujete seznam pro plánování směn. Odebrání nemění již uložené rozpisy.</p>
     {canManage ? <form onSubmit={(event) => void add(event)}><label>Jméno zaměstnance <input className="input" value={name} maxLength={200} onChange={(event) => setName(event.target.value)} /></label>{" "}<label>Úvazek <select className="input" value={employmentType} onChange={(event) => setEmploymentType(event.target.value as "full_time" | "part_time")}><option value="full_time">Plný</option><option value="part_time">Poloviční</option></select></label>{" "}<button className="btn btn--primary" disabled={busy || loading || !name.trim()} type="submit">Přidat zaměstnance</button></form> : <p>Seznam může upravovat pouze manažer.</p>}
     {error ? <p role="alert">{error}</p> : null}
-    {loading ? <ul className="skeleton-list" aria-busy="true" aria-label="Načítám zaměstnance">{Array.from({ length: 5 }).map((_, i) => <li key={i} className="skeleton" style={{ height: 28 }} />)}</ul> : employees.length ? <ul>{employees.map((employee) => <li key={employee.id}>{employee.displayName}{employee.employmentType === "part_time" ? " (poloviční)" : ""}{!employee.active ? " · odebrán ze seznamu" : ""}{canManage ? <> <button className="btn btn--secondary" type="button" disabled={busy} onClick={() => void changeStatus(employee.id, !employee.active)} aria-label={`${employee.active ? "Odebrat" : "Znovu zařadit"} ${employee.displayName}`}>{employee.active ? "Odebrat" : "Znovu zařadit"}</button></> : null}</li>)}</ul> : !error ? <p>Seznam zaměstnanců je zatím prázdný.</p> : null}
+    {loading ? <ul className="skeleton-list" aria-busy="true" aria-label="Načítám zaměstnance">{Array.from({ length: 5 }).map((_, i) => <li key={i} className="skeleton" style={{ height: 28 }} />)}</ul> : employees.length ? <ul>{employees.map((employee) => <li key={employee.id}>{employee.displayName}{!employee.active ? " · odebrán ze seznamu" : ""}{canManage ? <> <label className="employee-contract-label">Úvazek <select className="input" value={employee.employmentType} disabled={busy} aria-label={`Úvazek ${employee.displayName}`} onChange={(event) => void changeEmploymentType(employee.id, event.target.value as "full_time" | "part_time")}><option value="full_time">Plný</option><option value="part_time">Poloviční</option></select></label> <button className="btn btn--secondary" type="button" disabled={busy} onClick={() => void changeStatus(employee.id, !employee.active)} aria-label={`${employee.active ? "Odebrat" : "Znovu zařadit"} ${employee.displayName}`}>{employee.active ? "Odebrat" : "Znovu zařadit"}</button></> : <span> ({employee.employmentType === "part_time" ? "poloviční" : "plný"})</span>}</li>)}</ul> : !error ? <p>Seznam zaměstnanců je zatím prázdný.</p> : null}
   </section>;
 }

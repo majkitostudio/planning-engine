@@ -1,9 +1,9 @@
-import { CONFIRMED_SHIFT_DEFINITIONS, DEFAULT_TIME_ZONE, getShiftWindow } from "./confirmed";
+import { DEFAULT_TIME_ZONE, getConfirmedShiftWindow } from "./confirmed";
 import { datesInMonth } from "./month";
 import { addDays, getZonedDateTimeStatus, isIsoDate, isLocalTime, isWeekendDate } from "./time";
 import type { MonthlyBoundaryAssignment, MonthlyBoundaryData } from "./month-validation";
 import type { MonthlyRosterDay, MonthlyRosterSnapshot } from "./month-input";
-import type { ExistingAssignment, IsoDate, ShiftKind } from "./types";
+import type { EmploymentType, ExistingAssignment, IsoDate, ShiftKind } from "./types";
 
 /** Potvrzený rozpis se známým rozsahem a seznamem zahrnutých zaměstnanců. */
 export interface ConfirmedHistoryPeriod {
@@ -11,6 +11,7 @@ export interface ConfirmedHistoryPeriod {
   readonly end: IsoDate;
   readonly employeeIds: readonly string[];
   readonly assignments: readonly ExistingAssignment[];
+  readonly employmentTypes?: Readonly<Record<string, EmploymentType>>;
 }
 
 /** Výslovně převzaté buňky; absence záznamu pro den znamená neznámý den. */
@@ -39,6 +40,8 @@ const inPeriod = (date: string, start: string, end: string) => isIsoDate(start) 
 
 function validateConfirmedPeriod(period: ConfirmedHistoryPeriod): boolean {
   if (!inPeriod(period.start, period.start, period.end) || !Array.isArray(period.employeeIds) || !Array.isArray(period.assignments)) return false;
+  if (period.employmentTypes !== undefined && (!period.employmentTypes || typeof period.employmentTypes !== "object"
+    || Object.entries(period.employmentTypes).some(([employeeId, type]) => !period.employeeIds.includes(employeeId) || (type !== "full_time" && type !== "part_time")))) return false;
   const seen = new Set<string>();
   for (const item of period.assignments) {
     if (!item || typeof item.employeeId !== "string" || !period.employeeIds.includes(item.employeeId)
@@ -73,8 +76,8 @@ function factKey(fact: HistoryFact): string {
   return fact.status === "off" ? "off" : `shift|${fact.startTime}|${fact.endTime}`;
 }
 
-function confirmedFact(date: IsoDate, shiftKind: ShiftKind): HistoryFact {
-  const window = getShiftWindow(CONFIRMED_SHIFT_DEFINITIONS, shiftKind, isWeekendDate(date));
+function confirmedFact(date: IsoDate, shiftKind: ShiftKind, employmentType: EmploymentType = "full_time"): HistoryFact {
+  const window = getConfirmedShiftWindow(shiftKind, isWeekendDate(date), employmentType);
   return { status: "shift", startTime: window.start, endTime: window.end, shiftKind };
 }
 
@@ -83,8 +86,10 @@ function importedFact(date: string, item: RosterHistoryPeriod["entries"][number]
   const startTime = item.startTime!;
   const endTime = item.endTime!;
   const shiftKind = ( ["morning", "afternoon"] as const).find((kind) => {
-    const window = getShiftWindow(CONFIRMED_SHIFT_DEFINITIONS, kind, isWeekendDate(date));
-    return window.start === startTime && window.end === endTime;
+    const fullTime = getConfirmedShiftWindow(kind, isWeekendDate(date), "full_time");
+    const partTime = getConfirmedShiftWindow(kind, isWeekendDate(date), "part_time");
+    return (fullTime.start === startTime && fullTime.end === endTime)
+      || (partTime.start === startTime && partTime.end === endTime);
   });
   return { status: "shift", startTime, endTime, ...(shiftKind ? { shiftKind } : {}) };
 }
@@ -145,7 +150,7 @@ export function buildMonthlyBoundary(
         for (const period of validConfirmed) {
           if (!inPeriod(date, period.start, period.end) || !period.employeeIds.includes(employeeId)) continue;
           const assignment = period.assignments.find((item) => item.employeeId === employeeId && item.date === date);
-          facts.push(assignment ? confirmedFact(date, assignment.shiftKind) : { status: "off" });
+          facts.push(assignment ? confirmedFact(date, assignment.shiftKind, period.employmentTypes?.[employeeId] ?? "full_time") : { status: "off" });
         }
         for (const period of validRoster) {
           if (!inPeriod(date, period.start, period.end) || !period.employeeIds.includes(employeeId)) continue;

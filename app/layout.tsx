@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import { IBM_Plex_Mono, IBM_Plex_Sans } from "next/font/google";
 import "./globals.css";
-import { ToastProvider } from "@/components/ui/toast";
 
 const sans = IBM_Plex_Sans({
   subsets: ["latin", "latin-ext"],
@@ -32,7 +31,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="cs" className={`${sans.variable} ${mono.variable}`}>
-      <body><ToastProvider>{children}</ToastProvider></body>
+      <body>{children}</body>
     </html>
   );
 }

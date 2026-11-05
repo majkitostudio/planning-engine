@@ -35,6 +35,11 @@ enum RosterHistoryEntryStatus {
   off
 }
 
+enum PlanningEmploymentType {
+  full_time
+  part_time
+}
+
 model AppUser {
   id              String              @id @default(cuid())
   externalSubject String?             @unique
@@ -74,10 +79,11 @@ model MonthlyPlanningRun {
 }
 
 model PlanningEmployee {
-  id          String   @id @default(cuid())
-  displayName String
-  active      Boolean  @default(true)
-  createdAt   DateTime @default(now())
+  id             String                 @id @default(cuid())
+  displayName    String
+  employmentType PlanningEmploymentType @default(full_time)
+  active         Boolean                @default(true)
+  createdAt      DateTime               @default(now())
   rosterHistoryImports RosterHistoryImportEmployee[]
 }
 

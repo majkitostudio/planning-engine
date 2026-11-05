@@ -37,10 +37,12 @@ produkční aplikaci.
   prefers-reduced-motion).
 - Solver timeout je konfigurovatelný (`PLANNING_SOLVER_TIMEOUT_MS`, výchozí
   120 s, strop 300 s).
-- Částečné úvazky (partial contracts) jsou plánované (Milník 7); pilot zatím
-  podporuje pouze plné úvazky.
-- Stránka Analyzy je zatím placeholder s odkazem na Audit (read-only přehled je
-  Milník 2).
+- Měsíční plánování podporuje plný i poloviční úvazek; poloviční úvazek má
+  kratší všednodenní směny a o víkendu používá plnou délku směny. Migrace pro
+  ukládání typu úvazku byla aplikována na aktuální nakonfigurovanou DB; další
+  prostředí musí migraci nasadit před použitím této funkce.
+- Stránka Analyzy je read-only přehled potvrzených a odstraněných rozpisů;
+  rozsáhlejší metriky pokrytí a vytížení zůstávají mimo současný rozsah.
 - Auth.js podporuje lokální přihlášení a databázové účty; není napojený na CRM.
   Microsoft Entra ID zůstává plánovanou budoucí autentizační bránou.
 - Potvrzení manažera a auditní zápis jsou `IMPLEMENTED`; aplikace používá
@@ -49,9 +51,9 @@ produkční aplikaci.
   řeší výpadek na jedné celé směně, tři varianty, deterministický dopad, výběr
   managerem, potvrzení nové verze týdne a minimální audit. Gemini, provozní
   limity a produkční workflow zůstávají `NOT VERIFIED`.
-- Prisma obsahuje provozní modely identity, snapshotu běhu a auditu. Migrace a zápis
-  potvrzení byly ověřeny v izolované lokální Docker PostgreSQL; produkční DB zůstává
-  `NOT VERIFIED`.
+- Prisma obsahuje provozní modely identity, snapshotu běhu a auditu. Migrace včetně
+  typu úvazku byly nasazeny a ověřeny na aktivní nakonfigurované PostgreSQL.
+  Zálohy, obnova, monitoring a celé produkční nasazení zůstávají `NOT VERIFIED`.
 - Potvrzené jsou časy směn, pravidlo 35 h odpočinku po šesti dnech a dva dny
   volna po práci o víkendu.
 - Repozitář neobsahuje skutečné zaměstnanecké záznamy. Lokální prostředí

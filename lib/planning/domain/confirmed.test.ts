@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import {
   CONFIRMED_PLANNING_RULES,
   CONFIRMED_SHIFT_DEFINITIONS,
+  getConfirmedShiftWindow,
   getShiftWindow,
 } from "./index";
 
@@ -39,6 +40,13 @@ describe("potvrzené časy směn", () => {
     expect(
       getShiftWindow(CONFIRMED_SHIFT_DEFINITIONS, "afternoon", true),
     ).toEqual({ start: "12:45", end: "21:00" });
+  });
+
+  it("poloviční úvazek používá kratší všednodenní směny a plnou délku o víkendu", () => {
+    expect(getConfirmedShiftWindow("morning", false, "part_time")).toEqual({ start: "07:45", end: "15:00" });
+    expect(getConfirmedShiftWindow("afternoon", false, "part_time")).toEqual({ start: "15:00", end: "21:00" });
+    expect(getConfirmedShiftWindow("morning", true, "part_time")).toEqual({ start: "07:45", end: "16:30" });
+    expect(getConfirmedShiftWindow("afternoon", true, "part_time")).toEqual({ start: "12:45", end: "21:00" });
   });
 
   it("neznámý druh směny je chyba volajícího, ne tichý default", () => {

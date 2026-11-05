@@ -69,6 +69,16 @@ describe("lokální rozpracované zadání", () => {
     if (loaded.status === "found") expect(loaded.value).not.toHaveProperty("workFunds");
   });
 
+  it("zachová typ úvazku v uloženém měsíčním zadání", async () => {
+    const store = storage();
+    const partTime = { ...snapshot, employees: [{ id: "synthetic-1", name: "Test A", employmentType: "part_time" as const }] };
+    const saved = await saveMonthlyFormAtomically(store, uncontendedLock, "manager-a", "2026-11", partTime, null);
+    expect(saved.status).toBe("saved");
+    expect(loadMonthlyForm(store, "manager-a", "2026-11")).toMatchObject({
+      status: "found", value: { employees: [{ id: "synthetic-1", employmentType: "part_time" }] },
+    });
+  });
+
   it("bez podpory koordinace nezapisuje, ale dovolí vymazat beze změny uložená data", async () => {
     const store = storage();
     const saved = await saveMonthlyFormAtomically(store, uncontendedLock, "manager-a", "2026-11", snapshot, null);

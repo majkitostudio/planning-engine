@@ -288,6 +288,60 @@ class SolverInputTests(unittest.TestCase):
         self.assertEqual(result["status"], "feasible")
         self.assertEqual({item["employeeId"] for item in result["assignments"]}, {"synthetic-0"})
 
+    def test_part_time_weekday_uses_half_shift_duration(self):
+        payload = month_with_requirements("2026-11", 2, {
+            ("2026-11-02", "morning"),
+        })
+        payload["input"]["employees"] = [
+            {"id": "synthetic-0", "employmentType": "part_time"},
+            {"id": "synthetic-1", "employmentType": "full_time"},
+        ]
+        payload["input"]["workFunds"] = [
+            {"employeeId": "synthetic-0", "hours": 7.25, "excusedHours": 0},
+            {"employeeId": "synthetic-1", "hours": 0, "excusedHours": 0},
+        ]
+
+        result = solve(payload)
+
+        self.assertEqual(result["status"], "feasible")
+        self.assertEqual({item["employeeId"] for item in result["assignments"]}, {"synthetic-0"})
+
+    def test_part_time_employee_can_work_weekend_full_length_shift(self):
+        payload = month_with_requirements("2026-11", 2, {
+            ("2026-11-07", "morning"),
+        })
+        payload["input"]["employees"] = [
+            {"id": "synthetic-0", "employmentType": "part_time"},
+            {"id": "synthetic-1", "employmentType": "full_time"},
+        ]
+        payload["input"]["workFunds"] = [
+            {"employeeId": "synthetic-0", "hours": 8.75, "excusedHours": 0},
+            {"employeeId": "synthetic-1", "hours": 0, "excusedHours": 0},
+        ]
+
+        result = solve(payload)
+
+        self.assertEqual(result["status"], "feasible")
+        self.assertEqual({item["employeeId"] for item in result["assignments"]}, {"synthetic-0"})
+
+    def test_partial_month_accepts_fixed_part_time_weekday_shift_times(self):
+        payload = month_with_requirements("2026-11", 1, {
+            ("2026-11-16", "morning"),
+        })
+        payload["input"]["employees"] = [{"id": "synthetic-0", "employmentType": "part_time"}]
+        payload["input"]["planningRange"] = {"startDate": "2026-11-15", "endDate": "2026-11-30"}
+        payload["input"]["fixedDays"] = [
+            {"employeeId": "synthetic-0", "date": f"2026-11-{day:02}", "status": "shift", "startTime": "07:45", "endTime": "15:00", "shiftKind": "morning"}
+            if day == 2 else
+            {"employeeId": "synthetic-0", "date": f"2026-11-{day:02}", "status": "off"}
+            for day in range(1, 15)
+        ]
+
+        result = solve(payload)
+
+        self.assertEqual(result["status"], "feasible")
+        self.assertEqual(result["assignments"], [{"employeeId": "synthetic-0", "date": "2026-11-16", "shiftKind": "morning"}])
+
     def test_rejects_invalid_work_fund(self):
         cases = [
             [{"employeeId": "unknown", "hours": 1, "excusedHours": 0}],

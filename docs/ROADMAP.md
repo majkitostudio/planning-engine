@@ -656,7 +656,8 @@ označíme za hotovou až po opravě a doloženém ověření jejího rozsahu.
      zadává v hodinách za kalendářní měsíc pro každého zaměstnance zvlášť;
      manažer zadává i omluvené hodiny (schválená absence, svátek). Odchylka
      i chybějící údaj jsou nezávazné a neblokují potvrzení. Chybějící fond se
-     označí jako neověřený. Pilot zůstává pouze pro plné úvazky. Technický
+      označí jako neověřený. Měsíční pilot podporuje plné i poloviční úvazky.
+      Technický
      strop 1000 h je jen kontrola vstupu. Viz
      [`DOMAIN_DECISIONS.md`](DOMAIN_DECISIONS.md).
    - `IMPLEMENTED` — Volitelný vstup `workFunds`, deterministická kontrola
@@ -669,11 +670,17 @@ označíme za hotovou až po opravě a doloženém ověření jejího rozsahu.
      časy, česká desetinná čárka, povinnost vyplnění ve formuláři, ukládání
      včetně staršího snapshotu bez fondu, anonymizace v provideru a měkký cíl
      solveru jsou pokryté testy. Celý Vitest: 543 prošlo, 14 přeskočeno;
-     testy Python solveru: 25 prošlo. Prošly také lint a typecheck.
-    - [x] Podpora částečných úvazků (Milník 7) — IMPLEMENTOVÁNO (5. 11. 2026).
+      testy Python solveru: 28 prošlo. Prošly také lint a typecheck.
+    - [x] Podpora polovičních úvazků (Milník 7) — IMPLEMENTOVÁNO (5. 11. 2026).
       Poloviční úvazek: ranní 7:45–15:00, odpolední 15:00–21:00 (pouze
-      všední den); o víkendu plnoúvazkové časy. Fond v hodinách pro každého.
-      Implementováno: typy, validace, solver, formulář, UI selektor.
+      všední den); o víkendu smí pracovat v plné délce směny. Implementováno:
+      typy, DB persistence, validace, solver, formulář a UI selektor.
+    - `VERIFIED` (5. 11. 2026, schválená aktivní databáze) — Migrace
+      `20261105120000_add_planning_employee_contract_type` nasazena přes
+      `prisma migrate deploy`; následný `migrate status` hlásí schema up to
+      date. Existujících 30 zaměstnanců zůstalo `full_time`. Transakční test
+      zápisu/čtení `part_time` proběhl a byl vrácen zpět (bez testovacích řádků).
+      Nejde o ověření provozní připravenosti nasazení.
     - [x] Solver timeout konfigurovatelný (env `PLANNING_SOLVER_TIMEOUT_MS`,
       výchozí 120 s, strop 300 s). Rozhodnutí manažera 5. 11. 2026.
     - [x] UI/UX polish — 4 vlny implementovány (přechody, hover/active, focus
@@ -748,7 +755,12 @@ označíme za hotovou až po opravě a doloženém ověření jejího rozsahu.
      - [ ] Ověřit mobilní ovládání a fokus skutečnou čtečkou obrazovky.
    - [ ] Posoudit vývojové závislosti a ověřit kompatibilní aktualizace.
 10. **P2 — Závěrečné ověření MVP.**
-   - [ ] Provést syntetický průchod návrh → kontrola → potvrzení → obnovení,
-     včetně rolí, souběhu, návazností a správy rozpisů.
-   - [ ] Reálná data, produkční služby a další nasazení řešit až v samostatně
-     odsouhlaseném rozsahu.
+    - [ ] Provést syntetický průchod návrh → kontrola → potvrzení → obnovení,
+      včetně rolí, souběhu, návazností a správy rozpisů.
+    - `VERIFIED` (5. 11. 2026) — Manager schválil použití aktivní nakonfigurované
+      databáze pro testovací/pilotní i produkční data a povolil migrace. Migrace
+      typu úvazku je aplikována a databáze hlásí `up to date`. Outlook/Entra
+      přihlášení není pro MVP potřeba. Zálohy, monitoring, obnova a nasazení
+      zůstávají `NOT VERIFIED`.
+    - [ ] Další produkční nasazení a provozní služby řešit po ověření záloh,
+      monitoringu, obnovy a konfigurace cílového prostředí.

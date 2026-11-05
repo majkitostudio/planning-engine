@@ -112,8 +112,8 @@ Parametry byly doplněny takto:
   nezávazné upozornění a neblokuje potvrzení.
 - Chybějící fond se označí jako neověřený, nikoli jako splněný; ani tento nález
   sám neblokuje potvrzení.
-- Pilot zůstává pouze pro zaměstnance na plný úvazek. Částečné úvazky jsou mimo
-  rozsah.
+- Měsíční pilot podporuje plné a poloviční úvazky. Směny a pravidla jejich
+  přiřazení jsou uvedeny níže v rozhodnutích manažera z 5. 11. 2026.
 - Technický strop 1000 hodin na vstup je pouze ochrana proti zjevně chybnému
   zadání, nikoli doménové pravidlo ani pracovněprávní limit.
 - Formulář vyžaduje fond a omluvené hodiny pro každého vybraného zaměstnance.
@@ -136,9 +136,9 @@ potvrzená pravidla mají přednost. Ověření a přesné výsledky jsou v
   - Plný úvazek: ranní 7:45–16:30 (všední den i víkend), odpolední ve
     všední den 13:15–21:00, víkendová odpolední 12:45–21:00.
   - Poloviční úvazek: ranní 7:45–15:00 (pouze všední den), odpolední
-    15:00–21:00 (pouze všední den). O víkendu jsou směny pouze
-    plnoúvazkové (7:45–16:30, 12:45–21:00) — poloviční úvazek o víkendu
-    pracuje na plný směnový čas.
+    15:00–21:00 (pouze všední den). `VERIFIED` doplnění manažera:
+    poloviční úvazek smí pracovat o víkendu, ale pouze v plné délce
+    víkendové směny (7:45–16:30, 12:45–21:00).
   Fond práce se zadává v hodinách pro každého zaměstnance zvlášť
   (plný i poloviční).
 - **Role a dovednosti (H4):** `VERIFIED` — ne, všichni zaměstnanci mohou
@@ -157,8 +157,13 @@ potvrzená pravidla mají přednost. Ověření a přesné výsledky jsou v
   (pokrytí, vytížení, neobsazené směny); bez exportu.
 - **Solver timeout:** `VERIFIED` — výchozí 120 s, konfigurovatelné přes env
   `PLANNING_SOLVER_TIMEOUT_MS`.
-- **Produkční připravenost:** `VERIFIED` rozhodnutí ponechat `NOT VERIFIED`;
-  ověření později se schválením.
+- **Přihlášení přes Outlook/Entra:** pro MVP není potřeba; lokální databázové
+  účty zůstávají dostatečné. Azure tenant tedy neblokuje MVP.
+- **Aktivní databáze:** manažer výslovně povolil používat aktuálně
+  nakonfigurovanou databázi i pro testovací/pilotní a produkční data a povolil
+  migrace (5. 11. 2026). Toto povolení umožňuje zápis a migrace, ale samo o sobě
+  neověřuje zálohování, monitoring, obnovu ani připravenost aplikace k nasazení;
+  tyto provozní aspekty zůstávají `NOT VERIFIED`.
 
 ## Současná implementace měsíčního MVP (`IMPLEMENTED`, 3. 11. 2026)
 

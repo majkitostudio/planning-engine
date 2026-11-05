@@ -1,5 +1,7 @@
 import { CZECH_DAYS, SHIFT_META, formatDayMonth, formatIsoDate } from "@/lib/demo-data";
 import { monthlyRosterCaption } from "@/lib/planning/monthly-view";
+import { getConfirmedShiftWindow } from "@/lib/planning/domain/confirmed";
+import { isWeekendDate } from "@/lib/planning/domain/time";
 import type { MonthlyView } from "./monthly-planning-panel";
 
 export function MonthlyRosterTable({ view, weekDates }: { view: MonthlyView; weekDates: Date[] }) {
@@ -11,7 +13,11 @@ export function MonthlyRosterTable({ view, weekDates }: { view: MonthlyView; wee
       const items = view.draft.assignments.filter((assignment) => assignment.employeeId === employee.id && assignment.date === date);
       const range = view.input.planningRange;
       const fixed = range && (date < range.startDate || date > range.endDate) ? view.input.rosterHistory?.days.find((entry) => entry.employeeId === employee.id && entry.date === date) : undefined;
-      return <td key={date} className={index >= 5 ? "roster__cell roster__cell--weekend" : "roster__cell"}>{!date.startsWith(`${view.input.month}-`) ? <span aria-label="Mimo měsíc">—</span> : fixed?.status === "shift" ? <span className={`shift ${fixed.shiftKind ? SHIFT_META[fixed.shiftKind].className : ""}`} title="Převzatá směna"><span className="shift__code">P</span><span className="shift__time">{fixed.startTime}–{fixed.endTime}</span></span> : fixed?.status === "off" ? <span className="shift shift--off" title="Převzaté volno" aria-label="Převzaté volno">Volno</span> : range && (date < range.startDate || date > range.endDate) ? <span title={fixed?.status === "conflict" ? "Rozpor v podkladech" : "Neznámý den"}>?</span> : items.map((item, itemIndex) => <span key={`${item.shiftKind}-${itemIndex}`} className={`shift ${SHIFT_META[item.shiftKind].className}`} title={SHIFT_META[item.shiftKind][index >= 5 ? "weekendLabel" : "label"]}><span className="shift__code">{item.shiftKind === "morning" ? "R" : "O"}</span><span className="shift__time">{SHIFT_META[item.shiftKind][index >= 5 ? "weekendLabel" : "label"]}</span></span>)}</td>;
+       return <td key={date} className={index >= 5 ? "roster__cell roster__cell--weekend" : "roster__cell"}>{!date.startsWith(`${view.input.month}-`) ? <span aria-label="Mimo měsíc">—</span> : fixed?.status === "shift" ? <span className={`shift ${fixed.shiftKind ? SHIFT_META[fixed.shiftKind].className : ""}`} title="Převzatá směna"><span className="shift__code">P</span><span className="shift__time">{fixed.startTime}–{fixed.endTime}</span></span> : fixed?.status === "off" ? <span className="shift shift--off" title="Převzaté volno" aria-label="Převzaté volno">Volno</span> : range && (date < range.startDate || date > range.endDate) ? <span title={fixed?.status === "conflict" ? "Rozpor v podkladech" : "Neznámý den"}>?</span> : items.map((item, itemIndex) => {
+         const window = getConfirmedShiftWindow(item.shiftKind, isWeekendDate(date), employee.employmentType);
+         const timeLabel = `${window.start}–${window.end}`;
+         return <span key={`${item.shiftKind}-${itemIndex}`} className={`shift ${SHIFT_META[item.shiftKind].className}`} title={`${item.shiftKind === "morning" ? "Ranní" : "Odpolední"} · ${employee.employmentType === "part_time" ? "poloviční úvazek" : "plný úvazek"}`}><span className="shift__code">{item.shiftKind === "morning" ? "R" : "O"}</span><span className="shift__time">{timeLabel}</span></span>;
+       })}</td>;
     })}</tr>)}</tbody>
   </table></div>;
 }

@@ -45,6 +45,11 @@ describe("monthly planning input", () => {
     ]) expect(validateMonthlyInput({ ...input, workFunds })).toEqual({ ok: false, message: "Pracovní fond je neplatný." });
   });
 
+  it("přijímá poloviční úvazek jako podporovaný měsíční typ zaměstnance", () => {
+    expect(validateMonthlyInput({ ...input, employees: [{ id: "e1", displayName: "Test", employmentType: "part_time" }] }).ok).toBe(true);
+    expect(validateMonthlyInput({ ...input, employees: [{ id: "e1", displayName: "Test", employmentType: "contractor" }] }).ok).toBe(false);
+  });
+
   it("accepts only a continuous range inside the selected month", () => {
     expect(validateMonthlyInput({ ...input, planningRange: { startDate: "2026-02-14", endDate: "2026-02-28" } }).ok).toBe(true);
     for (const planningRange of [

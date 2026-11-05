@@ -246,6 +246,29 @@ describe("měsíční validace", () => {
     expect(over.canConfirm).toBe(true);
   });
 
+  it("počítá poloviční ranní směnu jako 7 h 15 min a víkendovou jako plnou směnu", () => {
+    const partTimeInput = {
+      ...input,
+      employees: [{ id: "e1", displayName: "Test", employmentType: "part_time" as const }],
+      staffingRequirements: input.staffingRequirements.map((item) => item.date === "2026-11-02" && item.shiftKind === "morning"
+        ? { ...item, requiredEmployees: 1 }
+        : item),
+      workFunds: [{ employeeId: "e1", hours: 7.25, excusedHours: 0 }],
+    };
+    const weekday = validateMonthlyPlan(partTimeInput, [assignment("2026-11-02")], completeBoundary);
+    expect(weekday.workFundFindings).toEqual([]);
+
+    const weekendInput = {
+      ...partTimeInput,
+      staffingRequirements: input.staffingRequirements.map((item) => item.date === "2026-11-07" && item.shiftKind === "morning"
+        ? { ...item, requiredEmployees: 1 }
+        : item),
+      workFunds: [{ employeeId: "e1", hours: 8.75, excusedHours: 0 }],
+    };
+    const weekend = validateMonthlyPlan(weekendInput, [assignment("2026-11-07")], completeBoundary);
+    expect(weekend.workFundFindings).toEqual([]);
+  });
+
   it("označí chybějící fond jako neověřený, ale neblokuje potvrzení", () => {
     const date = "2026-11-02";
     const result = validateMonthlyPlan({ ...input, availability: [{ employeeId: "e1", date, shiftKind: "morning" as const, available: true }] }, [assignment(date)], completeBoundary);

@@ -96,6 +96,23 @@ describe("MonthlyOrtoolsProvider", () => {
     expect(sent).not.toContain("private-id");
   });
 
+  it("předá typ úvazku anonymizovanému solveru bez jména zaměstnance", async () => {
+    let sent = "";
+    const provider = new MonthlyOrtoolsProvider(async (payload) => {
+      sent = payload;
+      return JSON.stringify({ status: "feasible", assignments: [] });
+    });
+
+    await provider.generateMonthlyPlan({
+      ...input,
+      employees: [{ id: "private-id", displayName: "Private Name", employmentType: "part_time" }],
+    }, boundary);
+
+    expect(JSON.parse(sent).input.employees).toEqual([{ id: "employee-0", employmentType: "part_time" }]);
+    expect(sent).not.toContain("Private Name");
+    expect(sent).not.toContain("private-id");
+  });
+
   it.each([
     ["infeasible", "solver_infeasible"],
     ["unknown", "solver_timeout"],

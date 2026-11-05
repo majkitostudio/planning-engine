@@ -228,9 +228,9 @@ export function MonthlyPlanningPanel({ month, canManage, formOwnerId, planningMo
       const response = await fetch("/api/employees");
       const result = await response.json();
       if (!response.ok || !result.ok) { setError(result.message ?? "Seznam zaměstnanců se nepodařilo načíst."); return; }
-      const incoming = result.employees as { id: string; displayName: string }[];
+      const incoming = result.employees as { id: string; displayName: string; employmentType?: "full_time" | "part_time" }[];
       if (!incoming.length) { setError("Seznam zaměstnanců je prázdný. Přidejte je nejprve ve správě zaměstnanců."); return; }
-      setEmployees((current) => [...current, ...incoming.filter((employee) => !current.some((item) => item.id === employee.id)).map((employee) => ({ id: employee.id, name: employee.displayName }))]);
+      setEmployees((current) => [...current, ...incoming.filter((employee) => !current.some((item) => item.id === employee.id)).map((employee) => ({ id: employee.id, name: employee.displayName, employmentType: employee.employmentType ?? "full_time" }))]);
     } catch { setError("Spojení se serverem selhalo."); } finally { setBusy(false); }
   }
   async function loadPreviousEmployees() {
@@ -242,7 +242,7 @@ export function MonthlyPlanningPanel({ month, canManage, formOwnerId, planningMo
       if (!response.ok || !result.ok) { setError(result.message ?? "Předchozí rozpis se nepodařilo načíst."); return; }
       if (!result.view) { setError("Pro předchozí měsíc není potvrzený měsíční rozpis."); return; }
       const incoming = result.view.input.employees as MonthlyPlanningInput["employees"];
-      setEmployees((current) => [...current, ...incoming.filter((employee) => !current.some((item) => item.id === employee.id)).map((employee) => ({ id: employee.id, name: employee.displayName }))]);
+       setEmployees((current) => [...current, ...incoming.filter((employee) => !current.some((item) => item.id === employee.id)).map((employee) => ({ id: employee.id, name: employee.displayName, employmentType: employee.employmentType }))]);
     } catch { setError("Spojení se serverem selhalo."); } finally { setBusy(false); }
   }
   function addAbsence() {

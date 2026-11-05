@@ -96,7 +96,13 @@ export async function loadMonthlyBoundary(month: string, employeeIds: readonly s
         const range = parsed.value.planningRange;
         if (row.draft.assignments.some((assignment) => assignment.date < range.startDate || assignment.date > range.endDate)) continue;
         const ids = parsed.value.employees.map((employee) => employee.id);
-        periods.push({ start: range.startDate, end: range.endDate, employeeIds: ids, assignments: row.draft.assignments });
+        periods.push({
+          start: range.startDate,
+          end: range.endDate,
+          employeeIds: ids,
+          assignments: row.draft.assignments,
+          employmentTypes: Object.fromEntries(parsed.value.employees.map((employee) => [employee.id, employee.employmentType])),
+        });
         const entries: RosterHistoryPeriod["entries"][number][] = [];
         for (const day of parsed.value.rosterHistory.days) {
           if (day.date >= range.startDate && day.date <= range.endDate) continue;
@@ -108,7 +114,14 @@ export async function loadMonthlyBoundary(month: string, employeeIds: readonly s
       }
       const validEmployees = Array.isArray(input.employees) && input.employees.every((employee: unknown) => isRecord(employee) && typeof employee.id === "string");
       const validDraft = draft.month === row.month && Array.isArray(draft.assignments);
-      periods.push({ start: monthDates[0], end: monthDates[monthDates.length - 1], employeeIds: validEmployees && validDraft ? (input.employees as { id: string }[]).map((employee) => employee.id) : [], assignments: validDraft ? draft.assignments as ExistingAssignment[] : [] });
+      const employees = validEmployees ? input.employees as { id: string; employmentType?: "full_time" | "part_time" }[] : [];
+      periods.push({
+        start: monthDates[0],
+        end: monthDates[monthDates.length - 1],
+        employeeIds: validEmployees && validDraft ? employees.map((employee) => employee.id) : [],
+        assignments: validDraft ? draft.assignments as ExistingAssignment[] : [],
+        employmentTypes: Object.fromEntries(employees.map((employee) => [employee.id, employee.employmentType ?? "full_time"])),
+      });
     }
   }
   if (db.rosterHistoryImport) {

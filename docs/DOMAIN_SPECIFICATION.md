@@ -226,7 +226,10 @@ Hlavní měsíční MVP má manažerovi ušetřit práci: lokální plánovač s
   odpoledních je přání, nikoli povinné pravidlo. Lokální OR-Tools je používá
   jako měkký cíl a nezávislá validace je vyhodnocuje jako neblokující nález.
   Střídání se vztahuje na sousední pracovní směny i přes dny volna.
-- Zaměstnanci na plný úvazek; částečné úvazky jsou mimo rozsah.
+- Zaměstnanci na plný a poloviční úvazek; poloviční úvazek má potvrzené
+  všednodenní časy 7:45–15:00 a 15:00–21:00. O víkendu smí pracovat v plné
+  délce víkendové směny. Podrobnosti a stav implementace v `DOMAIN_DECISIONS.md`
+  a `ROADMAP.md`.
 - Lokální OR-Tools plánovač vytváří konkrétní přiřazení směn.
 - Deterministická validace nezávisle kontroluje celý měsíc podle dostupných podkladů.
 - Výstup rozlišuje nalezené řešení, známou neproveditelnost a nedokončený běh.
@@ -405,7 +408,7 @@ musí být vynuceno deterministickou validací, ne jen instrukcí pro AI.
 | H6 | Po šesti po sobě jdoucích pracovních dnech alespoň 35 h nepřetržitého odpočinku | `VERIFIED` | Pracovní den je kalendářní den s alespoň jednou směnou (OQ21). |
 | H7 | Uzamčené přiřazení nelze přepsat | `VERIFIED` (rozhodnutí manažera 5. 11. 2026) | Ne — manažer nemůže přiřazení zamknout; solver může přepsat cokoli. |
 | H8 | Zaměstnanec pracující o víkendu má v témže týdnu dva dny volna | `VERIFIED` | Výklad „během týdne“ = pondělí–nedělí je `ASSUMPTION`. |
-| H9 | Plné a poloviční úvazky | `VERIFIED` (rozhodnutí manažera 5. 11. 2026) | Pilot podporuje plné a poloviční úvazky. Časy směn viz DOMAIN_DECISIONS.md. Implementace Milník 7. |
+| H9 | Plné a poloviční úvazky | `VERIFIED` (rozhodnutí manažera 5. 11. 2026) | Měsíční MVP podporuje oba typy; poloviční úvazek o víkendu používá plnou délku směny. |
 | H10 | Potřebné obsazení je splněno, nebo je nedostatek přiznán | `VERIFIED` (cíl) | Zda je nedostatek tvrdá chyba, je `OPEN QUESTION`. |
 | H11 | Bez potvrzení manažera se nic neukládá | `VERIFIED` (proces) | Netýká se obsahu plánu. |
 | H12 | Operativní náhrada nesmí prodlužovat, zkracovat ani dělit pevnou směnu; přesčas se nepoužívá | `VERIFIED` (interní) | Náhrada se vybírá pouze z celých existujících směn. |

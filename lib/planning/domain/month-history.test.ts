@@ -13,6 +13,27 @@ describe("podklady navazujících rozpisů", () => {
     expect(result.after.complete).toBe(true);
     expect(result.after.assignments).toEqual([]);
   });
+  it("slučuje potvrzenou poloviční ranní směnu s importovanou historií stejného času", () => {
+    const dates = Array.from({ length: 7 }, (_, i) => `2026-10-${String(25 + i).padStart(2, "0")}`);
+    const period = {
+      start: "2026-10-25", end: "2026-10-31", employeeIds: novemberEmployee,
+      assignments: [{ employeeId: "e1", date: "2026-10-30", shiftKind: "morning" as const }],
+      employmentTypes: { e1: "part_time" as const },
+    };
+    const roster = {
+      start: "2026-10-25", end: "2026-10-31", employeeIds: novemberEmployee,
+      entries: dates.map((date) => date === "2026-10-30"
+        ? { employeeId: "e1", date, status: "shift" as const, startTime: "07:45", endTime: "15:00" }
+        : { employeeId: "e1", date, status: "off" as const }),
+    };
+
+    const result = buildMonthlyBoundary("2026-11", novemberEmployee, [period], [roster]);
+
+    expect(result.before.complete).toBe(true);
+    expect(result.before.assignments).toContainEqual(expect.objectContaining({
+      employeeId: "e1", date: "2026-10-30", shiftKind: "morning", startTime: "07:45", endTime: "15:00",
+    }));
+  });
   it("sloučí totožné překryvy a neúplný rozpis nepovažuje za úplnou historii", () => {
     const result = buildMonthlyBoundary("2026-11", novemberEmployee, [before, before]);
     expect(result.before.complete).toBe(true);
@@ -66,6 +87,18 @@ describe("podklady navazujících rozpisů", () => {
 
     expect(result.before.complete).toBe(true);
     expect(result.before.assignments[0]).toMatchObject({ date: "2026-10-25", startTime: "08:05", endTime: "16:45" });
+  });
+
+  it("rozpozná potvrzený ranní čas polovičního úvazku jako ranní směnu", () => {
+    const roster = {
+      start: "2026-11-02", end: "2026-11-02", employeeIds: novemberEmployee,
+      entries: [{ employeeId: "e1", date: "2026-11-02", status: "shift" as const, startTime: "07:45", endTime: "15:00" }],
+    };
+    const result = resolveMonthlyRosterHistory("2026-11", novemberEmployee, [roster]);
+
+    expect(result.days.find((day) => day.date === "2026-11-02")).toMatchObject({
+      employeeId: "e1", status: "shift", shiftKind: "morning", startTime: "07:45", endTime: "15:00",
+    });
   });
 
   it("ponechá chybějící rosterovou buňku neznámou a označí rozporné zdroje jako neúplné", () => {

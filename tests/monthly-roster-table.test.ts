@@ -18,4 +18,21 @@ describe("tabulka měsíčního rozpisu", () => {
     expect(html).toContain("Převzatá směna");
     expect(html).toContain("Převzaté volno");
   });
+
+  it("zobrazuje všednodenní a víkendový čas polovičního úvazku", () => {
+    const view = {
+      id: "p", mode: "ortools",
+      input: { month: "2026-11", employees: [{ id: "e1", displayName: "Test", employmentType: "part_time" }] },
+      draft: { assignments: [
+        { employeeId: "e1", date: "2026-11-02", shiftKind: "morning" },
+        { employeeId: "e1", date: "2026-11-07", shiftKind: "morning" },
+      ] },
+      validation: { canConfirm: false },
+    } as unknown as MonthlyView;
+    const dates = Array.from({ length: 7 }, (_, index) => new Date(2026, 10, 2 + index));
+    const html = renderToStaticMarkup(createElement(MonthlyRosterTable, { view, weekDates: dates }));
+
+    expect(html).toContain("07:45–15:00");
+    expect(html).toContain("07:45–16:30");
+  });
 });
