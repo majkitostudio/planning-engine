@@ -33,6 +33,7 @@ describe("obrazovka plánování", () => {
     }));
     expect(settings).toContain("Upravte potřebný počet lidí pro jednotlivé směny.");
     expect(settings).toContain("Týdenní profil není uložen.");
+    expect(settings).toContain("Uložením potvrdíte všechny zobrazené hodnoty.");
     expect(settings).not.toContain("lokální výpočty");
     expect(settings).not.toContain("MANAGER");
     expect(staffingSettingsPersistenceNotice(false)).toBe("Ukládání není v tomto prostředí dostupné; hodnoty se nyní neuloží.");

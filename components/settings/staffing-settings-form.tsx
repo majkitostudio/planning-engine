@@ -119,6 +119,7 @@ export function StaffingSettingsForm({
               ? "Týdenní profil není uložen. Zobrazená čísla jsou výchozí minima; uložený profil vytvoříte výslovným uložením celé tabulky."
               : "Zdroj uložených hodnot se nepodařilo ověřit. Zobrazená čísla jsou výchozí minima, ne ověřený profil."}
       </p>
+      {canEdit && persistenceConfigured ? <p className="settings-form__notice">Uložením potvrdíte všechny zobrazené hodnoty.</p> : null}
 
       <form className="card settings-form" onSubmit={saveSettings}>
         <div className="card__head">

@@ -15,7 +15,7 @@ Opravené nálezy i otevřené kroky jsou označené samostatně. Před širší
 | --- | --- |
 | Vysoká | OPRAVENO — zápis přes starší API vyžaduje managera a chrání uložený záznam; souběžné potvrzení atomicky uloží právě jeden plán a auditní událost. |
 | Vysoká | OPRAVENO — starší relace se po resetu, změně hesla, změně role i deaktivaci odmítají podle verze relace; ověřeno také proti izolované PostgreSQL. |
-| Vysoká | Částečně opraveno — nastavení, API a měsíční formulář rozlišují uložené hodnoty od výchozích; stále je třeba rozhodnout, zda samotné uložení celé tabulky znamená schválení výchozích hodnot a jak se má chovat operativní náhrada při chybějícím profilu. |
+| Vysoká | Nastavení rozlišuje uložené a výchozí hodnoty. Manažer schvaluje uložením celou tabulku; náhrada při chybějícím potřebném obsazení žádá o doplnění. Zbývá prověřit změnu profilu mezi vytvořením náhrady a jejím potvrzením. |
 | Další | Částečně opraveno — nejednoznačné a neexistující místní časy i vstup nad 200 zaměstnanců jsou blokovány. Pokračovat v opravách přístupnosti, chyby chybějícího návrhu a ověřit výkon plánování. |
 | Dokončení MVP | Správa jednotlivých rozpisů je implementovaná a částečně ověřená; zbývá souvislý syntetický průchod včetně potvrzení nového rozpisu a návazností. Python i izolované databázové testy běží v CI. |
 
@@ -99,6 +99,11 @@ testovacím předpokladem, nikoli schváleným provozním pravidlem.
 - `VERIFIED` — GitHub CI běh `41936907000` na `6b225e3` úspěšně dokončil
   lint, typecheck, testy a build, Python testy solveru i izolované databázové
   integrační testy. Úspěch CI nenahrazuje výše uvedený průchod prohlížečem.
+- `NOT VERIFIED` — Následující CI běh `41942517618` na dokumentačním commitu
+  `dc55aed` selhal při buildu na `next/font/google`; ostatní kroky i databázový
+  a Python job prošly. Chyba odpovídá [hlášení Next.js](https://github.com/vercel/next.js/issues/99114),
+  ale konkrétní odpověď Google Fonts není z logu doložená. Opravu je nutné
+  samostatně ověřit; předchozí úspěšný běh neznamená aktuálně zelené CI.
 
 ### Rozhraní manažera — `IMPLEMENTED`, ověřeno částečně
 
@@ -541,10 +546,25 @@ označíme za hotovou až po opravě a doloženém ověření jejího rozsahu.
 4. **P1 — Pravdivé zdroje obsazení.**
    - [x] V nastavení, API a měsíčním formuláři rozlišit uložený profil od
      výchozích hodnot; měsíční návrh předvyplňuje jen uložené hodnoty.
-   - [ ] Určit, zda manažer výslovným uložením celé tabulky schvaluje i
+   - [x] Určit, zda manažer výslovným uložením celé tabulky schvaluje i
      dosazené výchozí hodnoty.
-   - [ ] Prověřit další použití výchozího profilu a rozhodnout o fallbacku při
+   - [x] Prověřit další použití výchozího profilu a rozhodnout o fallbacku při
      operativní náhradě.
+   - [ ] Prověřit a řešit změnu profilu mezi vytvořením náhrady a jejím
+     potvrzením: současné potvrzení znovu kontroluje uložený snapshot, nikoli
+     aktuální nastavení obsazení.
+   - `VERIFIED` (rozhodnutí uživatele 5. 11. 2026) — Uložením se schvaluje celá
+     zobrazená tabulka; při chybějícím potřebném obsazení náhrada žádá o jeho
+     doplnění. Viz [`DOMAIN_DECISIONS.md`](DOMAIN_DECISIONS.md).
+   - `IMPLEMENTED` — Nový návrh náhrady vyžaduje uložené hodnoty pro použité
+     směny, bez dosazení výchozích minim. U nepotvrzených starších návrhů bez
+     doloženého zdroje obsazení se vyžaduje vytvoření nového návrhu. Dříve
+     potvrzené záznamy zůstávají beze změny.
+   - `VERIFIED` (5. 11. 2026, syntetická data) — V prohlížeči se uložilo všech
+     14 hodnot; při chybějící hodnotě API náhradu odmítlo a po doplnění ji
+     vytvořilo. Prošlo 526 testů, 12 bylo přeskočeno; čtyři integrační soubory
+     na izolované PostgreSQL prošly s 8 testy. Prošly také lint, typecheck,
+     validace Prisma schématu a lokální build.
    - `VERIFIED` (5. 11. 2026, kontrola zdrojového kódu) — GET nastavení skládá
      úplných 14 buněk z uložených hodnot a výchozích minim; formulář při
      výslovném uložení odešle všech 14 a API je uloží. Operativní náhrada při

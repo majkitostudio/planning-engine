@@ -5,6 +5,7 @@ import { prisma } from "../db";
 import { toPlanningActor } from "../auth/actor";
 import { makeRunResult } from "../../tests/planning/fixtures";
 import { createReplacementOptions } from "./replacement-service";
+import { confirmPersistedReplacementRun } from "./confirm-service";
 import {
   getSimulatedReplacementScenario,
 } from "./simulated/replacement-scenarios";
@@ -19,6 +20,31 @@ import {
 const enabled = process.env.PLANNING_PERSISTENCE_INTEGRATION === "1";
 
 describe.skipIf(!enabled)("týdenní persistence v izolované PostgreSQL", () => {
+  it("zachová ověřený zdroj obsazení a zablokuje starší návrh bez něj", async () => {
+    const url = new URL(process.env.DATABASE_URL ?? "");
+    if (url.hostname !== "localhost" || url.port !== "55439" || url.pathname !== "/planning_monthly_test") throw new Error("Integrační test vyžaduje výhradně vyhrazenou izolovanou databázi.");
+    const suffix = randomUUID();
+    const actor = toPlanningActor({ user: { id: `source-${suffix}`, email: `${suffix}@example.test`, name: "Syntetický manažer", role: "manager" } });
+    const scenario = getSimulatedReplacementScenario("single-absence");
+    if (!actor || !scenario) throw new Error("Chybí syntetický aktér nebo scénář.");
+    const makeSnapshot = (id: string): ReplacementRunSnapshot => ({
+      replacementId: id, scenarioId: scenario.id, scenarioLabel: scenario.label,
+      providerName: "simulated-fixture/single-absence", mode: "simulated", input: scenario.input,
+      basePlan: scenario.basePlan,
+      result: createReplacementOptions(scenario.input, scenario.basePlan, { ...scenario.request, id }, scenario.drafts),
+      confirmedPlan: null, confirmedAt: null, confirmedById: null,
+    });
+    const persistence = new PrismaPlanningPersistence(prisma);
+    const current = { ...makeSnapshot(`source-current-${suffix}`), staffingSource: "saved" as const };
+    const legacy = makeSnapshot(`source-legacy-${suffix}`);
+    await persistence.saveReplacementRun(current, actor);
+    await persistence.saveReplacementRun(legacy, actor);
+    expect(await persistence.getReplacementRun(current.replacementId)).toMatchObject({ staffingSource: "saved" });
+    expect(await persistence.getReplacementRun(legacy.replacementId)).not.toHaveProperty("staffingSource");
+    expect(await confirmPersistedReplacementRun(persistence, legacy.replacementId, legacy.result.options[0]!.id, actor)).toMatchObject({ ok: false, code: "replacement_confirmation_blocked", blockers: expect.arrayContaining([expect.objectContaining({ code: "replacement_not_verified" })]) });
+    expect(await confirmPersistedReplacementRun(persistence, current.replacementId, current.result.options[0]!.id, actor)).toMatchObject({ ok: true, alreadyConfirmed: false });
+    expect(await persistence.getReplacementRun(current.replacementId)).toMatchObject({ staffingSource: "saved" });
+  });
   it("odmítne kolizi s potvrzeným týdenním záznamem bez změny uložených dat", async () => {
     const url = new URL(process.env.DATABASE_URL ?? "");
     if (

@@ -13,7 +13,7 @@
 > ho jen překládá do praxe a zaznamenává odpovědi.
 
 Datum vytvoření: 22. 10. 2026
-Poslední aktualizace: 3. 11. 2026
+Poslední aktualizace: 5. 11. 2026
 Vyplnil: uživatel / zadání projektu (částečně)
 
 ## Rozhodnutí manažera: měsíční MVP a vizuální návrh (31. 10. 2026)
@@ -211,6 +211,10 @@ otázka zůstává otevřená.
 - **Platnost minima obsazení:** manager potvrdil opakující se týdenní profil.
   Uložená hodnota pro den a směnu platí pro každý odpovídající den v týdnu,
   dokud ji manager nezmění; nejde o nastavení navázané na jeden kalendářní týden.
+- **Uložení a chybějící obsazení (`VERIFIED`, 5. 11. 2026):** Výslovným
+  uložením celé tabulky manažer schvaluje všechny zobrazené hodnoty včetně
+  předvyplněných. Když při operativní náhradě chybí uložený potřebný počet
+  pro směnu, aplikace požádá o doplnění; výchozí počet sama nedosadí.
 - **Tvrdá pravidla MVP:** platí pouze již potvrzená pravidla. Další limity
   hodin či směn se nesmějí domýšlet.
 - **Požadavky zaměstnanců:** o schválení či odmítnutí rozhoduje manager.

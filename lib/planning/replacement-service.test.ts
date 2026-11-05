@@ -242,7 +242,7 @@ describe("replacement-service", () => {
     );
   });
 
-  it("pro ranní náhradu použije nové minimum všedního dne i bez hodnoty ve vstupu", async () => {
+  it("chybějící obsazení cílové směny označí jako neověřené bez dosazení minima", async () => {
     const { getSimulatedReplacementScenario } = await import(
       "./simulated/replacement-scenarios"
     );
@@ -286,17 +286,10 @@ describe("replacement-service", () => {
       },
     );
 
-    expect(option.coverage).toEqual(
-      expect.arrayContaining([
-        expect.objectContaining({
-          date: WEEK_START,
-          shiftKind: "morning",
-          requiredEmployees: 23,
-          assignedEmployees: 23,
-          missingEmployees: 0,
-        }),
-      ]),
-    );
+    expect(option.validation.status).toBe("not_verified");
+    expect(option.validation.unverifiedChecks).toEqual(expect.arrayContaining([expect.objectContaining({ code: "COVERAGE_REQUIREMENT_MISSING", date: WEEK_START, shiftKind: "morning" })]));
+    expect(option.coverage.some((line) => line.date === WEEK_START && line.shiftKind === "morning")).toBe(false);
+    expect(getReplacementTargetSummary(inputWithoutMorningRequirement, scenario!.basePlan, request).requiredEmployees).toBeNull();
   });
 
   it("odmítne kandidáta se schválenou absencí", () => {

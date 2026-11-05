@@ -14,11 +14,9 @@ import {
   type ReplacementRequest,
   type ReplacementRunResult,
 } from "./domain";
-import { getStaffingRequirement } from "./staffing-settings";
-
 export interface ReplacementTargetSummary {
   readonly assignedEmployees: number;
-  readonly requiredEmployees: number;
+  readonly requiredEmployees: number | null;
   readonly afterIncidentEmployees: number;
 }
 
@@ -28,15 +26,14 @@ export function getReplacementTargetSummary(
   basePlan: ConfirmedPlan,
   request: ReplacementRequest,
 ): ReplacementTargetSummary {
-  const validationInput = withReplacementMinimum(input, request);
   const { date, shiftKind, absentEmployeeId } = request.incident;
   const assignedEmployees = basePlan.assignments.filter(
     (assignment) =>
       assignment.date === date && assignment.shiftKind === shiftKind,
   ).length;
-  const requiredEmployees = validationInput.staffingRequirements.find(
+  const requiredEmployees = input.staffingRequirements.find(
     (requirement) => requirement.date === date && requirement.shiftKind === shiftKind,
-  )?.requiredEmployees ?? 0;
+  )?.requiredEmployees ?? null;
   const absentEmployeeWasAssigned = basePlan.assignments.some(
     (assignment) =>
       assignment.employeeId === absentEmployeeId &&
@@ -104,7 +101,7 @@ export function evaluateReplacementOption(
 ): ReplacementOption {
   const assignments = removeIncidentAssignment(draft.assignments, request);
   const validationInput = withAcceptedVacationChanges(
-    withReplacementMinimum(input, request),
+    input,
     assignments,
     new Set(acceptedTimeOffChangeIds),
   );
@@ -182,35 +179,6 @@ function withAcceptedVacationChanges(
 
 export function timeOffChangeId(employeeId: string, date: string): string {
   return `${employeeId}|${date}`;
-}
-
-function withReplacementMinimum(
-  input: PlanningInput,
-  request: ReplacementRequest,
-): PlanningInput {
-  const targetRequirement = input.staffingRequirements.find(
-    (requirement) =>
-      requirement.date === request.incident.date &&
-      requirement.shiftKind === request.incident.shiftKind,
-  );
-  const minimumRequirement = {
-    date: request.incident.date,
-    shiftKind: request.incident.shiftKind,
-    requiredEmployees:
-      targetRequirement?.requiredEmployees ??
-      getStaffingRequirement([], request.incident.date, request.incident.shiftKind),
-  };
-
-  const staffingRequirements = targetRequirement
-    ? input.staffingRequirements.map((requirement) =>
-        requirement.date === minimumRequirement.date &&
-        requirement.shiftKind === minimumRequirement.shiftKind
-          ? minimumRequirement
-          : requirement,
-      )
-    : [...input.staffingRequirements, minimumRequirement];
-
-  return { ...input, staffingRequirements };
 }
 
 function removeIncidentAssignment(

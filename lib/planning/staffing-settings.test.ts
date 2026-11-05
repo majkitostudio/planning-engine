@@ -119,4 +119,23 @@ describe("staffing settings", () => {
       ]),
     );
   });
+
+  it("chybějící uložené minimum při náhradě nenahradí výchozí hodnotou", () => {
+    const scenario = getSimulatedReplacementScenario("single-absence");
+    if (!scenario) throw new Error("Fixture operativní náhrady chybí.");
+    const settings = getCompleteStaffingSettings([]).filter((setting) => !(setting.dayOfWeek === 0 && setting.shiftKind === "morning"));
+    const input = applyStaffingSettings(scenario.input, settings);
+    expect(input.staffingRequirements.some((item) => item.date === "2026-10-05" && item.shiftKind === "morning")).toBe(false);
+    expect(evaluateReplacementOption(input, scenario.basePlan, scenario.request, scenario.drafts[0]!).validation.status).toBe("not_verified");
+  });
+
+  it("pro cílovou směnu incidentu použije uložené obsazení i při nulové hodnotě v ukázce", () => {
+    const scenario = getSimulatedReplacementScenario("single-absence");
+    if (!scenario) throw new Error("Fixture operativní náhrady chybí.");
+    const incident = scenario.request.incident;
+    const input = { ...scenario.input, staffingRequirements: scenario.input.staffingRequirements.map((item) => item.date === incident.date && item.shiftKind === incident.shiftKind ? { ...item, requiredEmployees: 0 } : item) };
+    const settings = getCompleteStaffingSettings([]).map((item) => item.dayOfWeek === 1 && item.shiftKind === "afternoon" ? { ...item, requiredEmployees: 5 } : item);
+    const result = applyStaffingSettings(input, settings, incident);
+    expect(result.staffingRequirements.find((item) => item.date === incident.date && item.shiftKind === incident.shiftKind)?.requiredEmployees).toBe(5);
+  });
 });

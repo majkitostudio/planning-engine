@@ -185,6 +185,12 @@ export async function confirmPersistedReplacementRun(
   }
 
   const blockers: ConfirmationBlocker[] = [];
+  if (snapshot.staffingSource !== "saved") {
+    blockers.push({
+      code: "replacement_not_verified",
+      message: "U tohoto staršího návrhu nelze ověřit zdroj potřebného obsazení. Zkontrolujte nastavení a vytvořte náhradu znovu.",
+    });
+  }
   if (snapshot.basePlan.proposalId !== snapshot.result.request.baseProposalId) {
     blockers.push({
       code: "replacement_base_stale",

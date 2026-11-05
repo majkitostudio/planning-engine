@@ -7,6 +7,7 @@ import { POST as confirmReplacement } from "../app/api/planning/replacement/conf
 import { getPlanningPersistenceRuntime } from "../lib/planning/persistence-runtime";
 import { SIMULATED_WEEK_START } from "../lib/planning/simulated/scenarios";
 import { getSimulatedReplacementScenario } from "../lib/planning/simulated/replacement-scenarios";
+import { getCompleteStaffingSettings } from "../lib/planning/staffing-settings";
 
 vi.mock("@/auth", () => ({
   auth: vi.fn(),
@@ -41,7 +42,7 @@ function validBody(overrides: Record<string, unknown> = {}) {
 }
 
 describe("replacement route handlers", () => {
-  beforeEach(() => {
+  beforeEach(async () => {
     vi.stubEnv("AUTH_SECRET", "test-auth-secret");
     vi.stubEnv("AUTH_MICROSOFT_ENTRA_ID_ID", "test-client-id");
     vi.stubEnv("AUTH_MICROSOFT_ENTRA_ID_SECRET", "test-client-secret");
@@ -63,10 +64,40 @@ describe("replacement route handlers", () => {
         role: "manager",
       },
     });
+    const persistence = getPlanningPersistenceRuntime();
+    if (!persistence.configured) throw new Error("Test persistence není nakonfigurovaná.");
+    await persistence.persistence.saveStaffingSettings(getCompleteStaffingSettings([]));
   });
 
   afterEach(() => {
     vi.unstubAllEnvs();
+  });
+
+  it.each([[0, "morning"], [1, "afternoon"]] as const)("požádá o chybějící obsazení pro den %i a směnu %s", async (dayOfWeek, shiftKind) => {
+    const persistence = getPlanningPersistenceRuntime();
+    if (!persistence.configured) throw new Error("Test persistence není nakonfigurovaná.");
+    const settings = getCompleteStaffingSettings([]).filter((setting) => !(setting.dayOfWeek === dayOfWeek && setting.shiftKind === shiftKind));
+    await persistence.persistence.saveStaffingSettings(settings);
+    const response = await createReplacement(jsonRequest("http://localhost/api/planning/replacement", validBody({ requestId: "missing-staffing-test" })));
+    expect(response.status).toBe(409);
+    expect(await responseJson(response)).toMatchObject({ ok: false, rejected: { code: "staffing_missing", message: expect.stringContaining("obsazení") } });
+    expect(await persistence.persistence.getReplacementRun("missing-staffing-test")).toBeNull();
+  });
+
+  it("uloženou nulu považuje za skutečnou hodnotu, nikoli chybějící obsazení", async () => {
+    const persistence = getPlanningPersistenceRuntime();
+    if (!persistence.configured) throw new Error("Test persistence není nakonfigurovaná.");
+    await persistence.persistence.saveStaffingSettings(getCompleteStaffingSettings([]).map((setting) => setting.dayOfWeek === 1 && setting.shiftKind === "afternoon" ? { ...setting, requiredEmployees: 0 } : setting));
+    const response = await createReplacement(jsonRequest("http://localhost/api/planning/replacement", validBody()));
+    expect(response.status).toBe(200);
+  });
+
+  it("nevyžaduje hodnotu pro neaktivní směnu syntetického scénáře", async () => {
+    const persistence = getPlanningPersistenceRuntime();
+    if (!persistence.configured) throw new Error("Test persistence není nakonfigurovaná.");
+    await persistence.persistence.saveStaffingSettings(getCompleteStaffingSettings([]).filter((setting) => !(setting.dayOfWeek === 2 && setting.shiftKind === "morning")));
+    const response = await createReplacement(jsonRequest("http://localhost/api/planning/replacement", validBody()));
+    expect(response.status).toBe(200);
   });
 
   it("odmítne anonymní vytvoření návrhu", async () => {

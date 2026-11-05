@@ -189,6 +189,7 @@ function makeReplacementSnapshot(
     scenarioLabel: scenario.label,
     providerName: "simulated-fixture/single-absence",
     mode: "simulated",
+    staffingSource: "saved",
     input,
     basePlan: scenario.basePlan,
     result: tamperedResult,
@@ -199,6 +200,25 @@ function makeReplacementSnapshot(
 }
 
 describe("confirmPersistedReplacementRun", () => {
+  it("nepotvrdí starší návrh, u kterého nelze doložit zdroj obsazení", async () => {
+    const persistence = new InMemoryPlanningPersistence();
+    const snapshot = makeReplacementSnapshot();
+    const option = snapshot.result.options[0]!;
+    await persistence.saveReplacementRun({ ...snapshot, staffingSource: undefined }, replacementActor);
+    const result = await confirmPersistedReplacementRun(persistence, snapshot.replacementId, option.id, replacementActor, Date.UTC(2026, 9, 29, 8));
+    expect(result).toMatchObject({ ok: false, code: "replacement_confirmation_blocked", blockers: expect.arrayContaining([expect.objectContaining({ code: "replacement_not_verified", message: expect.stringContaining("obsazení") })]) });
+    expect((await persistence.getReplacementRun(snapshot.replacementId))?.confirmedPlan).toBeNull();
+  });
+  it("nepotvrdí starší snapshot s chybějícím požadavkem na obsazení cílové směny", async () => {
+    const persistence = new InMemoryPlanningPersistence();
+    const snapshot = makeReplacementSnapshot();
+    const option = snapshot.result.options[0]!;
+    const incident = snapshot.result.request.incident;
+    await persistence.saveReplacementRun({ ...snapshot, input: { ...snapshot.input, staffingRequirements: snapshot.input.staffingRequirements.filter((item) => item.date !== incident.date || item.shiftKind !== incident.shiftKind) } }, replacementActor);
+    const result = await confirmPersistedReplacementRun(persistence, snapshot.replacementId, option.id, replacementActor, Date.UTC(2026, 9, 29, 8));
+    expect(result).toMatchObject({ ok: false, code: "replacement_confirmation_blocked", blockers: expect.arrayContaining([expect.objectContaining({ code: "replacement_not_verified" })]) });
+    expect((await persistence.getReplacementRun(snapshot.replacementId))?.confirmedPlan).toBeNull();
+  });
   it("potvrdí validní úplnou variantu a opakování je idempotentní", async () => {
     const persistence = new InMemoryPlanningPersistence();
     const snapshot = makeReplacementSnapshot();

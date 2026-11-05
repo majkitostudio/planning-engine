@@ -83,18 +83,25 @@ export function getStaffingRequirement(
 export function applyStaffingSettings(
   input: PlanningInput,
   settings: readonly StaffingSetting[],
+  incident?: { readonly date: string; readonly shiftKind: ShiftKind },
 ): PlanningInput {
+  const findSaved = (date: string, shiftKind: ShiftKind) => isIsoDate(date)
+    ? settings.find((setting) => setting.dayOfWeek === weekdayIndex(date) && setting.shiftKind === shiftKind)
+    : undefined;
+  const staffingRequirements = input.staffingRequirements.flatMap((requirement) => {
+    const isIncident = incident?.date === requirement.date && incident.shiftKind === requirement.shiftKind;
+    // Nulové položky ukázky značí neaktivní směny; cílovou směnu ověříme vždy.
+    if (requirement.requiredEmployees <= 0 && !isIncident) return [requirement];
+    const saved = findSaved(requirement.date, requirement.shiftKind);
+    return saved ? [{ ...requirement, requiredEmployees: saved.requiredEmployees }] : [];
+  });
+  if (incident && !input.staffingRequirements.some((item) => item.date === incident.date && item.shiftKind === incident.shiftKind)) {
+    const saved = findSaved(incident.date, incident.shiftKind);
+    if (saved) staffingRequirements.push({ date: incident.date, shiftKind: incident.shiftKind, requiredEmployees: saved.requiredEmployees });
+  }
   return {
     ...input,
-    staffingRequirements: input.staffingRequirements.map((requirement) => ({
-      ...requirement,
-      // Syntetické fixture používají nulu pro neaktivní sloty. Ty zůstávají
-      // nulové; skutečně používaný požadavek se přepíše uloženou hodnotou.
-      requiredEmployees:
-        requirement.requiredEmployees > 0
-          ? getStaffingRequirement(settings, requirement.date, requirement.shiftKind)
-          : requirement.requiredEmployees,
-    })),
+    staffingRequirements,
   };
 }
 

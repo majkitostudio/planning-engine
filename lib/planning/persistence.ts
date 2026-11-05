@@ -31,6 +31,7 @@ export interface ReplacementRunSnapshot {
   readonly scenarioLabel: string;
   readonly providerName: string;
   readonly mode: PlanningProviderMode;
+  readonly staffingSource?: "saved";
   readonly input: PlanningInput;
   readonly basePlan: ConfirmedPlan;
   readonly result: ReplacementRunResult;
@@ -760,6 +761,7 @@ function planningSnapshotFromRecord(row: PlanningRunRecord): PlanningRunSnapshot
 function replacementEnvelope(snapshot: ReplacementRunSnapshot) {
   return {
     kind: "replacement" as const,
+    ...(snapshot.staffingSource === "saved" ? { staffingSource: "saved" as const } : {}),
     basePlan: snapshot.basePlan,
     result: snapshot.result,
   };
@@ -780,6 +782,7 @@ function replacementSnapshotFromRecord(
 ): ReplacementRunSnapshot {
   const envelope = row.result as unknown as {
     kind: "replacement";
+    staffingSource?: unknown;
     basePlan: ConfirmedPlan;
     result: ReplacementRunResult;
   };
@@ -789,6 +792,7 @@ function replacementSnapshotFromRecord(
     scenarioLabel: row.scenarioLabel,
     providerName: row.providerName,
     mode: row.mode as PlanningProviderMode,
+    ...(envelope.staffingSource === "saved" ? { staffingSource: "saved" as const } : {}),
     input: row.input as unknown as PlanningInput,
     basePlan: envelope.basePlan,
     result: envelope.result,
