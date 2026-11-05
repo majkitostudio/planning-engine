@@ -47,9 +47,9 @@ pro prezentaci vedení firmy. Každá položka má kritérium dokončení.
 - [ ] Zkontrolovat `.env.example` — všechny potřebné proměnné dokumentovány.
 
 ## Fáze 5 — Dokumentace pro vedení
-- [ ] Aktualizovat `README.md` — stav projektu, co je hotové, co je demo.
-- [ ] Připravit krátký scénář prezentace (kroky 1–5 výše).
-- [ ] Připravit „co není hotové“ — částečné úvazky, produkční auth/DB, analytika.
+- [x] Aktualizovat `README.md` — stav projektu, co je hotové, co je demo.
+- [x] Připravit krátký scénář prezentace (kroky 1–5 výše) — `docs/PREZENTACNI_SCENAR.md`.
+- [x] Připravit „co není hotové“ — částečné úvazky, produkční auth/DB, analytika.
 
 ## Blokující položky (vyžadují rozhodnutí)
 - Žádné — všechna rozhodnutí jsou zapsána v `docs/DOMAIN_DECISIONS.md`.
