@@ -645,23 +645,38 @@ označíme za hotovou až po opravě a doloženém ověření jejího rozsahu.
        ověřuje přechod otevřeno → zavřeno. V prohlížeči při 390 × 844 px
        načtené styly potvrdily skrytí zavřené navigace, její zobrazení po
        otevření a přeskočení skrytého odkazu klávesou Tab. Fokus v běžícím
-       `AppShell` a čtečka obrazovky zůstávají `NOT VERIFIED`; lokální přihlášení
-       nebylo dostupné.
+       `AppShell` byl následně ověřen v přihlášené aplikaci, viz níže; čtečka
+       obrazovky zůstává `NOT VERIFIED`.
      - [x] Rozlišit popisky tlačítek pro odebrání zaměstnanců a absencí; pole
        historie pojmenovat typem pole, přiřazeným zaměstnancem a dnem. Pokud
        řádek ještě není přiřazen, použije se název zdrojového řádku. Tři cílené
        testy ověřují formát popisků a mapované jméno; úplné testy, lint,
-       typecheck a build prošly. Výsledný DOM a čtečka obrazovky zůstávají
-       `NOT VERIFIED`.
+       typecheck a build prošly. Výsledný DOM zaměstnanců a absence byl následně
+       ověřen, viz níže; čtečka obrazovky zůstává `NOT VERIFIED`.
      - [x] Po změně kroku měsíčního formuláře přesunout fokus na legendu
        aktivního kroku, včetně skoku do souhrnu při chybějících vstupech.
        Cílený test ověřuje přechodový predikát; úplné testy, lint, typecheck a
-       build prošly. Skutečný fokus v prohlížeči zůstává `NOT VERIFIED`.
+       build prošly. Skutečný fokus byl následně ověřen v prohlížeči, viz níže.
      - [x] Při `404` nabídnout bezpečné odebrání neplatného odkazu pouze
        z prohlížeče; při dočasné chybě zachovat odkaz. Cílený test prošel;
-       zobrazení a ovládání v prohlížeči je `NOT VERIFIED`.
-     - [ ] Ověřit mobilní ovládání a fokus se čtečkou obrazovky; rozhodnout o
-       ochraně rozepsaných vstupů s ohledem na citlivá data.
+       zobrazení a ovládání bylo následně ověřeno v prohlížeči, viz níže.
+     - `VERIFIED` (5. 11. 2026, syntetická data, 390 × 844) — V přihlášené
+       aplikaci Escape zavřel mobilní navigaci a vrátil fokus na její tlačítko;
+       zavřená navigace nebyla v následném pořadí Tab. Po přechodu mezi kroky
+       formuláře dostala fokus legenda a další Tab přešel na první pole obsazení.
+       Popisky pro dva testovací zaměstnance i absenci se v DOM lišily. Neplatný
+       odkaz na návrh šel odstranit z prohlížeče; při 503 se zachoval.
+       Při přepínání měsíců byly opraveny duplicitní identifikátory popisků.
+     - `VERIFIED` / `IMPLEMENTED` — Manažer zvolil automatické ukládání
+       rozepsaného zadání v zařízení. Zadání se ukládá zvlášť pro účet a měsíc,
+       při chybě ukládání zobrazí upozornění a lze jej vymazat. Změna v jiném
+       okně pozastaví ukládání do výslovné volby uživatele. Syntetický průchod
+       ověřil obnovení nedokončených údajů, měsíců, chyby úložiště i souběh oken.
+       Pro bezpečný souběžný zápis je nutná podpora Web Locks a zabezpečený
+       kontext prohlížeče (HTTPS nebo localhost); bez ní se ukládání zablokuje
+       a zobrazí se upozornění. Data v prohlížeči nejsou šifrovaná a jsou
+       dostupná uživatelům zařízení.
+     - [ ] Ověřit mobilní ovládání a fokus skutečnou čtečkou obrazovky.
    - [ ] Posoudit vývojové závislosti a ověřit kompatibilní aktualizace.
 9. **P2 — Závěrečné ověření MVP.**
    - [ ] Provést syntetický průchod návrh → kontrola → potvrzení → obnovení,

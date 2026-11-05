@@ -35,8 +35,10 @@ export default async function PlanningPage() {
 
   return (
     <PlanWorkspace
+      key={`${session?.user?.id ?? "anonymous"}:${session?.user?.role ?? "none"}`}
       runtime={runtime}
       canManage={session?.user?.role === "manager"}
+      formOwnerId={session?.user?.id ?? null}
       initialStaffing={initialStaffing}
       staffingProfileStatus={staffingProfileStatus}
     />

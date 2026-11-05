@@ -13,6 +13,7 @@ import { datesInMonth } from "@/lib/planning/domain/month";
 import { monthlyInstructionMessage, monthlyValidationMessage } from "@/lib/planning/monthly-view";
 import { isUnavailableMonthlyDraftStatus } from "@/lib/planning/monthly-recovery";
 import { removalActionLabel, shouldFocusStepHeading } from "@/lib/accessibility-labels";
+import { loadMonthlyForm, monthlyFormStorageKey, saveMonthlyFormAtomically } from "@/lib/planning/monthly-form-storage";
 import { MonthlyRunsManager } from "./monthly-runs-manager";
 
 export interface MonthlyView {
@@ -28,7 +29,7 @@ type BoundaryReadiness = { readonly key: string; readonly status: "loading" | "a
 const DAYS = ["Pondělí", "Úterý", "Středa", "Čtvrtek", "Pátek", "Sobota", "Neděle"];
 const STEPS = ["Zaměstnanci", "Absence a dostupnost", "Obsazení", "Doplňující pokyny", "Souhrn a návrh"] as const;
 
-export function MonthlyPlanningPanel({ month, canManage, planningMode, initialStaffing, staffingProfileStatus, onResult, onRemoved }: { month: string; canManage: boolean; planningMode: MonthlyView["mode"] | null; initialStaffing: readonly StaffingSetting[] | null; staffingProfileStatus: StaffingProfileStatus; onResult: (month: string, result: MonthlyView | null) => void; onRemoved: (month: string, id: string) => void }) {
+export function MonthlyPlanningPanel({ month, canManage, formOwnerId, planningMode, initialStaffing, staffingProfileStatus, onResult, onRemoved }: { month: string; canManage: boolean; formOwnerId: string | null; planningMode: MonthlyView["mode"] | null; initialStaffing: readonly StaffingSetting[] | null; staffingProfileStatus: StaffingProfileStatus; onResult: (month: string, result: MonthlyView | null) => void; onRemoved: (month: string, id: string) => void }) {
   const [employees, setEmployees] = useState<MonthlyFormData["employees"]>([]);
   const [name, setName] = useState("");
   const [absences, setAbsences] = useState<Absence[]>([]);
@@ -51,10 +52,63 @@ export function MonthlyPlanningPanel({ month, canManage, planningMode, initialSt
   const [confirmed, setConfirmed] = useState(false);
   const [restored, setRestored] = useState(false);
   const [boundaryReadiness, setBoundaryReadiness] = useState<BoundaryReadiness | null>(null);
+  const [formStorage, setFormStorage] = useState<"loading" | "empty" | "ready" | "saved" | "cleared" | "unavailable" | "invalid" | "conflict">("loading");
+  const [formRestored, setFormRestored] = useState(false);
+  const formRaw = useRef<string | null>(null);
+  const formWrites = useRef<Promise<void>>(Promise.resolve());
+  const formGeneration = useRef(0);
+  const forceFormWrite = useRef(false);
   const stepHeadingRef = useRef<HTMLLegendElement>(null);
   const previousStep = useRef(step);
   const revision = useRef(0);
   const storageKey = `planning-monthly-draft:${month}`;
+
+  useEffect(() => {
+    if (!canManage || !formOwnerId) return;
+    let active = true;
+    queueMicrotask(() => {
+      if (!active) return;
+      try {
+        const loaded = loadMonthlyForm(localStorage, formOwnerId, month);
+        if (loaded.status !== "unavailable") formRaw.current = loaded.raw;
+        if (loaded.status === "found") {
+          const data = loaded.value;
+          setEmployees(data.employees); setName(data.name); setAbsences([...data.absences]); setPartialAbsences([...data.partialAbsences]);
+          setStaffing([...data.staffing]); setInstructions(data.instructions); setShiftRotationPreference(data.shiftRotationPreference);
+          setPartialMonth(data.partialMonth); setRangeStart(data.rangeStart); setRangeEnd(data.rangeEnd);
+          setEmployeeId(data.employeeId); setDate(data.date); setEndDate(data.endDate); setAbsenceShift(data.absenceShift); setStep(data.step);
+          setFormRestored(true); setFormStorage("ready");
+        } else setFormStorage(loaded.status);
+      } catch { setFormStorage("unavailable"); }
+    });
+    return () => { active = false; };
+  }, [canManage, formOwnerId, month]);
+
+  useEffect(() => {
+    if (!canManage || !formOwnerId || (formStorage !== "ready" && formStorage !== "saved")) return;
+    const value = { employees, name, absences, partialAbsences, staffing, instructions, shiftRotationPreference, partialMonth, rangeStart, rangeEnd, employeeId, date, endDate, absenceShift, step };
+    const generation = formGeneration.current;
+    formWrites.current = formWrites.current.then(async () => {
+      if (generation !== formGeneration.current) return;
+      try {
+        const result = await saveMonthlyFormAtomically(localStorage, navigator.locks, formOwnerId, month, value, formRaw.current, forceFormWrite.current, () => generation === formGeneration.current);
+        if (generation !== formGeneration.current) return;
+        if (result.status === "saved") { formRaw.current = result.raw; forceFormWrite.current = false; setFormStorage((current) => current === "ready" ? "saved" : current); }
+        else if (result.status === "conflict") { formGeneration.current++; setFormStorage("conflict"); }
+        else if (result.status === "unavailable") setFormStorage("unavailable");
+      } catch { if (generation === formGeneration.current) setFormStorage("unavailable"); }
+    });
+  }, [canManage, formOwnerId, month, formStorage, employees, name, absences, partialAbsences, staffing, instructions, shiftRotationPreference, partialMonth, rangeStart, rangeEnd, employeeId, date, endDate, absenceShift, step]);
+
+  useEffect(() => {
+    if (!canManage || !formOwnerId) return;
+    const onStorage = (event: StorageEvent) => {
+      try { if (event.storageArea !== localStorage) return; } catch { setFormStorage("unavailable"); return; }
+      if (event.key === monthlyFormStorageKey(formOwnerId, month) || event.key === null) { formGeneration.current++; forceFormWrite.current = false; setFormStorage("conflict"); }
+    };
+    window.addEventListener("storage", onStorage);
+    return () => window.removeEventListener("storage", onStorage);
+  }, [canManage, formOwnerId, month]);
 
   useEffect(() => {
     if (shouldFocusStepHeading(previousStep.current, step)) {
@@ -193,26 +247,51 @@ export function MonthlyPlanningPanel({ month, canManage, planningMode, initialSt
   }
   function changeStep(next: number) { setStep(Math.max(0, Math.min(STEPS.length - 1, next))); setError(""); }
   function clearResult() {
+    if (formStorage === "cleared" || formStorage === "empty") setFormStorage("ready");
     revision.current++;
     if (!view) return;
     setView(null); setConfirmed(false); setRestored(false); onResult(month, null);
   }
+  async function clearSavedForm() {
+    if (!formOwnerId || !window.confirm("Vymazat rozepsané zadání z tohoto prohlížeče a začít znovu? Uložené návrhy ani potvrzené rozpisy se nesmažou.")) return;
+    formGeneration.current++;
+    forceFormWrite.current = false;
+    setBusy(true);
+    try {
+      await formWrites.current;
+      const result = await saveMonthlyFormAtomically(localStorage, navigator.locks, formOwnerId, month, null, formRaw.current);
+      if (result.status !== "saved") { setFormStorage(result.status === "conflict" ? "conflict" : "unavailable"); return; }
+      formRaw.current = null;
+    } catch { setFormStorage("unavailable"); return; } finally { setBusy(false); }
+    setFormStorage("cleared"); setFormRestored(false);
+    setEmployees([]); setName(""); setAbsences([]); setPartialAbsences([]); setStaffing(staffingFormValues(initialStaffing));
+    setInstructions(""); setShiftRotationPreference(false); setPartialMonth(false); setRangeStart(`${month}-01`); setRangeEnd(datesInMonth(month).at(-1)!);
+    setEmployeeId(""); setDate(""); setEndDate(""); setAbsenceShift("full_day"); setStep(0); setError("");
+    revision.current++; setView(null); setConfirmed(false); setRestored(false); onResult(month, null);
+  }
   const employeeName = (id: string) => employees.find((employee) => employee.id === id)?.name ?? "Neznámý zaměstnanec";
+  const formLoading = canManage && formOwnerId !== null && formStorage === "loading";
 
-  return <section className="card monthly-planning-panel" aria-labelledby="monthly-title">
-    <div className="monthly-form-heading"><div><p className="eyebrow">Celý kalendářní měsíc</p><h2 id="monthly-title">Návrh rozpisu · {month}</h2></div><span className="monthly-step-count">Krok {step + 1} z {STEPS.length}</span></div>
+  return <section className="card monthly-planning-panel" aria-labelledby={`monthly-title-${month}`}>
+    <div className="monthly-form-heading"><div><p className="eyebrow">Celý kalendářní měsíc</p><h2 id={`monthly-title-${month}`}>Návrh rozpisu · {month}</h2></div><span className="monthly-step-count">Krok {step + 1} z {STEPS.length}</span></div>
     <p>Návrh se ukládá odděleně. Rozpis se změní až po potvrzení manažerem.</p>
     {canManage ? <MonthlyRunsManager month={month} canManage={canManage} refreshKey={`${view?.id ?? ""}:${confirmed}`} onRemoved={(id) => { revision.current++; if (view?.id === id) { setView(null); setConfirmed(false); setRestored(false); } onRemoved(month, id); }} /> : null}
+    {canManage ? <div className="monthly-muted" role="status">
+      <p>{!formOwnerId || formStorage === "unavailable" ? "Rozepsané zadání nelze v tomto prohlížeči bezpečně uložit; po odchodu se může ztratit." : formStorage === "invalid" ? "Uložené zadání nelze načíst. Vymažte jej, pokud chcete ukládat nové." : formStorage === "conflict" ? "Zadání bylo změněno v jiném okně. Změny v tomto okně se nyní neukládají. Pro načtení druhé verze obnovte stránku; zdejší změny se tím ztratí." : formStorage === "cleared" ? "Rozepsané zadání bylo z tohoto prohlížeče vymazáno." : formStorage === "empty" ? "Zadání se začne ukládat v tomto prohlížeči při vyplňování." : formStorage === "loading" ? "Načítám rozepsané zadání z tohoto prohlížeče." : formRestored ? "Rozepsané zadání bylo obnoveno a průběžně se ukládá v tomto prohlížeči." : "Rozepsané zadání se průběžně ukládá v tomto prohlížeči."}</p>
+      <p>V zařízení zůstávají i jména a pokyny. Na sdíleném zařízení k nim mohou mít přístup další uživatelé zařízení.</p>
+      {formStorage === "conflict" ? <button className="btn btn--secondary" type="button" onClick={() => { if (window.confirm("Přepsat zadání uložené jiným oknem touto verzí?")) { formGeneration.current++; forceFormWrite.current = true; setFormStorage("ready"); } }}>Uložit verzi z tohoto okna</button> : null}
+      {formOwnerId && formStorage !== "loading" && formStorage !== "empty" && formStorage !== "cleared" && formStorage !== "conflict" ? <button className="btn btn--secondary" type="button" disabled={busy} onClick={() => void clearSavedForm()}>Vymazat rozepsané zadání</button> : null}
+    </div> : null}
     {employees.length ? <div className="monthly-history-status" role="status"><strong>Návazné podklady</strong>{activeBoundary?.status === "loading" ? <span>Kontroluji sedm dní před měsícem a po něm…</span> : activeBoundary?.status === "unavailable" || !activeBoundary ? <span>Stav návaznosti se nepodařilo načíst. Před potvrzením proběhne serverová kontrola.</span> : <span>Před měsícem: {activeBoundary.before ? "k dispozici" : "chybí nebo jsou neúplné"} · Po měsíci: {activeBoundary.after ? "k dispozici" : "chybí nebo jsou neúplné"}{!activeBoundary.after ? " · Budoucí rozpis nemusí existovat; nic se nedoplňuje odhadem." : ""}</span>}<a href="/navaznost-smen">Zkontrolovat nebo vložit podklady</a></div> : null}
     {!canManage ? <p role="note">Vytvoření a potvrzení návrhu je dostupné manažerovi.</p> : null}
-    <nav className="monthly-progress" aria-label="Postup zadání měsíčního návrhu">{STEPS.map((label, index) => <button key={label} type="button" className="monthly-progress__step" aria-current={step === index ? "step" : undefined} aria-label={`Krok ${index + 1}: ${label}`} onClick={() => changeStep(index)}><span className="monthly-progress__number">{index + 1}</span><span className="monthly-progress__label">{label}</span></button>)}</nav>
+    <nav className="monthly-progress" aria-label="Postup zadání měsíčního návrhu">{STEPS.map((label, index) => <button key={label} type="button" disabled={busy || formLoading} className="monthly-progress__step" aria-current={step === index ? "step" : undefined} aria-label={`Krok ${index + 1}: ${label}`} onClick={() => changeStep(index)}><span className="monthly-progress__number">{index + 1}</span><span className="monthly-progress__label">{label}</span></button>)}</nav>
     <form onClick={(event) => { if (event.target instanceof HTMLElement && event.target.closest('button[type="button"]')) clearResult(); }} onChange={clearResult} onSubmit={(event) => void submit(event)}>
-      <fieldset disabled={!canManage || busy}>
+      <fieldset disabled={!canManage || busy || formLoading}>
         <legend ref={stepHeadingRef} tabIndex={-1}>{step + 1}. {STEPS[step]}</legend>
         {step === 0 ? <>
           {planningMode === "ortools" ? <div className="monthly-range"><label><input type="checkbox" checked={partialMonth} onChange={(event) => setPartialMonth(event.target.checked)} /> Doplnit jen část měsíce</label>{partialMonth ? <><p className="monthly-muted">Mimo vybraný úsek musí být pro všechny vybrané zaměstnance uložené a jednoznačné podklady na stránce <Link href="/navaznost-smen">Návaznost směn</Link>. Ve vybraném úseku nesmí být převzaté dny. Potvrzení je možné až po úspěšné kontrole celého měsíce.</p><div className="monthly-range__dates"><label>Plánovat od<input className="input" type="date" min={`${month}-01`} max={datesInMonth(month).at(-1)} value={rangeStart} onChange={(event) => setRangeStart(event.target.value)} /></label><label>Plánovat do<input className="input" type="date" min={`${month}-01`} max={datesInMonth(month).at(-1)} value={rangeEnd} onChange={(event) => setRangeEnd(event.target.value)} /></label></div></> : null}</div> : null}
           <div className="monthly-form-actions"><button className="btn btn--secondary" type="button" onClick={() => void loadEmployeeList()}>Načíst seznam zaměstnanců</button><button className="btn btn--secondary" type="button" onClick={() => void loadPreviousEmployees()}>Načíst z předchozího měsíce</button></div>
-          <div className="monthly-inline-field"><label htmlFor="monthly-employee-name">Jméno zaměstnance</label><input className="input" id="monthly-employee-name" value={name} onChange={(event) => setName(event.target.value)} /><button className="btn btn--secondary" type="button" onClick={addEmployee}>Přidat</button></div>
+          <div className="monthly-inline-field"><label htmlFor={`monthly-employee-name-${month}`}>Jméno zaměstnance</label><input className="input" id={`monthly-employee-name-${month}`} value={name} onChange={(event) => setName(event.target.value)} /><button className="btn btn--secondary" type="button" onClick={addEmployee}>Přidat</button></div>
           {employees.length ? <ul className="monthly-entry-list">{employees.map((employee) => <li key={employee.id}><span><strong>{employee.name}</strong></span><button className="btn btn--secondary" type="button" aria-label={removalActionLabel("Odebrat zaměstnance", employee.name)} onClick={() => { setEmployees((current) => current.filter((item) => item.id !== employee.id)); setAbsences((current) => current.filter((item) => item.employeeId !== employee.id)); setPartialAbsences((current) => current.filter((item) => item.employeeId !== employee.id)); if (employeeId === employee.id) setEmployeeId(""); }}>Odebrat</button></li>)}</ul> : <p className="monthly-muted">Zatím nejsou vybraní žádní zaměstnanci.</p>}
         </> : null}
         {step === 1 ? <>
@@ -231,15 +310,15 @@ export function MonthlyPlanningPanel({ month, canManage, planningMode, initialSt
         {step === 3 ? <>
           <p className="monthly-muted">Napište další pokyny. {planningMode === "ortools" ? "Lokální plánovač volný text nevyhodnocuje, ale zohlední níže uvedené střídání směn." : planningMode === "simulated" ? "Simulovaný návrh nezohlední střídání ani volný text." : planningMode === "gemini" ? "AI může přihlédnout k volnému textu, jeho splnění však nezávislá kontrola neověří. Strukturovanou preferenci střídání tento režim nepodporuje." : "Plánovač není nastaven; volný text ani preference zatím nelze zpracovat."}</p>
           {planningMode === "ortools" ? <label className="monthly-block-label"><input type="checkbox" checked={shiftRotationPreference} onChange={(event) => setShiftRotationPreference(event.target.checked)} /> Přednostně střídat ranní a odpolední směny mezi sousedními pracovními směnami, i když jsou mezi nimi dny volna. Jde o přání; obsazení a potvrzená pravidla mají přednost.</label> : null}
-          <label className="monthly-block-label" htmlFor="monthly-instructions">Doplňující pokyny<textarea className="input" id="monthly-instructions" value={instructions} onChange={(event) => setInstructions(event.target.value)} /></label>
+          <label className="monthly-block-label" htmlFor={`monthly-instructions-${month}`}>Doplňující pokyny<textarea className="input" id={`monthly-instructions-${month}`} value={instructions} onChange={(event) => setInstructions(event.target.value)} /></label>
         </> : null}
         {step === 4 && partialMonth && planningMode === "ortools" ? <p className="monthly-range">Doplňovaný úsek: {rangeStart} až {rangeEnd}</p> : null}
         {step === 4 ? <div className="monthly-review-summary"><h3>Souhrn před vytvořením návrhu</h3><dl><div><dt>Měsíc</dt><dd>{month}</dd></div><div><dt>Zaměstnanci</dt><dd>{readiness.employeeCount}</dd></div><div><dt>Výchozí dostupnost</dt><dd>Obě směny každý den včetně víkendů; platí zadané výjimky</dd></div><div><dt>Absence</dt><dd>{readiness.absenceCount + partialAbsences.length}</dd></div><div><dt>Vyplněné hodnoty obsazení</dt><dd>{readiness.filledStaffingCount} z 14</dd></div><div><dt>Střídání směn</dt><dd>{planningMode === "ortools" && shiftRotationPreference ? "Požadováno jako nezávazné přání" : "Bez preference"}</dd></div><div><dt>Doplňující pokyny</dt><dd>{instructions.trim() ? planningMode === "gemini" ? "Zadány; AI je může zohlednit, nezávisle ověřeny nejsou" : planningMode === "ortools" || planningMode === "simulated" ? "Zadány; tento režim je automaticky nevyhodnocuje" : "Zadány; bez nastaveného plánovače nejsou zpracovány" : "Bez doplňujících pokynů"}</dd></div></dl>{readiness.warnings.length ? <div className="monthly-missing" role="status"><strong>Upozornění k obsazení:</strong><ul>{readiness.warnings.map((warning) => <li key={warning}>{warning}</li>)}</ul></div> : null}{readiness.missing.length ? <div className="monthly-missing" role="alert"><strong>Před návrhem doplňte:</strong><ul>{readiness.missing.map((item) => <li key={item}>{item}</li>)}</ul></div> : <p className="monthly-ready" role="status">Povinná pole jsou vyplněna. Výsledek stále může být neúplný nebo neověřený a pak jej nebude možné potvrdit.</p>}<button className="btn btn--primary" type="submit" disabled={!canManage || busy || readiness.missing.length > 0}>{busy ? "Pracuji…" : "Vytvořit měsíční návrh"}</button></div> : null}
       </fieldset>
-      <div className="monthly-step-controls"><button className="btn btn--secondary" type="button" disabled={step === 0 || busy} onClick={() => changeStep(step - 1)}>Zpět</button>{step < STEPS.length - 1 ? <button className="btn btn--primary" type="button" disabled={busy} onClick={() => changeStep(step + 1)}>Pokračovat: {STEPS[step + 1]}</button> : null}</div>
+      <div className="monthly-step-controls"><button className="btn btn--secondary" type="button" disabled={step === 0 || busy || formLoading} onClick={() => changeStep(step - 1)}>Zpět</button>{step < STEPS.length - 1 ? <button className="btn btn--primary" type="button" disabled={busy || formLoading} onClick={() => changeStep(step + 1)}>Pokračovat: {STEPS[step + 1]}</button> : null}</div>
     </form>
     {error ? <div className="monthly-error" role="alert"><p>{error}</p>{unavailableDraftId ? <button className="btn btn--secondary" type="button" onClick={removeUnavailableDraftReference}>Odebrat odkaz na návrh</button> : null}</div> : null}
-    {view && view.input.month === month ? <div aria-live="polite"><h3>Výsledek návrhu</h3>{restored ? <p role="status">Obnovený uložený návrh. Původní vstupy jsou jeho součástí, ale formulář pro nový návrh nahoře není znovu vyplněný.</p> : null}<p>{view.mode === "simulated" ? "Simulovaný návrh. " : view.mode === "ortools" ? "Návrh připravil lokální plánovač. " : "Návrh připravila AI. "}{confirmed ? "Rozpis je potvrzený." : "Návrh čeká na rozhodnutí."} {monthlyValidationMessage(view.validation.status)}</p><p>{monthlyInstructionMessage(view.mode, view.draft.instructionsOutcome)}</p>{view.input.shiftRotationPreference ? <p>Střídání směn bylo zadáno jako nezávazné přání. Výjimky a chybějící okrajové podklady jsou uvedeny v kontrole preference.</p> : null}<p>Navržených směn: {view.draft.assignments.length}.</p>
+    {view && view.input.month === month ? <div aria-live="polite"><h3>Výsledek návrhu</h3>{restored ? <p role="status">Obnovený uložený návrh. Vstupy v návrhu se mohou lišit od rozepsaného formuláře.</p> : null}<p>{view.mode === "simulated" ? "Simulovaný návrh. " : view.mode === "ortools" ? "Návrh připravil lokální plánovač. " : "Návrh připravila AI. "}{confirmed ? "Rozpis je potvrzený." : "Návrh čeká na rozhodnutí."} {monthlyValidationMessage(view.validation.status)}</p><p>{monthlyInstructionMessage(view.mode, view.draft.instructionsOutcome)}</p>{view.input.shiftRotationPreference ? <p>Střídání směn bylo zadáno jako nezávazné přání. Výjimky a chybějící okrajové podklady jsou uvedeny v kontrole preference.</p> : null}<p>Navržených směn: {view.draft.assignments.length}.</p>
       {view.input.planningRange ? <p>Doplňovaný úsek: {view.input.planningRange.startDate} až {view.input.planningRange.endDate}. V tabulce značí P převzatou směnu.</p> : null}
 
       <details><summary>Pokrytí jednotlivých směn</summary><ul>{view.input.staffingRequirements.map((requirement) => {

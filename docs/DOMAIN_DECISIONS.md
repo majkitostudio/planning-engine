@@ -16,6 +16,11 @@ Datum vytvoření: 22. 10. 2026
 Poslední aktualizace: 5. 11. 2026
 Vyplnil: uživatel / zadání projektu (částečně)
 
+## Rozepsané měsíční zadání (`VERIFIED`, 5. 11. 2026)
+
+Manažer zvolil automatické ukládání rozepsaného zadání na zařízení, aby je
+mohl po obnovení stránky nebo návratu znovu načíst.
+
 ## Rozhodnutí manažera: měsíční MVP a vizuální návrh (31. 10. 2026)
 
 - Hlavním cílem je jeden návrh pro celý kalendářní měsíc; týden je pohled do něj.

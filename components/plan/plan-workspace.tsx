@@ -45,6 +45,7 @@ function initialWeekStart(): Date {
 interface PlanWorkspaceProps {
   runtime: MonthlyProviderRuntime;
   canManage: boolean;
+  formOwnerId: string | null;
   initialStaffing: readonly StaffingSetting[] | null;
   staffingProfileStatus: StaffingProfileStatus;
 }
@@ -52,6 +53,7 @@ interface PlanWorkspaceProps {
 export function PlanWorkspace({
   runtime,
   canManage,
+  formOwnerId,
   initialStaffing,
   staffingProfileStatus,
 }: PlanWorkspaceProps) {
@@ -151,7 +153,7 @@ export function PlanWorkspace({
         </button>
       </div>
 
-      {visitedMonths.map((month) => <div key={month} hidden={month !== visibleMonthValue}><MonthlyPlanningPanel month={month} canManage={canManage} planningMode={runtime.configured ? runtime.mode : null} initialStaffing={initialStaffing} staffingProfileStatus={staffingProfileStatus} onResult={onMonthlyResult} onRemoved={onMonthlyRemoved} /></div>)}
+      {visitedMonths.map((month) => <div key={month} hidden={month !== visibleMonthValue}><MonthlyPlanningPanel key={`${formOwnerId ?? "anonymous"}:${canManage}`} month={month} canManage={canManage} formOwnerId={formOwnerId} planningMode={runtime.configured ? runtime.mode : null} initialStaffing={initialStaffing} staffingProfileStatus={staffingProfileStatus} onResult={onMonthlyResult} onRemoved={onMonthlyRemoved} /></div>)}
 
       <div className="week-banner">
         <h2>Týden {isoWeekNumber(weekStart)}</h2>
