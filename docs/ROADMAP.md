@@ -104,6 +104,15 @@ testovacím předpokladem, nikoli schváleným provozním pravidlem.
   podkladem. Po jeho výslovném sjednocení byla návaznost úplná. Nejde o ověření
   OR-Tools ani reálné provozní kapacity; pro databázový režim je nutné nasadit
   migraci odstranění rozpisů.
+- `VERIFIED` (5. 11. 2026, syntetická izolovaná PostgreSQL, lokální OR-Tools)
+  — Manažer v prohlížeči vytvořil listopadový návrh pro jednoho testovacího
+  zaměstnance a čtyři ranní směny, potvrdil jej, obnovil stránku, odstranil jej
+  a pro stejný měsíc vytvořil a potvrdil nový. Před odstraněním byla předchozí
+  návaznost prosince úplná, po odstranění neúplná a po potvrzení nového rozpisu
+  opět úplná. Databáze uchovala odstraněný i aktivní rozpis a odpovídající dvě
+  události potvrzení a jednu odstranění. Všechny podklady byly syntetické;
+  scénář neověřuje provozní kapacitu ani kvalitu složitějšího plánování.
+  Samostatně prošlo 23 Python testů solveru.
 - `VERIFIED` — GitHub CI běh `41936907000` na `6b225e3` úspěšně dokončil
   lint, typecheck, testy a build, Python testy solveru i izolované databázové
   integrační testy. Úspěch CI nenahrazuje výše uvedený průchod prohlížečem.
@@ -123,7 +132,10 @@ testovacím předpokladem, nikoli schváleným provozním pravidlem.
 - `OPEN QUESTION` — `npm audit` po aktualizaci hlásí osm středních nálezů
   v řetězci vývojového lint nástroje, odvozených od zranitelnosti `minimatch`.
   Automaticky nabízená oprava by vrátila `eslint-config-next` na hlavní verzi 15;
-  vhodný postup a použitelnost jiné opravy je třeba samostatně prověřit.
+  `npm audit --omit=dev` hlásí nula nálezů. Dnešní závislost `minimatch` 10.2.6
+  spadá do [dotčeného rozsahu](https://github.com/advisories/GHSA-g3hv-75wg-m249);
+  oprava začíná až verzí 11.0.1, mimo požadovaný hlavní rozsah závislosti
+  `typescript-eslint`. Kompatibilní oprava nebo cílená náhrada zatím není ověřená.
 
 ### Rozhraní manažera — `IMPLEMENTED`, ověřeno částečně
 
