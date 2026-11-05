@@ -2267,11 +2267,17 @@ textarea {
 .monthly-inline-field > label + input { min-width: 0; }
 .monthly-inline-field > label { grid-column: 1 / -1; }
 .monthly-entry-list { display: grid; gap: 8px; margin: 0; padding: 0; list-style: none; }
-.monthly-entry-list li { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 10px 12px; border: 1px solid var(--border); border-radius: 7px; background: var(--surface); }
-.monthly-entry-list li > span:first-child { min-width: 0; overflow-wrap: anywhere; }
-.monthly-work-fund-fields { display: flex; flex-wrap: wrap; gap: 10px; align-items: end; }
+.monthly-entry-list li { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 12px; padding: 10px 12px; border: 1px solid var(--border); border-radius: 7px; background: var(--surface); }
+.monthly-entry-list li > span:first-child { min-width: 0; overflow-wrap: anywhere; font-weight: 500; }
+.monthly-work-fund-fields { display: flex; flex-wrap: wrap; gap: 10px; align-items: end; justify-content: flex-end; }
 .monthly-work-fund-fields label { display: grid; gap: 4px; font-size: .85rem; }
 .monthly-work-fund-fields input { width: 110px; }
+
+@media (max-width: 640px) {
+  .monthly-entry-list li { grid-template-columns: 1fr; gap: 8px; }
+  .monthly-work-fund-fields { justify-content: flex-start; }
+  .monthly-work-fund-fields input { width: 100%; }
+}
 .monthly-checkbox { display: flex !important; margin-top: 5px; }
 .monthly-entry-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
 .monthly-staffing-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 9px; }
@@ -2289,7 +2295,8 @@ textarea {
 .monthly-missing ul { margin: 6px 0 0; padding-left: 20px; }
 .monthly-ready,.monthly-muted { color: var(--muted); }
 .monthly-advisory { padding: 10px 12px; border-left: 3px solid var(--accent); background: var(--surface); }
-.monthly-step-controls { display: flex; justify-content: space-between; gap: 10px; }
+.monthly-step-controls { display: flex; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
+.monthly-step-controls > button { flex: 1 1 auto; min-width: 120px; }
 .monthly-error { padding: 10px 12px; border: 1px solid var(--red-border); border-radius: 6px; background: var(--red-soft); }
 .month-strip__nav { flex-basis: 44px; min-width: 44px; }
 
@@ -3229,7 +3236,7 @@ textarea {
   transition: background 0.12s ease, border-color 0.12s ease;
 }
 
- monthly-entry-list li:hover {
+.monthly-entry-list li:hover {
   background: var(--surface-2);
 }
 
