@@ -140,7 +140,7 @@ export function RequestApprovalPanel() {
       </div>
 
       {message ? <div className="alert alert--danger" role="alert">{message}</div> : null}
-      {isLoading ? <div className="card" aria-live="polite">Načítám požadavky…</div> : null}
+      {isLoading ? <div className="card" aria-live="polite" aria-busy="true"><ul className="skeleton-list">{Array.from({ length: 3 }).map((_, i) => <li key={i} className="skeleton" style={{ height: 64 }} />)}</ul></div> : null}
       {!isLoading && requests.length === 0 ? <div className="card">Nejsou k dispozici žádné ukázkové požadavky.</div> : null}
 
       <div className="stack" style={{ gap: 16 }}>

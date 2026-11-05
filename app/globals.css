@@ -2261,7 +2261,7 @@ textarea {
 .monthly-step-count { flex: 0 0 auto; color: var(--muted); font-size: 12px; }
 .monthly-progress { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 6px; margin: 8px 0; }
 .monthly-progress__step { display: grid; min-width: 0; min-height: 48px; grid-template-columns: 28px minmax(0, 1fr); align-items: center; gap: 7px; padding: 6px 8px; border: 1px solid var(--border); border-radius: 7px; background: var(--surface); color: var(--muted); text-align: left; cursor: pointer; }
-.monthly-progress__step[aria-current="step"] { border-color: var(--accent-border); background: var(--accent-soft); color: var(--ink); }
+.monthly-progress__step[aria-current="step"] { border-color: var(--accent-border); background: var(--accent-soft); color: var(--ink); transform: scale(1.02); box-shadow: 0 2px 8px rgba(13, 148, 136, 0.15); }
 .monthly-progress__number { display: grid; width: 26px; height: 26px; place-items: center; border: 1px solid currentColor; border-radius: 50%; font-size: 12px; font-weight: 700; }
 .monthly-progress__label { overflow-wrap: anywhere; font-size: 11px; line-height: 1.25; }
 .monthly-planning-panel fieldset { display: grid; align-items: stretch; gap: 14px; }

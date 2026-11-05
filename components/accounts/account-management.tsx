@@ -215,7 +215,7 @@ export function AccountManagement({ initialAccounts }: { initialAccounts: Accoun
             Obnovit seznam
           </button>
         </div>
-        {loading ? <p role="status">Načítám účty…</p> : null}
+        {loading ? <ul className="skeleton-list" aria-busy="true" aria-label="Načítám účty">{Array.from({ length: 3 }).map((_, i) => <li key={i} className="skeleton" style={{ height: 40 }} />)}</ul> : null}
         {!loading && accounts.length === 0 ? <p>V databázi zatím nejsou žádné účty.</p> : null}
         {!loading && accounts.length > 0 ? (
           <div className="table-wrap account-table-wrap">
