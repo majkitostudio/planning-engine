@@ -28,7 +28,7 @@ pro prezentaci vedení firmy. Každá položka má kritérium dokončení.
 - [x] Mobilní sticky sloupec tabulek.
 - [x] Responzivní grid pro fondy.
 - [x] Skeletony na zbývajících stránkách (Nastavení, Audit) — reusable `Skeleton`/`SkeletonList` komponenta vytvořena; použita v zaměstnancích, požadavcích, účtech, správě rozpisů.
-- [ ] Sjednocení toast/alert (architektonické rozhodnutí).
+- [x] Sjednocení toast/alert — implementován globální ToastProvider + useToast hook (auto-dismiss 4 s, 4 varianty).
 - [ ] Ověřit mobilní zobrazení (390 px) — kalendářní pruh, tabulky.
 - [ ] Ověřit tmavý režim (pokud bude zaveden).
 
