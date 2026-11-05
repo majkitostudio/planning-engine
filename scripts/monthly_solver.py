@@ -58,6 +58,11 @@ def _validate(payload):
     people = [item.get("id") if isinstance(item, dict) else None for item in employees]
     _require(all(isinstance(person, str) and person for person in people) and len(set(people)) == len(people))
     people_set = set(people)
+    employment_types = {}
+    for item in employees:
+        employment_type = item.get("employmentType", "full_time")
+        _require(employment_type in ("full_time", "part_time"))
+        employment_types[item["id"]] = employment_type
 
     planning_range = data.get("planningRange")
     range_start, range_end = first, last
@@ -174,12 +179,12 @@ def _validate(payload):
 
     timeout = payload.get("timeoutSeconds", 30)
     _require(isinstance(timeout, (int, float)) and not isinstance(timeout, bool) and 0.05 <= timeout <= 300)
-    return data, first, last, dates, people, requirements, availability, history, history_complete, shift_rotation, funds, float(timeout), range_start, range_end, fixed
+    return data, first, last, dates, people, requirements, availability, history, history_complete, shift_rotation, funds, float(timeout), range_start, range_end, fixed, employment_types
 
 
 def solve(payload):
     try:
-        data, first, last, dates, people, requirements, availability, history, history_complete, shift_rotation, funds, timeout, range_start, range_end, fixed = _validate(payload)
+        data, first, last, dates, people, requirements, availability, history, history_complete, shift_rotation, funds, timeout, range_start, range_end, fixed, employment_types = _validate(payload)
     except ZoneInfoNotFoundError:
         return {"status": "unavailable"}
     except (InvalidInput, TypeError, ValueError, KeyError, OverflowError):
@@ -231,12 +236,20 @@ def solve(payload):
     def moment(person, day, kind, end):
         if kind == "custom":
             clock = fixed[(person, day)][2 if end else 1]
-        elif kind == "morning":
-            clock = dt.time(16, 30) if end else dt.time(7, 45)
-        elif end:
-            clock = dt.time(21, 0)
         else:
-            clock = dt.time(12, 45) if day.weekday() >= 5 else dt.time(13, 15)
+            part_time = employment_types.get(person) == "part_time" and day.weekday() < 5
+            if kind == "morning":
+                if part_time:
+                    clock = dt.time(15, 0) if end else dt.time(7, 45)
+                else:
+                    clock = dt.time(16, 30) if end else dt.time(7, 45)
+            elif end:
+                clock = dt.time(21, 0)
+            else:
+                if part_time:
+                    clock = dt.time(15, 0)
+                else:
+                    clock = dt.time(12, 45) if day.weekday() >= 5 else dt.time(13, 15)
         return dt.datetime.combine(day, clock, zone).astimezone(dt.timezone.utc)
 
     for person in people:

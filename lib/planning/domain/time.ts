@@ -1,5 +1,6 @@
-import { getShiftWindow } from "./confirmed";
+import { getShiftWindow, getPartTimeShiftWindow } from "./confirmed";
 import type {
+  EmploymentType,
   IsoDate,
   LocalTime,
   ShiftDefinition,
@@ -182,8 +183,11 @@ export function getShiftInterval(
   kind: ShiftKind,
   definitions: readonly ShiftDefinition[],
   timeZone: string,
+  employmentType: EmploymentType = "full_time",
 ): ShiftInterval {
-  const window = getShiftWindow(definitions, kind, isWeekendDate(date));
+  const window = employmentType === "part_time"
+    ? getPartTimeShiftWindow(kind, isWeekendDate(date))
+    : getShiftWindow(definitions, kind, isWeekendDate(date));
   if (timeToMinutes(window.start) === timeToMinutes(window.end)) {
     throw new RangeError(`Směna "${kind}" má stejný začátek a konec.`);
   }

@@ -131,9 +131,16 @@ potvrzená pravidla mají přednost. Ověření a přesné výsledky jsou v
 
 ## Rozhodnutí manažera — druhé kolo (5. 11. 2026)
 
-- **Částečné úvazky:** `VERIFIED` rozhodnutí přidat podporu. Pilot dosud
-  podporuje pouze plné úvazky; rozšíření je plánovaný milník (Milník 7) a
-  vyžaduje fond v hodinách místo pevného času a úpravu datového modelu.
+- **Částečné úvazky (poloviční):** `VERIFIED` rozhodnutí (5. 11. 2026).
+  Pilot nyní podporuje i poloviční úvazky. Časy směn:
+  - Plný úvazek: ranní 7:45–16:30 (všední den i víkend), odpolední ve
+    všední den 13:15–21:00, víkendová odpolední 12:45–21:00.
+  - Poloviční úvazek: ranní 7:45–15:00 (pouze všední den), odpolední
+    15:00–21:00 (pouze všední den). O víkendu jsou směny pouze
+    plnoúvazkové (7:45–16:30, 12:45–21:00) — poloviční úvazek o víkendu
+    pracuje na plný směnový čas.
+  Fond práce se zadává v hodinách pro každého zaměstnance zvlášť
+  (plný i poloviční).
 - **Role a dovednosti (H4):** `VERIFIED` — ne, všichni zaměstnanci mohou
   obsadit libovolnou směnu. Role se neevidují.
 - **Maximální počet hodin nebo směn (H5):** `VERIFIED` — žádný tvrdý limit.

@@ -31,7 +31,7 @@ export interface MonthlyFormWorkFund {
 
 export interface MonthlyFormData {
   readonly month: string;
-  readonly employees: readonly { id: string; name: string }[];
+  readonly employees: readonly { id: string; name: string; employmentType?: "full_time" | "part_time" }[];
   readonly absences: readonly Absence[];
   readonly availability: readonly MonthlyAvailability[];
   /** Pondělí až neděle, každému dni odpovídá ranní a odpolední směna. */
@@ -170,7 +170,7 @@ export function buildMonthlyFormInput(form: MonthlyFormData): { ok: true; value:
   }
   const input: MonthlyPlanningInput = {
     month: form.month,
-    employees: form.employees.map((employee) => ({ id: employee.id, displayName: employee.name.trim(), employmentType: "full_time" })),
+    employees: form.employees.map((employee) => ({ id: employee.id, displayName: employee.name.trim(), employmentType: employee.employmentType ?? "full_time" })),
     absences: form.absences,
     availability: [...availability.values()],
     staffingRequirements: dates.flatMap((date) => (["morning", "afternoon"] as ShiftKind[]).map((shiftKind, index) => ({ date, shiftKind, requiredEmployees: Number(form.staffing[weekdayIndex(date) * 2 + index]) }))),

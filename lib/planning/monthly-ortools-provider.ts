@@ -104,7 +104,7 @@ export class MonthlyOrtoolsProvider implements MonthlyPlanningProvider {
     const request = {
       input: {
         month: input.month,
-        employees: input.employees.map((employee) => ({ id: tokenize(employee.id) })),
+        employees: input.employees.map((employee) => ({ id: tokenize(employee.id), employmentType: employee.employmentType })),
         absences: input.absences.map(({ employeeId, from, to, type, status }) => ({ employeeId: tokenize(employeeId), from, to, type, status })),
         availability: input.availability.map(({ employeeId, date, shiftKind, available }) => ({ employeeId: tokenize(employeeId), date, shiftKind, available })),
         staffingRequirements: input.staffingRequirements,

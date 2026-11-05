@@ -1,8 +1,8 @@
-import { CONFIRMED_SHIFT_DEFINITIONS, DEFAULT_TIME_ZONE, getShiftWindow } from "./confirmed";
+import { CONFIRMED_SHIFT_DEFINITIONS, DEFAULT_TIME_ZONE, getConfirmedShiftWindow } from "./confirmed";
 import { datesInMonth, monthWeekStarts } from "./month";
 import { validateMonthlyInput, type MonthlyPlanningInput } from "./month-input";
 import { addDays, datesInWeek, getShiftInterval, getZonedDateTimeStatus, isIsoDate, isLocalTime, isWeekendDate, zonedDateTimeToUtcMs } from "./time";
-import type { LocalTime, ProposedAssignment, ShiftKind } from "./types";
+import type { EmploymentType, LocalTime, ProposedAssignment, ShiftKind } from "./types";
 
 export interface MonthlyBoundaryAssignment {
   readonly employeeId: string;
@@ -64,7 +64,9 @@ export function validateMonthlyPlan(input: MonthlyPlanningInput, assignments: re
     if (item.shiftKind === "morning" || item.shiftKind === "afternoon") {
       if (item.startTime === undefined && item.endTime === undefined) return true;
       if (!isLocalTime(item.startTime) || !isLocalTime(item.endTime) || item.startTime >= item.endTime) return false;
-      const expected = getShiftWindow(CONFIRMED_SHIFT_DEFINITIONS, item.shiftKind, isWeekendDate(item.date));
+      const employee = input.employees.find((e) => e.id === item.employeeId);
+const employmentType = (employee?.employmentType === "part_time" ? "part_time" : "full_time") as EmploymentType;
+const expected = getConfirmedShiftWindow(item.shiftKind, isWeekendDate(item.date), employmentType);
       return item.startTime === expected.start && item.endTime === expected.end;
     }
     return isLocalTime(item.startTime) && isLocalTime(item.endTime) && item.startTime < item.endTime
@@ -152,7 +154,7 @@ export function validateMonthlyPlan(input: MonthlyPlanningInput, assignments: re
     const work = all.filter((item) => item.employeeId === employee.id);
     const workDates = [...new Set(work.map((item) => item.date))].sort();
     const shiftInterval = (item: MonthlyBoundaryAssignment) => {
-      if (item.shiftKind) return getShiftInterval(item.date, item.shiftKind, CONFIRMED_SHIFT_DEFINITIONS, DEFAULT_TIME_ZONE);
+      if (item.shiftKind) return getShiftInterval(item.date, item.shiftKind, CONFIRMED_SHIFT_DEFINITIONS, DEFAULT_TIME_ZONE, employee.employmentType as EmploymentType);
       const startMs = zonedDateTimeToUtcMs(item.date, item.startTime!, DEFAULT_TIME_ZONE);
       let endMs = zonedDateTimeToUtcMs(item.date, item.endTime!, DEFAULT_TIME_ZONE);
       if (endMs <= startMs) endMs = zonedDateTimeToUtcMs(addDays(item.date, 1), item.endTime!, DEFAULT_TIME_ZONE);

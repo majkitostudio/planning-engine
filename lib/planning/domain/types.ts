@@ -45,7 +45,7 @@ export interface ShiftDefinition {
 }
 
 /** První verze podporuje pouze plný úvazek. */
-export type EmploymentType = "full_time";
+export type EmploymentType = "full_time" | "part_time";
 
 /** Zaměstnanec call centra. Data v testech jsou výhradně syntetická. */
 export interface Employee {

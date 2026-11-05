@@ -1,4 +1,5 @@
 import type {
+  EmploymentType,
   PlanningRules,
   ShiftDefinition,
   ShiftKind,
@@ -50,4 +51,28 @@ export function getShiftWindow(
     throw new RangeError(`Chybí definice směny "${kind}".`);
   }
   return isWeekend ? definition.weekend : definition.weekday;
+}
+
+/**
+ * Potvrzené časy směn pro poloviční úvazek (VERIFIED, 5. 11. 2026).
+ * Ve všední den: ranní 7:45–15:00, odpolední 15:00–21:00.
+ * O víkendu se používají plnoúvazkové časy (7:45–16:30, 12:45–21:00).
+ */
+export function getPartTimeShiftWindow(kind: ShiftKind, isWeekend: boolean): ShiftWindow {
+  if (isWeekend) {
+    return getShiftWindow(CONFIRMED_SHIFT_DEFINITIONS, kind, true);
+  }
+  if (kind === "morning") return { start: "07:45", end: "15:00" };
+  if (kind === "afternoon") return { start: "15:00", end: "21:00" };
+  throw new RangeError(`Neznámý druh směny "${kind}".`);
+}
+
+/**
+ * Vrátí potvrzený časový interval směny podle druhu úvazku.
+ */
+export function getConfirmedShiftWindow(kind: ShiftKind, isWeekend: boolean, employmentType: EmploymentType): ShiftWindow {
+  if (employmentType === "part_time") {
+    return getPartTimeShiftWindow(kind, isWeekend);
+  }
+  return getShiftWindow(CONFIRMED_SHIFT_DEFINITIONS, kind, isWeekend);
 }
