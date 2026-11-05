@@ -282,6 +282,17 @@ testovacím předpokladem, nikoli schváleným provozním pravidlem.
   neřešitelnost ani provozní kapacitu. Ověřit výkon na reprezentativních,
   schválených syntetických scénářích včetně uživatelského toku a nezávislé
   kontroly; tento pokus testoval pouze samotný solver.
+- `VERIFIED` / syntetický pokus (5. 11. 2026) — Měsíční provider OR-Tools
+  pro listopad s 29 testovacími zaměstnanci, třemi schválenými absencemi
+  9.–11. 11. a jednou nedostupnou odpolední směnou 12. 11. vytvořil 552
+  přiřazení. Testovací obsazení bylo 15/7 ve všední dny a 7/3 o víkendu;
+  úplné sousední podklady obsahovaly pouze volno. Nezávislá kontrola vrátila
+  `valid` bez problémů a neověřených kontrol. Jednotlivý běh provideru včetně
+  validace trval 2,818 s; nejde o zátěžový test ani doloženou provozní kapacitu.
+  Opakovatelný integrační test navíc ověřuje absenci a nedostupnou směnu v
+  menším syntetickém měsíčním zadání. CI je nově nakonfigurováno spouštět
+  integrační testy aplikace s lokálním solverem; výsledek nového CI běhu je
+  nutné ověřit po odeslání změny.
 - `VERIFIED` / přístupnost — Při šířce prohlížeče 390 × 844 px šlo otevřít
   mobilní menu a přejít na Návaznost směn. Po přechodu se menu vizuálně zavřelo,
   ale stisk `Tab` přesunul fokus na skrytý odkaz Zaměstnanci; fokus nebyl na

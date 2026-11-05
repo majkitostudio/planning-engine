@@ -155,4 +155,33 @@ describe("MonthlyOrtoolsProvider", () => {
     expect(validation.status).toBe("not_verified");
     expect(validation.canConfirm).toBe(false);
   }, 35000);
+
+  it.skipIf(!process.env.PLANNING_PYTHON_EXECUTABLE)("při celoměsíčním plánování respektuje souběžné absence a nedostupnou směnu", async () => {
+    const dates = datesInMonth("2026-11");
+    const employees = Array.from({ length: 12 }, (_, index) => ({ id: `synthetic-${index}`, displayName: `Test ${index}`, employmentType: "full_time" as const }));
+    const absences = [0, 1, 2].map((index) => ({ id: `absence-${index}`, employeeId: `synthetic-${index}`, from: "2026-11-09", to: "2026-11-11", type: "other" as const, status: "approved" as const }));
+    const input: MonthlyPlanningInput = {
+      month: "2026-11", employees, absences, instructions: "",
+      availability: dates.flatMap((date) => employees.flatMap((employee) => (["morning", "afternoon"] as const).map((shiftKind) => ({
+        employeeId: employee.id, date, shiftKind,
+        available: !(employee.id === "synthetic-11" && date === "2026-11-12" && shiftKind === "afternoon"),
+      })))),
+      staffingRequirements: dates.flatMap((date) => {
+        const weekday = new Date(`${date}T00:00:00Z`).getUTCDay();
+        const weekend = weekday === 0 || weekday === 6;
+        return [
+          { date, shiftKind: "morning" as const, requiredEmployees: weekend ? 2 : 4 },
+          { date, shiftKind: "afternoon" as const, requiredEmployees: weekend ? 1 : 2 },
+        ];
+      }),
+    };
+    const completeBoundary = { before: { complete: true, assignments: [] }, after: { complete: true, assignments: [] } };
+    const draft = await new MonthlyOrtoolsProvider().generateMonthlyPlan(input, completeBoundary);
+    const validation = validateMonthlyDraft(input, draft, completeBoundary, "ortools");
+
+    expect(draft.assignments).toHaveLength(153);
+    expect(draft.assignments.filter((assignment) => absences.some((absence) => absence.employeeId === assignment.employeeId && absence.from <= assignment.date && assignment.date <= absence.to))).toEqual([]);
+    expect(draft.assignments).not.toContainEqual({ employeeId: "synthetic-11", date: "2026-11-12", shiftKind: "afternoon" });
+    expect(validation).toMatchObject({ status: "valid", problems: [], unverified: [], canConfirm: true });
+  }, 35000);
 });

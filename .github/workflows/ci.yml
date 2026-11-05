@@ -65,11 +65,28 @@ jobs:
           cache: pip
           cache-dependency-path: scripts/requirements-monthly-solver.txt
 
+      - name: Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      - name: Instalace závislostí aplikace
+        run: npm ci
+
       - name: Instalace závislostí solveru
         run: python -m pip install -r scripts/requirements-monthly-solver.txt
 
       - name: Testy solveru
         run: python -m unittest discover -s scripts -p "monthly_solver_test.py"
+
+      - name: Integrační testy místního plánovače
+        env:
+          PLANNING_PYTHON_EXECUTABLE: python
+        run: >-
+          npx vitest run
+          lib/planning/monthly-ortools-provider.test.ts
+          lib/planning/monthly-partial.integration.test.ts
 
   database-integration:
     name: Database integration tests
