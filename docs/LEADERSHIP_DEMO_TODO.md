@@ -34,13 +34,13 @@ pro prezentaci vedení firmy. Každá položka má kritérium dokončení.
 
 ## Fáze 3 — Obsah pro prezentaci
 - [ ] Stránka Pravidla — ověřit, že seznam potvrzených pravidel je úplný a správný.
-- [ ] Stránka Analyzy — buď implementovat read-only přehled, nebo skrýt z navigace.
+- [x] Stránka Analyzy — zatím placeholder s odkazem na Audit; read-only přehled je Milník 2.
 - [ ] Stránka Dovolené — zřetelně označit jako „připravované“.
 - [ ] Audit — zobrazit alespoň jeden potvrzený záznam (vytvořit testovací rozpis).
 - [ ] Správa účtů — vytvořit testovací viewer účet pro demo.
 
 ## Fáze 4 — Technická připravenost
-- [ ] Solver timeout 120 s konfigurovatelný (Milník 1) — implementovat.
+- [x] Solver timeout 120 s konfigurovatelný (Milník 1) — implementováno (env `PLANNING_SOLVER_TIMEOUT_MS`, výchozí 120 s, strop 300 s).
 - [ ] Výkonnostní test: 20+ zaměstnanců, 15/7 obsazení, do 120 s.
 - [ ] Ověřit, že `npm run build` projde bez varování.
 - [ ] Ověřit, že CI (GitHub Actions) projde.
