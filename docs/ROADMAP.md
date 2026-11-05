@@ -290,9 +290,14 @@ testovacím předpokladem, nikoli schváleným provozním pravidlem.
   `valid` bez problémů a neověřených kontrol. Jednotlivý běh provideru včetně
   validace trval 2,818 s; nejde o zátěžový test ani doloženou provozní kapacitu.
   Opakovatelný integrační test navíc ověřuje absenci a nedostupnou směnu v
-  menším syntetickém měsíčním zadání. CI je nově nakonfigurováno spouštět
-  integrační testy aplikace s lokálním solverem; výsledek nového CI běhu je
-  nutné ověřit po odeslání změny.
+  menším syntetickém měsíčním zadání. CI běh `41966770094` na `806df40`
+  úspěšně spustil 12 integračních testů aplikace s lokálním solverem,
+  23 Python testů i ostatní joby.
+- `VERIFIED` / doplňkový syntetický pokus (5. 11. 2026) — Stejné testovací
+  obsazení, absence a nedostupnost s 50 zaměstnanci vedly k 552 přiřazením a
+  nezávislému výsledku `valid` za 3,111 s včetně validace. Vyšší počet osob
+  vůči poptávce je pouze testovací vstup; tento pokus neověřuje pracovní dobu,
+  rovnoměrnost přidělení směn ani reálnou provozní kapacitu.
 - `VERIFIED` / přístupnost — Při šířce prohlížeče 390 × 844 px šlo otevřít
   mobilní menu a přejít na Návaznost směn. Po přechodu se menu vizuálně zavřelo,
   ale stisk `Tab` přesunul fokus na skrytý odkaz Zaměstnanci; fokus nebyl na
