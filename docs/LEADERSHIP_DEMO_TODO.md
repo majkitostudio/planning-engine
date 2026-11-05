@@ -10,7 +10,7 @@ pro prezentaci vedení firmy. Každá položka má kritérium dokončení.
 - [ ] Ověřit, že žádná stránka nezobrazuje „undefined“ nebo prázdné hodnoty.
 - [x] Odstranit debug výstupy a console.log z produkčního kódu (ověřeno — jediný výskyt je v bootstrap skriptu).
 
-## Fáze 1 — Hlavní tok (Rozpis směn)
+## Fáze 1 — Hlavní tok (Rozpis směn) — MANUÁLNÍ KROK
 - [ ] Přidat zaměstnance (plné úvazky) z reálného seznamu (anonymizované).
 - [ ] Zadat absence (dovolená, nemoc) pro listopad.
 - [ ] Zadat potřebné obsazení (15/7 Po–Pá, 7/3 So–Ne — již nastaveno).
@@ -19,6 +19,7 @@ pro prezentaci vedení firmy. Každá položka má kritérium dokončení.
 - [ ] Zkontrolovat nálezy (problémy, neověřené, fond) — zobrazit managerovi.
 - [ ] Potvrdit rozpis (pouze pokud `canConfirm === true`).
 - [ ] Ověřit, že potvrzený rozpis se zobrazí v týdenním pohledu.
+  (Tyto kroky provádí manažer v aplikaci; nelze je automatizovat bez produkčního zápisu.)
 
 ## Fáze 2 — Vizuální přesvědčivost (UI/UX)
 - [x] Page-enter animace a hover/active feedback.
