@@ -107,6 +107,13 @@ testovacím předpokladem, nikoli schváleným provozním pravidlem.
   Projekt aktualizoval Next.js na 16.4.5; oprava známé chyby je zahrnuta od
   [verze 16.4.3](https://github.com/vercel/next.js/releases/tag/v16.4.3).
   Lokálně s novou verzí prošly lint, typecheck, build a 526 testů (12 přeskočeno).
+- `VERIFIED` — CI běh `41945604185` na `082f543` úspěšně dokončil lint,
+  typecheck, testy, build, Python solver i databázové integrační testy. Samotný
+  úspěch nedokazuje, jakou odpověď Google Fonts v předchozím běhu vrátil.
+- `OPEN QUESTION` — `npm audit` po aktualizaci hlásí osm středních nálezů
+  v řetězci vývojového lint nástroje, odvozených od zranitelnosti `minimatch`.
+  Automaticky nabízená oprava by vrátila `eslint-config-next` na hlavní verzi 15;
+  vhodný postup a použitelnost jiné opravy je třeba samostatně prověřit.
 
 ### Rozhraní manažera — `IMPLEMENTED`, ověřeno částečně
 
