@@ -651,6 +651,11 @@ označíme za hotovou až po opravě a doloženém ověření jejího rozsahu.
    - [x] Blokovat neexistující i nejednoznačné místní časy při importu a
      validaci měsíční historie; nedovolit potvrzení návrhu s takovou návazností.
    - [x] Doplnit odpovídající obranu a Python testy přímo do solveru.
+   - [ ] Hlídat pracovní fond každého zaměstnance. Rozhodnutí uživatele je
+     `VERIFIED` (5. 11. 2026), ale jednotka, výše, započtení absencí a svátků,
+     rozsah na částečné úvazky i závažnost nedostatečného naplnění jsou
+     `OPEN QUESTION`. Implementace je proto `BLOCKED`; návrh nejmenšího
+     konzistentního doplnění je v [`DOMAIN_DECISIONS.md`](DOMAIN_DECISIONS.md).
 7. **P1 — Správa rozpisů.**
    - [x] Navrhnout a implementovat seznam rozpisů s možností smazat jednotlivý
      rozpis.

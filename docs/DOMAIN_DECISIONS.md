@@ -97,6 +97,28 @@ mění zadání:
 - **Obsazení směn:** konfigurovatelný vstup, ne historická konstanta.
 - **Countdown CRM:** budoucí architektonický směr, nyní žádná integrace.
 
+## Pracovní fond zaměstnanců (`VERIFIED` rozhodnutí, `OPEN QUESTION` parametry, 5. 11. 2026)
+
+Uživatel potvrdil, že aplikace má hlídat fond práce každého zaměstnance.
+Samotné rozhodnutí neurčuje výši fondu, jednotku ani způsob započtení absencí
+a svátků. Tyto parametry zůstávají `OPEN QUESTION`; do implementace se nesmí
+dosadit odhad ani „rozumná“ výchozí hodnota. Současný pilot podporuje pouze
+zaměstnance na plný úvazek a neobsahuje kalendář svátků.
+
+Nejmenší konzistentní doplnění k rozhodnutí:
+
+- manažer zadá fond výslovně pro každého zaměstnance a zvolené období;
+- plánovač i nezávislá validace používají stejnou vypočtenou pracovní dobu
+  z potvrzených časů směn, přičemž přestávky zůstávají mimo výpočet (OQ24);
+- chybějící fond se označí jako neověřený, nikoli jako splněný;
+- nedostatečné i nadměrné naplnění se zobrazí jako samostatný nález, aby se
+  nepletlo s neproveditelným obsazením.
+
+Před implementací je nutné potvrdit jednotku a výši fondu, zda se do fondu
+započítává schválená absence a svátek, zda se má podpůrně rozšířit i na částečné
+úvazky a zda má nedostatečné naplnění potvrzení blokovat, nebo být pouze
+upozorněním.
+
 ## Současná implementace měsíčního MVP (`IMPLEMENTED`, 3. 11. 2026)
 
 Níže uvedené popisuje implementaci, nikoli doloženou změnu schváleného záměru
