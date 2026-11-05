@@ -670,10 +670,10 @@ označíme za hotovou až po opravě a doloženém ověření jejího rozsahu.
      včetně staršího snapshotu bez fondu, anonymizace v provideru a měkký cíl
      solveru jsou pokryté testy. Celý Vitest: 543 prošlo, 14 přeskočeno;
      testy Python solveru: 25 prošlo. Prošly také lint a typecheck.
-    - [ ] Podpora částečných úvazků (Milník 7). Rozhodnutí manažera 5. 11. 2026:
-      přidat podporu. Implementace vyžaduje fond v hodinách místo pevného času,
-      rozšíření datového modelu, validace a solveru. Do té doby platí omezení
-      plných úvazků.
+    - [x] Podpora částečných úvazků (Milník 7) — IMPLEMENTOVÁNO (5. 11. 2026).
+      Poloviční úvazek: ranní 7:45–15:00, odpolední 15:00–21:00 (pouze
+      všední den); o víkendu plnoúvazkové časy. Fond v hodinách pro každého.
+      Implementováno: typy, validace, solver, formulář, UI selektor.
     - [x] Solver timeout konfigurovatelný (env `PLANNING_SOLVER_TIMEOUT_MS`,
       výchozí 120 s, strop 300 s). Rozhodnutí manažera 5. 11. 2026.
     - [x] UI/UX polish — 4 vlny implementovány (přechody, hover/active, focus

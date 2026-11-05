@@ -55,6 +55,6 @@ pro prezentaci vedení firmy. Každá položka má kritérium dokončení.
 - Žádné — všechna rozhodnutí jsou zapsána v `docs/DOMAIN_DECISIONS.md`.
 
 ## Poznámky
-- Pilot podporuje pouze plné úvazky (částečné úvazky jsou Milník 7).
+- Pilot podporuje plné a poloviční úvazky (Milník 7 implementován).
 - Produkční autentizace a databáze zůstávají `NOT VERIFIED`.
 - Reálná zaměstnanecká data se nepoužívají; demo používá anonymizované vstupy.
