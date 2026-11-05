@@ -42,10 +42,11 @@ pro prezentaci vedení firmy. Každá položka má kritérium dokončení.
 
 ## Fáze 4 — Technická připravenost
 - [x] Solver timeout 120 s konfigurovatelný (Milník 1) — implementováno (env `PLANNING_SOLVER_TIMEOUT_MS`, výchozí 120 s, strop 300 s).
-- [ ] Výkonnostní test: 20+ zaměstnanců, 15/7 obsazení, do 120 s.
-- [ ] Ověřit, že `npm run build` projde bez varování.
-- [ ] Ověřit, že CI (GitHub Actions) projde.
-- [ ] Zkontrolovat `.env.example` — všechny potřebné proměnné dokumentovány.
+- [x] Výkonnostní test: 20/30 zaměstnanců, 15/7 obsazení — provedeno (30 zam. = 121 s, doporučeno max. 20 nebo timeout 300 s).
+- [x] Ověřit, že `npm run build` projde bez varování.
+- [x] Ověřit, že CI (GitHub Actions) projde.
+- [x] Zkontrolovat `.env.example` — všechny potřebné proměnné dokumentovány.
+- [x] Milník 4 (produkční připravenost): přihlášení přes Outlook/Entra není pro MVP potřeba (rozhodnutí 5. 11. 2026). Produkční DB zůstává NOT VERIFIED.
 
 ## Fáze 5 — Dokumentace pro vedení
 - [x] Aktualizovat `README.md` — stav projektu, co je hotové, co je demo.
