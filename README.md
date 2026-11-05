@@ -104,8 +104,7 @@ nutné potvrdit cílovou lokální databázi.
 - Minimální datový kontrakt: [`docs/PLANNING_CONTRACT.md`](docs/PLANNING_CONTRACT.md)
 - Rozhodovací list pro managera: [`docs/DOMAIN_DECISIONS.md`](docs/DOMAIN_DECISIONS.md)
 - Roadmapa a stav: [`docs/ROADMAP.md`](docs/ROADMAP.md)
-- Schválený design operativních náhrad: [`docs/superpowers/specs/2026-10-29-operativni-nahrady-design.md`](docs/superpowers/specs/2026-10-29-operativni-nahrady-design.md)
-- Implementační plán operativních náhrad: [`docs/superpowers/plans/2026-10-29-operativni-nahrady.md`](docs/superpowers/plans/2026-10-29-operativni-nahrady.md)
+- Schválený design a rozsah jsou shrnuty v [`docs/DOMAIN_DECISIONS.md`](docs/DOMAIN_DECISIONS.md), [`docs/DOMAIN_SPECIFICATION.md`](docs/DOMAIN_SPECIFICATION.md) a [`docs/ROADMAP.md`](docs/ROADMAP.md). Historické implementační plány byly odstraněny.
 - Instrukce pro agenty: [`AGENTS.md`](AGENTS.md)
 
 ## Bezpečnost a hranice

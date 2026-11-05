@@ -10,7 +10,7 @@ export default function AbsencesPage() {
     <SectionPlaceholder
       icon="umbrella"
       title="Dovolené a absence"
-      description="Evidence dovolených, nemocí a dalších absencí. Způsob evidence čeká na schválení doménového kontraktu."
+      description="Absence a dostupnost se zadávají jako vstupy měsíčního plánování. Samostatná evidence mimo plán zatím není implementovaná."
     />
   );
 }

@@ -32,7 +32,7 @@ mohl po obnovení stránky nebo návratu znovu načíst.
   Platí potvrzené časy směn v `AGENTS.md`.
 - Hlavní obrazovka je „Rozpis směn“, ostatní položky jsou ve skupině „Budoucí
   funkce“. Schválený vizuální podklad je [`mvp-final.png`](design/mvp-final.png),
-  podrobnosti jsou ve [specifikaci](superpowers/specs/2026-10-30-mesicni-mvp-design.md).
+  podrobnosti jsou v [`docs/ROADMAP.md`](ROADMAP.md) a [`docs/DOMAIN_SPECIFICATION.md`](DOMAIN_SPECIFICATION.md).
   Schválený návrh sám o sobě nedokládá implementaci ani ověření.
 
 ## Výchozí dostupnost měsíčního plánování (`VERIFIED`, 3. 11. 2026)
