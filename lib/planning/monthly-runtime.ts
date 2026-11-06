@@ -13,8 +13,16 @@ const memory = new InMemoryMonthlyStore();
 const missingBoundary = { before: { complete: false, assignments: [] }, after: { complete: false, assignments: [] } } as const;
 const monthlyGeminiUnavailable = {
   configured: false as const,
-  reason: "Externí Gemini pro měsíční vstupy je vypnuté, dokud není schválen rozsah a ochrana údajů. Použijte místní plánovač.",
+  reason: "Externí Gemini pro měsíční vstupy zůstává vypnuté: bezplatná úroveň není pro aplikaci dostupnou v EHP přípustná a placená varianta odporuje rozpočtu projektu. Použijte „cloudflare“ nebo místní „ortools“.",
 };
+const monthlyCloudflareUnavailable = {
+  configured: false as const,
+  reason: "Režim „cloudflare“ je zvolený, ale chybí CLOUDFLARE_ACCOUNT_ID nebo CLOUDFLARE_API_TOKEN. Doplňte je do prostředí; aplikace je nevypisuje ani neukládá do repozitáře.",
+};
+
+function hasCloudflareCredentials(env: Readonly<Record<string, string | undefined>>): boolean {
+  return Boolean(env.CLOUDFLARE_ACCOUNT_ID?.trim() && env.CLOUDFLARE_API_TOKEN?.trim());
+}
 
 export type MonthlyProviderRuntime =
   | { readonly configured: true; readonly mode: MonthlyPlanningMode }
@@ -23,8 +31,13 @@ export type MonthlyProviderRuntime =
 export function getMonthlyProviderRuntime(env: Readonly<Record<string, string | undefined>> = process.env): MonthlyProviderRuntime {
   const explicit = env.PLANNING_MONTHLY_PROVIDER?.trim();
   if (explicit === "gemini") return monthlyGeminiUnavailable;
+  if (explicit === "cloudflare") {
+    return hasCloudflareCredentials(env)
+      ? { configured: true, mode: explicit }
+      : monthlyCloudflareUnavailable;
+  }
   if (explicit === "ortools" || explicit === "simulated") return { configured: true, mode: explicit };
-  if (explicit) return { configured: false, reason: "PLANNING_MONTHLY_PROVIDER má neznámou hodnotu. Povolené jsou „simulated“, „gemini“ a „ortools“." };
+  if (explicit) return { configured: false, reason: "PLANNING_MONTHLY_PROVIDER má neznámou hodnotu. Povolené jsou „simulated“, „gemini“, „ortools“ a „cloudflare“." };
   const planning = getPlanningRuntime(env);
   if (planning.configured && planning.mode === "gemini") return monthlyGeminiUnavailable;
   return planning.configured ? { configured: true, mode: planning.mode } : { configured: false, reason: planning.reason };

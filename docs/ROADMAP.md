@@ -44,9 +44,10 @@ existence sama nedokládá schválení změny záměru. Viz `DOMAIN_DECISIONS.md
 | Ruční změna směn a nová kontrola | Serverové rozhraní `IMPLEMENTED`; ruční úprava z manažerské obrazovky odstraněna |
 | Obnovení uložené verze po načtení stránky | `IMPLEMENTED`; obnovení syntetického prázdného návrhu v tomto auditu `VERIFIED`, další varianty `NOT VERIFIED` |
 | Potvrzení rozpisu | `IMPLEMENTED`; neúplné a neověřené návrhy mají být blokovány. Níže uvedený historický návrh potvrzen nebyl. |
-| Textové pokyny v režimu OR-Tools | Nevyhodnocují se; UI tuto skutečnost přiznává. Pokyny se solveru ani externí AI neposílají. |
-| Gemini provider | Zůstává dostupný pro ostatní nakonfigurované toky; není hlavním plánovačem měsíčního MVP. Kvalita produkčního plánování zůstává `NOT VERIFIED`. |
-| Produkční autentizace, databáze a provoz | `NOT VERIFIED`; mimo tento lokální průchod |
+| Textové pokyny v režimu OR-Tools | Nevyhodnocují se; UI tuto skutečnost přiznává. Do lokálního solveru se neposílají. |
+| Cloudflare Workers AI | Zvolený měsíční AI poskytovatel (`VERIFIED` rozhodnutí 6. 11. 2026). Adaptér `IMPLEMENTED`; reálné volání a kvalita `NOT VERIFIED`. |
+| Gemini provider | Starší adaptér zůstává v kódu. Bezplatná úroveň není použitelná pro aplikaci v EHP, placená odporuje rozpočtu. Kvalita `NOT VERIFIED`. |
+| Produkční autentizace, databáze a provoz | `NOT VERIFIED`; cílové nasazení Vercel Hobby + stávající Neon je `PLANNED` |
 
 ### Historický syntetický průchod (3. 11. 2026)
 
@@ -155,8 +156,9 @@ testovacím předpokladem, nikoli schváleným provozním pravidlem.
   `docs/DOMAIN_SPECIFICATION.md`.
 - Výsledek `infeasible` platí jen pro konkrétní vstupy a pravidla zahrnutá v
   modelu. Timeout ani `unknown` nejsou důkazem, že je zaměstnanců málo.
-- Měsíční režim OR-Tools nevyhodnocuje volný text. Skutečná jména, interní ID
-  ani textové pokyny nejsou do procesu solveru posílány.
+- Měsíční režim OR-Tools nevyhodnocuje volný text a nedostává skutečná jména
+  ani interní ID; pracuje s anonymními tokeny. AI režim naopak dostává skutečná
+  jména i pokyny podle `VERIFIED` rozhodnutí z 6. 11. 2026.
 - Testovací hodnoty obsazení nejsou schválený provozní profil. Pro provoz je
   třeba zadat schválená data a vyřešit otevřené doménové otázky.
 - Tento průchod neověřuje kvalitu Gemini, pracovní právo, produkční zabezpečení,
@@ -446,12 +448,14 @@ testovacím předpokladem, nikoli schváleným provozním pravidlem.
   napodoben přímou změnou testovacího účtu v databázi; změnu hesla provedla
   aplikační služba. Tento stav zachycuje původní audit z 4. 11. 2026; opravu
   a nové ověření shrnuje bod 2 v aktuálním To‑Do níže.
-- `IMPLEMENTED` / `OPEN QUESTION` — Měsíční běh odmítá externí Gemini a
-  OR-Tools nedostává volné pokyny ani skutečná jména. Text pokynů se však
-  ukládá se vstupem návrhu do databáze, i když jej OR-Tools nevyhodnocuje.
-  Před praktickým použitím určit přístup, dobu uchování a mazání těchto údajů.
-  Překladač pokynů není zapojený; před jeho použitím je nutné samostatně
-  schválit ochranu a rozsah předávaného textu.
+- `VERIFIED` (6. 11. 2026) — Externí AI je povolená včetně skutečných jmen
+  a volného textu. Měsíční provider je Cloudflare Workers AI s nulovým
+  uchováváním a bez trénování na zákaznickém obsahu. Historické odmítání Gemini
+  v měsíčním toku zůstává v kódu jen pro starší Gemini adaptér; nový adaptér má
+  vlastní režim `cloudflare`.
+- Text pokynů se ukládá se vstupem návrhu do databáze. Doba uchování a mazání
+  těchto údajů zůstávají předmětem dalšího rozhodnutí; nejsou potvrzeným
+  provozním pravidlem.
 - Historický lokální test před doplněním ochrany ukázal, že deset chybných
   přihlášení nebylo omezeno. Lokální vývojový režim má toto omezení nadále.
 - `IMPLEMENTED` / `VERIFIED` (syntetická izolovaná PostgreSQL, 5. 11. 2026) —
@@ -656,7 +660,8 @@ označíme za hotovou až po opravě a doloženém ověření jejího rozsahu.
      zadává v hodinách za kalendářní měsíc pro každého zaměstnance zvlášť;
      manažer zadává i omluvené hodiny (schválená absence, svátek). Odchylka
      i chybějící údaj jsou nezávazné a neblokují potvrzení. Chybějící fond se
-      označí jako neověřený. Měsíční pilot podporuje plné i poloviční úvazky.
+      označí jako neověřený. Měsíční pilot je pouze pro plné úvazky
+     (`VERIFIED`, 6. 11. 2026); poloviční úvazky jsou mimo pilot.
       Technický
      strop 1000 h je jen kontrola vstupu. Viz
      [`DOMAIN_DECISIONS.md`](DOMAIN_DECISIONS.md).
@@ -667,14 +672,17 @@ označíme za hotovou až po opravě a doloženém ověření jejího rozsahu.
      implementace, nikoli doménové pravidlo.
    - `VERIFIED` (5. 11. 2026, syntetická data) — Přesné naplnění, podstřelení,
      překročení, omluvené hodiny, chybějící fond, převzatá směna s vlastními
-     časy, česká desetinná čárka, povinnost vyplnění ve formuláři, ukládání
+     časy, česká desetinná čárka, volitelný fond ve formuláři (prázdný řádek
+     = nevyplněno, částečně vyplněný řádek vytvoření návrhu zablokuje), ukládání
      včetně staršího snapshotu bez fondu, anonymizace v provideru a měkký cíl
      solveru jsou pokryté testy. Celý Vitest: 543 prošlo, 14 přeskočeno;
       testy Python solveru: 28 prošlo. Prošly také lint a typecheck.
-    - [x] Podpora polovičních úvazků (Milník 7) — IMPLEMENTOVÁNO (5. 11. 2026).
-      Poloviční úvazek: ranní 7:45–15:00, odpolední 15:00–21:00 (pouze
-      všední den); o víkendu smí pracovat v plné délce směny. Implementováno:
-      typy, DB persistence, validace, solver, formulář a UI selektor.
+    - [x] Podpora polovičních úvazků (Milník 7) — IMPLEMENTOVÁNO (5. 11. 2026),
+      ale **mimo pilot** (`VERIFIED` rozhodnutí 6. 11. 2026). Poloviční úvazek:
+      ranní 7:45–15:00, odpolední 15:00–21:00 (pouze všední den); o víkendu smí
+      pracovat v plné délce směny. Implementováno: typy, DB persistence,
+      validace, solver, formulář a UI selektor. Pilotní scénář je pouze plný
+      úvazek.
     - `VERIFIED` (5. 11. 2026, schválená aktivní databáze) — Migrace
       `20261105120000_add_planning_employee_contract_type` nasazena přes
       `prisma migrate deploy`; následný `migrate status` hlásí schema up to
@@ -698,11 +706,15 @@ označíme za hotovou až po opravě a doloženém ověření jejího rozsahu.
      potvrzení jiného rozpisu a neúplnou návaznost po odstranění. Závěrečný
      souvislý průchod MVP zůstává položkou 10.
 8. **P1 — AI a citlivý text.**
-   - [ ] Rozhodnout o souladu současného lokálního plánovače s potvrzeným záměrem
-     AI a o bezpečném zpracování pokynů.
-   - [ ] Před praktickým použitím určit přístup, uchování a mazání volného textu;
-     dokud to není schválené, neposílat skutečná jména, rozpisy ani pokyny externí
-     AI.
+   - [x] Rozhodnout o souladu plánovače s potvrzeným záměrem AI
+     (`VERIFIED`, 6. 11. 2026): měsíční návrh má vytvářet Cloudflare Workers AI;
+     lokální OR-Tools zůstává offline.
+   - [x] Povolit skutečná jména, rozpisy a pokyny externí AI
+     (`VERIFIED`, 6. 11. 2026). Používá se model s nulovým uchováváním a bez
+     trénování na zákaznickém obsahu.
+   - [ ] Ověřit reálné volání Cloudflare Workers AI, kvalitu měsíčního návrhu
+     a spotřebu bezplatné denní kvóty. Do té doby zůstává kvalita `NOT VERIFIED`.
+   - [ ] Určit dobu uchování a mazání volného textu v databázi.
 9. **P1 — Kvalita a přístupnost.**
    - [x] Spouštět Python testy solveru v CI.
    - [x] Doplnit databázové integrační testy do CI s izolovanou testovací
@@ -773,5 +785,7 @@ označíme za hotovou až po opravě a doloženém ověření jejího rozsahu.
       vytvořen ani potvrzen: chybí manažersky potvrzené listopadové absence,
       dostupnost a fondy. V listopadu zůstalo 7 dřívějších návrhů nepotvrzených;
       při této kontrole nebyly změněny.
-    - [ ] Další produkční nasazení a provozní služby řešit po ověření záloh,
-      monitoringu, obnovy a konfigurace cílového prostředí.
+    - [ ] Cílové nasazení: Vercel Hobby (nekomerční, zdarma) + jediná stávající
+      Neon Free databáze + Cloudflare Workers AI Free. Ověřit přihlášení,
+      migrace, plánování a potvrzení na náhledovém nasazení; produkční úroveň
+      záloh a monitoringu zůstává `NOT VERIFIED`.

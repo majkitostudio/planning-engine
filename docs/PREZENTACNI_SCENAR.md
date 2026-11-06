@@ -15,19 +15,22 @@ celkové produkční zabezpečení a provozní připravenost ověřené nejsou.
 
 ## 2. Hlavní tok — Rozpis směn (listopad)
 1. Otevřít stránku Rozpis směn, zvolit listopad a období.
-2. Přidat zaměstnance (plné nebo poloviční úvazky) ze syntetického/anonymizovaného seznamu.
+2. Přidat zaměstnance na plný úvazek ze syntetického/anonymizovaného seznamu
+   (poloviční úvazky jsou mimo pilot).
 3. Zadat absence (dovolená, nemoc) pro listopad.
 4. Zadat potřebné obsazení (15/7 Po–Pá, 7/3 So–Ne).
-5. Zadat fond práce a omluvené hodiny u každého zaměstnance.
-6. Vygenerovat návrh (OR-Tools) — ověřit, že doběhne (timeout 120 s).
+5. Volitelně zadat fond práce a omluvené hodiny (rozbalovací část); bez fondu
+   návrh vznikne, kontrola jen označí naplnění fondu jako neověřené.
+6. Vygenerovat návrh podle nastaveného plánovače (lokálně OR-Tools, online
+   Cloudflare Workers AI) — ověřit, že doběhne v časovém limitu.
 7. Zkontrolovat nálezy: problémy, neověřené, fond.
 8. Potvrdit rozpis (pouze pokud `canConfirm === true`).
 9. Ověřit, že potvrzený rozpis se zobrazí v týdenním pohledu.
 
 ## 3. Pravidla
 - Otevřít stránku Pravidla.
-- Ukázat potvrzená pravidla (časy obou úvazků, 35 h odpočinek po 6 dnech,
-  dva dny volna po víkendu).
+- Ukázat potvrzená pravidla (časy plného úvazku, 35 h odpočinek po 6 dnech,
+  dva dny volna po víkendu; poloviční úvazky jsou mimo pilot).
 
 ## 4. Nastavení
 - Otevřít Nastavení, ukázat konfigurovatelné vstupy (obsazení, parametry).
@@ -45,7 +48,12 @@ celkové produkční zabezpečení a provozní připravenost ověřené nejsou.
 - Zmenšit okno na ~390 px, ověřit mobilní navigaci a sticky sloupec tabulek.
 
 ## Co není hotové (sdělit vedení)
+- Online nasazení: cílem je Vercel Hobby + stávající Neon Free a Cloudflare
+  Workers AI, ale reálné volání AI, přihlášení a potvrzení v online prostředí
+  zatím nejsou ověřené.
 - Rozsáhlejší analytika pokrytí a vytížení (aktuální Analýzy čerpají auditní události).
 - Entra ID/Outlook není součástí MVP; provozní zabezpečení, zálohy, monitoring
   a obnovení databáze zůstávají `NOT VERIFIED`.
 - Kvalita plánovacího výstupu pro produkci není ověřená.
+- Projekt je nekomerční ukázka pro jednoho manažera, ne oficiální firemní
+  systém ani produkt s podporou.

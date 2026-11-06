@@ -17,10 +17,13 @@ pro prezentaci vedení firmy. Každá položka má kritérium dokončení.
   zaměstnanců s kompletními explicitními dny 25.–31. 10.; uloženo 625 známých
   směn/volných dnů, 88 buněk zůstalo neznámých a nebylo převedeno na volno.
 - [x] Načíst staffing profil — 14/14 hodnot: Po–Pá 15/7, So–Ne 7/3.
-- [ ] Potvrdit, kteří současní zaměstnanci mají poloviční úvazek; databázové
-  záznamy jsou zatím `full_time` (výchozí hodnota migrace).
+- [x] Rozsah úvazků potvrzen (`VERIFIED`, 6. 11. 2026): pilot je pouze pro
+  plné úvazky. Poloviční úvazky zůstávají mimo pilot; databázové záznamy proto
+  není potřeba měnit.
 - [ ] Zadat listopadové absence a dostupnost — tyto údaje nejsou v říjnovém rosteru.
-- [ ] Zadat fond práce a omluvené hodiny pro každého vybraného zaměstnance.
+- [ ] Volitelně zadat fond práce a omluvené hodiny (rozbalovací část formuláře).
+  Bez fondu lze návrh vytvořit; kontrola pak u chybějících údajů uvede, že
+  naplnění fondu nelze ověřit.
 - [ ] Doplnit chybějící říjnové hranice pro 6 zaměstnanců a pořídit prosincovou
   návaznost, pokud má být listopadový návrh potvrditelný.
 - [ ] Vytvořit návrh (OR-Tools), zkontrolovat nálezy a potvrdit pouze po
@@ -64,7 +67,8 @@ pro prezentaci vedení firmy. Každá položka má kritérium dokončení.
 - Žádné — všechna rozhodnutí jsou zapsána v `docs/DOMAIN_DECISIONS.md`.
 
 ## Poznámky
-- Pilot podporuje plné a poloviční úvazky (Milník 7 implementován).
+- Pilot je pouze pro plné úvazky; poloviční úvazky jsou implementované, ale
+  mimo pilot (`VERIFIED`, 6. 11. 2026).
 - Outlook/Entra autentizace není v MVP požadována. Migrace aktuální aktivní DB
   je `VERIFIED`; provozní připravenost (zálohy/monitoring/obnova/nasazení)
   zůstává `NOT VERIFIED`.

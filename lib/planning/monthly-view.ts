@@ -16,10 +16,15 @@ export function monthlyValidationMessage(status: MonthlyValidation["status"]): s
 }
 
 export function monthlyRosterCaption({ confirmed, month, mode }: { readonly confirmed: boolean; readonly month: string; readonly mode: string }): string {
-  return `${confirmed ? "Potvrzený rozpis" : "Nepotvrzený návrh"} · ${month}${mode === "simulated" ? " · simulovaný" : ""}`;
+  const modeLabel = mode === "simulated" ? " · simulovaný"
+    : mode === "cloudflare" ? " · AI Cloudflare"
+      : mode === "gemini" ? " · AI Gemini"
+        : mode === "ortools" ? " · místní plánovač"
+          : "";
+  return `${confirmed ? "Potvrzený rozpis" : "Nepotvrzený návrh"} · ${month}${modeLabel}`;
 }
 
-export function monthlyInstructionMessage(mode: "simulated" | "gemini" | "ortools", outcome: string): string {
+export function monthlyInstructionMessage(mode: "simulated" | "gemini" | "ortools" | "cloudflare", outcome: string): string {
   if (mode === "simulated") return "Ukázkový návrh doplňující pokyny nevyhodnocuje.";
   if (mode === "ortools") return "Místní plánovač doplňující pokyny nevyhodnotil.";
   const statement = outcome.trim() || "AI neposkytla vysvětlení k pokynům.";

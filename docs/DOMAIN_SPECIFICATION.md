@@ -6,21 +6,23 @@ Dokument: `docs/DOMAIN_SPECIFICATION.md`
 > **Stav dokumentu: ČÁSTEČNĚ POTVRZENÝ NÁVRH (PARTIALLY VERIFIED PROPOSAL).**
 >
 > Dokument obsahuje **potvrzený kontext domény** (§0.1), rozhodnutí (§0.2),
-> časy směn a dvě pracovní pravidla. Současná měsíční implementace s OR-Tools
-> se liší od schváleného záměru využít AI jako hlavní plánovací logiku; rozdíl
-> je zaznamenán v `docs/DOMAIN_DECISIONS.md`. Zbytek zůstává `PROPOSAL` nebo `OPEN QUESTION` — dokument
+> časy směn a dvě pracovní pravidla. Měsíční AI plánovač je Cloudflare
+> Workers AI; lokální OR-Tools zůstává pro offline běh. Rozdíl mezi záměrem
+> a ověřenou kvalitou je zaznamenán v `docs/DOMAIN_DECISIONS.md`. Zbytek zůstává `PROPOSAL` nebo `OPEN QUESTION` — dokument
 > stále není úplná schválená specifikace a nevymýšlí chybějící pravidla.
 > Každý pracovní předpoklad je označen `ASSUMPTION`, každá nevyřešená věc
 > `OPEN QUESTION`.
 >
-> **Aktuální model měsíčního MVP:** lokální OR-Tools sestavuje přiřazení;
-> deterministická validace nezávisle kontroluje celý měsíc; manažer rozhoduje
-> o potvrzení. Historický týdenní AI tok zůstává oddělený.
+> **Aktuální model měsíčního MVP:** měsíční přiřazení má sestavovat Cloudflare
+> Workers AI (adaptér `IMPLEMENTED`, reálné volání `NOT VERIFIED`); lokální
+> OR-Tools zůstává pro offline běh. Deterministická validace nezávisle kontroluje
+> celý měsíc; manažer rozhoduje o potvrzení. Historický týdenní AI tok zůstává
+> oddělený.
 >
 > **Implementační stav (`IMPLEMENTED`, ne schválení domény):** doménové typy,
-> potvrzené časy, `validatePlan()`, AI kontrakt, Gemini adaptér a orchestrátor
-> existují. To nemění nic na tom, že nepotvrzená pravidla a výklady zůstávají
-> `ASSUMPTION` nebo `OPEN QUESTION`.
+> potvrzené časy, `validatePlan()`, AI kontrakt, adaptér Cloudflare Workers AI,
+> Gemini adaptér a orchestrátor existují. To nemění nic na tom, že nepotvrzená
+> pravidla a výklady zůstávají `ASSUMPTION` nebo `OPEN QUESTION`.
 
 ## 0. Jak číst tento dokument
 
@@ -102,7 +104,8 @@ plánovacího engine; nejde o pracovněprávní posudek ani výpočet placené d
   následovat alespoň **35 hodin nepřetržitého odpočinku**. `VERIFIED`
 - **Víkend a dva dny volna:** zaměstnanec, který pracuje o víkendu, má mít
   během téhož týdne **dva dny volna**. `VERIFIED`; výklad „během týdne“ jako
-  pondělí–neděle je `ASSUMPTION` do potvrzení. Dny volna nemusí následovat
+  pondělí–neděle je také `VERIFIED` (rozhodnutí uživatele 6. 11. 2026).
+  Dny volna nemusí následovat
   po sobě; odpočinek po šesti pracovních dnech se kontroluje samostatně. `VERIFIED`
 - **Plný úvazek:** první verze neobsahuje zaměstnance na částečný úvazek.
   `VERIFIED` jako rozsah, ne jako doménové pravidlo.
@@ -150,8 +153,8 @@ Nejsou schválením dosud otevřených pracovněprávních nebo personálních p
   náhradní volno; jeho datum ani přidělení se nesmí domýšlet či aplikovat bez
   potvrzení managera. `VERIFIED` jako procesní směr; termín náhradního volna
   zůstává `OPEN QUESTION`.
-- První řez používá syntetická data a simulovaný provider. Gemini se zapojí až
-  po stabilizaci kontraktu operativní náhrady.
+- První řez používá syntetická data. Měsíční AI plánovač je Cloudflare Workers
+  AI; Gemini zůstává jako starší adaptér mimo měsíční tok.
 - V prvním řezu se audit zaměřuje na potvrzenou změnu, původní a nový rozpis,
   incident, vybranou variantu, výchozí verzi a identitu managera.
 - Limity budou připravené jako konfigurovatelný profil. Právní baseline je
@@ -226,11 +229,13 @@ Hlavní měsíční MVP má manažerovi ušetřit práci: lokální plánovač s
   odpoledních je přání, nikoli povinné pravidlo. Lokální OR-Tools je používá
   jako měkký cíl a nezávislá validace je vyhodnocuje jako neblokující nález.
   Střídání se vztahuje na sousední pracovní směny i přes dny volna.
-- Zaměstnanci na plný a poloviční úvazek; poloviční úvazek má potvrzené
-  všednodenní časy 7:45–15:00 a 15:00–21:00. O víkendu smí pracovat v plné
-  délce víkendové směny. Podrobnosti a stav implementace v `DOMAIN_DECISIONS.md`
-  a `ROADMAP.md`.
-- Lokální OR-Tools plánovač vytváří konkrétní přiřazení směn.
+- **Pilot je pouze pro plné úvazky** (`VERIFIED`, 6. 11. 2026). Poloviční
+  úvazek je v kódu implementovaný, ale mimo pilot: ranní 7:45–15:00 a odpolední
+  15:00–21:00 (pouze všední den), o víkendu v plné délce směny. Podrobnosti v
+  `DOMAIN_DECISIONS.md` a `ROADMAP.md`.
+- Lokální OR-Tools plánovač vytváří konkrétní přiřazení směn v offline režimu.
+- Měsíční AI plánovač používá Cloudflare Workers AI; skutečné volání a kvalita
+  výstupu zůstávají `NOT VERIFIED`.
 - Deterministická validace nezávisle kontroluje celý měsíc podle dostupných podkladů.
 - Výstup rozlišuje nalezené řešení, známou neproveditelnost a nedokončený běh.
 - AI pomoc s pokyny či vysvětlením zůstává oddělená a volitelná.
@@ -242,7 +247,9 @@ Hlavní měsíční MVP má manažerovi ušetřit práci: lokální plánovač s
 - Zaměstnanci na částečný úvazek.
 - Integrace s Countdown CRM, EDocházkou, mzdami nebo jinými systémy.
 - Automatické ukládání nebo aplikace návrhu bez potvrzení manažera.
-- Produkční nasazení, produkční databáze a reálná data.
+- Produkční úroveň záloh, monitoringu a zabezpečení. Nekomerční online MVP na
+  Vercel Hobby + stávající Neon je `PLANNED`; nejde o produkční nasazení.
+- Skutečná osobní data v repozitáři nebo demo scénářích.
 - Vymýšlení pravidel, která nejsou potvrzená (H1–H7 a S1–S5 zůstávají
   z velké části `ASSUMPTION`/`OPEN QUESTION`).
 
@@ -407,8 +414,8 @@ musí být vynuceno deterministickou validací, ne jen instrukcí pro AI.
 | H5 | Maximální počet hodin nebo směn za období | `VERIFIED` (rozhodnutí manažera 5. 11. 2026) | Žádný tvrdý limit. Fond práce zůstává nezávazným cílem (H13). |
 | H6 | Po šesti po sobě jdoucích pracovních dnech alespoň 35 h nepřetržitého odpočinku | `VERIFIED` | Pracovní den je kalendářní den s alespoň jednou směnou (OQ21). |
 | H7 | Uzamčené přiřazení nelze přepsat | `VERIFIED` (rozhodnutí manažera 5. 11. 2026) | Ne — manažer nemůže přiřazení zamknout; solver může přepsat cokoli. |
-| H8 | Zaměstnanec pracující o víkendu má v témže týdnu dva dny volna | `VERIFIED` | Výklad „během týdne“ = pondělí–nedělí je `ASSUMPTION`. |
-| H9 | Plné a poloviční úvazky | `VERIFIED` (rozhodnutí manažera 5. 11. 2026) | Měsíční MVP podporuje oba typy; poloviční úvazek o víkendu používá plnou délku směny. |
+| H8 | Zaměstnanec pracující o víkendu má v témže týdnu dva dny volna | `VERIFIED` | Výklad „během týdne“ = pondělí–nedělí je `VERIFIED` (rozhodnutí uživatele 6. 11. 2026). |
+| H9 | Plné a poloviční úvazky | `VERIFIED` (rozhodnutí manažera 5. 11. 2026), pilot omezen 6. 11. 2026 | Kód podporuje oba typy, ale **pilot je pouze pro plné úvazky**. Poloviční úvazek zůstává mimo pilot; o víkendu používá plnou délku směny. |
 | H10 | Potřebné obsazení je splněno, nebo je nedostatek přiznán | `VERIFIED` (cíl) | Zda je nedostatek tvrdá chyba, je `OPEN QUESTION`. |
 | H11 | Bez potvrzení manažera se nic neukládá | `VERIFIED` (proces) | Netýká se obsahu plánu. |
 | H12 | Operativní náhrada nesmí prodlužovat, zkracovat ani dělit pevnou směnu; přesčas se nepoužívá | `VERIFIED` (interní) | Náhrada se vybírá pouze z celých existujících směn. |
@@ -617,9 +624,9 @@ Návaznost z exportu rosteru je nyní `IMPLEMENTED`: klient převádí semicolon
 
 Přihlášený průchod přes UI/API a dočasnou PostgreSQL 16 použil úsek `2026-11-15` až `2026-11-30`, 48 syntetických zaměstnanců a verzi 2 syntetického rosteru s 1 344 známými buňkami mimo doplňovaný úsek. Vstupní pevné směny mimo úsek pocházely z odděleného úplného syntetického návrhu s ověřeným obsazením. První pokus s podhodnoceným testovacím obsazením byl správně zablokován; po opravě fixture nezávislá kontrola prošla bez problémů. OR-Tools vytvořil 446 přiřazení a žádné nové přiřazení mimo vybraný úsek; uložený snapshot zachoval všech 394 pevných směn mimo rozsah. Týdenní tabulka je označila `P` a zobrazila jejich časy. Manažer potvrdil návrh; po obnovení stránky UI stále zobrazovalo potvrzený rozpis a `GET /api/planning/monthly` vrátil `confirmed: true`, správný rozsah, verzi rosteru 2 a 446 přiřazení. Databáze měla jeden potvrzený částečný běh a jednu auditní událost; browser konzole neměla chyby ani varování. CSV import přes UI i konflikt změněného rosteru byly následně ověřeny v běžné aplikaci a oddělené lokální PostgreSQL; produkční provoz a nasazení zůstávají `NOT VERIFIED`.
 
-**Rozhraní manažera — `IMPLEMENTED`, browser ověření `PARTIALLY VERIFIED`:** přehled zobrazuje krátké české výsledky nezávislé kontroly a konkrétní nálezy. U lokálního plánovače i ukázky je zřejmé, že volný text nevyhodnocují; výstup Gemini je označen jako tvrzení AI, které není nezávisle ověřené. Ruční editace návrhu a volba ukázkového scénáře byly odstraněny; jedno výslovné tlačítko potvrzení zůstává a samo potvrzení neprovádí. Ukázkové seznamy a interní názvy režimů byly odstraněny z přehledu; nastavení uvádí srozumitelný stav, pokud uložení není dostupné. Cílené testy, lint, typová kontrola, Prisma validace a build prošly. Prohlížeč ověřil rozměry 390×844 a 1280×900 px, klávesnicový přístup k odkazu přeskočení i rozbalení náhledu syntetického CSV. Náhled správně rozlišil 1 směnu, 1 výslovné volno a 28 neznámých buněk. Přímé syntetické Prisma uložení a načtení rosteru je nyní ověřené na izolované lokální DB; přihlášené UI ověřilo náhled, uložení CSV podkladů, vytvoření a potvrzení doplnění i načtení po obnovení. Ověřeny jsou také blokace zastaralého návrhu a aplikační oprávnění viewer účtu.
+**Rozhraní manažera — `IMPLEMENTED`, browser ověření `PARTIALLY VERIFIED`:** přehled zobrazuje krátké české výsledky nezávislé kontroly a konkrétní nálezy. U lokálního plánovače i ukázky je zřejmé, že volný text nevyhodnocují; výstup AI je označen jako tvrzení AI, které není nezávisle ověřené. Ruční editace návrhu a volba ukázkového scénáře byly odstraněny; jedno výslovné tlačítko potvrzení zůstává a samo potvrzení neprovádí. Ukázkové seznamy a interní názvy režimů byly odstraněny z přehledu; nastavení uvádí srozumitelný stav, pokud uložení není dostupné. Cílené testy, lint, typová kontrola, Prisma validace a build prošly. Prohlížeč ověřil rozměry 390×844 a 1280×900 px, klávesnicový přístup k odkazu přeskočení i rozbalení náhledu syntetického CSV. Náhled správně rozlišil 1 směnu, 1 výslovné volno a 28 neznámých buněk. Přímé syntetické Prisma uložení a načtení rosteru je nyní ověřené na izolované lokální DB; přihlášené UI ověřilo náhled, uložení CSV podkladů, vytvoření a potvrzení doplnění i načtení po obnovení. Ověřeny jsou také blokace zastaralého návrhu a aplikační oprávnění viewer účtu.
 
-**Ochrana externí AI — `IMPLEMENTED` / skutečný provoz `NOT VERIFIED`:** měsíční runtime nyní odmítne režim Gemini, ať je zvolen přímo nebo zděděn z obecného nastavení. Externí volání z měsíčního toku zůstává vypnuté do schválení rozsahu a ochrany údajů; syntetické integrační testy adaptéru tím nejsou vypnuté. Vstupní textové pokyny se při uložení měsíčního běhu stále ukládají jako součást snapshotu, i když je lokální OR-Tools nevyhodnocuje. Doba uchování a další zpracování tohoto textu zůstávají předmětem rozhodnutí před provozem.
+**Externí AI — `VERIFIED` rozhodnutím uživatele (6. 11. 2026):** měsíční AI plánovač smí posílat skutečná jména, směny, absence i volný text. Zvolený provider je Cloudflare Workers AI s modelem, který podle dokumentace uchovává nula dat a netrénuje na zákaznickém obsahu. Starší Gemini adaptér zůstává v kódu; měsíční runtime jej nadále odmítá, protože bezplatná úroveň není pro aplikaci v EHP přípustná a placená odporuje rozpočtu. Reálné volání Cloudflare AI a kvalita návrhu zůstávají `NOT VERIFIED`. Vstupní textové pokyny se ukládají jako součást snapshotu; doba uchování a mazání zůstávají předmětem dalšího rozhodnutí.
 
 **Doplňující běžné aplikační ověření 2026-11-04:** Ve dvou oddělených dočasných lokálních PostgreSQL 16 databázích byla použita pouze syntetická data. V prvním přihlášeném průchodu 48 zaměstnanců manažer přes stránku Návaznost směn uložil pět verzí CSV; změněný obsah vytvořil novou verzi, shodný zůstal idempotentní a známý den uvnitř doplňovaného úseku byl odmítnut. Po změně podkladu API odmítlo potvrdit starší návrh odpovědí 409 a aplikace to zobrazila. Po obnovení původního CSV nový návrh lokálního OR-Tools se 446 směnami prošel kontrolou a manažer jej potvrdil; po obnovení stránky zůstal potvrzený. V této databázi byly tři měsíční běhy, jeden potvrzený. V samostatném běhu s 48 syntetickými zaměstnanci a dvěma syntetickými účty vytvořil návrh bez okolní historie 840 směn, ale aplikace jej označila jako neověřený a potvrzovací tlačítko vypnula. Při novém návrhu pouze s jedním vybraným zaměstnancem a nezměněným nastavením obsazení formulář ukázal kapacitní limit; po spuštění API vrátilo 422, zobrazila se chyba o nemožnosti sestavit úplné obsazení a žádný nový běh se neuložil. Přihlášený viewer mohl číst měsíční stav, ale API mu zamítlo správu účtů, zápis zaměstnanců a spuštění plánovacího běhu odpovědí 403; přímá stránka správy účtů zobrazila omezení na managera. Druhá databáze obsahovala jeden neověřený běh a žádný potvrzený. Oba testovací běhy byly po ověření zastaveny. Tímto jsou ověřeny jen popsané aplikační cesty, nikoli celé MVP.
 

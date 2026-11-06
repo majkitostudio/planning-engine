@@ -15,6 +15,7 @@
     "db:generate": "prisma generate",
     "db:validate": "prisma validate",
     "db:migrate": "prisma migrate dev",
+    "db:migrate:deploy": "prisma migrate deploy",
     "db:bootstrap-manager": "tsx scripts/bootstrap-manager.ts",
     "db:studio": "prisma studio",
     "postinstall": "prisma generate"

@@ -78,9 +78,11 @@ Tato rozhodnutí jsou pro další práci závazná:
 
 - **AI je schváleným záměrem hlavní plánovací logiky.** Má sestavovat návrh,
   vyhodnocovat požadavky, absence, dostupnost a obsazení a navrhovat řešení.
-  Současná měsíční implementace však používá lokální OR-Tools a textové pokyny
-  nevyhodnocuje. Tento rozdíl není dokladem změny schváleného záměru.
-  Skutečná jména ani volný text neposílej externí AI bez schválené ochrany údajů.
+  Současná měsíční implementace připravuje adaptér pro Cloudflare Workers AI;
+  lokální OR-Tools zůstává pro offline běh. Externí AI je `VERIFIED` rozhodnutím
+  uživatele (6. 11. 2026) povolená i se skutečnými jmény a volným textem.
+  Používej model s nulovým uchováváním a bez trénování na zákaznickém obsahu;
+  volný text zůstává pokyn, nikoli deterministicky ověřené tvrdé pravidlo.
 - **Deterministická validace nezávisle kontroluje celý měsíční návrh.** Nálezy
   plánovače validaci nenahrazují a výsledek se nepovažuje za schválení.
 - **Manažer návrh kontroluje a potvrzuje.** Aplikace nesmí bez potvrzení
@@ -125,7 +127,8 @@ směny; přestávky ani výpočet odpracované doby nejsou samostatné tvrdé pr
 - Po šesti po sobě jdoucích pracovních dnech musí následovat alespoň 35 hodin
   nepřetržitého odpočinku.
 - Zaměstnanec, který pracuje o víkendu, má mít během téhož týdne dva dny volna.
-  Přesný výklad „během týdne“ je `ASSUMPTION` (pondělí–neděle) do potvrzení.
+  Týden se počítá **pondělí–neděle** (`VERIFIED`, rozhodnutí uživatele
+  6. 11. 2026).
 - Částečný návrh lze zobrazit a diskutovat, ale nelze jej potvrdit
   (`VERIFIED`, OQ23).
 - Potřebné obsazení směn je konfigurovatelný vstup. Historické počty se
@@ -133,8 +136,12 @@ směny; přestávky ani výpočet odpracované doby nejsou samostatné tvrdé pr
 
 ## Aktuální stav projektu
 
-- **Plánovací Engine je rozpracovaný technický základ s demo UI (Next.js +
-  TypeScript).** Není to hotová ani produkční aplikace.
+- **Plánovací Engine je nekomerční ukázkový projekt pro jednoho manažera**
+  (`VERIFIED`, 6. 11. 2026), rozpracovaný technický základ s demo UI
+  (Next.js + TypeScript). Není to hotová ani produkční aplikace.
+- **Cílové prostředí je Vercel Hobby + stávající Neon Free** (`VERIFIED`
+  rozhodnutí, 6. 11. 2026). Jiná databáze se nezakládá. Nasazení ani zápis
+  do databáze bez výslovného potvrzení neprováděj.
 - **Měsíční pilot:** celý kalendářní měsíc je hlavní tok; týdenní tabulka je
   jeho pohled. Stav plánovače a souvislého průchodu musí odpovídat aktuálním
   kontrolám, ne historickým pokusům.
@@ -143,9 +150,10 @@ směny; přestávky ani výpočet odpracované doby nejsou samostatné tvrdé pr
   (`validatePlan()`).
 - AI kontrakt a orchestrace: `IMPLEMENTED` — `lib/planning/ai-provider.ts`
   definuje provider-neutral rozhraní, `lib/planning/orchestrator.ts` spojuje
-  návrh, validaci, změny a pokrytí. Serverový Gemini adaptér je v
-  `lib/ai/gemini-planning-provider.ts`; reálné volání je `VERIFIED` integračním
-  testem. Kvalita plánovacího výstupu pro produkční provoz zůstává `NOT VERIFIED`.
+  návrh, validaci, změny a pokrytí. Měsíční AI adaptér pro Cloudflare Workers AI
+  je v `lib/ai/cloudflare-planning-provider.ts`; Gemini adaptér zůstává
+  v `lib/ai/gemini-planning-provider.ts` jako starší varianta. Kvalita
+  plánovacího výstupu pro produkční provoz zůstává `NOT VERIFIED`.
 - Starší týdenní API `POST /api/planning/run` a `/confirm` zůstává v kódu;
   samostatné týdenní UI bylo odstraněno. Měsíční UI používá vlastní měsíční
   API pro návrh, kontrolu a potvrzení s blokátory podle OQ23.
@@ -158,8 +166,8 @@ směny; přestávky ani výpočet odpracované doby nejsou samostatné tvrdé pr
   `planning.confirmed`; `memory` je pouze testovací režim. Migrace a potvrzení byly
   ověřeny v izolované lokální Docker PostgreSQL.
 - Starší týdenní provider používá `PLANNING_PROVIDER=simulated|gemini`; měsíční
-  provider jej může přepsat přes `PLANNING_MONTHLY_PROVIDER=simulated|gemini|ortools`.
-  Chybná hodnota ani nedostupný lokální plánovač nesmějí tiše přepnout provider.
+  provider jej může přepsat přes `PLANNING_MONTHLY_PROVIDER=simulated|gemini|ortools|cloudflare`.
+  Chybná hodnota ani nedostupný plánovač nesmějí tiše přepnout provider.
 - Simulovaný provider (`lib/planning/simulated/`) vrací tři fixture scénáře
   (`complete`, `partial`, `unverified`) pro pevný týden 5.–11. 10. 2026.
 - Doménová specifikace: `PARTIALLY VERIFIED PROPOSAL` —

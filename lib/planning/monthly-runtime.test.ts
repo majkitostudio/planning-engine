@@ -10,7 +10,26 @@ describe("měsíční provozní konfigurace", () => {
   ])("nepovolí externí Gemini pro měsíční vstupy bez schváleného rozsahu dat (%o)", (env) => {
     expect(getMonthlyProviderRuntime(env)).toMatchObject({
       configured: false,
-      reason: expect.stringContaining("ochran"),
+      reason: expect.stringContaining("EHP"),
+    });
+  });
+
+  it("umožní výslovně zapnout Cloudflare AI jen pro měsíční plánování", () => {
+    expect(getMonthlyProviderRuntime({
+      PLANNING_MONTHLY_PROVIDER: "cloudflare",
+      PLANNING_PROVIDER: "",
+      CLOUDFLARE_ACCOUNT_ID: "account-id",
+      CLOUDFLARE_API_TOKEN: "token",
+    })).toEqual({ configured: true, mode: "cloudflare" });
+  });
+
+  it("nepředstírá nakonfigurovaný Cloudflare bez přístupových údajů", () => {
+    expect(getMonthlyProviderRuntime({
+      PLANNING_MONTHLY_PROVIDER: "cloudflare",
+      PLANNING_PROVIDER: "",
+    })).toMatchObject({
+      configured: false,
+      reason: expect.stringContaining("CLOUDFLARE_ACCOUNT_ID"),
     });
   });
 

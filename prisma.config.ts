@@ -11,9 +11,8 @@ export default defineConfig({
     path: "prisma/migrations",
   },
   datasource: {
-    // Používáme `process.env.DATABASE_URL ?? ""` místo pomocníka `env()`,
-    // aby `prisma generate` fungoval i bez nastavené proměnné prostředí
-    // (podle dokumentace Prisma ORM v7).
-    url: process.env.DATABASE_URL ?? "",
+    // Pro Neon použij přímé připojení; pooler není vhodný pro migrace.
+    // `prisma generate` funguje i bez nastavené proměnné prostředí.
+    url: process.env.DATABASE_URL_UNPOOLED ?? process.env.DATABASE_URL ?? "",
   },
 });

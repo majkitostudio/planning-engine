@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import { canConfirmPlanning } from "@/lib/auth/actor";
 import { requirePlanningActor } from "@/lib/auth/route-access";
 import { GeminiPlanningProvider } from "@/lib/ai/gemini-planning-provider";
+import { CloudflarePlanningProvider } from "@/lib/ai/cloudflare-planning-provider";
 import { validateMonthlyInput } from "@/lib/planning/domain/month-input";
 import { executeMonthlyPlanning } from "@/lib/planning/monthly-planning";
 import { MonthlyOrtoolsProvider } from "@/lib/planning/monthly-ortools-provider";
@@ -33,7 +34,8 @@ export async function POST(request: Request) {
     const planningInput = input.value.planningRange ? { ...input.value, rosterHistory: await current.loadRosterSnapshot(input.value.month, employeeIds) } : input.value;
     const provider = current.mode === "simulated" ? new SimulatedMonthlyProvider(scenario as MonthlyScenario)
       : current.mode === "gemini" ? new GeminiPlanningProvider()
-        : new MonthlyOrtoolsProvider();
+        : current.mode === "cloudflare" ? new CloudflarePlanningProvider()
+          : new MonthlyOrtoolsProvider();
     const result = await executeMonthlyPlanning(planningInput, boundary, provider);
     if (!result.ok) {
       const status = result.code === "solver_timeout" ? 504

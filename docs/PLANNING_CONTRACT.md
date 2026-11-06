@@ -1,16 +1,17 @@
 # Minimální datový kontrakt plánovacího jádra
 
 > Tento dokument zachycuje původní týdenní kontrakt a související AI provider.
-> Měsíční MVP nyní používá samostatný lokální OR-Tools provider. Rozdíl oproti
-> schválenému záměru s AI uvádí [`DOMAIN_DECISIONS.md`](DOMAIN_DECISIONS.md).
+> Měsíční MVP má samostatný tok: Cloudflare Workers AI navrhuje, deterministická
+> validace ověřuje a manažer potvrzuje. Lokální OR-Tools zůstává pro offline běh.
+> Podrobnosti uvádí [`DOMAIN_DECISIONS.md`](DOMAIN_DECISIONS.md).
 
 - **Stav:** kontrakt je `PROPOSAL` (doména zůstává částečně otevřená);
   jeho implementace je `IMPLEMENTED` a ověřená testy.
-- **Datum:** 24. 10. 2026, aktualizováno 26. 10. 2026
+- **Datum:** 24. 10. 2026, aktualizováno 26. 10. 2026 a 6. 11. 2026
 - **Kód:** `lib/planning/domain/types.ts`, `lib/planning/domain/confirmed.ts`,
   `lib/planning/domain/time.ts`, `lib/planning/domain/validation.ts`,
   `lib/planning/ai-provider.ts`, `lib/planning/orchestrator.ts`,
-  `lib/ai/gemini-planning-provider.ts`
+  `lib/ai/cloudflare-planning-provider.ts`, `lib/ai/gemini-planning-provider.ts`
 - **Souvisí:** [Doménová specifikace](DOMAIN_SPECIFICATION.md),
   [Roadmapa](ROADMAP.md), [ADR 0005](adr/0005-ai-navrhuje-validace-overuje.md),
   [Plánovací vrstva](../lib/planning/README.md)
@@ -27,8 +28,9 @@ Kontrakt je záměrně **minimální pro první funkční verzi**:
 - schválené absence, požadavky, existující směny,
 - potvrzená pravidla odpočinku a víkendových dnů volna.
 
-Není to univerzální model pro všechny typy plánování. Měsíce, částečné úvazky,
-pobočky, kampaně, role, mzdy a integrace se doplní až po samostatném rozhodnutí.
+Není to univerzální model pro všechny typy plánování. Měsíční tok je
+implementovaný samostatně; částečné úvazky (mimo pilot), pobočky, kampaně,
+role, mzdy a integrace se doplní až po samostatném rozhodnutí.
 
 ## 2. Tři stavy, které se nesmí slít
 
@@ -322,8 +324,9 @@ interface PlanValidationResult {
 `problems` obsahují stabilní `code`, `severity`, text a podle možnosti
 `employeeId`, `date`, `shiftKind` a `details`. `unverifiedChecks` nejsou
 porušená pravidla; jen brání tomu, aby byl výsledek označen jako `valid`.
-`assumptions` přiznávají pouze dosud neuzavřené výklady (termín náhradního volna
-v OQ22 a výklad dvou dnů volna). Validace návrh nikdy neopravuje ani nemění.
+`assumptions` přiznávají pouze dosud neuzavřené výklady (zejména termín
+náhradního volna v OQ22). Výklad dvou dnů volna je `VERIFIED` (pondělí–neděle,
+rozhodnutí uživatele 6. 11. 2026). Validace návrh nikdy neopravuje ani nemění.
 
 ### 6.4 Stav běhu
 
@@ -457,10 +460,10 @@ Poznámky:
 
 - `ASSIGNMENT-OVERLAP` a `ABSENCE-APPROVED` jsou strukturální integrita, ne
   sporné doménové pravidlo.
-- `WEEKEND-TWO-DAYS-OFF` používá výklad „během týdne“ = pondělí–neděle
-  (`ASSUMPTION`). Dva dny volna se počítají jako libovolné dva dny; pokud
-  nejsou po sobě jdoucí, validace vrátí `not_verified`, protože striktnější
-  výklad není potvrzený.
+- `WEEKEND-TWO-DAYS-OFF` používá potvrzený výklad „během týdne“ =
+  pondělí–neděle (`VERIFIED`, rozhodnutí uživatele 6. 11. 2026). Dva dny volna
+  se počítají jako libovolné dva dny; pokud nejsou po sobě jdoucí, validace
+  vrátí `not_verified`, protože striktnější výklad není potvrzený.
 - `REST-AFTER-SIX-DAYS` používá potvrzený výklad „pracovní den“ = kalendářní den
   s alespoň jednou směnou (OQ21). 35 h se měří od konce 6. dne
   do začátku další směny. Chybějící historie před týdnem vede k `not_verified`.
@@ -524,20 +527,25 @@ selhání běhu.
 
 ### 8.2 Poskytovatel modelu
 
-První implementovaný poskytovatel je Google Gemini. Adaptér je v
-`lib/ai/gemini-planning-provider.ts` a implementuje provider-neutral rozhraní
-`PlanningModelProvider`; jádro na něm nezávisí.
+Měsíční AI plánovač je Cloudflare Workers AI (`lib/ai/cloudflare-planning-provider.ts`).
+Implementuje měsíční rozhraní `MonthlyPlanningProvider`; jádro na konkrétním
+poskytovateli nezávisí. Starší Google Gemini adaptér
+(`lib/ai/gemini-planning-provider.ts`) zůstává v kódu pro týdenní tok a historii.
 
 - volání je pouze serverové (`fetch`), bez nové závislosti;
-- konfigurace v prostředí: `GEMINI_API_KEY`, `GEMINI_MODEL` (výchozí
-  `gemini-2.5-flash`), `GEMINI_TIMEOUT_MS`, volitelně `GEMINI_BASE_URL`;
+- konfigurace Cloudflare: `CLOUDFLARE_ACCOUNT_ID`, `CLOUDFLARE_API_TOKEN`,
+  `CLOUDFLARE_AI_MODEL` (výchozí `@cf/meta/llama-3.3-70b-instruct-fp8-fast`),
+  `CLOUDFLARE_AI_TIMEOUT_MS`;
+- konfigurace staršího Gemini: `GEMINI_API_KEY`, `GEMINI_MODEL`
+  (`gemini-2.5-flash`), `GEMINI_TIMEOUT_MS`, volitelně `GEMINI_BASE_URL`;
 - klíč se nikdy nedostane do klienta ani do logu;
-- testování probíhá přes injektovaný provider; integrační test proti reálnému
-  API se spouští jen s `RUN_GEMINI_INTEGRATION=1`.
+- testování probíhá přes injektovaný provider nebo mockovaný `fetch`; reálné
+  volání se spouští jen s příslušným integračním přepínačem.
 
-Volba konkrétního modelu je konfigurace, ne doménové rozhodnutí. Reálné volání
-Gemini je `VERIFIED` doloženým integračním testem. Produkční kvalita
-plánovacího výstupu a jeho použití s reálnými daty zůstávají `NOT VERIFIED`.
+Externí AI je `VERIFIED` rozhodnutím uživatele (6. 11. 2026) povolená včetně
+skutečných jmen a volného textu. Reálné volání Cloudflare AI a kvalita
+měsíčního výstupu zůstávají `NOT VERIFIED`. Bezplatná úroveň Gemini není pro
+aplikaci dostupnou v EHP přípustná; placená varianta odporuje rozpočtu projektu.
 
 ## 9. Co kontrakt záměrně neobsahuje
 
@@ -564,7 +572,7 @@ typů.
 | OQ23 | Lze potvrdit částečně neúplný návrh? | `VERIFIED` — potvrzení je blokované |
 | OQ24 | Jak se započítávají přestávky? | `VERIFIED` — používají se hrubé časy |
 | — | Časová zóna `Europe/Prague` | `ASSUMPTION` |
-| — | „Během týdne“ = pondělí–neděle | `ASSUMPTION` |
+| — | „Během týdne“ = pondělí–neděle | `VERIFIED` — rozhodnutí uživatele 6. 11. 2026 |
 | — | Pracovní den = kalendářní den s alespoň jednou směnou | `VERIFIED` — OQ21 |
 | — | Dva dny volna nemusí následovat po sobě | `VERIFIED` — viz `DOMAIN_SPECIFICATION.md` |
 | — | Historie musí být úplná alespoň za 6 dnů před `weekStart` | `ASSUMPTION` |
@@ -582,6 +590,9 @@ typů.
   s testy `lib/planning/domain/validation.test.ts`.
 - AI kontrakt: `IMPLEMENTED` v `lib/planning/ai-provider.ts` — rozhraní
   `PlanningModelProvider`, chyby poskytovatele a `isPlanDraft()`.
+- Cloudflare Workers AI adaptér: `IMPLEMENTED` v
+  `lib/ai/cloudflare-planning-provider.ts`; reálné volání a kvalita výstupu jsou
+  `NOT VERIFIED`.
 - Gemini adaptér: `IMPLEMENTED` v `lib/ai/gemini-planning-provider.ts`; reálné
   volání je `VERIFIED` integračním testem, produkční kvalita výstupu je
   `NOT VERIFIED`.

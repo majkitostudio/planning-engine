@@ -5,9 +5,9 @@ export const metadata: Metadata = {
 };
 
 const CONFIRMED_RULES = [
-  ["Časy směn", "Plný úvazek: ranní 7:45–16:30, odpolední ve všední den 13:15–21:00, víkendová odpolední 12:45–21:00. Poloviční úvazek: ve všední den ranní 7:45–15:00, odpolední 15:00–21:00; o víkendu smí pracovat v plné délce víkendové směny."],
+  ["Časy směn", "Pilot používá plné úvazky: ranní 7:45–16:30, odpolední ve všední den 13:15–21:00, víkendová odpolední 12:45–21:00. Poloviční úvazky jsou v kódu připravené, ale mimo pilot."],
   ["Odpočinek po šesti dnech", "Po šesti po sobě jdoucích pracovních dnech musí následovat alespoň 35 hodin nepřetržitého odpočinku. Pracovním dnem je kalendářní den s alespoň jednou směnou."],
-  ["Víkendová práce", "Zaměstnanec, který pracuje o víkendu, má mít během téhož týdne dva dny volna. Výklad týdne jako pondělí–neděle je zatím pracovní předpoklad."],
+  ["Víkendová práce", "Zaměstnanec, který pracuje o víkendu, má mít během téhož týdne dva dny volna. Týden se počítá pondělí–neděle."],
   ["Schválená absence", "Schválená absence blokuje přiřazení směny."],
   ["Potvrzení manažera", "Nepotvrzený návrh lze uložit k posouzení, ale bez výslovného potvrzení manažera se nesmí aplikovat jako potvrzený rozpis."],
   ["Částečný návrh", "Částečný nebo neověřený návrh se může zobrazit a projednat, ale nelze jej potvrdit."],
@@ -20,10 +20,10 @@ const CONFIRMED_RULES = [
 ] as const;
 
 const OPEN_ITEMS = [
-  "Přesný výklad dvou dnů volna v týdnu: pondělí–neděle je zatím pracovní předpoklad.",
-  "Schválený záměr používá AI jako hlavní plánovací logiku, zatímco měsíční návrh vytváří lokální OR-Tools. Soulad implementace se záměrem zůstává otevřený.",
-  "Režim OR-Tools nevyhodnocuje doplňující textové pokyny. Měsíční volání externí AI zůstává vypnuté do schválení ochrany a uchovávání údajů; skutečné osobní údaje se externí AI neposílají.",
-  "Kvalita plánování, produkční zabezpečení a nasazení nejsou ověřené pro produkční provoz. Migrace aktivní databáze je ověřená; to samo o sobě není produkční provozní certifikace.",
+  "Externí AI je povolená a smí dostávat skutečná jména i volný text. Měsíční plánování zajišťuje Cloudflare Workers AI s nulovým uchováváním; reálné volání a kvalita výstupu se teprve ověřují.",
+  "AI může přihlédnout k volnému textu, ale jeho splnění nezávislá kontrola neověří. Volný text zůstává pokyn, ne tvrdé pravidlo.",
+  "Kvalita plánování, produkční zabezpečení a online nasazení nejsou ověřené. Cílem je nekomerční Vercel Hobby se stávající Neon databází, ne produkční systém.",
+  "Doba uchování a mazání volného textu v databázi zatím nejsou potvrzené.",
 ];
 
 export default function RulesPage() {

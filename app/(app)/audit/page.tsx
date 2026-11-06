@@ -20,6 +20,16 @@ export const dynamic = "force-dynamic";
 
 const PAGE_SIZE = 20;
 
+function modeLabel(mode: string): string {
+  switch (mode) {
+    case "simulated": return "ukázkový návrh";
+    case "ortools": return "místní plánovač";
+    case "gemini": return "AI Gemini";
+    case "cloudflare": return "AI Cloudflare";
+    default: return mode;
+  }
+}
+
 export default async function PlanningAuditPage({
   searchParams,
 }: {
@@ -182,7 +192,7 @@ export default async function PlanningAuditPage({
                   <span className="data-row__title">{entry.month !== undefined ? `Měsíc ${entry.month ?? "neuveden"}` : `Týden od ${entry.weekStart ?? "neuveden"}`}</span>
                   <span className="data-row__sub">
                     {entry.action === "removed" ? "Odstranil(a)" : "Potvrdil(a)"}: {entry.confirmedByEmail ?? "neuvedeno"}
-                    {entry.mode ? ` · režim: ${entry.mode}` : ""}
+                    {entry.mode ? ` · režim: ${modeLabel(entry.mode)}` : ""}
                     {entry.assignmentCount !== null ? ` · ${entry.assignmentCount} směn` : ""}
                   </span>
                 </span>

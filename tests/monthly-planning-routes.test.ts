@@ -7,11 +7,13 @@ const confirm = vi.fn();
 const loadBoundary = vi.fn();
 const getConfirmed = vi.fn();
 const loadPreviousWeeklyEmployees = vi.fn();
-const monthlyMode = vi.hoisted(() => ({ value: "simulated" as "simulated" | "ortools" }));
+const monthlyMode = vi.hoisted(() => ({ value: "simulated" as "simulated" | "ortools" | "cloudflare" }));
 const generateOrtools = vi.hoisted(() => vi.fn());
+const generateCloudflare = vi.hoisted(() => vi.fn());
 vi.mock("@/lib/auth/route-access", () => ({ requirePlanningActor: () => access() }));
 vi.mock("@/lib/planning/monthly-runtime", () => ({ getMonthlyRuntime: () => ({ configured: true, mode: monthlyMode.value, create, confirm, loadBoundary, getConfirmed }), getMonthlyPersistenceRuntime: () => ({ configured: true, create, confirm, loadBoundary, getConfirmed, loadPreviousWeeklyEmployees }) }));
 vi.mock("@/lib/planning/monthly-ortools-provider", () => ({ MonthlyOrtoolsProvider: class { name = "ortools"; generateMonthlyPlan = generateOrtools; } }));
+vi.mock("@/lib/ai/cloudflare-planning-provider", () => ({ CloudflarePlanningProvider: class { name = "cloudflare"; generateMonthlyPlan = generateCloudflare; } }));
 
 import { POST as run } from "@/app/api/planning/monthly/run/route";
 import { POST as confirmRoute } from "@/app/api/planning/monthly/confirm/route";
@@ -42,6 +44,16 @@ describe("měsíční plánovací API", () => {
     expect(body.mode).toBe("ortools");
     expect(generateOrtools).toHaveBeenCalledOnce();
     expect(create).toHaveBeenCalledWith(expect.objectContaining({ mode: "ortools", providerName: "ortools" }));
+  });
+  it("spustí Cloudflare AI jako samostatný měsíční režim a uloží jeho identitu", async () => {
+    monthlyMode.value = "cloudflare";
+    generateCloudflare.mockResolvedValue({ month: input.month, assignments: [], explanations: [], alternatives: [], assumptions: [], instructionsOutcome: "AI zohlednila pokyny." });
+    const response = await run(request({ input }));
+    expect(response.status).toBe(200);
+    const body = await response.json();
+    expect(body.mode).toBe("cloudflare");
+    expect(generateCloudflare).toHaveBeenCalledOnce();
+    expect(create).toHaveBeenCalledWith(expect.objectContaining({ mode: "cloudflare", providerName: "cloudflare" }));
   });
   it("viewer nemůže spustit ani potvrdit běh", async () => {
     access.mockResolvedValue({ ok: true, actor: { ...actor, role: "viewer" } });

@@ -13,8 +13,33 @@
 > ho jen překládá do praxe a zaznamenává odpovědi.
 
 Datum vytvoření: 22. 10. 2026
-Poslední aktualizace: 5. 11. 2026
+Poslední aktualizace: 6. 11. 2026
 Vyplnil: uživatel / zadání projektu (částečně)
+
+## Projekt a provoz (`VERIFIED`, 6. 11. 2026)
+
+Tato rozhodnutí mění dřívější předpoklady a platí pro další práci:
+
+- **Projekt je nekomerční** — studentský/ukázkový projekt pro jednoho manažera,
+  ne oficiální zakázka. Neočekává se platba za něj.
+- **Rozpočet je 0 Kč.** Hosting i AI se volí podle nejnižších možných nákladů.
+- **Cílová databáze je jediná stávající Neon databáze na bezplatném tarifu.**
+  Další databáze, izolované ani vývojové se nezakládají.
+- **Cílový hosting je Vercel Hobby** (zdarma, nekomerční použití). Vercel Pro
+  by se použil jen při změně na komerční projekt.
+- **Měsíční AI plánovač je Cloudflare Workers AI** s modelem s nulovým
+  uchováváním a bez trénování na zákaznickém obsahu. Bezplatný limit je
+  10 000 neuronů denně.
+- **Externí AI smí dostávat skutečná jména, směny i volný text.** Dřívější
+  omezení „neposílat skutečná jména“ bylo nedorozumění; projekt s externí AI
+  počítal od začátku.
+- **Pilot je pouze pro plné úvazky.** Poloviční úvazky zůstávají implementované,
+  ale mimo pilot.
+- **Týden pro víkendové volno je pondělí–nedělí.**
+- **Online MVP** znamená funkční web s přihlášením, který vytváří rozpis.
+  Vydání je odloženo, dokud nebude AI plánovač připravený a ověřený.
+- **Smyšlená demo data** mohou být vložena do jediné databáze, musí být označená
+  a po ověření je lze odstranit.
 
 ## Rozepsané měsíční zadání (`VERIFIED`, 5. 11. 2026)
 
@@ -112,13 +137,17 @@ Parametry byly doplněny takto:
   nezávazné upozornění a neblokuje potvrzení.
 - Chybějící fond se označí jako neověřený, nikoli jako splněný; ani tento nález
   sám neblokuje potvrzení.
-- Měsíční pilot podporuje plné a poloviční úvazky. Směny a pravidla jejich
-  přiřazení jsou uvedeny níže v rozhodnutích manažera z 5. 11. 2026.
+- **Měsíční pilot je pouze pro plné úvazky** (`VERIFIED`, 6. 11. 2026).
+  Poloviční úvazky jsou v kódu implementované, ale do pilotu nepatří. Směny
+  plného úvazku jsou uvedeny níže v rozhodnutích manažera z 5. 11. 2026.
 - Technický strop 1000 hodin na vstup je pouze ochrana proti zjevně chybnému
   zadání, nikoli doménové pravidlo ani pracovněprávní limit.
-- Formulář vyžaduje fond a omluvené hodiny pro každého vybraného zaměstnance.
-  Chybějící údaj zůstává možný u starších nebo přímých vstupů a validace jej
-  označí jako neověřený.
+- Fond je ve formuláři volitelná (rozbalovací) část. Zcela prázdný řádek
+  znamená „nevyplněno“ a návrh lze vytvořit i bez fondu; kontrola pak uvede,
+  že naplnění fondu nelze ověřit. Pokud manažer u zaměstnance vyplní alespoň
+  jednu hodnotu, musí doplnit fond i omluvené hodiny, jinak formulář vytvoření
+  návrhu neumožní. Chybějící údaj zůstává možný u starších nebo přímých vstupů
+  a validace jej označí jako neověřený.
 
 `IMPLEMENTED` (5. 11. 2026): volitelný vstup `workFunds` v měsíčním zadání,
 deterministická kontrola `workFundFindings` (`WORK_FUND_MISSING`,
@@ -129,18 +158,25 @@ volba implementace, nikoli potvrzené doménové pravidlo; tvrdé pokrytí a
 potvrzená pravidla mají přednost. Ověření a přesné výsledky jsou v
 [`ROADMAP.md`](ROADMAP.md).
 
+`IMPLEMENTED` (6. 11. 2026): fond práce je ve formuláři volitelná rozbalovací
+část. Zcela prázdné řádky se do měsíčního zadání nepřenášejí, takže návrh lze
+vytvořit bez fondu; částečně vyplněný řádek (jen jedna z hodnot) vytvoření
+návrhu zablokuje s vysvětlením. Souhrn ukazuje počet vyplněných fondů a
+upozorňuje, že zbytek zůstane neověřený. Chování je pokryté testy
+`lib/planning/monthly-form.test.ts`; typecheck, lint, testy a build prošly.
+
 ## Rozhodnutí manažera — druhé kolo (5. 11. 2026)
 
-- **Částečné úvazky (poloviční):** `VERIFIED` rozhodnutí (5. 11. 2026).
-  Pilot nyní podporuje i poloviční úvazky. Časy směn:
+- **Částečné úvazky (poloviční):** `IMPLEMENTED`, ale **mimo pilot**
+  (`VERIFIED` rozhodnutí, 6. 11. 2026). Pilot používá pouze plné úvazky.
+  Implementované časy pro budoucí rozšíření:
   - Plný úvazek: ranní 7:45–16:30 (všední den i víkend), odpolední ve
     všední den 13:15–21:00, víkendová odpolední 12:45–21:00.
   - Poloviční úvazek: ranní 7:45–15:00 (pouze všední den), odpolední
     15:00–21:00 (pouze všední den). `VERIFIED` doplnění manažera:
     poloviční úvazek smí pracovat o víkendu, ale pouze v plné délce
     víkendové směny (7:45–16:30, 12:45–21:00).
-  Fond práce se zadává v hodinách pro každého zaměstnance zvlášť
-  (plný i poloviční).
+  Fond práce se zadává v hodinách pro každého zaměstnance zvlášť.
 - **Role a dovednosti (H4):** `VERIFIED` — ne, všichni zaměstnanci mohou
   obsadit libovolnou směnu. Role se neevidují.
 - **Maximální počet hodin nebo směn (H5):** `VERIFIED` — žádný tvrdý limit.
@@ -172,14 +208,16 @@ AI jako hlavní plánovací logiky. Rozdíl mezi zadáním a implementací zůst
 otevřený k rozhodnutí uživatele.
 
 - Lokální OR-Tools sestavuje přiřazení směn pro celý kalendářní měsíc.
-- AI není nutná pro vytvoření návrhu. Případná AI pomoc s pokyny či vysvětlením
-  je oddělená a bez schválené ochrany údajů nesmí odesílat skutečná jména ani
-  volný text.
+- Měsíční AI návrh zajišťuje Cloudflare Workers AI (`IMPLEMENTED` adaptér,
+  reálné volání `NOT VERIFIED`). Externí AI je `VERIFIED` rozhodnutím
+  uživatele (6. 11. 2026) povolená včetně skutečných jmen a volného textu;
+  používá se model s nulovým uchováváním a bez trénování na zákaznickém obsahu.
 - Nezávislá deterministická validace kontroluje celý návrh včetně dostupných
   návazností. Chybějící hranice, neúplný návrh ani výsledek solveru samy o sobě
   nejsou ověření ani potvrzení.
 - Doplňující textové pokyny nejsou tvrdé pravidlo; v režimu OR-Tools se
-  nevyhodnocují a výsledek to musí přiznat.
+  nevyhodnocují a výsledek to musí přiznat. AI je může zohlednit, ale jejich
+  splnění nezávislá kontrola neověří.
 
 ## Potvrzený směr operativních náhrad (`VERIFIED`, 29. 10. 2026)
 
@@ -212,8 +250,8 @@ dosud neznámé pracovní limity ani preference.
 - Při běžném plánování je schválená dovolená nebo jiné potvrzené volno
   blokátorem. Pro operativní náhradu platí užší manažerská výjimka popsaná
   v odpovědích z 30. 10. 2026 níže; datum náhradního volna se nesmí domýšlet.
-- První řez používá syntetická data a simulovaný provider. Gemini se zapojí až
-  po stabilizaci kontraktu náhrady.
+- První řez operativních náhrad používá syntetická data a simulovaný provider.
+  AI návrhy náhrad zatím nejsou zapojené.
 - Základní audit prvního řezu obsahuje potvrzenou změnu, původní a nový rozpis,
   incident, vybranou variantu, výchozí verzi a identitu managera.
 - Limity se budou připravovat jako konfigurovatelný profil, nikoli jako

@@ -65,7 +65,7 @@ sítě. Volání AI je schované za rozhraním; konkrétní poskytovatel je v `l
 ```text
 PlanningInput
   → kontrola vstupu (orchestrátor)
-  → AI poskytovatel (v produkci Gemini, v testech fake)
+  → AI poskytovatel (měsíční Cloudflare Workers AI, týdenní Gemini, v testech fake)
   → kontrola PlanDraft (struktura + vazba na vstup)
   → validatePlan() s doménovými pravidly
   → změny a pokrytí
@@ -121,9 +121,9 @@ rozdíl odstranit nebo jej v UI výslovně přiznat.
 ## Stav
 
 `IMPLEMENTED` a ověřené testy: generické jádro, doménový kontrakt,
-`validatePlan()`, AI kontrakt, orchestrátor, **Fáze 2 API a UI** a integrační
-volání Gemini jsou `IMPLEMENTED` a ověřené. `NOT VERIFIED` zůstává kvalita
-plánovacího výstupu pro produkční provoz.
+`validatePlan()`, AI kontrakt, orchestrátor, **Fáze 2 API a UI**, volání Gemini
+a adaptér Cloudflare Workers AI jsou `IMPLEMENTED`. `NOT VERIFIED` zůstává
+reálné volání Cloudflare AI a kvalita plánovacího výstupu pro produkční provoz.
 
 - Generické jádro zná tři stavy kontroly: `no_problems_found`,
   `problems_found` a `not_verified`. `not_verified` se nesmí číst jako úspěch,
