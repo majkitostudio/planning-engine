@@ -380,6 +380,12 @@ export class CloudflarePlanningProvider implements MonthlyPlanningProvider {
     }
 
     if (!response.ok) {
+      if (response.status === 429) {
+        throw new AiProviderError(
+          "failed",
+          "Denní limit využití AI pro plánování směn vypršel. Zkuste to později, nebo přepněte PLANNING_MONTHLY_PROVIDER na „simulated“ (demo) či „ortools“ (lokálně). Automatické přepnutí neprovádíme.",
+        );
+      }
       throw new AiProviderError("failed", `Cloudflare AI vrátila HTTP ${response.status}.`);
     }
 
