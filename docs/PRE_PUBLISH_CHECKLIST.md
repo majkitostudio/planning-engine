@@ -123,7 +123,7 @@ Tato rozhodnutí uživatele mění dřívější předpoklady. Platí pro dalš�
 
 ### P2 — Závěrečné ověření MVP
 - [ ] Syntetický průchod návrh → kontrola → potvrzení → obnovení — jednotlivé části jsou historicky ověřené synteticky a lokální solver testy prošly; závěrečný souvislý průchod včetně izolované databáze a všech rolí zůstává v `ROADMAP.md` otevřený. Pro online AI větev chybí reálné volání.
-- [ ] Online nasazení na Vercel Hobby + stávající Neon — `PLANNED`: nejprve náhled, ověření přihlášení a migrací, potom ostrá adresa. Vyžaduje potvrzení zápisu do databáze a nastavení klíčů ve Vercelu.
+- [x] Online nasazeni na Vercel Hobby + stavajici Neon - VERIFIED (6. 11. 2026): preview i production nasazeny; migrace aplikovany; Cloudflare AI overeno; klice nastaveny ve Vercelu.
 
 ## 3. Dokumentace projektu
 

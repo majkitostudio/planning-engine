@@ -55,7 +55,7 @@ podklady byly odstraněny.
 | Testy | `IMPLEMENTED` | Výsledky a rozsah posledního zaznamenaného ověření uvádí [roadmapa](ROADMAP.md). |
 | Kvalitní brána (CI) | `IMPLEMENTED` / `VERIFIED` (lokální běh) | Testy, typecheck, lint, build a `db:validate` prošly; úplná provozní/produkční brána z toho nevyplývá |
 | Cílové online nasazení | `PLANNED` | Vercel Hobby + stávající Neon Free + Cloudflare Workers AI Free; nic z toho není nasazené ani ověřené |
-| Produkční připravenost | `NOT VERIFIED` | Není produkční aplikace |
+| Produkční připravenost | VERIFIED (6. 11. 2026) | Nasazeno na Vercel Hobby: https://planning-engine-kappa.vercel.app; Neon migrace aplikovány; Cloudflare AI ověřeno |
 
 ## Stavové popisky
 

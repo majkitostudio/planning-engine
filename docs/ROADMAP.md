@@ -48,7 +48,7 @@ existence sama nedokládá schválení změny záměru. Viz `DOMAIN_DECISIONS.md
 | Textové pokyny v režimu OR-Tools | Nevyhodnocují se; UI tuto skutečnost přiznává. Do lokálního solveru se neposílají. |
 | Cloudflare Workers AI | Zvolený měsíční AI poskytovatel (`VERIFIED` rozhodnutí 6. 11. 2026). Adaptér `IMPLEMENTED`; reálné volání `VERIFIED` (6. 11. 2026, 101 přiřazení, 93 s, stav validace `invalid` s 14 nálezy); kvalita návrhu `PARTIAL` — potřebuje ladění pokrytí. |
 | Gemini provider | Starší adaptér zůstává v kódu. Bezplatná úroveň není použitelná pro aplikaci v EHP, placená odporuje rozpočtu. Kvalita `NOT VERIFIED`. |
-| Produkční autentizace, databáze a provoz | `NOT VERIFIED`; cílové nasazení Vercel Hobby + stávající Neon je `PLANNED` |
+| Produkční autentizace, databáze a provoz | VERIFIED (6. 11. 2026) | Nasazeno na Vercel Hobby + Neon Free; migrace aplikovány; Cloudflare AI ověřeno |
 
 ### Historický syntetický průchod (3. 11. 2026)
 
