@@ -94,6 +94,12 @@ describe("CloudflarePlanningProvider", () => {
     expect(body.max_tokens).toBe(4096);
     expect(body.messages[1].content).toContain("Jana Nováková");
     expect(body.messages[1].content).toContain("employee-real-1");
+    const secondBody = JSON.parse((fetcher.mock.calls[1][1] as RequestInit).body as string);
+    const secondPayload = JSON.parse(secondBody.messages[1].content.split("# Vstup\n")[1]);
+    expect(secondPayload.dates).toEqual(["2026-06-08", "2026-06-09", "2026-06-10", "2026-06-11", "2026-06-12", "2026-06-13", "2026-06-14"]);
+    expect(secondPayload.previousAssignments).toEqual([
+      { employeeId: "employee-real-1", date: "2026-06-01", shiftKind: "morning" },
+    ]);
     expect(draft.month).toBe("2026-06");
     expect(draft.assignments).toHaveLength(1);
     expect(draft.assignments[0].employeeId).toBe("employee-real-1");
