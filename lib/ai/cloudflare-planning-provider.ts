@@ -97,6 +97,7 @@ const SYSTEM_PROMPT = [
   "Jsi plánovač směn call centra. Vracíš pouze strukturovaný JSON podle schématu.",
   "Nevymýšlej zaměstnance ani data, která nejsou ve vstupu.",
   "Neschvaluj rozpis a netvrď, že je ověřený.",
+  "Maximalizuj pokrytí požadovaného obsazení: směnu nech nepokrytou jen tehdy, když ji nelze obsadit bez porušení pravidel.",
 ].join(" ");
 
 /** Rozdělí měsíc na kalendářní týdny začínající pondělím, oříznuté na měsíc. */
@@ -142,6 +143,9 @@ function buildWeekPayload(
     absences: input.absences.filter((absence) => absence.to >= week.startDate && absence.from <= week.endDate),
     availability: input.availability.filter((item) => inRange(item.date, week)),
     staffingRequirements: input.staffingRequirements.filter((item) => inRange(item.date, week)),
+    requiredAssignmentsTotal: input.staffingRequirements
+      .filter((item) => inRange(item.date, week))
+      .reduce((sum, item) => sum + item.requiredEmployees, 0),
     workFunds: input.workFunds ?? [],
     instructions: input.instructions,
     shiftRotationPreference: input.shiftRotationPreference === true,
@@ -155,6 +159,10 @@ function buildWeekPayload(
 }
 
 function buildPrompt(payload: unknown): string {
+  const requiredTotal =
+    typeof payload === "object" && payload !== null && typeof (payload as Record<string, unknown>).requiredAssignmentsTotal === "number"
+      ? (payload as Record<string, unknown>).requiredAssignmentsTotal
+      : null;
   return [
     "# Role",
     "Jsi plánovač směn call centra. Vytváříš návrh, nic neschvaluješ.",
@@ -165,11 +173,17 @@ function buildPrompt(payload: unknown): string {
     "- Po šesti po sobě jdoucích pracovních dnech alespoň 35 hodin nepřetržitého odpočinku.",
     "- Zaměstnanec pracující o víkendu má v témže týdnu (pondělí–neděle) dva dny volna.",
     "- Schválená absence blokuje přiřazení.",
+    "- Jeden zaměstnanec nesmí mít v jednom dni ranní i odpolední směnu; směny se časově překrývají.",
     "- Potřebné obsazení je konfigurovatelný vstup, ne historická konstanta.",
     "- Nevymýšlej další pravidla, limity ani zaměstnance.",
     "",
     "# Úkol",
     "Vyplň pouze dny uvedené v `dates`; ostatní dny neměň.",
+    "Cílem je pokrýt co nejvíce požadovaného obsazení: pro každý den v `dates` a každý `shiftKind` v `staffingRequirements` přiřaď přesně `requiredEmployees` zaměstnanců, pokud to pravidla dovolí. Směnu nech nepokrytou jen s doloženým důvodem.",
+    "Nepřiřazuj jednomu zaměstnanci ranní i odpolední směnu ve stejný den.",
+    requiredTotal !== null
+      ? `V tomto týdnu je požadováno celkem ${requiredTotal} přiřazení (součet requiredEmployees); snaž se dosáhnout tohoto počtu.`
+      : "",
     "Dodrž zadané `staffingRequirements`. Když pokrytí nejde, přiznej to v `explanations` a `assumptions`.",
     "Dodrž absence, dostupnost, odpočinek a víkendové volno.",
     "Fond práce je nezávazný cíl; odchylku přiznej v `explanations`.",
