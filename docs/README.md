@@ -38,7 +38,7 @@ podklady byly odstraněny.
 | Doménový kontrakt | `IMPLEMENTED` | `lib/planning/domain/`; kontrakt je `PROPOSAL` k ověření |
 | Deterministická validace | `IMPLEMENTED` | `validatePlan()`; testy procházejí |
 | AI kontrakt | `IMPLEMENTED` | `lib/planning/ai-provider.ts` |
-| Cloudflare Workers AI adaptér | `IMPLEMENTED` / `NOT VERIFIED` | `lib/ai/cloudflare-planning-provider.ts`; reálné volání ani kvalita výstupu nejsou ověřené |
+| Cloudflare Workers AI adaptér | `IMPLEMENTED` / `NOT VERIFIED` | `lib/ai/cloudflare-planning-provider.ts`; reálné volání VERIFIED (6. 11. 2026, 101 přiřazení, 93 s), kvalita PARTIAL |
 | Gemini adaptér | `IMPLEMENTED` / `VERIFIED` (volání) | `lib/ai/gemini-planning-provider.ts`; starší varianta, produkční kvalita `NOT VERIFIED` |
 | Orchestrace | `IMPLEMENTED` | `runPlanning()` spojuje návrh, validaci a změny |
 | Starší týdenní API | `IMPLEMENTED` / `DEMO` | `POST /api/planning/run`; samostatné týdenní UI bylo odstraněno |

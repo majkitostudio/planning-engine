@@ -14,7 +14,7 @@ Dokument: `docs/DOMAIN_SPECIFICATION.md`
 > `OPEN QUESTION`.
 >
 > **Aktuální model měsíčního MVP:** měsíční přiřazení má sestavovat Cloudflare
-> Workers AI (adaptér `IMPLEMENTED`, reálné volání `NOT VERIFIED`); lokální
+> Workers AI (adaptér `IMPLEMENTED`, reálné volání `VERIFIED (6. 11. 2026)`); lokální
 > OR-Tools zůstává pro offline běh. Deterministická validace nezávisle kontroluje
 > celý měsíc; manažer rozhoduje o potvrzení. Historický týdenní AI tok zůstává
 > oddělený.

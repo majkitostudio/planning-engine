@@ -46,7 +46,7 @@ existence sama nedokládá schválení změny záměru. Viz `DOMAIN_DECISIONS.md
 | Obnovení uložené verze po načtení stránky | `IMPLEMENTED`; obnovení syntetického prázdného návrhu v tomto auditu `VERIFIED`, další varianty `NOT VERIFIED` |
 | Potvrzení rozpisu | `IMPLEMENTED`; neúplné a neověřené návrhy mají být blokovány. Níže uvedený historický návrh potvrzen nebyl. |
 | Textové pokyny v režimu OR-Tools | Nevyhodnocují se; UI tuto skutečnost přiznává. Do lokálního solveru se neposílají. |
-| Cloudflare Workers AI | Zvolený měsíční AI poskytovatel (`VERIFIED` rozhodnutí 6. 11. 2026). Adaptér `IMPLEMENTED`; reálné volání a kvalita `NOT VERIFIED`. |
+| Cloudflare Workers AI | Zvolený měsíční AI poskytovatel (`VERIFIED` rozhodnutí 6. 11. 2026). Adaptér `IMPLEMENTED`; reálné volání `VERIFIED` (6. 11. 2026, 101 přiřazení, 93 s, stav validace `invalid` s 14 nálezy); kvalita návrhu `PARTIAL` — potřebuje ladění pokrytí. |
 | Gemini provider | Starší adaptér zůstává v kódu. Bezplatná úroveň není použitelná pro aplikaci v EHP, placená odporuje rozpočtu. Kvalita `NOT VERIFIED`. |
 | Produkční autentizace, databáze a provoz | `NOT VERIFIED`; cílové nasazení Vercel Hobby + stávající Neon je `PLANNED` |
 
@@ -754,8 +754,10 @@ označíme za hotovou až po opravě a doloženém ověření jejího rozsahu.
    - [x] Povolit skutečná jména, rozpisy a pokyny externí AI
      (`VERIFIED`, 6. 11. 2026). Používá se model s nulovým uchováváním a bez
      trénování na zákaznickém obsahu.
-   - [ ] Ověřit reálné volání Cloudflare Workers AI, kvalitu měsíčního návrhu
-     a spotřebu bezplatné denní kvóty. Do té doby zůstává kvalita `NOT VERIFIED`.
+   - [x] Ověřit reálné volání Cloudflare Workers AI, kvalitu měsíčního návrhu
+     a spotřebu bezplatné denní kvóty (VERIFIED, 6. 11. 2026): 101 přiřazení,
+     stav validace invalid (14 nálezů), 102 neověřených kontrol, doba běhu 93 s.
+     Volání je ověřené a bezpečné. Kvalita pokrytí je PARTIAL.
    - [ ] Určit dobu uchování a mazání volného textu v databázi.
 9. **P1 — Kvalita a přístupnost.**
    - [x] Spouštět Python testy solveru v CI.

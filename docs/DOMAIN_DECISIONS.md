@@ -209,7 +209,7 @@ otevřený k rozhodnutí uživatele.
 
 - Lokální OR-Tools sestavuje přiřazení směn pro celý kalendářní měsíc.
 - Měsíční AI návrh zajišťuje Cloudflare Workers AI (`IMPLEMENTED` adaptér,
-  reálné volání `NOT VERIFIED`). Externí AI je `VERIFIED` rozhodnutím
+  reálné volání `VERIFIED (6. 11. 2026)`). Externí AI je `VERIFIED` rozhodnutím
   uživatele (6. 11. 2026) povolená včetně skutečných jmen a volného textu;
   používá se model s nulovým uchováváním a bez trénování na zákaznickém obsahu.
 - Nezávislá deterministická validace kontroluje celý návrh včetně dostupných
