@@ -76,6 +76,21 @@ describe("GeminiIntentTranslator", () => {
       .rejects.toMatchObject({ code: "timeout", name: "AiProviderError" });
   });
 
+  it("použije GEMINI_TIMEOUT_MS z prostředí", async () => {
+    vi.stubEnv("GEMINI_TIMEOUT_MS", "5");
+    vi.stubGlobal("fetch", vi.fn().mockImplementation((_url: unknown, init: RequestInit) => new Promise((_resolve, reject) => {
+      init.signal?.addEventListener("abort", () => {
+        const error = new Error("aborted");
+        error.name = "AbortError";
+        reject(error);
+      });
+    })));
+
+    await expect(new GeminiIntentTranslator({ apiKey: "synthetic-test-key" })
+      .translate("Prosím střídat směny.", "manager"))
+      .rejects.toMatchObject({ code: "timeout", name: "AiProviderError" });
+  });
+
   it("prázdný text označí jako nejasný bez volání sítě", async () => {
     const fetchMock = vi.fn();
     vi.stubGlobal("fetch", fetchMock);

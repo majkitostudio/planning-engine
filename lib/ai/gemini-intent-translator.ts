@@ -62,7 +62,10 @@ export class GeminiIntentTranslator implements PlanningIntentTranslator {
     this.apiKey = options.apiKey ?? process.env.GEMINI_API_KEY;
     this.model = options.model ?? process.env.GEMINI_MODEL ?? DEFAULT_MODEL;
     this.baseUrl = (options.baseUrl ?? process.env.GEMINI_BASE_URL ?? DEFAULT_BASE_URL).replace(/\/$/, "");
-    this.timeoutMs = options.timeoutMs ?? DEFAULT_TIMEOUT_MS;
+    const envTimeout = process.env.GEMINI_TIMEOUT_MS ? Number(process.env.GEMINI_TIMEOUT_MS) : NaN;
+    this.timeoutMs =
+      options.timeoutMs ??
+      (Number.isFinite(envTimeout) && envTimeout > 0 ? envTimeout : DEFAULT_TIMEOUT_MS);
   }
 
   async translate(text: string, actor: PlanningIntentActor): Promise<PlanningIntentTranslation> {

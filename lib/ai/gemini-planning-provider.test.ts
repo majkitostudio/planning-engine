@@ -137,6 +137,24 @@ describe("GeminiPlanningProvider", () => {
     });
   });
 
+  it("použije GEMINI_TIMEOUT_MS z prostředí", async () => {
+    process.env.GEMINI_TIMEOUT_MS = "5";
+    globalThis.fetch = vi.fn().mockImplementation((_url, init) => {
+      return new Promise((_resolve, reject) => {
+        (init as RequestInit).signal?.addEventListener("abort", () => {
+          const err = new Error("aborted");
+          err.name = "AbortError";
+          reject(err);
+        });
+      });
+    }) as unknown as typeof fetch;
+
+    const provider = new GeminiPlanningProvider({ apiKey: "k" });
+    await expect(provider.generatePlan(makeInput())).rejects.toMatchObject({
+      code: "timeout",
+    });
+  });
+
   it("použije vlastní model z konstruktoru", async () => {
     const fetchMock = vi.fn().mockResolvedValue({
       ok: true,
