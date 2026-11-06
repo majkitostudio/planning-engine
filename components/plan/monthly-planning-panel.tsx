@@ -270,7 +270,11 @@ export function MonthlyPlanningPanel({ month, canManage, formOwnerId, planningMo
       if (!response.ok || !result.ok) {
         const message = result.message ?? "Návrh se nepodařilo vytvořit. Vyplněné hodnoty zůstaly zachované.";
         setError(message);
-        if (message.includes("Denní limit využití AI")) setQuotaExhausted(true);
+        if (message.includes("Denní limit využití AI")) {
+          setQuotaExhausted(true);
+          setDemoMode(true);
+          window.alert(message);
+        }
         return;
       }
       rememberDraft(result.id); setView(result); onResult(month, result);
