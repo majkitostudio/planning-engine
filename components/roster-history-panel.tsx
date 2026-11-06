@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { parseRosterCsv, type RosterImportDay, type RosterImportPreviewEmployee, type RosterImportResult } from "@/lib/planning/roster-import";
-import { rosterHistoryEmptyState, withoutRosterSourceName } from "@/lib/planning/roster-history-view";
+import { rosterHistoryEmptyState, splitRosterPreview, withoutRosterSourceName } from "@/lib/planning/roster-history-view";
 import {
   removalActionLabel,
   rosterHistoryControlLabel,
@@ -41,6 +41,7 @@ export function RosterHistoryPanel({ canManage, initialMonth }: { readonly canMa
   const [rawText, setRawText] = useState("");
   const [fileName, setFileName] = useState("");
   const [preview, setPreview] = useState<Preview | null>(null);
+  const [skippedEmployees, setSkippedEmployees] = useState<readonly RosterImportPreviewEmployee[]>([]);
   const [employeeMapping, setEmployeeMapping] = useState<Record<string, string>>({});
   const [dayEdits, setDayEdits] = useState<Record<string, EditableDay>>({});
   const [savedImports, setSavedImports] = useState<readonly SavedImport[]>([]);
@@ -130,7 +131,7 @@ export function RosterHistoryPanel({ canManage, initialMonth }: { readonly canMa
   const importsLoadState = loading || savedImportsMonth !== month ? "loading" : savedImportsUnavailable ? "unavailable" : "ready";
   const importsEmptyMessage = rosterHistoryEmptyState(importsLoadState, savedImports.length);
 
-  function clearPreview() { setPreview(null); setEmployeeMapping({}); setDayEdits({}); setNotice(""); setError(""); }
+  function clearPreview() { setPreview(null); setSkippedEmployees([]); setEmployeeMapping({}); setDayEdits({}); setNotice(""); setError(""); }
 
   function clearSource() {
     setRawText(""); setFileName(""); clearPreview();
@@ -146,6 +147,7 @@ export function RosterHistoryPanel({ canManage, initialMonth }: { readonly canMa
     setError(""); setNotice("");
     const result = parseRosterCsv(rawText, month, employees);
     if (!result.ok) {
+      setSkippedEmployees([]);
       const messages: Record<typeof result.code, string> = {
         invalid_month: "Vyberte platný měsíc.", invalid_csv: "Text není platný export CSV se středníky.",
         invalid_header: "V exportu nebyla rozpoznána hlavička dnů.", header_month_mismatch: "Čísla dnů nebo dny v týdnu neodpovídají vybranému měsíci.",
@@ -156,8 +158,17 @@ export function RosterHistoryPanel({ canManage, initialMonth }: { readonly canMa
       setError(messages[result.code]);
       return;
     }
-    setPreview(result);
-    setEmployeeMapping(Object.fromEntries(result.employees.flatMap((employee) => employee.employeeId ? [[employee.sourceName, employee.employeeId]] : [])));
+    const { included, skipped } = splitRosterPreview(result.employees);
+    setSkippedEmployees(skipped);
+    if (!included.length) {
+      setPreview(null);
+      setEmployeeMapping({});
+      setDayEdits({});
+      setError("Žádný řádek exportu neodpovídá zaměstnanci v aplikaci. Přidejte chybějící zaměstnance, nebo zkontrolujte export.");
+      return;
+    }
+    setPreview({ ...result, employees: included });
+    setEmployeeMapping(Object.fromEntries(included.flatMap((employee) => employee.employeeId ? [[employee.sourceName, employee.employeeId]] : [])));
     setDayEdits({});
   }
 
@@ -199,7 +210,7 @@ export function RosterHistoryPanel({ canManage, initialMonth }: { readonly canMa
       const result = await response.json();
       if (!response.ok || !result.ok) throw new Error(result.message ?? "Podklady se nepodařilo uložit.");
       const savedNotice = result.duplicate ? `Tento obsah je již uložen ve verzi ${result.version}.` : `Podklady jsou uloženy jako verze ${result.version}. Změna zatím nemění potvrzený rozpis.`;
-      setRawText(""); setFileName(""); setPreview(null); setEmployeeMapping({}); setDayEdits({});
+      setRawText(""); setFileName(""); setPreview(null); setSkippedEmployees([]); setEmployeeMapping({}); setDayEdits({});
       if (fileInputRef.current) fileInputRef.current.value = "";
       setNotice(savedNotice);
       await loadImports(month);
@@ -278,9 +289,18 @@ export function RosterHistoryPanel({ canManage, initialMonth }: { readonly canMa
       {error ? <p className="roster-history__error" role="alert">{error}</p> : null}
       {notice ? <p className="roster-history__success" role="status">{notice}</p> : null}
 
+      {skippedEmployees.length ? <details className="roster-history__skipped">
+        <summary>Přeskočené řádky bez shody ({skippedEmployees.length})</summary>
+        <p>Tyto řádky nejsou v evidenci zaměstnanců, proto se do podkladů neuloží. Pokud jde o nového zaměstnance, nejprve ho přidejte v sekci Zaměstnanci a export zkontrolujte znovu.</p>
+        <ul>{skippedEmployees.map((employee) => {
+          const knownDays = Object.values(employee.days).filter((day) => day.status !== "unknown").length;
+          return <li key={employee.sourceName}><span>{employee.sourceName}</span><span>{knownDays === 0 ? "bez známých dnů" : `${knownDays} známých dnů`}</span></li>;
+        })}</ul>
+      </details> : null}
+
       {preview && counts ? <section className="roster-history__preview" aria-labelledby="roster-preview-title">
-        <div className="roster-history__preview-head"><div><h3 id="roster-preview-title">Náhled {month}</h3><p>{counts.employees} řádků zaměstnanců · {counts.shifts} směn · {counts.off} dnů volna · {counts.unknown} neznámých buněk</p></div></div>
-        <p className="roster-history__hint">Každý řádek zaměstnance rozbalte. Opravte párování a neznámé buňky. U neznámého času aplikace žádnou směnu sama nevymyslí. Nadpisy pracovních pozic se přeskočí; nového zaměstnance nejprve přidejte v sekci Zaměstnanci, jinak zůstane bez shody.</p>
+        <div className="roster-history__preview-head"><div><h3 id="roster-preview-title">Náhled {month}</h3><p>{counts.employees} řádků zaměstnanců · {counts.shifts} směn · {counts.off} dnů volna · {counts.unknown} neznámých buněk{skippedEmployees.length ? ` · ${skippedEmployees.length} řádků bez shody přeskočeno` : ""}</p></div></div>
+        <p className="roster-history__hint">Každý řádek zaměstnance rozbalte. Opravte párování a neznámé buňky. U neznámého času aplikace žádnou směnu sama nevymyslí. Nadpisy pracovních pozic a řádky bez shody se přeskočí; nového zaměstnance nejprve přidejte v sekci Zaměstnanci.</p>
         {preview.employees.map((employee) => {
           const employeeContext = rosterHistoryEmployeeContext(
             employees.find((reference) => reference.id === employeeMapping[employee.sourceName])?.displayName,

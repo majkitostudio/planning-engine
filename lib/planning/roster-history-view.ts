@@ -5,6 +5,20 @@ export function rosterHistoryEmptyState(state: "loading" | "unavailable" | "read
 }
 
 /**
+ * Rozdělí náhled exportu na řádky, které lze uložit, a řádky bez shody.
+ * Nespárované řádky se nezahrnou do uložených podkladů, ale zůstávají
+ * viditelné k ruční kontrole. Nejednoznačná shoda zůstává v náhledu.
+ */
+export function splitRosterPreview<T extends { readonly match: "exact" | "unmatched" | "ambiguous" }>(
+  employees: readonly T[],
+): { readonly included: readonly T[]; readonly skipped: readonly T[] } {
+  return {
+    included: employees.filter((employee) => employee.match !== "unmatched"),
+    skipped: employees.filter((employee) => employee.match === "unmatched"),
+  };
+}
+
+/**
  * Odstraní stav vázaný na jeden zdrojový řádek exportu. Klíč párování je
  * `sourceName`, klíč ruční opravy dne je `sourceName|date`. Ostatní osoby
  * zůstávají beze změny, i když mají podobné jméno (např. „Jan“ a „Jana“).

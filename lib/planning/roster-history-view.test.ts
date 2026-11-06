@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { rosterHistoryEmptyState, withoutRosterSourceName } from "./roster-history-view";
+import { rosterHistoryEmptyState, splitRosterPreview, withoutRosterSourceName } from "./roster-history-view";
 
 describe("stav načítání uložené návaznosti", () => {
   it("odliší načítání, nedostupné úložiště a prázdný seznam", () => {
@@ -7,6 +7,26 @@ describe("stav načítání uložené návaznosti", () => {
     expect(rosterHistoryEmptyState("unavailable")).toBe("Uložené podklady nejsou dostupné.");
     expect(rosterHistoryEmptyState("ready")).toBe("Pro toto období nejsou uložené podklady.");
     expect(rosterHistoryEmptyState("ready", 2)).toBeNull();
+  });
+});
+
+describe("rozdělení náhledu exportu", () => {
+  const rows = [
+    { sourceName: "Přesná", match: "exact" as const },
+    { sourceName: "Neznámá", match: "unmatched" as const },
+    { sourceName: "Nejednoznačná", match: "ambiguous" as const },
+  ];
+
+  it("automaticky přeskočí jen řádky bez shody", () => {
+    const { included, skipped } = splitRosterPreview(rows);
+
+    expect(included.map((row) => row.sourceName)).toEqual(["Přesná", "Nejednoznačná"]);
+    expect(skipped.map((row) => row.sourceName)).toEqual(["Neznámá"]);
+  });
+
+  it("nejednoznačnou shodu nikdy nepřeskočí a prázdný vstup vrátí prázdný", () => {
+    expect(splitRosterPreview(rows).skipped.some((row) => row.match === "ambiguous")).toBe(false);
+    expect(splitRosterPreview([])).toEqual({ included: [], skipped: [] });
   });
 });
 
