@@ -50,6 +50,7 @@ export function MonthlyPlanningPanel({ month, canManage, formOwnerId, planningMo
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [quotaExhausted, setQuotaExhausted] = useState(false);
+  const [demoMode, setDemoMode] = useState(false);
   const [unavailableDraftId, setUnavailableDraftId] = useState<string | null>(null);
   const [view, setView] = useState<MonthlyView | null>(null);
   const [confirmed, setConfirmed] = useState(false);
@@ -327,7 +328,7 @@ export function MonthlyPlanningPanel({ month, canManage, formOwnerId, planningMo
   const formLoading = canManage && formOwnerId !== null && formStorage === "loading";
 
   return <section className="card monthly-planning-panel" aria-labelledby={`monthly-title-${month}`}>
-    <div className="monthly-form-heading"><div><p className="eyebrow">Celý kalendářní měsíc</p><h2 id={`monthly-title-${month}`}>Návrh rozpisu · {month}</h2></div><span className="monthly-step-count">Krok {step + 1} z {STEPS.length}</span></div>
+    <div className="monthly-form-heading"><div><p className="eyebrow">Celý kalendářní měsíc</p><h2 id={`monthly-title-${month}`}>Návrh rozpisu · {month}</h2></div><div className="monthly-mode-switch" role="group" aria-label="Režim plánovače"><span>Demo</span><button type="button" role="switch" aria-checked={demoMode} className="monthly-mode-switch__toggle" onClick={() => setDemoMode((value) => !value)} disabled={busy}>{demoMode ? "Zapnuto" : "Vypnuto"}</button><span>Production</span></div><span className="monthly-step-count">Krok {step + 1} z {STEPS.length}</span></div>
     <p>Návrh se ukládá odděleně. Rozpis se změní až po potvrzení manažerem.</p>
     {canManage ? <MonthlyRunsManager month={month} canManage={canManage} refreshKey={`${view?.id ?? ""}:${confirmed}`} onRemoved={(id) => { revision.current++; if (view?.id === id) { setView(null); setConfirmed(false); setRestored(false); } onRemoved(month, id); }} /> : null}
     {canManage ? <div className="monthly-muted" role="status">
