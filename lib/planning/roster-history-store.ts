@@ -35,6 +35,10 @@ export type SaveRosterHistoryResult =
   | { readonly ok: true; readonly id: string; readonly version: number; readonly duplicate: boolean }
   | { readonly ok: false; readonly code: "forbidden" | RosterHistoryImportError };
 
+export type DeleteRosterHistoryResult =
+  | { readonly ok: true }
+  | { readonly ok: false; readonly code: "forbidden" | "not_found" };
+
 export type RosterHistoryDay =
   | { readonly status: "unknown" }
   | { readonly status: "conflict" }
@@ -104,6 +108,33 @@ function hash(value: unknown): string {
 /** Ukládá pouze výslovné buňky; chybějící dny se nikdy nedoplní jako volno. */
 export class PrismaRosterHistoryStore {
   constructor(private readonly db: PrismaClient = defaultPrisma) {}
+
+  /** Trvale odstraní jeden import a jeho navázané řádky; ostatní importy ani rozpisy nemění. */
+  async delete(actor: PlanningActor, id: string): Promise<DeleteRosterHistoryResult> {
+    if (!canConfirmPlanning(actor)) return { ok: false, code: "forbidden" };
+    const importId = typeof id === "string" ? id.trim() : "";
+    if (!importId) return { ok: false, code: "not_found" };
+
+    return this.db.$transaction(async (tx) => {
+      if (process.env.PLANNING_AUTH_MODE?.trim().toLowerCase() === "database") {
+        const account = await tx.appUser.findUnique({
+          where: { id: actor.userId },
+          select: { role: true, active: true, passwordHash: true, mustChangePassword: true },
+        });
+        if (!account || account.role !== "manager" || !account.active || !account.passwordHash || account.mustChangePassword) {
+          return { ok: false, code: "forbidden" } as const;
+        }
+      }
+
+      const record = await tx.rosterHistoryImport.findUnique({ where: { id: importId }, select: { id: true } });
+      if (!record) return { ok: false, code: "not_found" } as const;
+
+      await tx.rosterHistoryEntry.deleteMany({ where: { importId } });
+      await tx.rosterHistoryImportEmployee.deleteMany({ where: { importId } });
+      await tx.rosterHistoryImport.delete({ where: { id: importId } });
+      return { ok: true } as const;
+    }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable });
+  }
 
   async save(actor: PlanningActor, raw: unknown): Promise<SaveRosterHistoryResult> {
     if (!canConfirmPlanning(actor)) return { ok: false, code: "forbidden" };

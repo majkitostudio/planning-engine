@@ -35,6 +35,30 @@ describe("převod exportu rosteru", () => {
     expect(preview.employees[0].days["2026-11-05"]).toMatchObject({ status: "unknown", reason: "blank" });
   });
 
+  it("přeskočí nadpisy pracovních pozic s kódem i bez dvojtečky", () => {
+    const withHeadings = [
+      header.join(";"),
+      `${makeRow("10010 Closing manager", {}).join(";")};`,
+      makeRow("Nováková Jana", { 2: "07:45-16:30" }).join(";"),
+      `${makeRow("10040 CC Representative CZ", {}).join(";")};`,
+      makeRow("Testovní Petr", { 3: "12:45-21:00" }).join(";"),
+    ].join("\n");
+
+    const result = parseRosterCsv(withHeadings, month, []);
+
+    if (!result.ok) throw new Error(result.code);
+    expect(result.employees.map((employee) => employee.sourceName)).toEqual(["Nováková Jana", "Testovní Petr"]);
+  });
+
+  it("neskryje skutečného zaměstnance s číslem v názvu, pokud má vyplněnou směnu", () => {
+    const numericName = [header.join(";"), makeRow("123 Jan", { 2: "07:45-16:30" }).join(";")].join("\n");
+
+    const result = parseRosterCsv(numericName, month, []);
+
+    if (!result.ok) throw new Error(result.code);
+    expect(result.employees.map((employee) => employee.sourceName)).toEqual(["123 Jan"]);
+  });
+
   it("ponechá nejednoznačné a nespárované osoby k ručnímu rozhodnutí", () => {
     const ambiguous = parseRosterCsv(csv, month, [
       { id: "e1", displayName: "Nováková Jana" },

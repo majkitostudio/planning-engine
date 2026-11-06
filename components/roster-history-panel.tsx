@@ -1,9 +1,10 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { parseRosterCsv, type RosterImportDay, type RosterImportResult } from "@/lib/planning/roster-import";
-import { rosterHistoryEmptyState } from "@/lib/planning/roster-history-view";
+import { parseRosterCsv, type RosterImportDay, type RosterImportPreviewEmployee, type RosterImportResult } from "@/lib/planning/roster-import";
+import { rosterHistoryEmptyState, withoutRosterSourceName } from "@/lib/planning/roster-history-view";
 import {
+  removalActionLabel,
   rosterHistoryControlLabel,
   rosterHistoryEmployeeContext,
 } from "@/lib/accessibility-labels";
@@ -12,6 +13,12 @@ type Employee = { readonly id: string; readonly displayName: string };
 type SavedImport = { readonly id: string; readonly periodStart: string; readonly periodEnd: string; readonly source: string; readonly version: number; readonly createdAt: string; readonly employeeCount: number; readonly knownDayCount: number };
 type EditableDay = { status: "shift" | "off" | "unknown"; startTime: string; endTime: string };
 type Preview = Extract<RosterImportResult, { readonly ok: true }>;
+type BoundaryState = {
+  readonly key: string;
+  readonly status: "loading" | "available" | "unavailable" | "too_many";
+  readonly before: boolean;
+  readonly after: boolean;
+};
 
 function lastDateOfMonth(month: string) {
   const [year, monthNumber] = month.split("-").map(Number);
@@ -24,7 +31,8 @@ function initialCell(day: RosterImportDay): EditableDay {
     : { status: day.status, startTime: "", endTime: "" };
 }
 
-function dayKey(employeeIndex: number, date: string) { return `${employeeIndex}|${date}`; }
+function dayKey(sourceName: string, date: string) { return `${sourceName}|${date}`; }
+function boundaryStateKey(month: string, employeeIds: readonly string[]) { return `${month}|${employeeIds.join(",")}`; }
 function validTime(value: string) { return /^(?:[01]\d|2[0-3]):[0-5]\d$/.test(value); }
 
 export function RosterHistoryPanel({ canManage, initialMonth }: { readonly canManage: boolean; readonly initialMonth: string }) {
@@ -33,13 +41,15 @@ export function RosterHistoryPanel({ canManage, initialMonth }: { readonly canMa
   const [rawText, setRawText] = useState("");
   const [fileName, setFileName] = useState("");
   const [preview, setPreview] = useState<Preview | null>(null);
-  const [employeeMapping, setEmployeeMapping] = useState<Record<number, string>>({});
+  const [employeeMapping, setEmployeeMapping] = useState<Record<string, string>>({});
   const [dayEdits, setDayEdits] = useState<Record<string, EditableDay>>({});
   const [savedImports, setSavedImports] = useState<readonly SavedImport[]>([]);
   const [savedImportsMonth, setSavedImportsMonth] = useState("");
   const [savedImportsUnavailable, setSavedImportsUnavailable] = useState(false);
+  const [boundary, setBoundary] = useState<BoundaryState | null>(null);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
   const [notice, setNotice] = useState("");
   const [error, setError] = useState("");
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -63,6 +73,22 @@ export function RosterHistoryPanel({ canManage, initialMonth }: { readonly canMa
     }
   }
 
+  async function loadBoundary(selectedMonth: string, employeeIds: readonly string[], signal?: AbortSignal) {
+    const key = boundaryStateKey(selectedMonth, employeeIds);
+    if (!employeeIds.length || employeeIds.length > 200) return;
+    try {
+      const query = new URLSearchParams({ month: selectedMonth, employeeIds: employeeIds.join(",") });
+      const response = await fetch(`/api/planning/roster-history?${query.toString()}`, signal ? { signal } : undefined);
+      const result = await response.json();
+      if (!response.ok || !result.ok || !result.boundary) throw new Error("Stav návaznosti není dostupný.");
+      if (!signal?.aborted) {
+        setBoundary({ key, status: "available", before: result.boundary.beforeComplete === true, after: result.boundary.afterComplete === true });
+      }
+    } catch {
+      if (!signal?.aborted) setBoundary({ key, status: "unavailable", before: false, after: false });
+    }
+  }
+
   useEffect(() => {
     const controller = new AbortController();
     void Promise.all([
@@ -78,10 +104,27 @@ export function RosterHistoryPanel({ canManage, initialMonth }: { readonly canMa
     return () => controller.abort();
   }, [month]);
 
+  const employeeIds = useMemo(() => employees.map((employee) => employee.id).sort(), [employees]);
+  const boundaryKey = boundaryStateKey(month, employeeIds);
+  const activeBoundary = boundary?.key === boundaryKey
+    ? boundary
+    : employeeIds.length > 200
+      ? { key: boundaryKey, status: "too_many" as const, before: false, after: false }
+      : employeeIds.length > 0
+        ? { key: boundaryKey, status: "loading" as const, before: false, after: false }
+        : null;
+
+  useEffect(() => {
+    if (!employeeIds.length || employeeIds.length > 200) return;
+    const controller = new AbortController();
+    void Promise.resolve().then(() => loadBoundary(month, employeeIds, controller.signal));
+    return () => controller.abort();
+  }, [boundaryKey, employeeIds, month]);
+
   const selectedIds = Object.values(employeeMapping);
-  const mappingValid = Boolean(preview && preview.employees.every((_, index) => Boolean(employeeMapping[index])) && new Set(selectedIds).size === selectedIds.length);
-  const editValid = Boolean(preview && preview.employees.every((employee, employeeIndex) => Object.entries(employee.days).every(([date, day]) => {
-    const value = dayEdits[dayKey(employeeIndex, date)] ?? initialCell(day);
+  const mappingValid = Boolean(preview && preview.employees.length > 0 && preview.employees.every((employee) => Boolean(employeeMapping[employee.sourceName])) && new Set(selectedIds).size === selectedIds.length);
+  const editValid = Boolean(preview && preview.employees.every((employee) => Object.entries(employee.days).every(([date, day]) => {
+    const value = dayEdits[dayKey(employee.sourceName, date)] ?? initialCell(day);
     return value.status !== "shift" || (validTime(value.startTime) && validTime(value.endTime) && value.startTime < value.endTime);
   })));
   const importsLoadState = loading || savedImportsMonth !== month ? "loading" : savedImportsUnavailable ? "unavailable" : "ready";
@@ -114,19 +157,39 @@ export function RosterHistoryPanel({ canManage, initialMonth }: { readonly canMa
       return;
     }
     setPreview(result);
-    setEmployeeMapping(Object.fromEntries(result.employees.flatMap((employee, index) => employee.employeeId ? [[index, employee.employeeId]] : [])));
+    setEmployeeMapping(Object.fromEntries(result.employees.flatMap((employee) => employee.employeeId ? [[employee.sourceName, employee.employeeId]] : [])));
     setDayEdits({});
+  }
+
+  function removePreviewEmployee(employee: RosterImportPreviewEmployee) {
+    if (!preview || busy || deletingId) return;
+    const remaining = preview.employees.filter((candidate) => candidate.sourceName !== employee.sourceName);
+    setEmployeeMapping((current) => withoutRosterSourceName(current, employee.sourceName));
+    setDayEdits((current) => withoutRosterSourceName(current, employee.sourceName));
+    setError("");
+    if (!remaining.length) {
+      setPreview(null);
+      setEmployeeMapping({});
+      setDayEdits({});
+      setNotice("Všechny řádky náhledu byly odebrány. Vložený export zůstává, můžete jej zkontrolovat znovu.");
+      return;
+    }
+    setPreview({ ...preview, employees: remaining });
+    setNotice(`Řádek „${employee.sourceName}“ byl odebrán z náhledu. Uloží se jen zbývající řádky.`);
   }
 
   async function savePreview() {
     if (!preview || !mappingValid || !editValid) return;
-    const ids = preview.employees.map((_, index) => employeeMapping[index]);
+    const ids = preview.employees.map((employee) => employeeMapping[employee.sourceName]);
     const entries: { employeeId: string; date: string; status: "shift" | "off"; startTime?: string; endTime?: string }[] = [];
-    preview.employees.forEach((employee, employeeIndex) => Object.entries(employee.days).forEach(([date, day]) => {
-      const value = dayEdits[dayKey(employeeIndex, date)] ?? initialCell(day);
-      if (value.status === "off") entries.push({ employeeId: ids[employeeIndex], date, status: "off" });
-      else if (value.status === "shift") entries.push({ employeeId: ids[employeeIndex], date, status: "shift", startTime: value.startTime, endTime: value.endTime });
-    }));
+    preview.employees.forEach((employee) => {
+      const employeeId = employeeMapping[employee.sourceName];
+      Object.entries(employee.days).forEach(([date, day]) => {
+        const value = dayEdits[dayKey(employee.sourceName, date)] ?? initialCell(day);
+        if (value.status === "off") entries.push({ employeeId, date, status: "off" });
+        else if (value.status === "shift") entries.push({ employeeId, date, status: "shift", startTime: value.startTime, endTime: value.endTime });
+      });
+    });
     setBusy(true); setError(""); setNotice("");
     try {
       const response = await fetch("/api/planning/roster-history", {
@@ -144,11 +207,39 @@ export function RosterHistoryPanel({ canManage, initialMonth }: { readonly canMa
     finally { setBusy(false); }
   }
 
+  async function deleteImport(item: SavedImport) {
+    if (!canManage || busy || deletingId) return;
+    if (!window.confirm("Opravdu chcete tyto podklady trvale smazat? Mohou se tím stát některé kontroly návaznosti neověřené.")) return;
+    setDeletingId(item.id); setError(""); setNotice("");
+    try {
+      const response = await fetch("/api/planning/roster-history", {
+        method: "DELETE", headers: { "content-type": "application/json" },
+        body: JSON.stringify({ id: item.id }),
+      });
+      const result = await response.json().catch(() => null);
+      if (!response.ok || !result?.ok) {
+        if (response.status === 404) {
+          setError("Tyto podklady už nejsou uložené. Seznam se znovu načte.");
+          await loadImports(month);
+          await loadBoundary(month, employeeIds);
+        } else {
+          setError(result?.message ?? "Podklady se nepodařilo smazat. Řádek zůstává beze změny.");
+        }
+        return;
+      }
+      setNotice("Podklady byly smazány. Seznam a stav návaznosti se znovu načetly.");
+      await loadImports(month);
+      await loadBoundary(month, employeeIds);
+    } catch {
+      setError("Podklady se nepodařilo smazat kvůli chybě spojení. Řádek zůstává beze změny.");
+    } finally { setDeletingId(null); }
+  }
+
   const counts = useMemo(() => {
     if (!preview) return null;
     let shifts = 0; let off = 0; let unknown = 0;
     for (const employee of preview.employees) for (const [date, day] of Object.entries(employee.days)) {
-      const value = dayEdits[dayKey(preview.employees.indexOf(employee), date)] ?? initialCell(day);
+      const value = dayEdits[dayKey(employee.sourceName, date)] ?? initialCell(day);
       if (value.status === "shift") shifts++;
       else if (value.status === "off") off++;
       else unknown++;
@@ -156,14 +247,24 @@ export function RosterHistoryPanel({ canManage, initialMonth }: { readonly canMa
     return { employees: preview.employees.length, shifts, off, unknown };
   }, [dayEdits, preview]);
 
+  const boundaryMessage = !activeBoundary
+    ? null
+    : activeBoundary.status === "loading"
+      ? "Kontroluji sedm dní před měsícem a po něm…"
+      : activeBoundary.status === "unavailable"
+        ? "Stav návaznosti se nepodařilo načíst. Před potvrzením proběhne serverová kontrola."
+        : activeBoundary.status === "too_many"
+          ? "Stav návaznosti se zde nezobrazuje pro více než 200 zaměstnanců. Před potvrzením proběhne serverová kontrola."
+          : `Před měsícem: ${activeBoundary.before ? "k dispozici" : "chybí nebo jsou neúplné"} · Po měsíci: ${activeBoundary.after ? "k dispozici" : "chybí nebo jsou neúplné"}${activeBoundary.after ? "" : " · Budoucí rozpis nemusí existovat; nic se nedoplňuje odhadem."}`;
+
   return <section className="card roster-history" aria-labelledby="roster-history-title">
     <header className="card__head"><div><span className="roster-history__eyebrow">PODKLADY PRO KONTROLU NÁVAZNOSTI</span><h2 className="card__title" id="roster-history-title">Návaznost směn</h2><p>Načtěte měsíční export, zkontrolujte spárování a uložte jen známé směny a výslovné volno.</p></div></header>
     <div className="roster-history__body">
       <div className="roster-history__notice" role="note"><strong>Soukromí a význam dat</strong><span>CSV se přečte v tomto prohlížeči. Ukládají se pouze zkontrolované buňky a jejich přesné časy. „Dovolená“ a „Nemoc“ se nezamění za volno ani za schválenou absenci. Prázdná buňka zůstává neznámá.</span></div>
 
       <div className="roster-history__form-row">
-        <label className="roster-history__field">Měsíc exportu<input className="input" type="month" value={month} disabled={!canManage || busy} onChange={(event) => { setMonth(event.target.value); updateSource(rawText); }} /></label>
-        <label className="roster-history__field">Nebo vyberte stažený CSV<input ref={fileInputRef} className="input roster-history__file" type="file" accept=".csv,text/csv" disabled={!canManage || busy} onChange={(event) => {
+        <label className="roster-history__field">Měsíc exportu<input className="input" type="month" value={month} disabled={!canManage || busy || deletingId !== null} onChange={(event) => { setMonth(event.target.value); updateSource(rawText); }} /></label>
+        <label className="roster-history__field">Nebo vyberte stažený CSV<input ref={fileInputRef} className="input roster-history__file" type="file" accept=".csv,text/csv" disabled={!canManage || busy || deletingId !== null} onChange={(event) => {
           const file = event.target.files?.[0];
           if (!file) return;
           if (file.size > 5_000_000) { setError("Soubor je příliš velký; maximální velikost je 5 MB."); event.target.value = ""; return; }
@@ -171,27 +272,27 @@ export function RosterHistoryPanel({ canManage, initialMonth }: { readonly canMa
         }} /></label>
       </div>
       <label className="roster-history__field" htmlFor="roster-history-source">Vložený obsah CSV {fileName ? <span>· {fileName}</span> : null}
-        <textarea id="roster-history-source" className="input roster-history__source" value={rawText} disabled={!canManage || busy} onChange={(event) => updateSource(event.target.value)} placeholder="Otevřete stažený soubor, zkopírujte celý obsah a vložte jej sem." />
+        <textarea id="roster-history-source" className="input roster-history__source" value={rawText} disabled={!canManage || busy || deletingId !== null} onChange={(event) => updateSource(event.target.value)} placeholder="Otevřete stažený soubor, zkopírujte celý obsah a vložte jej sem." />
       </label>
-      <div className="roster-history__actions"><button type="button" className="btn btn--secondary" disabled={!canManage || busy || loading || !rawText.trim() || !month} onClick={createPreview}>Zkontrolovat export</button>{!canManage ? <span>Uložit podklady může pouze manažer.</span> : null}</div>
+      <div className="roster-history__actions"><button type="button" className="btn btn--secondary" disabled={!canManage || busy || deletingId !== null || loading || !rawText.trim() || !month} onClick={createPreview}>Zkontrolovat export</button>{!canManage ? <span>Uložit podklady může pouze manažer.</span> : null}</div>
       {error ? <p className="roster-history__error" role="alert">{error}</p> : null}
       {notice ? <p className="roster-history__success" role="status">{notice}</p> : null}
 
       {preview && counts ? <section className="roster-history__preview" aria-labelledby="roster-preview-title">
         <div className="roster-history__preview-head"><div><h3 id="roster-preview-title">Náhled {month}</h3><p>{counts.employees} řádků zaměstnanců · {counts.shifts} směn · {counts.off} dnů volna · {counts.unknown} neznámých buněk</p></div></div>
-        <p className="roster-history__hint">Každý řádek zaměstnance rozbalte. Opravte párování a neznámé buňky. U neznámého času aplikace žádnou směnu sama nevymyslí.</p>
-        {preview.employees.map((employee, employeeIndex) => {
+        <p className="roster-history__hint">Každý řádek zaměstnance rozbalte. Opravte párování a neznámé buňky. U neznámého času aplikace žádnou směnu sama nevymyslí. Nadpisy pracovních pozic se přeskočí; nového zaměstnance nejprve přidejte v sekci Zaměstnanci, jinak zůstane bez shody.</p>
+        {preview.employees.map((employee) => {
           const employeeContext = rosterHistoryEmployeeContext(
-            employees.find((reference) => reference.id === employeeMapping[employeeIndex])?.displayName,
+            employees.find((reference) => reference.id === employeeMapping[employee.sourceName])?.displayName,
             employee.sourceName,
           );
-          return <details className="roster-history__employee" key={`${employee.sourceName}-${employeeIndex}`}>
-          <summary><span>{employee.sourceName}</span><span className={`roster-history__match roster-history__match--${employee.match}`}>{employee.match === "exact" ? "Jednoznačná shoda" : employee.match === "ambiguous" ? "Vyberte osobu" : "Bez shody"}</span></summary>
-          <label className="roster-history__field">Zaměstnanec<select className="input" value={employeeMapping[employeeIndex] ?? ""} disabled={!canManage || busy} onChange={(event) => setEmployeeMapping((current) => ({ ...current, [employeeIndex]: event.target.value }))}>
+          return <details className="roster-history__employee" key={employee.sourceName}>
+          <summary><span>{employee.sourceName}</span><span className="roster-history__summary-actions"><span className={`roster-history__match roster-history__match--${employee.match}`}>{employee.match === "exact" ? "Jednoznačná shoda" : employee.match === "ambiguous" ? "Vyberte osobu" : "Bez shody"}</span>{canManage ? <button type="button" className="roster-history__remove" aria-label={removalActionLabel("Odebrat řádek z náhledu", employee.sourceName)} title="Odebrat řádek z náhledu" disabled={busy || deletingId !== null} onClick={(event) => { event.preventDefault(); event.stopPropagation(); removePreviewEmployee(employee); }}>×</button> : null}</span></summary>
+          <label className="roster-history__field">Zaměstnanec<select className="input" value={employeeMapping[employee.sourceName] ?? ""} disabled={!canManage || busy} onChange={(event) => setEmployeeMapping((current) => ({ ...current, [employee.sourceName]: event.target.value }))}>
             <option value="">Vyberte zaměstnance</option>{employees.map((reference) => <option key={reference.id} value={reference.id}>{reference.displayName}</option>)}
           </select></label>
           <div className="roster-history__days">{Object.entries(employee.days).map(([date, day]) => {
-            const key = dayKey(employeeIndex, date);
+            const key = dayKey(employee.sourceName, date);
             const value = dayEdits[key] ?? initialCell(day);
             const dayLabel = day.status === "unknown" ? (day.sourceCell || (day.reason === "blank" ? "Prázdná buňka" : "Nerozpoznaná hodnota")) : day.sourceCell;
             return <div className={`roster-history__day${value.status === "unknown" ? " roster-history__day--unknown" : ""}`} key={date}>
@@ -206,10 +307,11 @@ export function RosterHistoryPanel({ canManage, initialMonth }: { readonly canMa
         })}
         {mappingValid ? null : <p className="roster-history__error" role="status">Každý řádek musí být spárován s jiným zaměstnancem.</p>}
         {!editValid ? <p className="roster-history__error" role="status">Doplňte platný čas u každé buňky označené jako směna.</p> : null}
-        <div className="roster-history__actions"><button type="button" className="btn btn--primary" disabled={!canManage || busy || !mappingValid || !editValid} onClick={() => void savePreview()}>{busy ? "Ukládám…" : "Uložit zkontrolované podklady"}</button><button type="button" className="btn btn--secondary" disabled={busy} onClick={clearSource}>Zrušit náhled a vymazat obsah</button></div>
+        <div className="roster-history__actions"><button type="button" className="btn btn--primary" disabled={!canManage || busy || deletingId !== null || !mappingValid || !editValid} onClick={() => void savePreview()}>{busy ? "Ukládám…" : "Uložit zkontrolované podklady"}</button><button type="button" className="btn btn--secondary" disabled={busy || deletingId !== null} onClick={clearSource}>Zrušit náhled a vymazat obsah</button></div>
       </section> : null}
 
-      <section className="roster-history__saved" aria-labelledby="roster-saved-title"><h3 id="roster-saved-title">Uložené podklady pro {month}</h3>{importsEmptyMessage ? <p role="status">{importsEmptyMessage}</p> : <ul>{savedImports.map((item) => <li key={item.id}><span>{item.periodStart} až {item.periodEnd} · verze {item.version}</span><span>{item.employeeCount} osob · {item.knownDayCount} známých dnů</span><time dateTime={item.createdAt}>{new Intl.DateTimeFormat("cs-CZ", { dateStyle: "medium", timeStyle: "short" }).format(new Date(item.createdAt))}</time></li>)}</ul>}</section>
+      <section className="roster-history__saved" aria-labelledby="roster-saved-title"><h3 id="roster-saved-title">Uložené podklady pro {month}</h3>{importsEmptyMessage ? <p role="status">{importsEmptyMessage}</p> : <ul>{savedImports.map((item) => <li className={canManage ? "roster-history__saved-row roster-history__saved-row--manage" : "roster-history__saved-row"} key={item.id}><span>{item.periodStart} až {item.periodEnd} · verze {item.version}</span><span>{item.employeeCount} osob · {item.knownDayCount} známých dnů</span><time dateTime={item.createdAt}>{new Intl.DateTimeFormat("cs-CZ", { dateStyle: "medium", timeStyle: "short" }).format(new Date(item.createdAt))}</time>{canManage ? <button type="button" className="roster-history__delete" aria-label={removalActionLabel("Smazat podklady", `${item.periodStart} až ${item.periodEnd}, verze ${item.version}`)} title="Smazat podklady" disabled={deletingId !== null || busy} onClick={() => void deleteImport(item)}>{deletingId === item.id ? "…" : "×"}</button> : null}</li>)}</ul>}</section>
+      {boundaryMessage ? <div className="roster-history__boundary" role="status"><strong>Stav návaznosti</strong><span>{boundaryMessage}</span></div> : null}
       <p className="roster-history__footnote">Uložení podkladů nemění potvrzený rozpis. Měsíční návrh je při nové kontrole znovu porovná s okolní historií.</p>
     </div>
   </section>;

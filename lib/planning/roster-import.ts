@@ -111,7 +111,8 @@ export function parseRosterCsv(
       continue;
     }
     const cells = Array.from({ length: dates.length }, (_, index) => sourceRow[index + 1]?.trim() ?? "");
-    if (/^\d+\s*:/.test(name) && cells.every((cell) => !cell)) continue;
+    // Export obsahuje nadpisy pracovních pozic s číselným kódem a prázdnými dny.
+    if (cells.every((cell) => !cell) && /^\d{3,}\b/.test(name)) continue;
     const normalizedName = normalize(name);
     if (sourceNames.has(normalizedName)) return { ok: false, code: "duplicate_person" };
     sourceNames.add(normalizedName);

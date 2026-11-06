@@ -22,12 +22,17 @@ const createImportEmployees = vi.fn().mockResolvedValue({ count: 1 });
 const createEntries = vi.fn().mockResolvedValue({ count: 2 });
 const findByFingerprint = vi.fn();
 const latestInScope = vi.fn();
+const deleteImportRecord = vi.fn();
+const deleteImportEmployees = vi.fn();
+const deleteEntries = vi.fn();
+const createAudit = vi.fn();
 const accountFindUnique = vi.fn();
 const tx = {
-  rosterHistoryImport: { create: createImport, findUnique: findByFingerprint, findFirst: latestInScope },
-  rosterHistoryImportEmployee: { createMany: createImportEmployees },
-  rosterHistoryEntry: { createMany: createEntries },
+  rosterHistoryImport: { create: createImport, findUnique: findByFingerprint, findFirst: latestInScope, delete: deleteImportRecord },
+  rosterHistoryImportEmployee: { createMany: createImportEmployees, deleteMany: deleteImportEmployees },
+  rosterHistoryEntry: { createMany: createEntries, deleteMany: deleteEntries },
   appUser: { findUnique: accountFindUnique },
+  auditEvent: { create: createAudit },
 };
 const db = { $transaction: vi.fn((callback) => callback(tx)) } as unknown as PrismaClient;
 
@@ -160,5 +165,63 @@ describe("uložené podklady návaznosti", () => {
 
     expect(result).toEqual({ ok: false, code: "forbidden" });
     expect(createImport).not.toHaveBeenCalled();
+  });
+});
+
+describe("smazání uložených podkladů návaznosti", () => {
+  beforeEach(() => {
+    findByFingerprint.mockResolvedValue({ id: "import-1" });
+    deleteEntries.mockResolvedValue({ count: 3 });
+    deleteImportEmployees.mockResolvedValue({ count: 1 });
+    deleteImportRecord.mockResolvedValue({ id: "import-1" });
+  });
+
+  it("atomicky smaže jen vybraný import a jeho navázané řádky", async () => {
+    const result = await new PrismaRosterHistoryStore(db).delete(actor, "import-1");
+
+    expect(result).toEqual({ ok: true });
+    expect(db.$transaction).toHaveBeenCalledWith(expect.any(Function), { isolationLevel: "Serializable" });
+    expect(findByFingerprint).toHaveBeenCalledWith({ where: { id: "import-1" }, select: { id: true } });
+    expect(deleteEntries).toHaveBeenCalledWith({ where: { importId: "import-1" } });
+    expect(deleteImportEmployees).toHaveBeenCalledWith({ where: { importId: "import-1" } });
+    expect(deleteImportRecord).toHaveBeenCalledWith({ where: { id: "import-1" } });
+    expect(createAudit).not.toHaveBeenCalled();
+  });
+
+  it("viewer nesmí podklady smazat a transakce se vůbec neotevře", async () => {
+    const result = await new PrismaRosterHistoryStore(db).delete({ ...actor, role: "viewer" }, "import-1");
+
+    expect(result).toEqual({ ok: false, code: "forbidden" });
+    expect(db.$transaction).not.toHaveBeenCalled();
+    expect(deleteEntries).not.toHaveBeenCalled();
+    expect(deleteImportRecord).not.toHaveBeenCalled();
+  });
+
+  it("neexistující import nic nesmaže", async () => {
+    findByFingerprint.mockResolvedValue(null);
+
+    const result = await new PrismaRosterHistoryStore(db).delete(actor, "missing");
+
+    expect(result).toEqual({ ok: false, code: "not_found" });
+    expect(deleteEntries).not.toHaveBeenCalled();
+    expect(deleteImportEmployees).not.toHaveBeenCalled();
+    expect(deleteImportRecord).not.toHaveBeenCalled();
+  });
+
+  it("v databázovém režimu odmítne neaktivního manažera bez mazání", async () => {
+    vi.stubEnv("PLANNING_AUTH_MODE", "database");
+    accountFindUnique.mockResolvedValue({ role: "manager", active: false, passwordHash: "hash", mustChangePassword: false });
+
+    const result = await new PrismaRosterHistoryStore(db).delete(actor, "import-1");
+
+    expect(result).toEqual({ ok: false, code: "forbidden" });
+    expect(deleteEntries).not.toHaveBeenCalled();
+    expect(deleteImportRecord).not.toHaveBeenCalled();
+  });
+
+  it("propaguje chybu databázové transakce", async () => {
+    const failingDb = { $transaction: vi.fn().mockRejectedValue(new Error("database unavailable")) } as unknown as PrismaClient;
+
+    await expect(new PrismaRosterHistoryStore(failingDb).delete(actor, "import-1")).rejects.toThrow("database unavailable");
   });
 });

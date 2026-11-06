@@ -52,6 +52,30 @@ export async function GET(request: Request) {
   }
 }
 
+export async function DELETE(request: Request) {
+  const access = await requirePlanningActor();
+  if (!access.ok) return NextResponse.json({ ok: false, message: access.message }, { status: access.status });
+  if (!canConfirmPlanning(access.actor)) return NextResponse.json({ ok: false, message: "Podklady může smazat pouze manažer." }, { status: 403 });
+  const persistence = getPlanningPersistenceRuntime();
+  if (!persistence.configured || persistence.mode !== "prisma") return NextResponse.json({ ok: false, message: "Smazání podkladů není dostupné." }, { status: 503 });
+  const body: unknown = await request.json().catch(() => null);
+  const id = typeof body === "object" && body !== null && !Array.isArray(body) ? (body as Record<string, unknown>).id : null;
+  if (typeof id !== "string" || !id.trim()) return NextResponse.json({ ok: false, message: "Chybí identifikátor podkladů." }, { status: 400 });
+  try {
+    const result = await new PrismaRosterHistoryStore(prisma).delete(access.actor, id);
+    if (!result.ok) {
+      return NextResponse.json({
+        ok: false,
+        code: result.code,
+        message: result.code === "forbidden" ? "Podklady může smazat pouze aktivní manažer." : "Tyto podklady už nejsou uložené.",
+      }, { status: result.code === "forbidden" ? 403 : 404 });
+    }
+    return NextResponse.json(result);
+  } catch {
+    return NextResponse.json({ ok: false, message: "Podklady se nepodařilo smazat. Zkuste to znovu." }, { status: 503 });
+  }
+}
+
 export async function POST(request: Request) {
   const access = await requirePlanningActor();
   if (!access.ok) return NextResponse.json({ ok: false, message: access.message }, { status: access.status });

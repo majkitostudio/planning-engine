@@ -46,6 +46,21 @@ describe("načtení sousedních potvrzených rozpisů", () => {
     expect((await loadMonthlyBoundary("2026-11", ["e1"], db)).before.complete).toBe(false);
   });
 
+  it("po odstranění jediného rosteru zůstane návaznost neúplná a dny neznámé", async () => {
+    const db = {
+      planningRunRecord: { findMany: vi.fn().mockResolvedValue([]) },
+      rosterHistoryImport: { findMany: vi.fn().mockResolvedValue([]) },
+    };
+
+    const boundary = await loadMonthlyBoundary("2026-11", ["e1"], db);
+    expect(boundary.before.complete).toBe(false);
+    expect(boundary.after.complete).toBe(false);
+
+    const snapshot = await loadMonthlyRosterSnapshot("2026-11", ["e1"], db);
+    expect(snapshot.imports).toEqual([]);
+    expect(snapshot.days.every((day) => day.status === "unknown")).toBe(true);
+  });
+
   it("načte poslední verzi uloženého rosteru a nepovažuje chybějící buňku za volno", async () => {
     const dates = ["2026-10-25", "2026-10-26", "2026-10-27", "2026-10-28", "2026-10-29", "2026-10-30", "2026-10-31"];
     const roster = (version: number, entries: readonly { date: string; status: "shift" | "off"; startTime: string | null; endTime: string | null }[]) => ({
