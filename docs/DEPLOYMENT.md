@@ -45,6 +45,7 @@ databáze.
 | `CLOUDFLARE_ACCOUNT_ID` | ID účtu Cloudflare |
 | `CLOUDFLARE_API_TOKEN` | token s právem Workers AI |
 | `CLOUDFLARE_AI_MODEL` | volitelné, výchozí `@cf/meta/llama-3.3-70b-instruct-fp8-fast` |
+| `CLOUDFLARE_AI_TOTAL_TIMEOUT_MS` | volitelné, rozpočet na celý měsíc, výchozí `270000` |
 
 4. Nasaď nejprve **preview**, ne production.
 5. Ověř přihlášení, načtení stránek, jeden dotaz do databáze a vytvoření
@@ -64,6 +65,23 @@ Test používá smyšlený listopad 2026 a osm syntetických zaměstnanců. Ově
 Cloudflare vrátí strukturovaný návrh, přiřazení patří do měsíce a nezávislá
 validace návrh nezfalšuje. Samotný úspěch testu neznamená, že je kvalita
 plánování dostatečná pro provoz; tu je potřeba posoudit na více měsících.
+Test vypíše počet přiřazení, stav validace, počet nálezů a dobu běhu.
+
+### Technické limity, se kterými adaptér počítá (`VERIFIED` dokumentací, 6. 11. 2026)
+
+- Model `@cf/meta/llama-3.3-70b-instruct-fp8-fast` má **kontextové okno
+  24 000 tokenů** a podporuje JSON schema režim. Proto adaptér odmítne prompt
+  nad 40 000 znaků ještě před voláním; hrubý přepočet je ~3 znaky na token
+  a rezerva na výstup.
+- Měsíc se posílá **po kalendářních týdnech**, tedy až šest požadavků za sebou.
+  Vercel Hobby (2026) dovoluje funkci běžet až 300 s; adaptér má proto vlastní
+  rozpočet na celý měsíc (výchozí 270 s) a po jeho vyčerpání vrátí jasnou chybu
+  bez uložení návrhu.
+- Když Cloudflare odmítne splnit JSON schéma (chyba „JSON Mode couldn't be met“),
+  aplikace to ohlásí jako neplatný výstup a návrh neuloží. Náhradní model se
+  nezapíná automaticky.
+- Volání jsou sekvenční, protože každý týden dostává předchozí hotové směny jako
+  návaznost. Paralelní volání by tuto návaznost ztratila.
 
 ## 5. Co ověřit po nasazení
 

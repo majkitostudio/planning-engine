@@ -85,6 +85,12 @@ export async function executeMonthlyPlanning(input: MonthlyPlanningInput, bounda
       return { ok: false, code: error.code, message: messages[error.code] };
     }
     if (error instanceof AiProviderError && error.code === "invalid_output") return { ok: false, code: "ai_invalid_output", message: "AI vrátila neplatný návrh." };
+    if (error instanceof AiProviderError && error.code === "not_configured") {
+      return { ok: false, code: "ai_failed", message: "AI plánovač není nakonfigurovaný: chybí přístupové údaje. Návrh nebyl vytvořen." };
+    }
+    if (error instanceof AiProviderError && error.code === "timeout") {
+      return { ok: false, code: "ai_failed", message: "AI plánovač nedokončil návrh v časovém limitu. Návrh nebyl uložen." };
+    }
     return { ok: false, code: "ai_failed", message: "Návrh od zvoleného plánovače se nepodařilo získat." };
   }
   if (!isMonthlyPlanDraft(draft, input.month)) return { ok: false, code: "ai_invalid_output", message: "Zvolený plánovač vrátil neplatný návrh nebo nesprávný měsíc." };

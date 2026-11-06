@@ -46,8 +46,8 @@ function syntheticMonth(): MonthlyPlanningInput {
             { date, shiftKind: "afternoon" as const, requiredEmployees: 1 },
           ]
         : [
-            { date, shiftKind: "morning" as const, requiredEmployees: 4 },
-            { date, shiftKind: "afternoon" as const, requiredEmployees: 3 },
+            { date, shiftKind: "morning" as const, requiredEmployees: 3 },
+            { date, shiftKind: "afternoon" as const, requiredEmployees: 2 },
           ],
     ),
     instructions: "Syntetické zadání: upřednostni rovnoměrné rozložení směn.",
@@ -67,7 +67,9 @@ describe.skipIf(!SHOULD_RUN)("Cloudflare Workers AI integration", () => {
       const input = syntheticMonth();
       const provider = new CloudflarePlanningProvider();
 
+      const startedAt = performance.now();
       const draft = await provider.generateMonthlyPlan(input, BOUNDARY);
+      const durationMs = Math.round(performance.now() - startedAt);
 
       expect(draft.month).toBe(MONTH);
       expect(draft.assignments.length).toBeGreaterThan(0);
@@ -79,9 +81,13 @@ describe.skipIf(!SHOULD_RUN)("Cloudflare Workers AI integration", () => {
       }
 
       const validation = validateMonthlyDraft(input, draft, BOUNDARY, provider.name);
+      // Čísla slouží k posouzení kvality a spotřeby; nejsou náhradou validace.
+      console.info(
+        `[cloudflare-integration] assignments=${draft.assignments.length} status=${validation.status} problems=${validation.problems.length} unverified=${validation.unverified.length} durationMs=${durationMs}`,
+      );
       expect(["valid", "invalid", "not_verified"]).toContain(validation.status);
       expect(validation.canConfirm).toBe(validation.status === "valid");
     },
-    240_000,
+    290_000,
   );
 });

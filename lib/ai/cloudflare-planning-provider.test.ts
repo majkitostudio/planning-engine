@@ -135,4 +135,27 @@ describe("CloudflarePlanningProvider", () => {
     const provider = new CloudflarePlanningProvider({ accountId: "a", apiToken: "t", timeoutMs: 5, fetcher: fetcher as unknown as typeof fetch });
     await expect(provider.generateMonthlyPlan(makeInput(), BOUNDARY)).rejects.toMatchObject({ code: "timeout" });
   });
+
+  it("odmítne vstup, který se nevejde do kontextu modelu, ještě před voláním", async () => {
+    const fetcher = vi.fn();
+    const provider = new CloudflarePlanningProvider({ accountId: "a", apiToken: "t", fetcher: fetcher as unknown as typeof fetch });
+    const input = makeInput({ instructions: "x".repeat(50_000) });
+    await expect(provider.generateMonthlyPlan(input, BOUNDARY)).rejects.toMatchObject({
+      code: "failed",
+      message: expect.stringContaining("příliš velký"),
+    });
+    expect(fetcher).not.toHaveBeenCalled();
+  });
+
+  it("nepřekročí celkový rozpočet na celý měsíc", async () => {
+    const fetcher = vi.fn();
+    const provider = new CloudflarePlanningProvider({
+      accountId: "a",
+      apiToken: "t",
+      totalTimeoutMs: 0,
+      fetcher: fetcher as unknown as typeof fetch,
+    });
+    await expect(provider.generateMonthlyPlan(makeInput(), BOUNDARY)).rejects.toMatchObject({ code: "timeout" });
+    expect(fetcher).not.toHaveBeenCalled();
+  });
 });

@@ -25,7 +25,14 @@ import {
 const DEFAULT_BASE_URL = "https://api.cloudflare.com/client/v4";
 const DEFAULT_MODEL = "@cf/meta/llama-3.3-70b-instruct-fp8-fast";
 const DEFAULT_TIMEOUT_MS = 120_000;
-const MAX_PROMPT_CHARS = 120_000;
+/** Limit jednoho volání Vercel Hobby je 300 s; rezerva na uložení draftu a odpověď. */
+const DEFAULT_TOTAL_TIMEOUT_MS = 270_000;
+/**
+ * Model má kontextové okno 24 000 tokenů (dokumentace Cloudflare, 2026).
+ * Při ~3 znacích na token a rezervě 4 096 tokenů na výstup odpovídá 40 000
+ * znaků promptu zhruba 13 000 tokenům, takže se do okna vejde i výstup.
+ */
+const MAX_PROMPT_CHARS = 40_000;
 const MAX_TOKENS_PER_WEEK = 4_096;
 
 type Fetcher = typeof fetch;
@@ -36,6 +43,8 @@ export interface CloudflarePlanningProviderOptions {
   readonly model?: string;
   readonly baseUrl?: string;
   readonly timeoutMs?: number;
+  /** Rozpočet na celý měsíc (všechny týdenní požadavky), ne na jeden požadavek. */
+  readonly totalTimeoutMs?: number;
   /** Testovací injekce; v aplikaci se používá globální `fetch`. */
   readonly fetcher?: Fetcher;
 }
@@ -225,6 +234,7 @@ export class CloudflarePlanningProvider implements MonthlyPlanningProvider {
   private readonly model: string;
   private readonly baseUrl: string;
   private readonly timeoutMs: number;
+  private readonly totalTimeoutMs: number;
   private readonly fetcher: Fetcher;
 
   constructor(options: CloudflarePlanningProviderOptions = {}) {
@@ -238,6 +248,12 @@ export class CloudflarePlanningProvider implements MonthlyPlanningProvider {
     this.timeoutMs =
       options.timeoutMs ??
       (Number.isFinite(envTimeout) && envTimeout > 0 ? envTimeout : DEFAULT_TIMEOUT_MS);
+    const envTotalTimeout = process.env.CLOUDFLARE_AI_TOTAL_TIMEOUT_MS
+      ? Number(process.env.CLOUDFLARE_AI_TOTAL_TIMEOUT_MS)
+      : NaN;
+    this.totalTimeoutMs =
+      options.totalTimeoutMs ??
+      (Number.isFinite(envTotalTimeout) && envTotalTimeout > 0 ? envTotalTimeout : DEFAULT_TOTAL_TIMEOUT_MS);
     this.fetcher = options.fetcher ?? fetch;
   }
 
@@ -262,18 +278,26 @@ export class CloudflarePlanningProvider implements MonthlyPlanningProvider {
     const allAssignments: MonthlyPlanDraft["assignments"][number][] = [];
     const allExplanations: MonthlyPlanDraft["explanations"][number][] = [];
     const allAssumptions = new Set<string>();
+    const deadline = Date.now() + this.totalTimeoutMs;
     let outcome = "";
 
     for (const week of weeks) {
+      const remaining = deadline - Date.now();
+      if (remaining <= 0) {
+        throw new AiProviderError(
+          "timeout",
+          "Cloudflare AI nedokončila celý měsíc v časovém limitu. Návrh nebyl uložen; zkuste to znovu nebo měsíc vytvořte po částech.",
+        );
+      }
       const payload = buildWeekPayload(input, boundary, week, allAssignments);
       const prompt = buildPrompt(payload);
       if (prompt.length > MAX_PROMPT_CHARS) {
         throw new AiProviderError(
           "failed",
-          "Měsíční vstup je příliš velký pro bezplatný limit AI. Zmenšete počet zaměstnanců nebo rozsah.",
+          "Měsíční vstup je příliš velký pro limit modelu AI. Zmenšete počet zaměstnanců nebo rozsah.",
         );
       }
-      const chunk = await this.requestChunk(prompt, options?.signal);
+      const chunk = await this.requestChunk(prompt, options?.signal, Math.min(this.timeoutMs, remaining));
       const dates = new Set(week.dates);
       const employees = new Set(input.employees.map((employee) => employee.id));
       for (const assignment of chunk.assignments) {
@@ -301,7 +325,7 @@ export class CloudflarePlanningProvider implements MonthlyPlanningProvider {
     return draft;
   }
 
-  private async requestChunk(prompt: string, externalSignal?: AbortSignal): Promise<ChunkResult> {
+  private async requestChunk(prompt: string, externalSignal?: AbortSignal, timeoutMs = this.timeoutMs): Promise<ChunkResult> {
     const url = `${this.baseUrl}/accounts/${encodeURIComponent(this.accountId ?? "")}/ai/run/${this.model}`;
     const controller = new AbortController();
     const abortFromExternal = () => controller.abort();
@@ -309,7 +333,7 @@ export class CloudflarePlanningProvider implements MonthlyPlanningProvider {
       if (externalSignal.aborted) controller.abort();
       else externalSignal.addEventListener("abort", abortFromExternal, { once: true });
     }
-    const timer = setTimeout(() => controller.abort(), this.timeoutMs);
+    const timer = setTimeout(() => controller.abort(), timeoutMs);
 
     let response: Response;
     try {

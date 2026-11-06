@@ -12,6 +12,11 @@ import { SimulatedMonthlyProvider, type MonthlyScenario } from "@/lib/planning/s
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
+/**
+ * Měsíc se generuje po týdnech, tedy více požadavky za sebou. Vercel Hobby
+ * (2026) dovoluje funkci až 300 s; limit je uvedený kvůli čitelnosti záměru.
+ */
+export const maxDuration = 300;
 
 export async function POST(request: Request) {
   const access = await requirePlanningActor();

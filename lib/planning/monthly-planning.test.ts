@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import { executeMonthlyPlanning, isMonthlyPlanDraft, MonthlyProviderError, validateMonthlyDraft } from "./monthly-planning";
+import { AiProviderError } from "./ai-provider";
 import { datesInMonth } from "./domain/month";
 import type { MonthlyPlanningInput } from "./domain/month-input";
 
@@ -66,6 +67,16 @@ describe("měsíční plánovací běh", () => {
   it("přizná chybu poskytovatele bez náhradního simulovaného návrhu", async () => {
     const provider = { name: "test", generateMonthlyPlan: vi.fn().mockRejectedValue(new Error("offline")) };
     expect(await executeMonthlyPlanning(input, boundary, provider)).toMatchObject({ ok: false, code: "ai_failed" });
+  });
+  it("rozliší chybějící konfiguraci AI a časový limit od obecného selhání", async () => {
+    const notConfigured = { name: "cloudflare", generateMonthlyPlan: vi.fn().mockRejectedValue(new AiProviderError("not_configured", "chybí klíč")) };
+    expect(await executeMonthlyPlanning(input, boundary, notConfigured)).toMatchObject({
+      ok: false, code: "ai_failed", message: expect.stringContaining("není nakonfigurovaný"),
+    });
+    const timedOut = { name: "cloudflare", generateMonthlyPlan: vi.fn().mockRejectedValue(new AiProviderError("timeout", "limit")) };
+    expect(await executeMonthlyPlanning(input, boundary, timedOut)).toMatchObject({
+      ok: false, code: "ai_failed", message: expect.stringContaining("časovém limitu"),
+    });
   });
   it("zachová prokázanou neproveditelnost jako výsledek plánovače", async () => {
     const provider = { name: "ortools", generateMonthlyPlan: vi.fn().mockRejectedValue(new MonthlyProviderError("solver_infeasible")) };
