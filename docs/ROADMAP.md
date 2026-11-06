@@ -19,9 +19,10 @@ Opravené nálezy i otevřené kroky jsou označené samostatně. Před širší
 | Další | Částečně opraveno — nejednoznačné a neexistující místní časy i vstup nad 200 zaměstnanců jsou blokovány. Pokračovat v opravách přístupnosti, chyby chybějícího návrhu a ověřit výkon plánování. |
 | Dokončení MVP | Správa jednotlivých rozpisů je implementovaná a částečně ověřená; zbývá souvislý syntetický průchod včetně potvrzení nového rozpisu a návazností. Python i izolované databázové testy běží v CI. |
 
-Všechny dostupné commitované špičky jsou zahrnuté v `main`. Zachované zálohy,
-nesledované výstupy a dosud neuklizené pracovní stromy nejsou automaticky
-převzaté ani odstraněné. Postup prací je v
+Všechny dostupné commitované špičky jsou zahrnuté v `main`. Zachované zálohy
+a nesledované výstupy nejsou automaticky převzaté ani odstraněné; staré
+pracovní stromy a jejich sloučené větve byly 6. 11. 2026 po potvrzení
+odstraněny. Postup prací je v
 [doporučeném pořadí](#doporučené-pořadí-dokončení-před-závěrečným-testováním).
 
 ## Stav měsíčního MVP
@@ -253,6 +254,33 @@ testovacím předpokladem, nikoli schváleným provozním pravidlem.
   úspěšně; databázová sada ověřila migrace a šest integračních testů nad
   izolovanou databází.
 
+### Úklid pracovních stromů a větví (`VERIFIED`, 6. 11. 2026)
+
+Uživatel 6. 11. 2026 potvrdil úklid existujících i nedostupných pracovních
+stromů. Šlo o operaci mimo pracovní adresář (`C:\Users\mikes\.codex\worktrees`),
+proto je důvod zaznamenán zde.
+
+- `VERIFIED` — Čtyři záznamy worktree ukazovaly na neexistující cesty a byly
+  odstraněny přes `git worktree prune`. Šlo jen o metadata, žádná pracovní kopie.
+- `VERIFIED` — Tři dostupné stromy (`audit-security-first-step`,
+  `monthly-mvp-ui-polish`, `navaznost-ai-plan`) byly čisté, jejich HEAD odpovídal
+  špičce větve a všechny commity byly předky `main`. Registraci zrušil
+  `git worktree remove`; zbytky souborů, které Windows Git nedokázal smazat kvůli
+  limitu délky cesty, dočistil PowerShell s prefixem `\\?\`.
+- `VERIFIED` — Šest už sloučených větví bylo smazáno přes `git branch -d`:
+  `codex/audit-weekly-write-protection`, `codex/database-managed-accounts`,
+  `codex/database-managed-accounts-windows`, `codex/leadership-demo`,
+  `codex/monthly-ortools-mvp`, `codex/navaznost-ai-plan`. Vzdálený `origin`
+  žádné `codex/*` větve neměl, takže na serveru se nic nemazalo.
+- `VERIFIED` — `git worktree list` nyní obsahuje jen hlavní pracovní strom,
+  `git branch` jen `main`. `main` = `origin/main` = `7b28db6` před úklidem
+  i po něm a pracovní strom byl čistý.
+- `VERIFIED` — `git fsck --connectivity-only` po úklidu hlásí jen volné objekty
+  uvolněné smazanými větvemi (107 stromů, 19 commitů, 3 bloby), nikoli
+  poškození. Tři záložní `git stash` položky zůstaly zachované.
+- Neplatné záznamy worktree ani smazané větve nebyly používány k běhu aplikace;
+  jejich commity jsou obsažené v `main`.
+
 ### Další kontrola a postup před uzavřením MVP
 
 - `VERIFIED` / opraveno — Syntetický vstup s 201 zaměstnanci dříve prošel
@@ -478,8 +506,9 @@ testovacím předpokladem, nikoli schváleným provozním pravidlem.
   s `minimatch` (GHSA-g3hv-75wg-m249). Navržená automatická oprava zahrnuje
   zásadní změny verzí; řešení vyžaduje samostatné ověření kompatibility.
 - `PLANNED` — Dokončit kontrolu návazností, částečného měsíce, souběhu a migrací
-  v cílovém lokálním prostředí. Posoudit necommitnuté změny starého pracovního
-  stromu; neslučovat je naslepo ani neodstraňovat zálohy.
+  v cílovém lokálním prostředí. `VERIFIED` (6. 11. 2026) — Staré pracovní stromy
+  byly po potvrzení odstraněny; necommitnuté změny ani tři `git stash` zálohy
+  smazány nebyly a nejsou součástí `main`.
 - `PLANNED` — Sladit aktuální dokumentaci, doplnit Python a izolované databázové
   kontroly do automatizace a oddělit historické záznamy od aktuálního stavu.
 - `PLANNED` — Ověřit manažerský tok v prohlížeči se syntetickými daty včetně
@@ -495,12 +524,19 @@ Podle auditu postupujeme po malých, samostatně ověřených částech. Položk
 označíme za hotovou až po opravě a doloženém ověření jejího rozsahu.
 
 0. **P0 — Sjednocení projektu do `main` a povinný úklid.**
-   - [ ] Udělat úplnou inventuru lokálních i vzdálených větví, všech pracovních
+   - [x] Udělat úplnou inventuru lokálních i vzdálených větví, všech pracovních
      stromů a jejich tracked, untracked, ignored a staged změn; ověřit také
      odložené změny, detached worktrees a metadata nedostupná z tohoto systému.
-   - [ ] Každou nalezenou změnu porovnat s `main`, určit její účel a zapsat
+     `VERIFIED` (6. 11. 2026) — Inventura zopakována: vzdálený `origin` měl
+     jen `main`, všech šest lokálních větví `codex/*` byly předky `main`, tři
+     dostupné pracovní stromy byly čisté a čtyři záznamy mířily na neexistující
+     cesty. Podrobnosti jsou v části „Úklid pracovních stromů a větví“.
+   - [x] Každou nalezenou změnu porovnat s `main`, určit její účel a zapsat
      výsledek: začlenit, bezpečně odložit, nebo po ověření označit za nepotřebnou.
      Žádný obsah nemazat ani nepřepisovat před jeho kontrolou.
+     `VERIFIED` (6. 11. 2026) — Všechny commitované tipy byly předky `main`,
+     takže se nezačleňovalo nic nového. Necommitnuté změny ani `git stash`
+     zálohy nebyly smazány; zůstávají zachované.
    - [x] Konkrétně prověřit starou větev a pracovní strom `cline/9dbfe` na HEAD
      `7a57454`: změny ve dvou testech, exporty v `lib/planning/index.ts`, úpravu
      `lib/planning/orchestrator.ts` a nový `lib/planning/ai-provider.ts`.
@@ -517,10 +553,16 @@ označíme za hotovou až po opravě a doloženém ověření jejího rozsahu.
      untracked výstupy včetně `design-qa.md` a `output/`; zachovat hodnotné
      podklady, ostatní odstranit až po určení původu a po ověření zálohy či
      začlenění.
-   - [ ] Po začlenění veškeré potřebné práce odstranit nepotřebné pracovní
+   - [x] Po začlenění veškeré potřebné práce odstranit nepotřebné pracovní
      stromy a lokální větve; vzdálené větve ponechat nebo odstranit až po
      ověření obsahu a potvrzení, že `main` obsahuje všechny potřebné změny.
      Konečný stav: jediný aktivní pracovní strom a jediná vývojová větev `main`.
+     `VERIFIED` (6. 11. 2026) — Uživatel potvrdil odstranění. Tři dostupné
+     pracovní stromy byly čisté a jejich HEAD odpovídal špičce větve; registrace
+     zrušil `git worktree remove`, zbytky souborů dočistil PowerShell kvůli
+     limitu délky cesty. Šest sloučených větví `codex/*` smazal `git branch -d`.
+     `origin` žádné `codex/*` neměl, takže na serveru se nic nemazalo. Konečný
+     stav je dosažen: `git worktree list` i `git branch` obsahují jen `main`.
    - `VERIFIED` (5. 11. 2026) — Dostupné commitované tipy jsou již předky
      `origin/main` (`175ab674`); lokální `main` byl fast-forwardem srovnán a
      zachoval nesledované `design-qa.md` a `output/`. `cline/9dbfe` má stále

@@ -23,8 +23,10 @@ Tato rozhodnutí uživatele mění dřívější předpoklady. Platí pro dalš�
 - **Online MVP pro manažera** = funkční web s přihlášením, který vytváří rozpis.
   Vydání je odloženo, dokud nebude připravený a ověřený AI plánovač
   (rozhodnutí uživatele „3C“).
-- **Slučování pracovních stromů** má proběhnout co nejdřív, ale nejprve je
-  potřeba společně projít, které změny do vydání patří. Nic se nemaže naslepo.
+- **Slučování pracovních stromů** — `VERIFIED`, 6. 11. 2026: všechny větve už
+  byly obsažené v `main`, tři dostupné pracovní stromy byly čisté a uživatel
+  potvrdil jejich odstranění i smazání sloučených větví. Nic se nemazalo naslepo;
+  podrobnosti jsou v `ROADMAP.md`.
 
 ### Zvolené prostředí a AI (`VERIFIED`, 6. 11. 2026)
 
@@ -88,7 +90,7 @@ Tato rozhodnutí uživatele mění dřívější předpoklady. Platí pro dalš�
 - [x] Solver timeout 120 s konfigurovatelný (env `PLANNING_SOLVER_TIMEOUT_MS`).
 - [x] Výkonnostní test (20/30 zaměstnanců, historický výsledek v `LEADERSHIP_DEMO_TODO.md`/`ROADMAP.md`; neprokazuje aktuální provozní kapacitu).
 - [x] Ověřit, že `npm run build` projde bez varování — finální build po změnách prošel.
-- [ ] Ověřit, že CI (GitHub Actions) projde na aktuálním pracovním stromu — lokálně prošly lint, typecheck, 586 Vitest testů (15 přeskočeno), Prisma validace, build, 28 Python testů solveru a 13 solver integračních testů; GitHub CI a jeho izolovaný PostgreSQL job nemají nový běh pro necommitnuté změny.
+- [x] Ověřit, že CI (GitHub Actions) projde na aktuálním pracovním stromu — `VERIFIED`, 6. 11. 2026: běh CI na `7b28db6` dokončil všechny joby úspěšně (kvalita, Python solver i izolovaný PostgreSQL). Lokálně prošly lint, typecheck, 586 Vitest testů (15 přeskočeno), Prisma validace, build, 28 Python testů solveru a 13 solver integračních testů. Následné změny jsou jen v dokumentaci a běh CI neovlivňují.
 - [x] Zkontrolovat `.env.example` — doplněny Cloudflare proměnné, `DATABASE_URL_UNPOOLED` a poznámka k Vercelu; database auth mode zůstává. `GEMINI_TIMEOUT_MS` je napojen na provider i translator a pokryt testy.
 - [x] Milník 4 (produkční připravenost): přihlášení přes Outlook/Entra není pro MVP potřeba (rozhodnutí 5. 11. 2026). Produkční DB zůstává `NOT VERIFIED`.
 
@@ -100,7 +102,12 @@ Tato rozhodnutí uživatele mění dřívější předpoklady. Platí pro dalš�
 ## 2. `docs/ROADMAP.md` — „To‑Do: postup podle auditu před závěrečným testováním“
 
 ### P0
-- [ ] Sjednocení projektu do `main` a povinný úklid — `BLOCKED`: aktuální Git inventura ukazuje 8 pracovních stromů a další necommitnuté změny mimo tuto práci. Zachovat je a prověřit jejich vlastníkem; nic nesmazat ani nepřepisovat bez určení původu.
+- [x] Sjednocení projektu do `main` a povinný úklid — `VERIFIED`, 6. 11. 2026:
+  uživatel potvrdil úklid. Čtyři neplatné záznamy worktree odstranil
+  `git worktree prune`, tři čisté a už sloučené pracovní stromy byly odstraněny
+  a šest sloučených větví `codex/*` smazáno. `worktree list` i `branch` nyní
+  obsahují jen `main`; podrobnosti jsou v `ROADMAP.md`. Záložní `git stash`
+  položky zůstaly zachované.
 - [x] Starší API a ochrana rozpisů (manager-only zápis, ochrana potvrzeného záznamu).
 - [x] Zneplatnění starých přihlášení (session version).
 - [x] Dočasné blokování chybných databázových přihlášení (10 pokusů).
