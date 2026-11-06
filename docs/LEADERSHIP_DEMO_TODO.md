@@ -11,6 +11,8 @@ pro prezentaci vedení firmy. Každá položka má kritérium dokončení.
 - [x] Odstranit debug výstupy a console.log z produkčního kódu (ověřeno — jediný výskyt je v bootstrap skriptu).
 
 ## Fáze 1 — Hlavní tok (Rozpis směn) — MANUÁLNÍ KROK
+> Úvazky, listopadové absence, fondy i další návaznost doplní manažer přímo
+> v aplikaci. Agent tyto osobní/doménové údaje nebude odhadovat ani doplňovat.
 - [x] Importovat říjnový roster jako návaznost — 23 přesně spárovaných aktivních
   zaměstnanců s kompletními explicitními dny 25.–31. 10.; uloženo 625 známých
   směn/volných dnů, 88 buněk zůstalo neznámých a nebylo převedeno na volno.
