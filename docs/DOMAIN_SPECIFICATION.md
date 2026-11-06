@@ -589,13 +589,15 @@ podřízený tomuto dokumentu — autoritativní seznam je tento.
 
 ### Blokující pro preference a optimalizaci
 
-- **OQ12** (S6) Které preference jsou žádoucí (S1–S5)?
-- **OQ13** (S6) Váha/priorita preferencí?
-- **OQ14** (S6) Co má přednost při vzájemném vyloučení preferencí?
-- **OQ17** (S7) Pořadí obětování preferencí?
 - **OQ22** (S6) Manager schvaluje či odmítá ručně a při přijetí vidí dopad;
   po záskoku během schválené dovolené zůstává otevřené přesné datum náhradního
-  volna.
+  volna. `PARTIALLY ANSWERED` — rozhodnuto, že manažer rozhoduje ručně; otevřené
+  zůstává pouze datum náhradního volna.
+
+OQ12–OQ14 a OQ17 jsou pro pilot uzavřeny (`VERIFIED` v `DOMAIN_DECISIONS.md`):
+preference S1–S5 se nezavádějí, zůstává pouze S6 (střídání ranní/odpolední) jako
+nezávazné přání bez vah, a pořadí obětování je „nejprve pokrytí, potom tvrdá
+pravidla, potom nejmenší dopad".
 
 ### Blokující pro role a data
 

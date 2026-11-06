@@ -396,7 +396,7 @@ první řez stát.
 | OQ11 | Existují pravidla mimo seznam? | rozsah prvního řezu | `VERIFIED` (5. 11. 2026) — žádná další pravidla (svátky, jazyky, kontinuita) |
 | OQ15 | Kdo rozhoduje při konfliktu? | tok po nálezu problému | `VERIFIED` — AI navrhne, validace zkontroluje, manažer potvrdí |
 | OQ16 | Neúplný plán, nebo chyba? | stav úplnosti plánu | `VERIFIED` — neúplný návrh se přizná a nabídnou se alternativy |
-| OQ17 | Pořadí obětování preferencí? | navazuje na OQ12–OQ14 | `PARTIALLY ANSWERED` — nejprve pokrytí, potom tvrdá pravidla, potom nejmenší dopad |
+| OQ17 | Pořadí obětování preferencí? | navazuje na OQ12–OQ14 | `VERIFIED` pro pilot — nejprve pokrytí, potom tvrdá pravidla, potom nejmenší dopad; v pilotu existuje pouze S6, žádné váhy se nezavádějí |
 | OQ18 | Jaké další role? | později, až s přihlášením | `OPEN QUESTION` |
 | OQ19 | Plánovač vs. schvalovatel? | schvalovací tok | `OPEN QUESTION` |
 | OQ20 | Potřebujeme audit změn? | historie a odpovědnost | `VERIFIED` pro pilot — audit potvrzených změn; odmítnuté a opuštěné varianty se neevidují |
@@ -633,7 +633,7 @@ vůbec používají (OQ12–OQ14, mimo tento list).
 
 **Návrh k diskusi (`PROPOSAL`):** odložit — preference nejsou v prvním řezu.
 
-**Odpověď:**
+**Odpověď:** `VERIFIED` pro pilot — pořadí je „nejprve pokrytí, potom tvrdá pravidla, potom nejmenší dopad". V pilotu existuje pouze preference S6 (střídání ranní/odpolední) jako nezávazné přání, žádné další preference ani váhy se nezavádějí, takže pořadí obětování se v tomto rozsahu neuplatňuje.
 
 ---
 
