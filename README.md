@@ -31,8 +31,10 @@ produkční aplikaci.
   adaptér pro Cloudflare Workers AI, orchestrátor **a napojení demo UI (Fáze 2)**
   jsou `IMPLEMENTED` a pokryté testy.
 - Cloudflare Workers AI je zvolený měsíční AI poskytovatel (`VERIFIED` rozhodnutí
-  z 6. 11. 2026). Adaptér je `IMPLEMENTED`; reálné volání a kvalita výstupu
-  zůstávají `NOT VERIFIED`, dokud neproběhne ověření s přístupovým tokenem.
+  z 6. 11. 2026). Adaptér je `IMPLEMENTED`; reálné volání je ověřeno (až 132
+  přiřazení, stav po úpravě promptu `invalid` s 1 nálezem). Kvalita výstupu
+  zůstává `PARTIAL` / `NOT VERIFIED` pro produkční provoz. Při vyčerpané denní
+  kvótě se zobrazí upozornění a manažer může přepnout na demo režim.
 - Starší Gemini adaptér zůstává v kódu; jeho reálné volání je `VERIFIED`
   integračním testem. Bezplatná úroveň Gemini není použitelná pro aplikaci
   dostupnou v EHP a placená varianta odporuje rozpočtu projektu.
@@ -84,7 +86,7 @@ Stack-specifické soubory: `package.json`, `tsconfig.json`, `next.config.mjs`,
 | `components/` | Demo UI dashboardu a pracovní plochy | `IMPLEMENTED` (`DEMO`) |
 | `lib/planning/` | Plánovací jádro, doménový kontrakt, AI kontrakt a orchestrátor | `IMPLEMENTED` |
 | `lib/planning/domain/` | Doménové typy, potvrzené časy a deterministická validace | `IMPLEMENTED` |
-| `lib/ai/` | Serverové AI adaptéry: Cloudflare Workers AI (měsíční), Gemini (starší) | `IMPLEMENTED`; reálné volání Cloudflare `NOT VERIFIED` |
+| `lib/ai/` | Serverové AI adaptéry: Cloudflare Workers AI (měsíční), Gemini (starší) | `IMPLEMENTED`; reálné volání Cloudflare ověřeno, kvalita `PARTIAL` |
 | `lib/auth/`, `auth.ts`, `proxy.ts` | Lokální MVP login gate, role a budoucí Entra adaptér | `IMPLEMENTED` / `PLANNED` |
 | `lib/db.ts` | Singleton PrismaClient (technická vrstva) | `IMPLEMENTED` |
 | `prisma/` | Prisma konfigurace, provozní modely a migrace | `IMPLEMENTED`; lokální migrace `VERIFIED`, produkční DB `NOT VERIFIED` |
