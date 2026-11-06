@@ -39,7 +39,10 @@ export interface MonthlyFormData {
   readonly instructions: string;
   readonly shiftRotationPreference?: boolean;
   readonly planningRange?: MonthlyPlanningRange;
-  /** Volitelné fondy; při uvedení se vyžaduje záznam pro každého vybraného zaměstnance. */
+  /**
+   * Volitelný měsíční fond. Zcela prázdný řádek znamená nevyplněno; pokud je
+   * některá hodnota zadaná, musí být platné obě, aby nevznikl částečný fond.
+   */
   readonly workFunds?: readonly MonthlyFormWorkFund[];
 }
 
@@ -62,6 +65,11 @@ function parseWorkFundHours(value: string): number | null {
   return Number.isFinite(hours) ? hours : null;
 }
 
+/** Zcela prázdný řádek fondu znamená, že manažer fond nezadal; takový řádek se nevyžaduje. */
+function isBlankWorkFund(fund: MonthlyFormWorkFund): boolean {
+  return fund.hours.trim() === "" && fund.excusedHours.trim() === "";
+}
+
 /** Souhrn povinných polí před odesláním celoměsíčního návrhu. */
 export function monthlyFormReadiness(form: MonthlyFormData): MonthlyFormReadiness {
   const missing: string[] = [];
@@ -72,6 +80,7 @@ export function monthlyFormReadiness(form: MonthlyFormData): MonthlyFormReadines
   const fundById = new Map<string, MonthlyFormWorkFund>();
   let duplicateFund = false;
   for (const fund of form.workFunds ?? []) {
+    if (isBlankWorkFund(fund)) continue;
     if (fundById.has(fund.employeeId)) duplicateFund = true;
     else fundById.set(fund.employeeId, fund);
   }
@@ -79,12 +88,12 @@ export function monthlyFormReadiness(form: MonthlyFormData): MonthlyFormReadines
     const fund = fundById.get(employee.id);
     return fund !== undefined && parseWorkFundHours(fund.hours) !== null && parseWorkFundHours(fund.excusedHours) !== null;
   }).length;
-  if (form.workFunds !== undefined) {
-    if (duplicateFund) missing.push("Pracovní fond stejného zaměstnance je zadaný vícekrát.");
-    for (const employee of form.employees) {
-      if (!fundById.has(employee.id) || parseWorkFundHours(fundById.get(employee.id)!.hours) === null || parseWorkFundHours(fundById.get(employee.id)!.excusedHours) === null) {
-        missing.push(`Zadejte měsíční fond a omluvené hodiny pro ${employee.name}.`);
-      }
+  if (duplicateFund) missing.push("Pracovní fond stejného zaměstnance je zadaný vícekrát.");
+  for (const employee of form.employees) {
+    const fund = fundById.get(employee.id);
+    if (fund === undefined) continue;
+    if (parseWorkFundHours(fund.hours) === null || parseWorkFundHours(fund.excusedHours) === null) {
+      missing.push(`Doplňte měsíční fond i omluvené hodiny pro ${employee.name}, nebo obě pole vymažte.`);
     }
   }
   const prepared = buildMonthlyFormInput(form);
@@ -138,10 +147,11 @@ export function buildMonthlyFormInput(form: MonthlyFormData): { ok: true; value:
   if (form.workFunds !== undefined) {
     const seen = new Set<string>();
     for (const fund of form.workFunds) {
+      if (isBlankWorkFund(fund)) continue;
       const hours = parseWorkFundHours(fund.hours);
       const excusedHours = parseWorkFundHours(fund.excusedHours);
       if (seen.has(fund.employeeId)) return { ok: false, message: "Pracovní fond stejného zaměstnance je zadaný vícekrát." };
-      if (hours === null || excusedHours === null) return { ok: false, message: "Zadejte nezáporný měsíční fond a omluvené hodiny v hodinách." };
+      if (hours === null || excusedHours === null) return { ok: false, message: "Doplňte měsíční fond i omluvené hodiny, nebo obě pole vymažte." };
       seen.add(fund.employeeId);
       workFunds.push({ employeeId: fund.employeeId, hours, excusedHours });
     }

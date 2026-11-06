@@ -2288,6 +2288,12 @@ textarea {
 .monthly-entry-list { display: grid; gap: 8px; margin: 0; padding: 0; list-style: none; }
 .monthly-entry-list li { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; align-items: center; gap: 12px; padding: 10px 12px; border: 1px solid var(--border); border-radius: 7px; background: var(--surface); }
 .monthly-entry-list li > span:first-child { min-width: 0; overflow-wrap: anywhere; font-weight: 500; }
+.monthly-optional-section { border: 1px solid var(--border); border-radius: 8px; background: var(--surface); padding: 12px 14px; }
+.monthly-optional-section > summary { cursor: pointer; font-weight: 600; }
+.monthly-optional-section > summary:hover { color: var(--accent); }
+.monthly-optional-section > summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 4px; }
+.monthly-optional-section[open] > summary { margin-bottom: 8px; }
+.monthly-optional-section > p { margin: 0 0 10px; }
 .monthly-work-fund-fields { display: flex; flex-wrap: wrap; gap: 10px; align-items: end; justify-content: flex-end; }
 .monthly-work-fund-fields label { display: grid; gap: 4px; font-size: .85rem; }
 .monthly-work-fund-fields input { width: 110px; }

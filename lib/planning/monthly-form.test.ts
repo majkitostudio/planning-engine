@@ -81,14 +81,24 @@ describe("vstupy měsíčního formuláře", () => {
     expect(buildMonthlyFormInput({ ...form, workFunds: [{ employeeId: "e1", hours: "168", excusedHours: "0" }, { employeeId: "e1", hours: "160", excusedHours: "0" }] }).ok).toBe(false);
   });
 
-  it("vyžaduje fond pro každého zaměstnance, pokud je zadání fondu otevřené", () => {
+  it("ponechává měsíční fond volitelný a prázdné řádky nevyžaduje", () => {
     const employees = [{ id: "e1", name: "Test" }];
     const base = { month: "2026-11", employees, absences: [], availability: [], staffing: Array(14).fill("0"), instructions: "" };
+    const withoutFunds = monthlyFormReadiness(base);
+    expect(withoutFunds).toMatchObject({ filledWorkFundCount: 0, missing: [], warnings: [] });
+    expect(monthlyFormReadiness({ ...base, workFunds: [{ employeeId: "e1", hours: "", excusedHours: "" }] }).missing).toEqual([]);
     expect(monthlyFormReadiness({ ...base, workFunds: [{ employeeId: "e1", hours: "168", excusedHours: "0" }] })).toMatchObject({ filledWorkFundCount: 1 });
-    const empty = monthlyFormReadiness({ ...base, workFunds: [{ employeeId: "e1", hours: "", excusedHours: "" }] });
-    expect(empty.filledWorkFundCount).toBe(0);
-    expect(empty.missing).toContain("Zadejte měsíční fond a omluvené hodiny pro Test.");
-    expect(monthlyFormReadiness(base).filledWorkFundCount).toBe(0);
+    const partial = monthlyFormReadiness({ ...base, workFunds: [{ employeeId: "e1", hours: "168", excusedHours: "" }] });
+    expect(partial.filledWorkFundCount).toBe(0);
+    expect(partial.missing).toContain("Doplňte měsíční fond i omluvené hodiny pro Test, nebo obě pole vymažte.");
+  });
+
+  it("vynechá prázdné řádky fondu a návrh vytvoří i bez fondu", () => {
+    const form = { month: "2026-11", employees: [{ id: "e1", name: "Test" }], absences: [], availability: [], staffing: Array(14).fill("0"), instructions: "" };
+    const blank = buildMonthlyFormInput({ ...form, workFunds: [{ employeeId: "e1", hours: " ", excusedHours: "" }] });
+    expect(blank.ok).toBe(true);
+    if (blank.ok) expect(blank.value).not.toHaveProperty("workFunds");
+    expect(buildMonthlyFormInput(form).ok).toBe(true);
   });
 
   it("předá výslovně zvolenou preferenci střídání jako strukturovaný vstup", () => {
