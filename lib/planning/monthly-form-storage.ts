@@ -10,9 +10,10 @@ export interface MonthlyFormSnapshot {
   readonly staffing: readonly string[];
   readonly instructions: string;
   readonly shiftRotationPreference: boolean;
-  readonly partialMonth: boolean;
-  readonly rangeStart: string;
-  readonly rangeEnd: string;
+  /** Legacy form fields from the removed OR-Tools partial-month workflow. */
+  readonly partialMonth?: boolean;
+  readonly rangeStart?: string;
+  readonly rangeEnd?: string;
   readonly employeeId: string;
   readonly date: string;
   readonly endDate: string;
@@ -29,8 +30,8 @@ const record = (value: unknown): value is Record<string, unknown> => !!value && 
 const strings = (item: Record<string, unknown>, keys: readonly string[]) => keys.every((name) => typeof item[name] === "string");
 
 function isSnapshot(value: unknown): value is MonthlyFormSnapshot {
-  if (!record(value) || !strings(value, ["name", "instructions", "rangeStart", "rangeEnd", "employeeId", "date", "endDate"])) return false;
-  if (typeof value.shiftRotationPreference !== "boolean" || typeof value.partialMonth !== "boolean" || !Number.isInteger(value.step) || Number(value.step) < 0 || Number(value.step) > 4) return false;
+  if (!record(value) || !strings(value, ["name", "instructions", "employeeId", "date", "endDate"])) return false;
+  if (typeof value.shiftRotationPreference !== "boolean" || (value.partialMonth !== undefined && typeof value.partialMonth !== "boolean") || (value.rangeStart !== undefined && typeof value.rangeStart !== "string") || (value.rangeEnd !== undefined && typeof value.rangeEnd !== "string") || !Number.isInteger(value.step) || Number(value.step) < 0 || Number(value.step) > 4) return false;
   if (!["full_day", "morning", "afternoon"].includes(String(value.absenceShift))) return false;
   if (!Array.isArray(value.staffing) || value.staffing.length !== 14 || !value.staffing.every((item) => typeof item === "string")) return false;
   if (!Array.isArray(value.employees) || !value.employees.every((item) => record(item) && strings(item, ["id", "name"]) && (item.employmentType === undefined || item.employmentType === "full_time" || item.employmentType === "part_time"))) return false;

@@ -42,7 +42,7 @@ podklady byly odstraněny.
 | Gemini adaptér | `IMPLEMENTED` / `VERIFIED` (volání) | `lib/ai/gemini-planning-provider.ts`; starší varianta, produkční kvalita `NOT VERIFIED` |
 | Orchestrace | `IMPLEMENTED` | `runPlanning()` spojuje návrh, validaci a změny |
 | Starší týdenní API | `IMPLEMENTED` / `DEMO` | `POST /api/planning/run`; samostatné týdenní UI bylo odstraněno |
-| Měsíční pilot | `IMPLEMENTED` / `NOT VERIFIED` | Měsíční formulář, lokální OR-Tools a připravený Cloudflare AI adaptér; pilot je pouze pro plné úvazky. Ověření a omezení popisuje [roadmapa](ROADMAP.md). |
+| Měsíční pilot | `IMPLEMENTED` / `PARTIAL` | Cloudflare Workers AI navrhuje celý měsíc, nezávislá validace kontroluje návrh a manager potvrzuje; kvalita pokrytí není úplná. Pilot je pouze pro plné úvazky. |
 | Zaměstnanci pro plánování | `IMPLEMENTED` | Manažer spravuje trvalý seznam a může načíst aktivní zaměstnance do měsíčního návrhu. Odebrání zachová historii a zaměstnance lze znovu zařadit se stejnou identitou. |
 | Přihlášení a role | `IMPLEMENTED` / `VERIFIED` (lokální syntetický smoke) | Auth.js podporuje vývojový local režim a databázové účty v PostgreSQL; vytvoření účtu, změna hesla a zneplatnění deaktivované session prošly lokálním browser průchodem. Produkční úroveň a Entra ID zůstávají `NOT VERIFIED`/`PLANNED`. |
 | Správa přihlašovacích účtů | `IMPLEMENTED` / `VERIFIED` (izolovaná lokální PostgreSQL) | `/uzivatele`, manager-only API a jednorázový `db:bootstrap-manager`; migrace, bootstrap, create, role, reset, povinná změna hesla, viewer denial i souběžná ochrana posledního managera byly ověřeny synteticky. Produkce `NOT VERIFIED`. |
@@ -54,8 +54,8 @@ podklady byly odstraněny.
 | Rozhodování o požadavcích | `IMPLEMENTED` / `SIMULATED` | `/pozadavky` ukazuje dopad dvou syntetických požadavků, dostupné kandidáty a manager-only schválení/zamítnutí; rozhodnutí se ukládá přes Prisma a samo neupraví rozpis |
 | Testy | `IMPLEMENTED` | Výsledky a rozsah posledního zaznamenaného ověření uvádí [roadmapa](ROADMAP.md). |
 | Kvalitní brána (CI) | `IMPLEMENTED` / `VERIFIED` (lokální běh) | Testy, typecheck, lint, build a `db:validate` prošly; úplná provozní/produkční brána z toho nevyplývá |
-| Cílové online nasazení | `PLANNED` | Vercel Hobby + stávající Neon Free + Cloudflare Workers AI Free; nic z toho není nasazené ani ověřené |
-| Produkční připravenost | VERIFIED (6. 11. 2026) | Nasazeno na Vercel Hobby: https://planning-engine-kappa.vercel.app; Neon migrace aplikovány; Cloudflare AI ověřeno |
+| Cílové online nasazení | `VERIFIED` (omezené) | Vercel Hobby + stávající Neon Free + Cloudflare Workers AI Free; podrobnosti a limity jsou v checklistu nasazení |
+| Produkční připravenost | `NOT VERIFIED` | Nasazení a AI volání existují, ale zálohy, monitoring, obnova a produkční úroveň zabezpečení nejsou ověřeny |
 
 ## Stavové popisky
 

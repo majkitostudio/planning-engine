@@ -1,10 +1,12 @@
 import { ChangePasswordForm } from "@/components/accounts/change-password-form";
+import { Icon } from "@/components/icons";
 
 export default function ChangePasswordPage() {
   return (
     <div>
       <header className="page-head">
         <div className="page-head__lead">
+          <span className="page-head__icon" aria-hidden="true"><Icon name="lock" width={20} height={20} /></span>
           <div>
             <h1 className="page-head__title">Změna hesla</h1>
             <p className="page-head__sub">Než budete pokračovat do aplikace, nastavte si vlastní heslo.</p>

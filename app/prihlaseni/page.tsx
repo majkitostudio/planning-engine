@@ -27,7 +27,7 @@ export default async function LoginPage({
             <BrandMark size={34} />
           </span>
           <span className="brand__text">
-            <span className="brand__name">PPPlánovací Engine</span>
+            <span className="brand__name">Plánovací Engine</span>
           </span>
         </div>
 

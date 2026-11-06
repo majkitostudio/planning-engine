@@ -78,8 +78,9 @@ Tato rozhodnutí jsou pro další práci závazná:
 
 - **AI je schváleným záměrem hlavní plánovací logiky.** Má sestavovat návrh,
   vyhodnocovat požadavky, absence, dostupnost a obsazení a navrhovat řešení.
-  Současná měsíční implementace připravuje adaptér pro Cloudflare Workers AI;
-  lokální OR-Tools zůstává pro offline běh. Externí AI je `VERIFIED` rozhodnutím
+  Měsíční implementace používá Cloudflare Workers AI; lokální OR-Tools byl
+  na žádost uživatele 6. 11. 2026 odstraněn, protože cílové použití je online.
+  Externí AI je `VERIFIED` rozhodnutím
   uživatele (6. 11. 2026) povolená i se skutečnými jmény a volným textem.
   Používej model s nulovým uchováváním a bez trénování na zákaznickém obsahu;
   volný text zůstává pokyn, nikoli deterministicky ověřené tvrdé pravidlo.
@@ -97,8 +98,8 @@ Tato rozhodnutí jsou pro další práci závazná:
   měsíčním plánování.
 - Manažer pro měsíční návrh zadává období, zaměstnance, absence, dostupnost,
   potřebné obsazení a případné doplňující pokyny. Volný text se nestává
-  deterministicky ověřovaným tvrdým pravidlem. Režim OR-Tools pokyny nevyhodnotí
-  a tuto skutečnost musí zobrazit.
+  deterministicky ověřovaným tvrdým pravidlem. Simulovaný režim pokyny
+  nevyhodnotí a tuto skutečnost musí zobrazit.
 - Měsíční návrh se kontroluje jako celek včetně návazností přes týdny a hranice
   měsíců. Využij dostupnou historii předchozího a navazujícího rozpisu; při
   chybějících podkladech označ dotčené kontroly jako neověřené. Neúplný návrh
@@ -166,7 +167,7 @@ směny; přestávky ani výpočet odpracované doby nejsou samostatné tvrdé pr
   `planning.confirmed`; `memory` je pouze testovací režim. Migrace a potvrzení byly
   ověřeny v izolované lokální Docker PostgreSQL.
 - Starší týdenní provider používá `PLANNING_PROVIDER=simulated|gemini`; měsíční
-  provider jej může přepsat přes `PLANNING_MONTHLY_PROVIDER=simulated|gemini|ortools|cloudflare`.
+  provider jej může přepsat přes `PLANNING_MONTHLY_PROVIDER=simulated|gemini|cloudflare`.
   Chybná hodnota ani nedostupný plánovač nesmějí tiše přepnout provider.
 - Simulovaný provider (`lib/planning/simulated/`) vrací tři fixture scénáře
   (`complete`, `partial`, `unverified`) pro pevný týden 5.–11. 10. 2026.

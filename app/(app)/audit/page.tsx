@@ -23,7 +23,6 @@ const PAGE_SIZE = 20;
 function modeLabel(mode: string): string {
   switch (mode) {
     case "simulated": return "ukázkový návrh";
-    case "ortools": return "místní plánovač";
     case "gemini": return "AI Gemini";
     case "cloudflare": return "AI Cloudflare";
     default: return mode;
@@ -206,13 +205,13 @@ export default async function PlanningAuditPage({
         )}
 
         {totalPages > 1 ? (
-          <div className="monthly-step-controls" style={{ marginTop: 12 }}>
+          <div className="monthly-step-controls audit-pagination">
             {currentPage > 1 ? (
               <Link className="btn btn--secondary" href={`/audit?${new URLSearchParams({ ...(filterMonth ? { month: filterMonth } : {}), ...(filterAction ? { action: filterAction } : {}), page: String(currentPage - 1) }).toString()}`}>
                 Předchozí
               </Link>
             ) : null}
-            <span style={{ alignSelf: "center", fontSize: 13, color: "var(--muted)" }}>
+            <span className="audit-pagination__status">
               Strana {currentPage} / {totalPages}
             </span>
             {currentPage < totalPages ? (

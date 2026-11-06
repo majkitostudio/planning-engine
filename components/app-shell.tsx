@@ -42,14 +42,6 @@ type AppShellUser = {
   readonly role?: "manager" | "viewer";
 };
 
-function titleFor(pathname: string): string {
-  if (pathname === "/") return "Přehled";
-  const match = NAV_ITEMS.find(
-    (item) => item.href !== "/" && pathname.startsWith(item.href),
-  );
-  return match ? match.label : "Přehled";
-}
-
 export function AppShell({
   children,
   user,
@@ -243,7 +235,6 @@ export function AppShell({
             <Icon name={sidebarOpen ? "close" : "menu"} width={19} height={19} />
           </button>
 
-          <span className="topbar__title">{titleFor(pathname)}</span>
           <span className="topbar__spacer" />
 
           <div className="topbar__actions">

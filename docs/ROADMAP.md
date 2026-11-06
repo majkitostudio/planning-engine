@@ -1,6 +1,6 @@
 # Aktuální stav a další kroky — Plánovací Engine
 
-> Stav aktualizován 5. 11. 2026 při postupném sjednocování větví. Historické
+> Aktuální směr aktualizován 6. 11. 2026. Historické
 > testy níže jsou výslovně označeny; aktuální kontroly jsou v závěru dokumentu.
 > Význam stavových popisků
 > vysvětluje [`docs/README.md`](README.md#stavové-popisky).
@@ -28,27 +28,26 @@ odstraněny. Postup prací je v
 ## Stav měsíčního MVP
 
 Schváleným směrem je jeden návrh pro celý kalendářní měsíc; týdenní tabulka je
-jeho pohled. Lokální OR-Tools plánovač vytváří přiřazení a aplikace je
-nezávisle kontroluje. Manažer může zvolit i souvislý úsek měsíce s pevnými
-podklady pro zbytek. Ruční úprava návrhu byla z manažerské obrazovky odstraněna;
-serverové rozhraní pro opětovnou kontrolu zůstává. Potvrzení vyžaduje
-samostatnou akci manažera.
-
-Schváleným záměrem je AI jako hlavní plánovací logika. Současná implementace
-s lokálním OR-Tools a bez vyhodnocení textových pokynů se od něj liší; její
-existence sama nedokládá schválení změny záměru. Viz `DOMAIN_DECISIONS.md`.
+jeho pohled. Měsíční návrh vytváří Cloudflare Workers AI a aplikace jej
+nezávisle deterministicky kontroluje. Manažer může potvrdit pouze úplný,
+ověřený návrh samostatnou akcí. Lokální OR-Tools a doplánování části měsíce
+byly na žádost uživatele 6. 11. 2026 odstraněny; historické záznamy režimu
+`ortools` zůstávají čitelné. Aktuální rozhodnutí: `docs/adr/0008-cloudflare-only-and-unified-ui.md`.
 
 | Oblast | Aktuální stav |
 | --- | --- |
-| Měsíční formulář, lokální OR-Tools provider a uložení návrhu | `IMPLEMENTED`; syntetický integrační průchod `VERIFIED` |
+| Měsíční formulář, Cloudflare AI provider a uložení návrhu | `IMPLEMENTED`; reálné volání `VERIFIED`, kvalita pokrytí `PARTIAL` |
 | Nezávislá měsíční validace | `IMPLEMENTED`; v testovacím měsíci zůstala část pravidel `NOT VERIFIED` kvůli chybějícím návaznostem a otevřenému výkladu víkendového volna |
 | Ruční změna směn a nová kontrola | Serverové rozhraní `IMPLEMENTED`; ruční úprava z manažerské obrazovky odstraněna |
 | Obnovení uložené verze po načtení stránky | `IMPLEMENTED`; obnovení syntetického prázdného návrhu v tomto auditu `VERIFIED`, další varianty `NOT VERIFIED` |
 | Potvrzení rozpisu | `IMPLEMENTED`; neúplné a neověřené návrhy mají být blokovány. Níže uvedený historický návrh potvrzen nebyl. |
-| Textové pokyny v režimu OR-Tools | Nevyhodnocují se; UI tuto skutečnost přiznává. Do lokálního solveru se neposílají. |
+| Textové pokyny | Cloudflare AI je může zohlednit; jejich splnění deterministická validace neověřuje. |
 | Cloudflare Workers AI | Zvolený měsíční AI poskytovatel (`VERIFIED` rozhodnutí 6. 11. 2026). Adaptér `IMPLEMENTED`; reálné volání `VERIFIED` (6. 11. 2026, 101 přiřazení, 93 s, stav validace `invalid` s 14 nálezy); kvalita návrhu `PARTIAL` — potřebuje ladění pokrytí. |
 | Gemini provider | Starší adaptér zůstává v kódu. Bezplatná úroveň není použitelná pro aplikaci v EHP, placená odporuje rozpočtu. Kvalita `NOT VERIFIED`. |
 | Produkční autentizace, databáze a provoz | VERIFIED (6. 11. 2026) | Nasazeno na Vercel Hobby + Neon Free; migrace aplikovány; Cloudflare AI ověřeno |
+
+Při vyčerpání AI kvóty aplikace nesmí tiše změnit poskytovatele. UI nabídne
+jednorázový simulovaný demo scénář, který musí být jasně označen jako simulace.
 
 ### Historický syntetický průchod (3. 11. 2026)
 

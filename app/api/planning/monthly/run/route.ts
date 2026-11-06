@@ -6,7 +6,6 @@ import { GeminiPlanningProvider } from "@/lib/ai/gemini-planning-provider";
 import { CloudflarePlanningProvider } from "@/lib/ai/cloudflare-planning-provider";
 import { validateMonthlyInput } from "@/lib/planning/domain/month-input";
 import { executeMonthlyPlanning } from "@/lib/planning/monthly-planning";
-import { MonthlyOrtoolsProvider } from "@/lib/planning/monthly-ortools-provider";
 import { getMonthlyRuntime } from "@/lib/planning/monthly-runtime";
 import { SimulatedMonthlyProvider } from "@/lib/planning/simulated/monthly-provider";
 
@@ -30,25 +29,20 @@ export async function POST(request: Request) {
   if (!input.ok) return NextResponse.json({ ok: false, message: input.message }, { status: 400 });
   const current = getMonthlyRuntime();
   if (!current.configured) return NextResponse.json({ ok: false, message: current.reason }, { status: 503 });
-  if (input.value.planningRange && current.mode !== "ortools") return NextResponse.json({ ok: false, message: "Doplánování části měsíce vyžaduje lokální plánovač." }, { status: 422 });
   const scenario = record.scenario;
   const providerOverride = record.providerOverride === "simulated" ? "simulated" : null;
   if (current.mode === "simulated" && scenario !== "complete" && scenario !== "partial" && scenario !== "unverified") return NextResponse.json({ ok: false, message: "Zvolte platný simulovaný scénář." }, { status: 400 });
   try {
     const employeeIds = input.value.employees.map((employee) => employee.id);
     const boundary = await current.loadBoundary(input.value.month, employeeIds);
-    const planningInput = input.value.planningRange ? { ...input.value, rosterHistory: await current.loadRosterSnapshot(input.value.month, employeeIds) } : input.value;
+    const planningInput = input.value;
     const effectiveMode = providerOverride === "simulated" ? "simulated" : current.mode;
     const provider = effectiveMode === "simulated" ? new SimulatedMonthlyProvider("complete")
       : effectiveMode === "gemini" ? new GeminiPlanningProvider()
-        : effectiveMode === "cloudflare" ? new CloudflarePlanningProvider()
-          : new MonthlyOrtoolsProvider();
+        : new CloudflarePlanningProvider();
     const result = await executeMonthlyPlanning(planningInput, boundary, provider);
     if (!result.ok) {
-      const status = result.code === "solver_timeout" ? 504
-        : result.code === "solver_unavailable" ? 503
-          : result.code === "solver_invalid_output" ? 502 : 422;
-      return NextResponse.json(result, { status });
+      return NextResponse.json(result, { status: 422 });
     }
     const id = randomUUID();
     await current.create({ id, input: planningInput, draft: result.draft, providerName: provider.name, mode: effectiveMode });

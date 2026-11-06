@@ -13,8 +13,8 @@ pohled do měsíčního návrhu. Poloviční úvazky jsou v kódu implementovan�
 podle rozhodnutí z 6. 11. 2026 zůstávají **mimo pilot**.
 
 **Cílové nasazení je Vercel Hobby (zdarma, nekomerční) se stávající Neon Free
-databází.** Online plánování má zajistit Cloudflare Workers AI; lokální
-OR-Tools zůstává pro offline běh. Nezávislá deterministická validace kontroluje
+databází.** Plánování zajišťuje Cloudflare Workers AI; lokální OR-Tools byl
+odstraněn, protože aplikace je určena pro online použití. Nezávislá deterministická validace kontroluje
 návrh; chybějící návaznosti zůstávají neověřené. Manažer návrh potvrzuje; bez
 potvrzení se návrh neaplikuje jako potvrzený plán.
 
@@ -23,8 +23,9 @@ potvrzení se návrh neaplikuje jako potvrzený plán.
 Toto je **rozpracovaný technický základ s demo UI**. Nejedná se o hotovou ani
 produkční aplikaci.
 
-- Měsíční plánování lokálně používá OR-Tools, podporuje návazné podklady a
-  doplánování souvislé části měsíce. Manažerská obrazovka již nenabízí ruční
+- Měsíční plánování používá Cloudflare Workers AI a pokrývá celý kalendářní
+  měsíc. OR-Tools a lokální dílčí plánování byly odstraněny; historické záznamy
+  vytvořené OR-Tools zůstávají čitelné. Manažerská obrazovka již nenabízí ruční
   úpravu návrhu. Syntetická ověření a jejich meze jsou v
   [`docs/ROADMAP.md`](docs/ROADMAP.md); nenahrazují závěrečné testování MVP.
 - Plánovací jádro, doménový kontrakt, deterministická validace, AI kontrakt,
@@ -34,7 +35,8 @@ produkční aplikaci.
   z 6. 11. 2026). Adaptér je `IMPLEMENTED`; reálné volání je ověřeno (až 132
   přiřazení, stav po úpravě promptu `invalid` s 1 nálezem). Kvalita výstupu
   zůstává `PARTIAL` / `NOT VERIFIED` pro produkční provoz. Při vyčerpané denní
-  kvótě se zobrazí upozornění a manažer může přepnout na demo režim.
+  kvótě se zobrazí upozornění a manažer může jednorázově spustit simulovaný demo
+  scénář; nejde o přepnutí produkčního plánovače.
 - Starší Gemini adaptér zůstává v kódu; jeho reálné volání je `VERIFIED`
   integračním testem. Bezplatná úroveň Gemini není použitelná pro aplikaci
   dostupnou v EHP a placená varianta odporuje rozpočtu projektu.
@@ -43,8 +45,6 @@ produkční aplikaci.
 - UI/UX: implementovány 4 vlny polish (přechody, hover/active, focus ringy,
   scrollbary, skeletony, empty-state, mobilní sticky sloupec, responzivní grid,
   prefers-reduced-motion).
-- Solver timeout je konfigurovatelný (`PLANNING_SOLVER_TIMEOUT_MS`, výchozí
-  120 s, strop 300 s).
 - Měsíční kód umí plný i poloviční úvazek; **pilot je pouze pro plné úvazky**
   (`VERIFIED`, 6. 11. 2026). Poloviční úvazky se v pilotním scénáři nezadávají.
 - Stránka Analyzy je read-only přehled potvrzených a odstraněných rozpisů;
@@ -107,11 +107,8 @@ Další příkazy: `npm run lint`, `npm run lint:fix`, `npm run build`, `npm run
 `npm run typecheck`, `npm run test`, `npm run test:watch`, `npm run db:generate`,
 `npm run db:validate`, `npm run db:migrate`, `npm run db:migrate:deploy`, `npm run db:studio`.
 
-Pro aplikační běh nastav `PLANNING_PROVIDER`, případně samostatný
-`PLANNING_MONTHLY_PROVIDER=cloudflare` s `CLOUDFLARE_ACCOUNT_ID` a
-`CLOUDFLARE_API_TOKEN`, nebo `PLANNING_MONTHLY_PROVIDER=ortools` s
-`PLANNING_PYTHON_EXECUTABLE` na Python s lokálně instalovanými závislostmi ze
-`scripts/requirements-monthly-solver.txt`, dále `PLANNING_PERSISTENCE=prisma`,
+Pro aplikační běh nastav `PLANNING_MONTHLY_PROVIDER=cloudflare` s
+`CLOUDFLARE_ACCOUNT_ID` a `CLOUDFLARE_API_TOKEN`, dále `PLANNING_PERSISTENCE=prisma`,
 `DATABASE_URL`, `DATABASE_URL_UNPOOLED` pro migrace a lokální login proměnné
 (viz `.env.example`). Databázové příkazy (`db:migrate`, `db:studio`) vyžadují
 běžící PostgreSQL a před jejich spuštěním je nutné potvrdit cílovou databázi.
@@ -120,8 +117,8 @@ Pro online běh na Vercelu: `PLANNING_MONTHLY_PROVIDER=cloudflare`,
 `PLANNING_AUTH_MODE=database`, `PLANNING_PERSISTENCE=prisma`, `AUTH_SECRET`,
 pooled `DATABASE_URL` a unpooled `DATABASE_URL_UNPOOLED`. Migrace se pouští
 ručně (`npm run db:migrate:deploy` s `DATABASE_URL_UNPOOLED`), ne při každém
-buildu. Lokální OR-Tools na Vercelu dostupný není, protože vyžaduje spuštění
-Python procesu.
+buildů. Po vyčerpání AI kvóty aplikace nepřepíná provider automaticky; lze
+spustit pouze výslovný simulovaný demo scénář.
 
 ## Dokumentace
 

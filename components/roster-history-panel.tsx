@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
+import { Icon } from "@/components/icons";
 import { parseRosterCsv, type RosterImportDay, type RosterImportPreviewEmployee, type RosterImportResult } from "@/lib/planning/roster-import";
 import { rosterHistoryEmptyState, splitRosterPreview, withoutRosterSourceName } from "@/lib/planning/roster-history-view";
 import {
@@ -268,8 +269,14 @@ export function RosterHistoryPanel({ canManage, initialMonth }: { readonly canMa
           ? "Stav návaznosti se zde nezobrazuje pro více než 200 zaměstnanců. Před potvrzením proběhne serverová kontrola."
           : `Před měsícem: ${activeBoundary.before ? "k dispozici" : "chybí nebo jsou neúplné"} · Po měsíci: ${activeBoundary.after ? "k dispozici" : "chybí nebo jsou neúplné"}${activeBoundary.after ? "" : " · Budoucí rozpis nemusí existovat; nic se nedoplňuje odhadem."}`;
 
-  return <section className="card roster-history" aria-labelledby="roster-history-title">
-    <header className="card__head"><div><span className="roster-history__eyebrow">PODKLADY PRO KONTROLU NÁVAZNOSTI</span><h2 className="card__title" id="roster-history-title">Návaznost směn</h2><p>Načtěte měsíční export, zkontrolujte spárování a uložte jen známé směny a výslovné volno.</p></div></header>
+  return <div className="page-stack roster-history-page">
+    <header className="page-head">
+      <div className="page-head__lead">
+        <span className="page-head__icon" aria-hidden="true"><Icon name="calendar" width={20} height={20} /></span>
+        <div><h1 className="page-head__title" id="roster-history-title">Návaznost směn</h1><p className="page-head__sub">Načtěte měsíční export, zkontrolujte spárování a uložte jen známé směny a výslovné volno.</p></div>
+      </div>
+    </header>
+    <section className="card roster-history" aria-labelledby="roster-history-title">
     <div className="roster-history__body">
       <div className="roster-history__notice" role="note"><strong>Soukromí a význam dat</strong><span>CSV se přečte v tomto prohlížeči. Ukládají se pouze zkontrolované buňky a jejich přesné časy. „Dovolená“ a „Nemoc“ se nezamění za volno ani za schválenou absenci. Prázdná buňka zůstává neznámá.</span></div>
 
@@ -334,5 +341,6 @@ export function RosterHistoryPanel({ canManage, initialMonth }: { readonly canMa
       {boundaryMessage ? <div className="roster-history__boundary" role="status"><strong>Stav návaznosti</strong><span>{boundaryMessage}</span></div> : null}
       <p className="roster-history__footnote">Uložení podkladů nemění potvrzený rozpis. Měsíční návrh je při nové kontrole znovu porovná s okolní historií.</p>
     </div>
-  </section>;
+    </section>
+  </div>;
 }

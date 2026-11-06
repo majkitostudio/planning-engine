@@ -13,7 +13,7 @@ const memory = new InMemoryMonthlyStore();
 const missingBoundary = { before: { complete: false, assignments: [] }, after: { complete: false, assignments: [] } } as const;
 const monthlyGeminiUnavailable = {
   configured: false as const,
-  reason: "Externí Gemini pro měsíční vstupy zůstává vypnuté: bezplatná úroveň není pro aplikaci dostupnou v EHP přípustná a placená varianta odporuje rozpočtu projektu. Použijte „cloudflare“ nebo místní „ortools“.",
+  reason: "Externí Gemini pro měsíční vstupy zůstává vypnuté: bezplatná úroveň není pro aplikaci dostupnou v EHP přípustná a placená varianta odporuje rozpočtu projektu. Použijte „cloudflare“.",
 };
 const monthlyCloudflareUnavailable = {
   configured: false as const,
@@ -36,8 +36,8 @@ export function getMonthlyProviderRuntime(env: Readonly<Record<string, string | 
       ? { configured: true, mode: explicit }
       : monthlyCloudflareUnavailable;
   }
-  if (explicit === "ortools" || explicit === "simulated") return { configured: true, mode: explicit };
-  if (explicit) return { configured: false, reason: "PLANNING_MONTHLY_PROVIDER má neznámou hodnotu. Povolené jsou „simulated“, „gemini“, „ortools“ a „cloudflare“." };
+  if (explicit === "simulated") return { configured: true, mode: explicit };
+  if (explicit) return { configured: false, reason: "PLANNING_MONTHLY_PROVIDER má neznámou hodnotu. Povolené jsou „simulated“, „gemini“ a „cloudflare“." };
   const planning = getPlanningRuntime(env);
   if (planning.configured && planning.mode === "gemini") return monthlyGeminiUnavailable;
   return planning.configured ? { configured: true, mode: planning.mode } : { configured: false, reason: planning.reason };

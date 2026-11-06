@@ -10,7 +10,7 @@ import { staffingSettingsPersistenceNotice } from "@/lib/settings-view";
 
 describe("obrazovka plánování", () => {
   it("při současném zobrazení více měsíců propojí popisky s různými poli", () => {
-    const common = { canManage: true, formOwnerId: "synthetic-manager", planningMode: "ortools" as const, initialStaffing: null, staffingProfileStatus: "unavailable" as const, onResult: () => {}, onRemoved: () => {} };
+    const common = { canManage: true, formOwnerId: "synthetic-manager", planningMode: "cloudflare" as const, initialStaffing: null, staffingProfileStatus: "unavailable" as const, onResult: () => {}, onRemoved: () => {} };
     const html = renderToStaticMarkup(createElement("div", null,
       createElement(MonthlyPlanningPanel, { ...common, month: "2026-11" }),
       createElement(MonthlyPlanningPanel, { ...common, month: "2026-12" }),
@@ -21,7 +21,7 @@ describe("obrazovka plánování", () => {
     for (const id of inputIds) expect(html).toContain(`for="${id}"`);
   });
   it("nabízí měsíční plán bez ukázkových filtrů a seznamů", () => {
-    const html = renderToStaticMarkup(createElement(PlanWorkspace, { runtime: { configured: true, mode: "ortools" }, canManage: true, formOwnerId: "synthetic-manager", initialStaffing: null, staffingProfileStatus: "unavailable" }));
+    const html = renderToStaticMarkup(createElement(PlanWorkspace, { runtime: { configured: true, mode: "cloudflare" }, canManage: true, formOwnerId: "synthetic-manager", initialStaffing: null, staffingProfileStatus: "unavailable" }));
     expect(html).toContain("Návrh rozpisu");
     expect(html).toContain("Měsíční rozpis zatím není k dispozici");
     expect(html).not.toContain("Filtry a doplňující ukázkové přehledy");

@@ -33,9 +33,7 @@ describe("měsíční provozní konfigurace", () => {
     });
   });
 
-  it("umožní výslovně zapnout OR-Tools jen pro měsíční plánování", () => {
-    expect(getMonthlyProviderRuntime({ PLANNING_MONTHLY_PROVIDER: "ortools", PLANNING_PROVIDER: "" })).toEqual({ configured: true, mode: "ortools" });
-  });
+
 
   it("odmítne neznámý měsíční režim bez tichého přepnutí", () => {
     expect(getMonthlyProviderRuntime({ PLANNING_MONTHLY_PROVIDER: "other", PLANNING_PROVIDER: "simulated" })).toMatchObject({ configured: false, reason: expect.stringContaining("PLANNING_MONTHLY_PROVIDER") });

@@ -11,5 +11,5 @@ export default async function RosterHistoryPage() {
   const parts = new Intl.DateTimeFormat("en", { timeZone: "Europe/Prague", year: "numeric", month: "2-digit" }).formatToParts(new Date());
   const year = parts.find((part) => part.type === "year")!.value;
   const month = parts.find((part) => part.type === "month")!.value;
-  return <div className="roster-history-page"><RosterHistoryPanel canManage={session?.user?.role === "manager"} initialMonth={`${year}-${month}`} /></div>;
+  return <RosterHistoryPanel canManage={session?.user?.role === "manager"} initialMonth={`${year}-${month}`} />;
 }

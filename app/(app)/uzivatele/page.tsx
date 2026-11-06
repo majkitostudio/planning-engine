@@ -3,6 +3,7 @@ import { requirePlanningActor } from "@/lib/auth/route-access";
 import { getActiveAuthRuntimeConfig } from "@/lib/auth/local";
 import { listAccounts } from "@/lib/auth/account-service";
 import { prisma } from "@/lib/db";
+import { Icon } from "@/components/icons";
 
 export default async function AccountsPage() {
   const runtime = getActiveAuthRuntimeConfig();
@@ -22,6 +23,7 @@ export default async function AccountsPage() {
     <div>
       <header className="page-head">
         <div className="page-head__lead">
+          <span className="page-head__icon" aria-hidden="true"><Icon name="users" width={20} height={20} /></span>
           <div>
             <h1 className="page-head__title">Správa účtů</h1>
             <p className="page-head__sub">Vytvářejte uživatelské účty a spravujte jejich přístup do aplikace.</p>

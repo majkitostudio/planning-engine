@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { EmptyState } from "@/components/ui/empty-state";
 
 interface RequestImpact {
   readonly date: string;
@@ -132,32 +133,32 @@ export function RequestApprovalPanel() {
         <div className="page-head__actions"><span className="badge badge--warning">SIMULATED</span></div>
       </div>
 
-      <div className="card" style={{ marginBottom: 16 }}>
-        <p className="muted" style={{ margin: 0 }}>
+      <div className="card card--pad card--spaced">
+        <p className="muted">
           Jde o syntetické ukázkové požadavky pro týden 5.–11. 10. 2026. Schválení
           ani zamítnutí samo o sobě nemění nebo nepotvrzuje rozpis.
         </p>
       </div>
 
       {message ? <div className="alert alert--danger" role="alert">{message}</div> : null}
-      {isLoading ? <div className="card" aria-live="polite" aria-busy="true"><ul className="skeleton-list">{Array.from({ length: 3 }).map((_, i) => <li key={i} className="skeleton" style={{ height: 64 }} />)}</ul></div> : null}
-      {!isLoading && requests.length === 0 ? <div className="card">Nejsou k dispozici žádné ukázkové požadavky.</div> : null}
+      {isLoading ? <div className="card card--pad" aria-live="polite" aria-busy="true"><ul className="skeleton-list">{Array.from({ length: 3 }).map((_, i) => <li key={i} className="skeleton skeleton--request" />)}</ul></div> : null}
+      {!isLoading && requests.length === 0 && !message ? <section className="card card--pad"><EmptyState icon="checkCircle" title="Žádné čekající požadavky" description="Momentálně není potřeba rozhodnout o žádném ukázkovém požadavku." /></section> : null}
 
-      <div className="stack" style={{ gap: 16 }}>
+      <div className="stack-lg">
         {requests.map((request) => (
-          <article className="card" key={request.id}>
-            <div className="row" style={{ justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
+          <article className="card card--pad" key={request.id}>
+            <div className="row row--between">
               <div>
-                <h2 style={{ margin: 0, fontSize: 18 }}>{request.summary}</h2>
-                <p className="muted" style={{ margin: "6px 0 0" }}>{request.employeeLabel} · {formatDate(request.date)}</p>
+                <h2 className="request-card__title">{request.summary}</h2>
+                <p className="muted request-card__meta">{request.employeeLabel} · {formatDate(request.date)}</p>
               </div>
               <span className={`badge ${request.status === "pending" ? "badge--warning" : request.status === "approved" ? "badge--success" : "badge--danger"}`}>
                 {statusLabel(request.status)}
               </span>
             </div>
 
-            <div style={{ marginTop: 16 }}>
-              <h3 style={{ margin: "0 0 8px", fontSize: 14 }}>Dopad při přijetí požadavku</h3>
+            <div className="request-card__impact">
+              <h3 className="request-card__impact-title">Dopad při přijetí požadavku</h3>
               {request.preview.impacts.length === 0 ? (
                 <p className="muted">V ukázkovém plánu není přiřazení, jehož dopad lze spočítat.</p>
               ) : (
@@ -179,7 +180,7 @@ export function RequestApprovalPanel() {
                 </div>
               )}
               {request.preview.impacts.some((impact) => impact.suggestedCandidates.length > 0) ? (
-                <p className="muted" style={{ marginBottom: 0 }}>
+                <p className="muted request-card__note">
                   Dostupní syntetičtí kandidáti k posouzení: {request.preview.impacts.flatMap((impact) => impact.suggestedCandidates).map((id) => `zaměstnanec ${id}`).join(", ")}.
                   Jde o návrh pro kontrolu managerem; směna se nepřidá automaticky.
                 </p>
@@ -187,7 +188,7 @@ export function RequestApprovalPanel() {
             </div>
 
             {canDecide && request.status === "pending" ? (
-              <div className="row" style={{ marginTop: 16, gap: 8 }}>
+              <div className="row request-card__actions">
                 <button type="button" className="btn btn--primary" disabled={pendingId !== null} onClick={() => void decide(request.id, "approved")}>
                   {pendingId === request.id ? "Ukládám…" : "Schválit požadavek"}
                 </button>
@@ -196,7 +197,7 @@ export function RequestApprovalPanel() {
                 </button>
               </div>
             ) : null}
-            {!canDecide ? <p className="muted" style={{ margin: "12px 0 0" }}>Pouze manager může požadavek schválit nebo zamítnout.</p> : null}
+            {!canDecide ? <p className="muted request-card__note request-card__note--after">Pouze manager může požadavek schválit nebo zamítnout.</p> : null}
           </article>
         ))}
       </div>

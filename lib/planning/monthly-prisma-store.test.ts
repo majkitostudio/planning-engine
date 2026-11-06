@@ -27,10 +27,16 @@ it("vrátí potvrzený měsíc i po novém načtení", async () => {
   expect(await new PrismaMonthlyStore(reader).getConfirmed("2026-11")).toMatchObject({ ok: true, run: { id: "p", confirmed: { by: "m" } } });
 });
 
-it("načte uložený OR-Tools návrh jako vlastní režim", async () => {
+it("načte uložený OR-Tools návrh jako starší režim", async () => {
   findUnique.mockResolvedValue({ ...row, mode: "ortools", providerName: "ortools" });
   const reader = { monthlyPlanningRun: { findUnique } } as unknown as PrismaClient;
   expect(await new PrismaMonthlyStore(reader).get("p")).toMatchObject({ mode: "ortools", providerName: "ortools" });
+});
+
+it("načte uložený Cloudflare návrh; režim nesmí být považován za neznámý", async () => {
+  findUnique.mockResolvedValue({ ...row, mode: "cloudflare", providerName: "cloudflare" });
+  const reader = { monthlyPlanningRun: { findUnique } } as unknown as PrismaClient;
+  expect(await new PrismaMonthlyStore(reader).get("p")).toMatchObject({ mode: "cloudflare", providerName: "cloudflare" });
 });
 
 it("načte starší uložený návrh s prázdným ID alternativy", async () => {

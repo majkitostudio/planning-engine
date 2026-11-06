@@ -11,9 +11,13 @@ import type { MonthlyDraftRecord, MonthlyReadResult, MonthlyRunSummary, StoredMo
 type StoredRow = { id: string; month: string; input: unknown; draft: unknown; mode: string; providerName: string; confirmedAt: Date | null; confirmedById: string | null; deletedAt: Date | null };
 type ConfirmResult = { ok: true; alreadyConfirmed: boolean; run: StoredMonthlyRun } | { ok: false; code: "forbidden" | "not_found" | "confirmation_blocked" | "month_conflict" | "account_changed"; validation?: MonthlyValidation };
 
+function isKnownStoredMode(mode: string): mode is StoredMonthlyRun["mode"] {
+  return mode === "simulated" || mode === "gemini" || mode === "cloudflare" || mode === "ortools";
+}
+
 function fromRow(row: StoredRow): StoredMonthlyRun | null {
   const input = validateMonthlyInput(row.input);
-  if (row.deletedAt || !input.ok || input.value.month !== row.month || !isMonthlyPlanDraft(row.draft, row.month, { allowLegacyEmptyAlternativeId: true }) || (row.mode !== "simulated" && row.mode !== "gemini" && row.mode !== "ortools") || (!!row.confirmedAt !== !!row.confirmedById)) return null;
+  if (row.deletedAt || !input.ok || input.value.month !== row.month || !isMonthlyPlanDraft(row.draft, row.month, { allowLegacyEmptyAlternativeId: true }) || !isKnownStoredMode(row.mode) || (!!row.confirmedAt !== !!row.confirmedById)) return null;
   return { id: row.id, input: input.value, draft: row.draft, mode: row.mode, providerName: row.providerName, confirmed: row.confirmedAt && row.confirmedById ? { by: row.confirmedById, at: row.confirmedAt.toISOString() } : null };
 }
 

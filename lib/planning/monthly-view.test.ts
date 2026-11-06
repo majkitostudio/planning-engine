@@ -10,9 +10,9 @@ describe("výběr zobrazeného měsíce", () => {
   it("použije české označení simulovaného rozpisu", () => {
     expect(monthlyRosterCaption({ confirmed: false, month: "2026-11", mode: "simulated" })).toBe("Nepotvrzený návrh · 2026-11 · simulovaný");
   });
-  it("označí AI návrh a místní plánovač, aby zdroj nebyl zaměnitelný", () => {
+  it("označí AI návrh a starší uložený režim, aby zdroj nebyl zaměnitelný", () => {
     expect(monthlyRosterCaption({ confirmed: false, month: "2026-11", mode: "cloudflare" })).toBe("Nepotvrzený návrh · 2026-11 · AI Cloudflare");
-    expect(monthlyRosterCaption({ confirmed: true, month: "2026-11", mode: "ortools" })).toBe("Potvrzený rozpis · 2026-11 · místní plánovač");
+    expect(monthlyRosterCaption({ confirmed: true, month: "2026-11", mode: "ortools" })).toBe("Potvrzený rozpis · 2026-11 · starší místní plánovač");
   });
   it("rozliší nevyhodnocené pokyny od tvrzení AI", () => {
     expect(monthlyInstructionMessage("ortools", "ignored")).toMatch(/nevyhodnotil/i);
