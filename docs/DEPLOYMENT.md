@@ -51,7 +51,21 @@ databáze.
    návrhu na smyšlených datech.
 6. Teprve po úspěšném preview nasaď produkční adresu.
 
-## 4. Co ověřit po nasazení
+## 4. Ověření AI plánovače
+
+Reálné volání se ověřuje odděleně, aby se kvóta nespotřebovávala při běžných
+testech:
+
+```bash
+RUN_CLOUDFLARE_INTEGRATION=1 npx vitest run lib/ai/cloudflare-planning-provider.integration.test.ts
+```
+
+Test používá smyšlený listopad 2026 a osm syntetických zaměstnanců. Ověří, že
+Cloudflare vrátí strukturovaný návrh, přiřazení patří do měsíce a nezávislá
+validace návrh nezfalšuje. Samotný úspěch testu neznamená, že je kvalita
+plánování dostatečná pro provoz; tu je potřeba posoudit na více měsících.
+
+## 5. Co ověřit po nasazení
 
 - Manager i viewer se přihlásí a vidí správné role.
 - Návrh se uloží, zobrazí nálezy a po obnovení stránky zůstane.

@@ -88,7 +88,7 @@ Tato rozhodnutí uživatele mění dřívější předpoklady. Platí pro dalš�
 - [x] Solver timeout 120 s konfigurovatelný (env `PLANNING_SOLVER_TIMEOUT_MS`).
 - [x] Výkonnostní test (20/30 zaměstnanců, historický výsledek v `LEADERSHIP_DEMO_TODO.md`/`ROADMAP.md`; neprokazuje aktuální provozní kapacitu).
 - [x] Ověřit, že `npm run build` projde bez varování — finální build po změnách prošel.
-- [ ] Ověřit, že CI (GitHub Actions) projde na aktuálním pracovním stromu — lokálně prošly lint, typecheck, 584 Vitest testů (14 přeskočeno), Prisma validace, build, 28 Python testů solveru a 13 solver integračních testů; GitHub CI a jeho izolovaný PostgreSQL job nemají nový běh pro necommitnuté změny.
+- [ ] Ověřit, že CI (GitHub Actions) projde na aktuálním pracovním stromu — lokálně prošly lint, typecheck, 586 Vitest testů (15 přeskočeno), Prisma validace, build, 28 Python testů solveru a 13 solver integračních testů; GitHub CI a jeho izolovaný PostgreSQL job nemají nový běh pro necommitnuté změny.
 - [x] Zkontrolovat `.env.example` — doplněny Cloudflare proměnné, `DATABASE_URL_UNPOOLED` a poznámka k Vercelu; database auth mode zůstává. `GEMINI_TIMEOUT_MS` je napojen na provider i translator a pokryt testy.
 - [x] Milník 4 (produkční připravenost): přihlášení přes Outlook/Entra není pro MVP potřeba (rozhodnutí 5. 11. 2026). Produkční DB zůstává `NOT VERIFIED`.
 
@@ -111,7 +111,7 @@ Tato rozhodnutí uživatele mění dřívější předpoklady. Platí pro dalš�
 - [ ] Pravidla a limity plánování — pilotní body jsou zapsané a rozpor úvazků je vyřešený: pilot pouze plné úvazky. Výkon zůstává `PARTIAL`; historický test není důkazem provozní kapacity.
 - [x] Správa rozpisů (seznam, odstranění, audit, návaznost).
 - [x] AI a citlivý text — rozhodnuto (`VERIFIED`, 6. 11. 2026): Cloudflare Workers AI, skutečná jména i volný text povoleny, nulové uchovávání a žádné trénování. Zbývá ověřit reálné volání a spotřebu kvóty.
-- [ ] Ověřit reálné volání Cloudflare Workers AI na smyšleném měsíci — `BLOCKED`: chybí `CLOUDFLARE_ACCOUNT_ID` a `CLOUDFLARE_API_TOKEN` v prostředí; klíče nepatří do chatu ani repozitáře.
+- [ ] Ověřit reálné volání Cloudflare Workers AI na smyšleném měsíci — `BLOCKED`: chybí `CLOUDFLARE_ACCOUNT_ID` a `CLOUDFLARE_API_TOKEN` v prostředí; klíče nepatří do chatu ani repozitáře. Připravený opt-in test: `npx vitest run lib/ai/cloudflare-planning-provider.integration.test.ts` s `RUN_CLOUDFLARE_INTEGRATION=1`.
 - [ ] Kvalita a přístupnost — klávesnice/popisky/fokus mají doložené testy; skutečná čtečka obrazovky nebyla ověřena. `npm audit --omit=dev`: 0 zranitelností; plný `npm audit`: 8 středně závažných nálezů ve vývojové závislosti `minimatch`; automatická oprava by znamenala breaking downgrade `eslint-config-next` na v15, kompatibilní oprava není ověřená.
 
 ### P2 — Závěrečné ověření MVP
