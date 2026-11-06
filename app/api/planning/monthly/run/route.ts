@@ -8,7 +8,7 @@ import { validateMonthlyInput } from "@/lib/planning/domain/month-input";
 import { executeMonthlyPlanning } from "@/lib/planning/monthly-planning";
 import { MonthlyOrtoolsProvider } from "@/lib/planning/monthly-ortools-provider";
 import { getMonthlyRuntime } from "@/lib/planning/monthly-runtime";
-import { SimulatedMonthlyProvider, type MonthlyScenario } from "@/lib/planning/simulated/monthly-provider";
+import { SimulatedMonthlyProvider } from "@/lib/planning/simulated/monthly-provider";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -32,14 +32,16 @@ export async function POST(request: Request) {
   if (!current.configured) return NextResponse.json({ ok: false, message: current.reason }, { status: 503 });
   if (input.value.planningRange && current.mode !== "ortools") return NextResponse.json({ ok: false, message: "Doplánování části měsíce vyžaduje lokální plánovač." }, { status: 422 });
   const scenario = record.scenario;
+  const providerOverride = record.providerOverride === "simulated" ? "simulated" : null;
   if (current.mode === "simulated" && scenario !== "complete" && scenario !== "partial" && scenario !== "unverified") return NextResponse.json({ ok: false, message: "Zvolte platný simulovaný scénář." }, { status: 400 });
   try {
     const employeeIds = input.value.employees.map((employee) => employee.id);
     const boundary = await current.loadBoundary(input.value.month, employeeIds);
     const planningInput = input.value.planningRange ? { ...input.value, rosterHistory: await current.loadRosterSnapshot(input.value.month, employeeIds) } : input.value;
-    const provider = current.mode === "simulated" ? new SimulatedMonthlyProvider(scenario as MonthlyScenario)
-      : current.mode === "gemini" ? new GeminiPlanningProvider()
-        : current.mode === "cloudflare" ? new CloudflarePlanningProvider()
+    const effectiveMode = providerOverride === "simulated" ? "simulated" : current.mode;
+    const provider = effectiveMode === "simulated" ? new SimulatedMonthlyProvider("complete")
+      : effectiveMode === "gemini" ? new GeminiPlanningProvider()
+        : effectiveMode === "cloudflare" ? new CloudflarePlanningProvider()
           : new MonthlyOrtoolsProvider();
     const result = await executeMonthlyPlanning(planningInput, boundary, provider);
     if (!result.ok) {
@@ -49,8 +51,8 @@ export async function POST(request: Request) {
       return NextResponse.json(result, { status });
     }
     const id = randomUUID();
-    await current.create({ id, input: planningInput, draft: result.draft, providerName: provider.name, mode: current.mode });
-    return NextResponse.json({ ok: true, id, mode: current.mode, input: planningInput, draft: result.draft, validation: result.validation });
+    await current.create({ id, input: planningInput, draft: result.draft, providerName: provider.name, mode: effectiveMode });
+    return NextResponse.json({ ok: true, id, mode: effectiveMode, input: planningInput, draft: result.draft, validation: result.validation });
   } catch {
     return NextResponse.json({ ok: false, message: "Návrh nebo jeho podklady se nepodařilo uložit či načíst." }, { status: 503 });
   }

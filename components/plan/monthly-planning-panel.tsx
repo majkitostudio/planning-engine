@@ -49,6 +49,7 @@ export function MonthlyPlanningPanel({ month, canManage, formOwnerId, planningMo
   const [step, setStep] = useState(0);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
+  const [quotaExhausted, setQuotaExhausted] = useState(false);
   const [unavailableDraftId, setUnavailableDraftId] = useState<string | null>(null);
   const [view, setView] = useState<MonthlyView | null>(null);
   const [confirmed, setConfirmed] = useState(false);
@@ -254,17 +255,23 @@ export function MonthlyPlanningPanel({ month, canManage, formOwnerId, planningMo
     else setPartialAbsences((current) => [...current, { id: crypto.randomUUID(), employeeId, from: date, to: endDate, shiftKind: absenceShift }]);
     setError("");
   }
-  async function submit(event: FormEvent) {
-    event.preventDefault();
+  async function submit(event?: FormEvent, useDemo = false) {
+    if (event) event.preventDefault();
     setError("");
+    setQuotaExhausted(false);
     if (readiness.missing.length) { changeStep(4); setError("Doplňte povinné vstupy uvedené v souhrnu před vytvořením návrhu."); return; }
     const prepared = buildMonthlyFormInput(formData);
     if (!prepared.ok) { changeStep(4); setError(prepared.message); return; }
     revision.current++; setBusy(true); setView(null); setConfirmed(false); setRestored(false); onResult(month, null);
     try {
-      const response = await fetch("/api/planning/monthly/run", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ input: prepared.value, ...(planningMode === "simulated" ? { scenario: "complete" } : {}) }) });
+      const response = await fetch("/api/planning/monthly/run", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ input: prepared.value, ...(planningMode === "simulated" || useDemo ? { scenario: "complete", providerOverride: useDemo ? "simulated" : undefined } : {}) }) });
       const result = await response.json();
-      if (!response.ok || !result.ok) { setError(result.message ?? "Návrh se nepodařilo vytvořit. Vyplněné hodnoty zůstaly zachované."); return; }
+      if (!response.ok || !result.ok) {
+        const message = result.message ?? "Návrh se nepodařilo vytvořit. Vyplněné hodnoty zůstaly zachované.";
+        setError(message);
+        if (message.includes("Denní limit využití AI")) setQuotaExhausted(true);
+        return;
+      }
       rememberDraft(result.id); setView(result); onResult(month, result);
     } catch { setError("Spojení se serverem selhalo. Vyplněné hodnoty zůstaly zachované."); } finally { setBusy(false); }
   }
@@ -378,6 +385,7 @@ export function MonthlyPlanningPanel({ month, canManage, formOwnerId, planningMo
       </fieldset>
       <div className="monthly-step-controls"><button className="btn btn--secondary" type="button" disabled={step === 0 || busy || formLoading} onClick={() => changeStep(step - 1)}>Zpět</button>{step < STEPS.length - 1 ? <button className="btn btn--primary" type="button" disabled={busy || formLoading} onClick={() => changeStep(step + 1)}>Pokračovat: {STEPS[step + 1]}</button> : null}</div>
     </form>
+    {quotaExhausted ? <div className="monthly-error" role="alert"><p>Denní limit využití AI pro plánování směn vypršel. Můžete zkusit znovu v demo režimu (simulovaný návrh, ne AI).</p><button className="btn btn--secondary" type="button" disabled={busy} onClick={() => void submit(undefined, true)}>Přepnout na demo režim</button></div> : null}
     {error ? <div className="monthly-error" role="alert"><p>{error}</p>{unavailableDraftId ? <button className="btn btn--secondary" type="button" onClick={removeUnavailableDraftReference}>Odebrat odkaz na návrh</button> : null}</div> : null}
     {view && view.input.month === month ? <div aria-live="polite"><h3>Výsledek návrhu</h3>{restored ? <p role="status">Obnovený uložený návrh. Vstupy v návrhu se mohou lišit od rozepsaného formuláře.</p> : null}<p>{view.mode === "simulated" ? "Simulovaný návrh. " : view.mode === "ortools" ? "Návrh připravil lokální plánovač. " : "Návrh připravila AI. "}{confirmed ? "Rozpis je potvrzený." : "Návrh čeká na rozhodnutí."} {monthlyValidationMessage(view.validation.status)}</p><p>{monthlyInstructionMessage(view.mode, view.draft.instructionsOutcome)}</p>{view.input.shiftRotationPreference ? <p>Střídání směn bylo zadáno jako nezávazné přání. Výjimky a chybějící okrajové podklady jsou uvedeny v kontrole preference.</p> : null}<p>Navržených směn: {view.draft.assignments.length}.</p>
       {view.input.planningRange ? <p>Doplňovaný úsek: {view.input.planningRange.startDate} až {view.input.planningRange.endDate}. V tabulce značí P převzatou směnu.</p> : null}
