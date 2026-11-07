@@ -1,5 +1,10 @@
 # Minimální datový kontrakt plánovacího jádra
 
+> **Rozsah:** především starší týdenní kontrakt a syntetické operativní náhrady.
+> Požadavky na tři varianty či detaily staršího solveru z něj nepřenášej do
+> měsíčního pilotu. Aktuální praktický měsíční cíl a stav uvádí
+> `DOMAIN_DECISIONS.md` a `ROADMAPA_DALSIHO_POSTUPU.md`.
+
 > Tento dokument zachycuje původní týdenní kontrakt a související AI provider.
 > Měsíční MVP má samostatný tok: Cloudflare Workers AI navrhuje, deterministická
 > validace ověřuje a manažer potvrzuje. Lokální OR-Tools zůstává pro offline běh.

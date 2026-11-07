@@ -4,6 +4,12 @@ Technický repozitář: `planning-engine`
 
 ## Účel projektu
 
+Manažer zadává osoby, požadované obsazení, volna a dostupnost, aby dostal
+prakticky použitelný návrh měsíčního rozpisu. Pokud návrh nelze sestavit,
+aplikace má srozumitelně uvést známé nedostatky a nejistotu; matematicky
+optimální řešení se nepožaduje. Výklad libovolného textu a přesný počet dalších
+potřebných lidí nejsou zatím ověřenými funkcemi.
+
 Plánovací Engine je **nekomerční ukázkový projekt pro jednoho manažera**
 (`VERIFIED`, 6. 11. 2026). Jde o záměr **chytrého plánovače směn** pro
 zaměstnance call centra, určeného pro managera telemarketingového oddělení

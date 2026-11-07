@@ -91,7 +91,8 @@ Tato rozhodnutí jsou pro další práci závazná:
 - **Návrh, ověřený návrh a potvrzené změny jsou tři různé stavy.** Samotné
   vygenerování návrhu nic nemění v uloženém rozpisu.
 - **Neověřené nebo chybějící informace se nesmí prezentovat jako jistota.**
-  Výsledek musí přiznat omezení a nabídnout nejlepší dostupné alternativy.
+  Výsledek musí přiznat omezení a nabídnout podložené praktické alternativy,
+  pokud jsou k dispozici; neslibuj matematické optimum.
 - **Pilotní verze (`VERIFIED`, rozhodnutí uživatele):** jeden návrh rozpisu pro
   celý zvolený kalendářní měsíc a zaměstnanci na plný úvazek. Částečné úvazky
   a integrace zůstávají mimo pilot. Týdenní pravidla se uplatňují i při
@@ -106,6 +107,15 @@ Tato rozhodnutí jsou pro další práci závazná:
   nelze potvrdit.
 - **Rozsah zůstává praktický.** Nevytvářej univerzální plánovací framework ani
   integraci s Countdown CRM; to je pouze budoucí architektonický směr.
+- **Cíl manažera (`VERIFIED`, upřesnění uživatele 7. 11. 2026):** zadat lidi,
+  potřebné ranní/odpolední obsazení, volna a časově omezenou dostupnost a získat
+  použitelný návrh celého měsíce. AI má pokyny zohlednit a při nejasném zadání
+  nabídnout upřesnění; volný text však sám není deterministicky ověřeným tvrdým
+  pravidlem. Nevyžaduje se matematické optimum ani univerzální optimalizátor.
+  Když návrh nelze sestavit, popiš známé nedostatky; samotné nenalezení řešení
+  nedokazuje neproveditelnost. Přesný počet dalších potřebných lidí uváděj jen
+  s ověřeným podkladem, jinak přiznej nejistotu. Nejde o tvrzení, že zpracování
+  libovolného přirozeného jazyka nebo výpočet minimálního počtu je implementován.
 
 ### Potvrzené časy směn (`VERIFIED`)
 

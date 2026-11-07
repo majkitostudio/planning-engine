@@ -77,11 +77,15 @@ Syntetický operativní tok navazuje na potvrzený plán:
 ```text
 ConfirmedPlan
   → výpadek jedné celé směny
-  → tři AI varianty
+  → až tři simulované varianty náhrady (AI kvalita není ověřena)
   → výběr managerem
   → validace vybrané varianty
   → nové potvrzení
 ```
+
+Tento historický operativní tok není požadavkem na tři varianty ani matematicky
+optimální řešení měsíčního návrhu. Aktuální měsíční cíl je praktický rozpis
+ze zadaných podkladů s nezávislou validací; viz `docs/DOMAIN_DECISIONS.md`.
 
 Poslední krok je záměrně **mimo jádro**: `runPlanning()` nic neukládá a
 nenastavuje `confirmed: true`. `ready_for_review` znamená „validace nic

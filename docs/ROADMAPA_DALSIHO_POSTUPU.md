@@ -11,9 +11,15 @@
 
 ## Teď — ověření skutečného plánovače
 
+**Praktický cíl:** manažer zadá zaměstnance, potřebná obsazení, volna a
+časová omezení směn a získá použitelný měsíční návrh nebo srozumitelný popis
+známých nedostatků. Nejde o důkaz matematického optima. Zpracování libovolného
+textu ani přesný počet dalších potřebných lidí nejsou zatím ověřenou funkcí.
+
 1. **Připravit syntetické scénáře a očekávání.** Začít jedním proveditelným měsícem, absencí a úplnými hranicemi; předem zaznamenat vstupy bez osobních údajů. Zkontrolovat automatické testy validace a formuláře.
 2. **Provést omezený AI běh.** Zaznamenat poskytovatele, čas, pokrytí, validační stav, nálezy a případně měřitelnou spotřebu. První úspěch neopravňuje tvrdit, že všechny případy fungují. Při vyčerpané kvótě nepřepínat skrytě na simulaci.
 3. **Navázat dalšími scénáři podle dostupné kvóty:** absence, neúplná návaznost a nemožné obsazení. Přehled scénářů a postup je v `PLAN_OVERENI_AI.md`.
+4. **Ověřit manažerské zadání:** více období volna jedné osoby, dočasně pouze ranní směny jiné osoby a srozumitelné upozornění na nejasné datum. Strukturované omezení musí být zachováno pro nezávislou kontrolu; volný text sám není automaticky tvrdé pravidlo. Přirozenojazyčný převod a dotazování na nejasnosti označit jako dosud neověřené, dokud je neověří test.
 
 **Kritérium uzavření:** existují reprodukovatelné vstupy a zaznamenané výsledky scénářů; vady jsou popsány včetně způsobu reprodukce, nepokryté oblasti zůstávají označené.
 

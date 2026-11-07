@@ -25,9 +25,24 @@ obsazených pozic, 30 dnů, stav `valid` a čtyři nezávazné nálezy chybějí
 fondu. Jednotlivá přiřazení byla zobrazena uživateli; neuložila se do databáze.
 Počáteční hlášená spotřeba byla 2,18k neuronů, koncová zatím není známá.
 
+### Ověření kompaktního zadání
+
+Při samostatném lokálním testu se skutečnou AI nad upraveným kompaktním
+formátem bylo pokryto 60/60 pozic, ale validace vrátila `invalid`: tři nálezy
+nedostupnosti a jeden zásah do schválené absence (nálezy se mohou týkat stejného
+přiřazení). Chyběly čtyři nezávazně zadávané fondy. Běh trval 86,7 s, nic
+neuložil a rozpis nepotvrdil. Výsledek sám neprokazuje, že příčinou chyb je
+změna formátu; AI není deterministická. Úprava promptu není ověřena pro
+nasazení; spotřeba neuronů dosud není změřena.
+
 ## Cíl a hranice
 
 Ověřit opakovatelnost návrhu a úplnost nezávislé kontroly bez záměny simulátoru za AI. Přednostně použít syntetická data a existující automatické testy. Reálné volání AI a zápis do sdílené databáze provádět pouze s odpovídajícím souhlasem; potvrzení rozpisu je samostatné rozhodnutí. Nezaznamenávat jména, volný text ani tajné údaje do výsledkového protokolu.
+
+Testujeme praktickou použitelnost, nikoli matematickou optimalitu. Je-li
+požadavek napsán pouze volným textem, nelze tvrdit, že ho deterministická
+validace ověřila jako tvrdé pravidlo. Přesný počet chybějících lidí se uvádí
+pouze při doloženém výsledku; jinak se popíší zjištěné mezery a nejistota.
 
 ## Scénáře
 
@@ -41,6 +56,7 @@ Referenční návrh offline prochází validací. Samostatný živý test
 | --- | --- | --- |
 | P0 | Opakování známého úspěšného scénáře s dostatečným obsazením a známými návaznostmi | Režim AI, úplnost pokrytí, stav a nálezy validace, délku běhu, spotřebu kvóty pokud dostupná. Nepředpokládat shodný výsledek. |
 | P0 | Týdenní absence jednoho zaměstnance | Žádné přiřazení v době schválené absence; stav celkového pokrytí a validace. |
+| P0 | Dvě oddělená období volna a dočasně jen ranní směna jiné osoby | Syntetické údaje převést na strukturované absence/nedostupnost a ověřit jejich dodržení; interpretace libovolného textu je samostatně `NOT VERIFIED`. |
 | P0 | Chybějící návaznost před nebo po měsíci | Dotčená kontrola je neověřená; návrh nelze potvrdit, pokud chybějící podklady brání ověření. |
 | P1 | Nedostatečná dostupnost nebo příliš vysoký požadavek na obsazení | Nedostatek je přiznán a podobsazený návrh nelze potvrdit; AI nesmí být hodnocena jen podle počtu přiřazení. |
 | P1 | Směny přes hranici týdne a měsíce | Nezávislá kontrola 35 hodin po šesti dnech a dvou dnů volna při víkendové práci, v rozsahu dostupných podkladů. |

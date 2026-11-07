@@ -41,6 +41,22 @@ Tato rozhodnutí mění dřívější předpoklady a platí pro další práci:
 - **Smyšlená demo data** mohou být vložena do jediné databáze, musí být označená
   a po ověření je lze odstranit.
 
+## Praktický cíl plánování (`VERIFIED`, upřesnění uživatele 7. 11. 2026)
+
+Manažer potřebuje zadat zaměstnance, potřebné obsazení ranních a odpoledních
+směn, volna a časově omezenou dostupnost; AI má připravit použitelný měsíční
+rozpis, nebo srozumitelně popsat zjištěné nedostatky. Například jeden člověk
+může mít dvě oddělená období volna a jiný může být po určitou dobu dostupný jen
+na ranní směny. Při nejasnosti se má aplikace zeptat, nikoli datum odhadnout.
+
+Matematický důkaz nejlepšího rozpisu ani univerzální optimalizační rámec nejsou
+požadavkem. Nenalezený návrh sám neprokazuje, že řešení neexistuje; přesný
+počet dalších potřebných zaměstnanců lze tvrdit jen při doloženém výsledku,
+jinak je nutné přiznat nejistotu. Nezávislá validace a rozhodnutí manažera
+zůstávají zachovány. Plná interpretace libovolného textu, navazující otázky a
+prokazatelný výpočet počtu dalších lidí jsou záměr, nikoli ověřená funkčnost;
+volné pokyny samy nejsou deterministicky ověřovaným tvrdým pravidlem.
+
 ## Rozepsané měsíční zadání (`VERIFIED`, 5. 11. 2026)
 
 Manažer zvolil automatické ukládání rozepsaného zadání na zařízení, aby je
