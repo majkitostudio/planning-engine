@@ -5,11 +5,14 @@ Technický repozitář: `planning-engine`
 Rozcestník dokumentace. Každý dokument má jednu hlavní odpovědnost a podrobnosti
 jiných dokumentů neopakuje.
 
-Dokumentace obsahuje pouze aktuální doménové, technické a stavové podklady.
+Dokumentace obsahuje aktuální podklady i historické pracovní záznamy.
 Schválená doménová rozhodnutí platí podle jejich aktuálního znění v
 `DOMAIN_DECISIONS.md` a `DOMAIN_SPECIFICATION.md`; aktuální implementaci a
-ověření uvádí `ROADMAP.md`. Historické implementační plány a dočasné
-podklady byly odstraněny.
+ověření a historické výsledky uvádí `ROADMAP.md`.
+
+Dokumentace však stále obsahuje historické záznamy a dosud nebyla plně
+konsolidována; jejich zařazení a omezení uvádí [inventura](INVENTURA_DOKUMENTACE.md).
+Aktuální navržené priority jsou v [roadmapě dalšího postupu](ROADMAPA_DALSIHO_POSTUPU.md).
 
 ## Kde co hledat
 
@@ -18,6 +21,12 @@ podklady byly odstraněny.
 | [`../README.md`](../README.md) | Co projekt je, jaký je stav a jak ho spustit | `IMPLEMENTED` |
 | [`../AGENTS.md`](../AGENTS.md) | Pravidla práce coding agenta a meze autonomie | `IMPLEMENTED` |
 | [`ROADMAP.md`](ROADMAP.md) | Co je hotové, co chybí a co dělat dál | `IMPLEMENTED` (pracovní plán) |
+| [`ROADMAPA_DALSIHO_POSTUPU.md`](ROADMAPA_DALSIHO_POSTUPU.md) | Návrh priorit a kritéria dokončení dalších etap | `PROPOSAL` |
+| [`INVENTURA_DOKUMENTACE.md`](INVENTURA_DOKUMENTACE.md) | Rozdělení dokumentů a upozornění na historické části | `IMPLEMENTED` |
+| [`PLAN_OVERENI_AI.md`](PLAN_OVERENI_AI.md) | Scénáře a bezpečný postup ověření AI plánování | `PLANNED` |
+| [`projektova-karta.pdf`](projektova-karta.pdf) | Stručný vizuální stav projektu pro manažery | stav k 7. 11. 2026 |
+| [`projektova-karta.html`](projektova-karta.html) | Upravitelné zdrojové znění vizuální karty | stav k 7. 11. 2026 |
+| [`PROJEKTOVA_KARTA.md`](PROJEKTOVA_KARTA.md) | Podrobný textový podklad k projektové kartě | stav k 7. 11. 2026 |
 | [`PRE_PUBLISH_CHECKLIST.md`](PRE_PUBLISH_CHECKLIST.md) | Co zbývá před online vydáním a proč | `IMPLEMENTED` (checklist) |
 | [`DEPLOYMENT.md`](DEPLOYMENT.md) | Postup nasazení na Vercel Hobby a stávající Neon | `PLANNED` (neprovedeno) |
 | [`PLANNING_CONTRACT.md`](PLANNING_CONTRACT.md) | Původní týdenní AI kontrakt a odkazy na měsíční tok | `PROPOSAL` (kontrakt) / `IMPLEMENTED` (kód) |
@@ -38,11 +47,11 @@ podklady byly odstraněny.
 | Doménový kontrakt | `IMPLEMENTED` | `lib/planning/domain/`; kontrakt je `PROPOSAL` k ověření |
 | Deterministická validace | `IMPLEMENTED` | `validatePlan()`; testy procházejí |
 | AI kontrakt | `IMPLEMENTED` | `lib/planning/ai-provider.ts` |
-| Cloudflare Workers AI adaptér | `IMPLEMENTED` / `NOT VERIFIED` | `lib/ai/cloudflare-planning-provider.ts`; reálné volání VERIFIED (6. 11. 2026, 101 přiřazení, 93 s), kvalita PARTIAL |
+| Cloudflare Workers AI adaptér | `IMPLEMENTED` / `VERIFIED` (omezené testy) | Reálné volání ověřeno; podle uživatele pozdější test vytvořil platný rozpis. Spolehlivost na dalších vstupech zůstává `NOT VERIFIED`. |
 | Gemini adaptér | `IMPLEMENTED` / `VERIFIED` (volání) | `lib/ai/gemini-planning-provider.ts`; starší varianta, produkční kvalita `NOT VERIFIED` |
 | Orchestrace | `IMPLEMENTED` | `runPlanning()` spojuje návrh, validaci a změny |
 | Starší týdenní API | `IMPLEMENTED` / `DEMO` | `POST /api/planning/run`; samostatné týdenní UI bylo odstraněno |
-| Měsíční pilot | `IMPLEMENTED` / `PARTIAL` | Cloudflare Workers AI navrhuje celý měsíc, nezávislá validace kontroluje návrh a manager potvrzuje; kvalita pokrytí není úplná. Pilot je pouze pro plné úvazky. |
+| Měsíční pilot | `IMPLEMENTED` / `PARTIAL` | Cloudflare Workers AI navrhuje celý měsíc, nezávislá validace kontroluje návrh a manažer potvrzuje. Další testy kvality čekají; pilot je pouze pro plné úvazky. |
 | Zaměstnanci pro plánování | `IMPLEMENTED` | Manažer spravuje trvalý seznam a může načíst aktivní zaměstnance do měsíčního návrhu. Odebrání zachová historii a zaměstnance lze znovu zařadit se stejnou identitou. |
 | Přihlášení a role | `IMPLEMENTED` / `VERIFIED` (lokální syntetický smoke) | Auth.js podporuje vývojový local režim a databázové účty v PostgreSQL; vytvoření účtu, změna hesla a zneplatnění deaktivované session prošly lokálním browser průchodem. Produkční úroveň a Entra ID zůstávají `NOT VERIFIED`/`PLANNED`. |
 | Správa přihlašovacích účtů | `IMPLEMENTED` / `VERIFIED` (izolovaná lokální PostgreSQL) | `/uzivatele`, manager-only API a jednorázový `db:bootstrap-manager`; migrace, bootstrap, create, role, reset, povinná změna hesla, viewer denial i souběžná ochrana posledního managera byly ověřeny synteticky. Produkce `NOT VERIFIED`. |

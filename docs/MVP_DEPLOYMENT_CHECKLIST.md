@@ -1,8 +1,13 @@
 # MVP Deployment — konsolidovaný seznam řízení
 
+> **Historický pracovní snapshot ze 6. 11. 2026, nikoli aktuální stav služeb.**
+> Staré údaje o nasazení, otevřených rozhodnutích a testovacích datech dále
+> neplatí automaticky. Aktuální priority jsou v `ROADMAP.md`, scénáře ověření
+> v `PLAN_OVERENI_AI.md` a provozní postup v `DEPLOYMENT.md`.
+
 > Vytvořeno 6. 11. 2026 jako pracovní seznam pro řízení dokončení MVP a nasazení.
 > Autoritativní zdroje: `docs/ROADMAP.md`, `docs/PRE_PUBLISH_CHECKLIST.md`,
-> `docs/DEPLOYMENT.md`, `docs/LEADERSHIP_DEMO_TODO.md`, `AGENTS.md`.
+> `docs/DEPLOYMENT.md`, `AGENTS.md`.
 > Stavové popisky (`VERIFIED`, `IMPLEMENTED`, `PLANNED`, `NOT VERIFIED`,
 > `OPEN QUESTION`) zachovávají význam z `docs/README.md`.
 
@@ -48,8 +53,8 @@
   volný text povoleny, nulové uchovávání, žádné trénování.
 - [x] Reálné volání Cloudflare Workers AI ověřeno (smyslený listopad 2026, 8 zaměstnanců).
 - [x] Podpora polovičních úvazků (`IMPLEMENTED`, mimo pilot).
-- [x] Fond práce zaměstnance (volitelný vstup; AI jej může zohlednit, validace
-  jeho splnění samostatně neověřuje).
+- [x] Fond práce zaměstnance (volitelný vstup; AI jej může zohlednit,
+  validace naplnění zobrazuje jako samostatný nezávazný nález).
 - [x] Lokální OR-Tools a jeho Python solver odstraněny; AI-only online tok.
 - [~] UI/UX sjednocení: sdílené tokeny, Zaměstnanci a Návaznost směn upraveny;
   další stránky a finální mobilní vizuální kontrola zbývají.
@@ -80,7 +85,7 @@
 - [~] Absence přes hranici měsíce: `IMPLEMENTED` implicitně (boundary se bere z
   potvrzených rozpisů; absence jen in-month dostupnost). Chybějící podklady →
   unverified.
-- [ ] Uzavřít doménové rozhodnutí o neúplném plánu jako platném (`OPEN QUESTION`).
+- [x] Neúplný návrh lze zobrazit, ale nelze potvrdit (`VERIFIED`, OQ23).
 - [ ] Ověřit výkon na schválených syntetických scénářích; technický limit 200
   zaměstnanců nepovažovat za doloženou provozní kapacitu.
 - [ ] Určit dobu uchování a mazání volného textu v databázi (`OPEN QUESTION`).
@@ -154,8 +159,7 @@ Zdroj: `docs/DEPLOYMENT.md`, `docs/PRE_PUBLISH_CHECKLIST.md` §0 a §2.
 - [ ] Vytvořit manažerský účet jednorázově přes `npm run db:bootstrap-manager`
   (heslo nevkládat do chatu/dokumentace).
 - [ ] Vytvořit viewer účet v aplikaci na stránce Správa účtů.
-  - `BLOCKED` v `LEADERSHIP_DEMO_TODO.md` Fáze 3: vyžaduje potvrzení zápisu
-    do jediné stávající Neon DB.
+   - Vyžaduje potvrzení zápisu do jediné stávající Neon DB.
 
 ### C3. Vercel (stav)
 - [x] Repozitář importován jako Next.js projekt, propojen (`.vercel/project.json`).

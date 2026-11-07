@@ -1,7 +1,8 @@
 # Nasazení — Vercel Hobby + stávající Neon
 
-> **Stav:** `PLANNED`. Tento postup není provedený ani ověřený. Nenasazuj ho
-> bez výslovného potvrzení a bez zálohy databáze.
+> **Stav:** pracovní postup; historické záznamy uvádějí provedené nasazení a
+> migrace, aktuální stav prostředí ani celý tento postup nyní nebyly ověřeny.
+> Nové nasazení ani migrace neprováděj bez výslovného potvrzení a bez zálohy.
 
 ## Předpoklady
 

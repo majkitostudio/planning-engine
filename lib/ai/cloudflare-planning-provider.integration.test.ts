@@ -6,6 +6,7 @@ import { isWeekendDate } from "../planning/domain/time";
 import type { MonthlyPlanningInput } from "../planning/domain/month-input";
 import type { MonthlyBoundaryData } from "../planning/domain/month-validation";
 import { validateMonthlyDraft } from "../planning/monthly-planning";
+import { summarizeIntegrationRun } from "./integration-report";
 
 const SHOULD_RUN =
   Boolean(process.env.CLOUDFLARE_ACCOUNT_ID) &&
@@ -82,9 +83,7 @@ describe.skipIf(!SHOULD_RUN)("Cloudflare Workers AI integration", () => {
 
       const validation = validateMonthlyDraft(input, draft, BOUNDARY, provider.name);
       // Čísla slouží k posouzení kvality a spotřeby; nejsou náhradou validace.
-      console.info(
-        `[cloudflare-integration] assignments=${draft.assignments.length} status=${validation.status} problems=${validation.problems.length} unverified=${validation.unverified.length} durationMs=${durationMs}`,
-      );
+      console.info("[cloudflare-integration]", JSON.stringify(summarizeIntegrationRun(input, draft, validation, durationMs)));
       expect(["valid", "invalid", "not_verified"]).toContain(validation.status);
       expect(validation.canConfirm).toBe(validation.status === "valid");
     },

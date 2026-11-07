@@ -1,5 +1,25 @@
 # Aktuální stav a další kroky — Plánovací Engine
 
+> **Nové priority:** viz [Roadmapa dalšího postupu](ROADMAPA_DALSIHO_POSTUPU.md).
+> Tento rozsáhlý soubor obsahuje také historické výsledky a vyžaduje další konsolidaci.
+
+## Aktuální shrnutí po ukázce (7. 11. 2026)
+
+- `VERIFIED` — Podle uživatele AI mimo demo režim při dosavadních testech vytvořila platný rozpis podle zadaných podmínek a kontrolovaných pravidel. Konkrétní výsledky těchto běhů zde nejsou zdokumentovány; širší spolehlivost zůstává `NOT VERIFIED`.
+- `VERIFIED` — Při testování byl vyčerpán denní limit Cloudflare Workers AI. Spotřeba jednotlivých návrhů a vhodný postup dalšího testování vyžadují ověření.
+- `VERIFIED` — V místní aplikaci se stávající databází byl opakovaně načten říjnový export: 29 spárovaných zaměstnanců, 531 směn a 228 výslovných dnů volna; 71 nespárovaných řádků bylo přeskočeno. Uložená verze nemění potvrzený rozpis.
+- `VERIFIED` — Simulovaný listopadový návrh pro 29 zaměstnanců a jednu absenci obsahoval 552 směn ve všech 30 dnech; validace našla překryvy směn a problémy s odpočinkem. Návrh zůstal nepotvrzený. Simulace není důkaz kvality AI.
+- `NOT VERIFIED` — Příčina původního neúspěšného importu ani návrhu s pěti směnami nebyla reprodukována; netvrdit, že byly opraveny.
+
+### Priority po ukázce
+
+1. Zaznamenávat vstupy, výsledky validace a spotřebu AI u dalších testů; ověřit opakovatelnost platného výsledku i při různých absencích a návaznostech.
+2. Získat podmínky původních potíží a reprodukovat je bez předpokládání příčiny; zlepšení importu a sdělení o přeskočených řádcích posuzovat podle zjištění.
+3. S manažery uzavřít relevantní otevřené doménové otázky; oddělit tvrdá pravidla od preferencí.
+4. Před širším použitím ověřit kompletní průchod včetně potvrzení, návazností, obnovy, bezpečnosti a provozních limitů. Zápis do produkční databáze vyžaduje výslovné potvrzení.
+
+Manažerský přehled: [projektová karta](PROJEKTOVA_KARTA.md).
+
 > Aktuální směr aktualizován 6. 11. 2026. Historické
 > testy níže jsou výslovně označeny; aktuální kontroly jsou v závěru dokumentu.
 > Význam stavových popisků

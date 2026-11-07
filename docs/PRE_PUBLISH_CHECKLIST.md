@@ -1,5 +1,9 @@
 # Pre‑publish checklist — Plánovací Engine
 
+> **Historický checklist:** prezentace již proběhla a dílčí položky níže jsou
+> dobové záznamy, nikoli aktuální závěr o stavu projektu. Aktuální priority
+> uvádí `ROADMAP.md`, provozní postup `DEPLOYMENT.md`.
+
 Souhrn položek, které je potřeba (podle existující dokumentace) vyřešit
 před vydáním / produkčním nasazením aplikace. Tento soubor je jen přehled;
 autoritativní zdroje jsou uvedené dokumenty.
@@ -58,7 +62,7 @@ Tato rozhodnutí uživatele mění dřívější předpoklady. Platí pro dalš�
   a současný OR-Tools spouští Python přes `child_process`, který Workers
   nepodporují. Nebylo by to nasazení beze změny.
 
-## 1. `docs/LEADERSHIP_DEMO_TODO.md` (příprava na prezentaci vedení)
+## 1. Historický přehled přípravy na prezentaci vedení
 
 ### Fáze 0 — Stabilizace (před prezentací)
 - [ ] Ověřit nový start `npm run dev` bez chyby — `BLOCKED`: server na portu 3000 už běžel; další `npm run dev` skončil kvůli existujícímu Next dev serveru. Stávající server odpovídá, ale nebyl zastaven ani nahrazen.
@@ -88,7 +92,7 @@ Tato rozhodnutí uživatele mění dřívější předpoklady. Platí pro dalš�
 
 ### Fáze 4 — Technická připravenost
 - [x] Solver timeout 120 s konfigurovatelný (env `PLANNING_SOLVER_TIMEOUT_MS`).
-- [x] Výkonnostní test (20/30 zaměstnanců, historický výsledek v `LEADERSHIP_DEMO_TODO.md`/`ROADMAP.md`; neprokazuje aktuální provozní kapacitu).
+- [x] Historický výkonnostní test neprokazuje aktuální provozní kapacitu.
 - [x] Ověřit, že `npm run build` projde bez varování — finální build po změnách prošel.
 - [x] Ověřit, že CI (GitHub Actions) projde na aktuálním pracovním stromu — `VERIFIED`, 6. 11. 2026: běh CI na `7b28db6` dokončil všechny joby úspěšně (kvalita, Python solver i izolovaný PostgreSQL). Lokálně prošly lint, typecheck, 586 Vitest testů (15 přeskočeno), Prisma validace, build, 28 Python testů solveru a 13 solver integračních testů. Následné změny jsou jen v dokumentaci a běh CI neovlivňují.
 - [x] Zkontrolovat `.env.example` — doplněny Cloudflare proměnné, `DATABASE_URL_UNPOOLED` a poznámka k Vercelu; database auth mode zůstává. `GEMINI_TIMEOUT_MS` je napojen na provider i translator a pokryt testy.
@@ -96,7 +100,7 @@ Tato rozhodnutí uživatele mění dřívější předpoklady. Platí pro dalš�
 
 ### Fáze 5 — Dokumentace pro vedení
 - [x] Aktualizovat `README.md` — stav projektu, co je hotové, co je demo.
-- [x] Připravit krátký scénář prezentace — `docs/PREZENTACNI_SCENAR.md`.
+- [x] Připravit scénář pro proběhlou prezentaci.
 - [x] Připravit „co není hotové“ — poloviční úvazky mimo pilot, produkční auth/DB, analytika, neověřené AI plánování.
 
 ## 2. `docs/ROADMAP.md` — „To‑Do: postup podle auditu před závěrečným testováním“
@@ -133,7 +137,7 @@ Tato rozhodnutí uživatele mění dřívější předpoklady. Platí pro dalš�
 - [x] `docs/DOMAIN_SPECIFICATION.md` — AI model, H9, rozsah pilotu a hosting.
 - [x] `docs/ROADMAP.md` — AI, úvazky a cílové nasazení.
 - [x] `docs/PLANNING_CONTRACT.md` — Cloudflare provider a konfigurace.
-- [x] `docs/LEADERSHIP_DEMO_TODO.md`, `docs/PREZENTACNI_SCENAR.md` — úvazky a hosting.
+- [x] Příprava dokumentace pro proběhlou prezentaci.
 - [x] `docs/README.md` — poškozený soubor s neplatnými českými znaky přepsán a doplněn.
 - [x] `.env.example` — Cloudflare, `DATABASE_URL_UNPOOLED`, Vercel poznámky.
 

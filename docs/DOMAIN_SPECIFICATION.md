@@ -563,8 +563,16 @@ podřízený tomuto dokumentu — autoritativní seznam je tento.
 - **AI role, rozsah prvního řezu, časy směn, 35 h odpočinku, dva dny volna po
   víkendu a výklady OQ21, OQ23 a OQ24** — `VERIFIED` (§0.2). Jde o závazná
   rozhodnutí v jejich popsaném rozsahu.
+- **OQ9–OQ11** — `VERIFIED` pro měsíční pilot podle rozhodnutí manažera
+  z 5. 11. v `DOMAIN_DECISIONS.md`: role a dovednosti se neevidují, další tvrdý
+  maximální počet hodin či směn není stanoven, zamykání přiřazení se nezavádí
+  a další pravidla mimo odsouhlasený seznam se nepřidávají. Fond práce je
+  nezávazný nález. Nejde o pracovněprávní posudek ani obecné tvrzení o právních limitech.
 
-### Blokující pro úplnou definici domény
+### Historické otázky širšího / operativního řešení
+
+Následující otázky se týkají staršího týdenního operativního řezu nebo širšího
+modelu. Jejich uvedení samo o sobě neznamená překážku měsíčního pilotu.
 
 - **OQ2** (S2) Je plán statický nebo průběžně upravovaný? Pro operativní řez je
   potvrzeno průběžné vytváření nové verze týdne; širší pravidla historie zůstávají otevřená.
@@ -575,11 +583,8 @@ podřízený tomuto dokumentu — autoritativní seznam je tento.
 - **OQ4** (S3) Které atributy entit jsou povinné? Výpadek musí nejméně odkazovat
   na zaměstnance, datum, celou směnu a výchozí verzi plánu; přesný kontrakt je otevřený.
 - **OQ5** (S3) Existuje pojem pobočky/umístění call centra?
-- **OQ9** (S5) Která pravidla jsou skutečně tvrdá (H4, H5, H7)?
-- **OQ10** (S5) Konkrétní limity tvrdých pravidel (max. hodiny, jiný odpočinek)?
-- **OQ11** (S5) Existují pravidla mimo uvedený seznam?
 
-### Blokující pro chování výstupu
+### Historické otázky chování operativního výstupu
 
 - **OQ6** (S4) Jak se vstupy zadávají (ručně / soubor / budoucí integrace)? Pro první
   operativní řez je zvolen ruční vstup v UI; Outlook a import zůstávají mimo rozsah.

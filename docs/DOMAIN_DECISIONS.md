@@ -201,13 +201,13 @@ upozorňuje, že zbytek zůstane neověřený. Chování je pokryté testy
   neověřuje zálohování, monitoring, obnovu ani připravenost aplikace k nasazení;
   tyto provozní aspekty zůstávají `NOT VERIFIED`.
 
-## Současná implementace měsíčního MVP (`IMPLEMENTED`, 3. 11. 2026)
+## Historický stav měsíčního MVP (3. 11. 2026)
 
-Níže uvedené popisuje implementaci, nikoli doloženou změnu schváleného záměru
-AI jako hlavní plánovací logiky. Rozdíl mezi zadáním a implementací zůstává
-otevřený k rozhodnutí uživatele.
+Tato část zachycuje historický stav. Od 6. 11. 2026 je aktuálním měsíčním
+poskytovatelem Cloudflare Workers AI a lokální OR-Tools byl odstraněn; aktuální
+stav a ověření uvádí `ROADMAP.md`.
 
-- Lokální OR-Tools sestavuje přiřazení směn pro celý kalendářní měsíc.
+- Historicky lokální OR-Tools sestavoval přiřazení směn pro celý kalendářní měsíc.
 - Měsíční AI návrh zajišťuje Cloudflare Workers AI (`IMPLEMENTED` adaptér,
   reálné volání `VERIFIED (6. 11. 2026)`). Externí AI je `VERIFIED` rozhodnutím
   uživatele (6. 11. 2026) povolená včetně skutečných jmen a volného textu;

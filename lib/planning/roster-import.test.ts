@@ -22,6 +22,15 @@ const csv = [
 ].join("\r\n");
 
 describe("převod exportu rosteru", () => {
+  it.each(["\t", ","])("přečte vložené tabulkové buňky s oddělovačem %j", (delimiter) => {
+    const text = [header, makeRow("Test osoba", { 1: "Volno", 2: "07:45-16:30" })]
+      .map((row) => row.join(delimiter)).join("\r\n");
+    const result = parseRosterCsv(text, month, []);
+    if (!result.ok) throw new Error(result.code);
+    expect(result.employees[0].days["2026-11-02"]).toMatchObject({ status: "shift", startTime: "07:45", endTime: "16:30" });
+    expect(result.employees[0].days["2026-11-01"]).toMatchObject({ status: "off" });
+    expect(parseRosterCsv(text, "2026-12", []).ok).toBe(false);
+  });
   it("zachová přesné směny, výslovné volno a neznámé buňky bez uložení surových řádků", () => {
     const preview = parseRosterCsv(csv, month, [{ id: "e1", displayName: "Nováková Jana" }]);
 

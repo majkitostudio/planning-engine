@@ -1,6 +1,6 @@
 # ADR 0006 — Měsíční AI plánovač na Cloudflare Workers AI
 
-- **Stav:** adaptér `IMPLEMENTED`; reálné volání a kvalita výstupu `NOT VERIFIED`
+- **Stav:** adaptér `IMPLEMENTED`; reálné volání `VERIFIED` omezeným testem; spolehlivost a provozní kvalita `NOT VERIFIED`
 - **Datum:** 6. 11. 2026
 - **Kontext kódu:** `lib/ai/cloudflare-planning-provider.ts`,
   `lib/planning/monthly-planning.ts`, `app/api/planning/monthly/run/route.ts`
@@ -29,17 +29,16 @@ projde stejnou deterministickou validací jako dříve.
   rozhodnutí z 6. 11. 2026. Nejde o anonymizovaný režim.
 - **Bezplatná kvóta je limit, ne nárok.** Při vyčerpání se běh odmítne; nedojde
   k tichému přepnutí na placenou službu ani k vymyšlenému návrhu.
-- **Lokální OR-Tools zůstává offline.** Na Vercelu nelze spustit Python proces,
-  který dnes solver vyžaduje.
+- **Aktualizace 6. 11. 2026:** lokální OR-Tools byl odstraněn; viz ADR 0008.
 
 ## Důsledky
 
 - Online měsíční plánování závisí na dostupnosti Cloudflare a denní kvótě.
-- Kvalita návrhu a spotřeba neuronů se musí změřit na syntetickém měsíci;
-  do té doby zůstává `NOT VERIFIED`.
+- Kvalita návrhu a spotřeba neuronů vyžadují další měření; samotný úspěch
+  integračního volání nezaručuje platný rozpis ani neuvádí spotřebu.
 - Chybějící `CLOUDFLARE_ACCOUNT_ID` nebo `CLOUDFLARE_API_TOKEN` je poctivě
   nekonfigurovaný stav, ne důvod k náhradnímu scénáři.
-- Doplňování části měsíce zůstává dostupné jen v lokálním OR-Tools režimu.
+- Doplňování části měsíce není součástí aktuálního měsíčního UI.
 
 ## Co to neznamená
 

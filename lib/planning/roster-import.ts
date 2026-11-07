@@ -27,8 +27,8 @@ const weekdayByLabel: Readonly<Record<string, number>> = { po: 0, ut: 1, st: 2, 
 const normalize = (value: string) => value.normalize("NFD").replace(/\p{Diacritic}/gu, "").trim().replace(/\s+/g, " ").toLocaleLowerCase("cs-CZ");
 const isClockTime = (value: string) => /^(?:[01]\d|2[0-3]):[0-5]\d$/.test(value);
 
-/** Parse semicolon-delimited CSV, including quoted delimiters, quotes, and line breaks. */
-function parseSemicolonCsv(text: string): string[][] | null {
+/** Parse delimited rows, including quoted delimiters, quotes, and line breaks. */
+function parseDelimitedRows(text: string, delimiter: string): string[][] | null {
   const rows: string[][] = [];
   let row: string[] = [];
   let cell = "";
@@ -45,7 +45,7 @@ function parseSemicolonCsv(text: string): string[][] | null {
     if (char === '"') {
       if (cell.length) return null;
       quoted = true;
-    } else if (char === ";") {
+    } else if (char === delimiter) {
       row.push(cell); cell = "";
     } else if (char === "\n" || char === "\r") {
       row.push(cell); cell = "";
@@ -86,7 +86,12 @@ export function parseRosterCsv(
 ): RosterImportResult {
   if (!/^\d{4}-\d{2}$/.test(month) || !isIsoDate(`${month}-01`)) return { ok: false, code: "invalid_month" };
   if (typeof text !== "string" || !text.trim() || text.length > 5_000_000) return { ok: false, code: "invalid_csv" };
-  const rows = parseSemicolonCsv(text);
+  // Clipboard copies from spreadsheets use tabs rather than CSV semicolons.
+  // Detect by a valid calendar header, never by delimiters inside employee data.
+  const candidates = [";", "\t", ","].map((delimiter) => parseDelimitedRows(text, delimiter));
+  const rows = candidates.find((candidate) => candidate?.length && headerDates(candidate[0], month))
+    ?? candidates.find((candidate) => candidate?.length && candidate[0].length > 1)
+    ?? candidates[0];
   if (!rows || rows.length < 2) return { ok: false, code: "invalid_csv" };
   const dates = headerDates(rows[0], month);
   if (!dates) {

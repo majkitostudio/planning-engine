@@ -2,11 +2,22 @@ import { describe, expect, it } from "vitest";
 import { SimulatedMonthlyProvider } from "./monthly-provider";
 import type { MonthlyPlanningInput } from "../domain/month-input";
 import { validateMonthlyDraft } from "../monthly-planning";
+import { buildMonthlyFormInput } from "../monthly-form";
+import { datesInMonth } from "../domain/month";
 
 const input: MonthlyPlanningInput = { month: "2026-11", employees: [{ id: "e1", displayName: "Test", employmentType: "full_time" }], absences: [], availability: [{ employeeId: "e1", date: "2026-11-02", shiftKind: "morning", available: true }], staffingRequirements: [{ date: "2026-11-02", shiftKind: "morning", requiredEmployees: 1 }], instructions: "Test" };
 const boundary = { before: { complete: false, assignments: [] }, after: { complete: false, assignments: [] } };
 
 describe("simulovaný měsíční poskytovatel", () => {
+  it("z měsíčního formuláře vytvoří směny pro každý den, nejen poslední den", async () => {
+    const prepared = buildMonthlyFormInput({ month: input.month, employees: Array.from({ length: 5 }, (_, index) => ({ id: `e${index}`, name: `Test ${index}` })), absences: [], availability: [], staffing: Array(14).fill("2"), instructions: "" });
+    if (!prepared.ok) throw new Error(prepared.message);
+    const draft = await new SimulatedMonthlyProvider("complete").generateMonthlyPlan(prepared.value, boundary);
+    expect(draft.assignments).toHaveLength(120);
+    for (const date of datesInMonth(input.month)) {
+      expect(draft.assignments.filter((assignment) => assignment.date === date)).toHaveLength(4);
+    }
+  });
   it("vrátí pouze syntetický návrh z daných vstupů", async () => {
     const draft = await new SimulatedMonthlyProvider("complete").generateMonthlyPlan(input, boundary);
     expect(draft.month).toBe(input.month);

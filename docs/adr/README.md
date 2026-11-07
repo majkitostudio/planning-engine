@@ -10,8 +10,9 @@ pravidla — popisují **proč** je technické rozhodnutí takové a co z něj p
 | [0003](0003-zdroj-navrhu-neni-schvaleni.md) | Zdroj návrhu není schválení | `IMPLEMENTED` |
 | [0004](0004-chyba-pravidla-se-nepolyka.md) | Chyba uvnitř pravidla se nepolyká | `IMPLEMENTED` |
 | [0005](0005-ai-navrhuje-validace-overuje.md) | AI navrhuje, validace ověřuje, manažer potvrzuje | `IMPLEMENTED` (rozhodnutí) |
-| [0006](0006-mesicni-ai-cloudflare-workers-ai.md) | Měsíční AI plánovač na Cloudflare Workers AI | `IMPLEMENTED` adaptér; reálné volání `NOT VERIFIED` |
-| [0007](0007-nekomerci-hosting-vercel-neon.md) | Nekomerční hosting: Vercel Hobby a jediná Neon databáze | `PLANNED` |
+| [0006](0006-mesicni-ai-cloudflare-workers-ai.md) | Měsíční AI plánovač na Cloudflare Workers AI | `IMPLEMENTED`; reálné volání ověřeno, širší spolehlivost `NOT VERIFIED` |
+| [0007](0007-nekomerci-hosting-vercel-neon.md) | Nekomerční hosting: Vercel Hobby a jediná Neon databáze | `VERIFIED` rozhodnutí; aktuální provozní stav `NOT VERIFIED` |
+| [0008](0008-cloudflare-only-and-unified-ui.md) | Online AI plánování a jednotné UI | `VERIFIED` rozhodnutí; rozsah ověření viz roadmapa |
 
 ## Jak přidat další rozhodnutí
 
