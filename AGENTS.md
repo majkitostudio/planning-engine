@@ -116,6 +116,15 @@ Tato rozhodnutí jsou pro další práci závazná:
   nedokazuje neproveditelnost. Přesný počet dalších potřebných lidí uváděj jen
   s ověřeným podkladem, jinak přiznej nejistotu. Nejde o tvrzení, že zpracování
   libovolného přirozeného jazyka nebo výpočet minimálního počtu je implementován.
+- **Priorita pilotu (`VERIFIED`, upřesnění uživatele 7. 11. 2026):** hlavním
+  výsledkem je samostatně sestavený použitelný rozpis, nikoli přenesení ručního
+  hledání kombinací na manažera. Plánovač může hledat a opravovat návrh v rámci
+  dostupných možností; jejich konkrétní implementaci nevydávej za hotovou. Pokud
+  návrh nenajde, vysvětli známé překážky bez tvrzení o nemožnosti bez důkazu.
+  Samostatná správa docházky, požadavků, dovolených a nemocenských je až budoucí
+  funkcionalita. Zda má pilot nadále přijímat konkrétní volna a omezení jako
+  jednoduché vstupy pro plánování, je potřeba s uživatelem potvrdit; stávající
+  funkce proto nemaž ani nepovažuj automaticky za požadovanou změnu.
 
 ### Potvrzené časy směn (`VERIFIED`)
 

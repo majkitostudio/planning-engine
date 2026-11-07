@@ -16,6 +16,12 @@
 známých nedostatků. Nejde o důkaz matematického optima. Zpracování libovolného
 textu ani přesný počet dalších potřebných lidí nejsou zatím ověřenou funkcí.
 
+**Priorita pilotu:** AI má samostatně sestavit použitelný rozpis; samostatné
+hlídání docházky a správa požadavků, dovolených a nemocenských jsou budoucí
+funkce. `OPEN QUESTION`: rozsah jednoduchých ručně zadaných volen a omezení
+v samotném pilotním vstupu je nutné potvrdit. Neodstraňovat stávající vstupy
+ani nepokládat tuto otázku za vyřešenou.
+
 1. **Připravit syntetické scénáře a očekávání.** Začít jedním proveditelným měsícem, absencí a úplnými hranicemi; předem zaznamenat vstupy bez osobních údajů. Zkontrolovat automatické testy validace a formuláře.
 2. **Provést omezený AI běh.** Zaznamenat poskytovatele, čas, pokrytí, validační stav, nálezy a případně měřitelnou spotřebu. První úspěch neopravňuje tvrdit, že všechny případy fungují. Při vyčerpané kvótě nepřepínat skrytě na simulaci.
 3. **Navázat dalšími scénáři podle dostupné kvóty:** absence, neúplná návaznost a nemožné obsazení. Přehled scénářů a postup je v `PLAN_OVERENI_AI.md`.

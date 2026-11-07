@@ -57,6 +57,22 @@ zůstávají zachovány. Plná interpretace libovolného textu, navazující ot�
 prokazatelný výpočet počtu dalších lidí jsou záměr, nikoli ověřená funkčnost;
 volné pokyny samy nejsou deterministicky ověřovaným tvrdým pravidlem.
 
+### Upřesnění rozsahu pilotu (7. 11. 2026)
+
+`VERIFIED`: nejdůležitější je, aby AI samostatně sestavila použitelný rozpis;
+manažer nemá ručně hledat kombinace, které by plánovač mohl najít sám.
+Plánovač má v rámci svých dostupných možností hledat a případně opravovat
+návrh. Nenajde-li jej, řekne „pro zadané podmínky se nepodařilo sestavit
+rozpis“ a popíše známé překážky; nemožnost tvrdí pouze s podkladem. Konkrétní
+opravný mechanismus a jeho spolehlivost jsou `NOT VERIFIED`.
+
+`VERIFIED`: samostatné hlídání docházky a správa zaměstnaneckých požadavků,
+dovolených a nemocenských patří do budoucna, nikoli mezi priority pilotu.
+`OPEN QUESTION`: má pilot i nadále přijímat jednotlivá volna nebo časová
+omezení jako jednoduché ručně zadané vstupy pro sestavení rozpisu? Dřívější
+příklady je obsahují, nové upřesnění jejich rozsah výslovně nerozlišuje.
+Odpověď je nutné získat před odstraněním vstupů či změnou plánovacích pravidel.
+
 ## Rozepsané měsíční zadání (`VERIFIED`, 5. 11. 2026)
 
 Manažer zvolil automatické ukládání rozepsaného zadání na zařízení, aby je
