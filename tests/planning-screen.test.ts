@@ -2,13 +2,26 @@ import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
 import { PlanWorkspace } from "@/components/plan/plan-workspace";
-import { MonthlyPlanningPanel } from "@/components/plan/monthly-planning-panel";
+import { MonthlyGenerationStatus, MonthlyPlanningPanel } from "@/components/plan/monthly-planning-panel";
 import { EmployeesManager } from "@/components/employees-manager";
 import DashboardPage from "@/app/(app)/page";
 import { StaffingSettingsForm } from "@/components/settings/staffing-settings-form";
 import { staffingSettingsPersistenceNotice } from "@/lib/settings-view";
 
 describe("obrazovka plánování", () => {
+  it("zobrazuje přístupný, neurčitý stav pouze během generování návrhu", () => {
+    const active = renderToStaticMarkup(createElement(MonthlyGenerationStatus, { active: true }));
+    expect(active).toContain('role="status"');
+    expect(active).toContain('aria-live="polite"');
+    expect(active).toContain('aria-busy="true"');
+    expect(active).toContain('tabindex="-1"');
+    expect(active).toContain("Vytvářím měsíční návrh");
+    expect(active).toContain("Nezobrazuje se průběžné procento");
+    expect(active).toContain("stránku neobnovujte ani neopouštějte");
+    expect(active).not.toMatch(/\b\d+\s*%/);
+    expect(renderToStaticMarkup(createElement(MonthlyGenerationStatus, { active: false }))).toBe("");
+  });
+
   it("při současném zobrazení více měsíců propojí popisky s různými poli", () => {
     const common = { canManage: true, formOwnerId: "synthetic-manager", planningMode: "cloudflare" as const, initialStaffing: null, staffingProfileStatus: "unavailable" as const, onResult: () => {}, onRemoved: () => {} };
     const html = renderToStaticMarkup(createElement("div", null,

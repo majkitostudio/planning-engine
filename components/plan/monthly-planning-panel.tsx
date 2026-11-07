@@ -43,6 +43,7 @@ export function MonthlyPlanningPanel({ month, canManage, formOwnerId, planningMo
   const [absenceShift, setAbsenceShift] = useState<ShiftKind | "full_day">("full_day");
   const [step, setStep] = useState(0);
   const [busy, setBusy] = useState(false);
+  const [generating, setGenerating] = useState(false);
   const [error, setError] = useState("");
   const [quotaExhausted, setQuotaExhausted] = useState(false);
   const [unavailableDraftId, setUnavailableDraftId] = useState<string | null>(null);
@@ -62,9 +63,14 @@ export function MonthlyPlanningPanel({ month, canManage, formOwnerId, planningMo
   const formEditRevision = useRef(0);
   const skipRestoredWrite = useRef(false);
   const stepHeadingRef = useRef<HTMLLegendElement>(null);
+  const generationStatusRef = useRef<HTMLDivElement>(null);
   const previousStep = useRef(step);
   const revision = useRef(0);
   const storageKey = `planning-monthly-draft:${month}`;
+
+  useEffect(() => {
+    if (generating) generationStatusRef.current?.focus();
+  }, [generating]);
 
   useEffect(() => {
     if (!canManage || !formOwnerId) return;
@@ -126,13 +132,13 @@ export function MonthlyPlanningPanel({ month, canManage, formOwnerId, planningMo
   useEffect(() => {
     if (!canManage) return;
     const warnIfUnsaved = (event: BeforeUnloadEvent) => {
-      if (pendingFormWrites.current === 0 && !formChanged.current) return;
+      if (!generating && pendingFormWrites.current === 0 && !formChanged.current) return;
       event.preventDefault();
       event.returnValue = "";
     };
     window.addEventListener("beforeunload", warnIfUnsaved);
     return () => window.removeEventListener("beforeunload", warnIfUnsaved);
-  }, [canManage]);
+  }, [canManage, generating]);
 
   useEffect(() => {
     if (shouldFocusStepHeading(previousStep.current, step)) {
@@ -256,7 +262,7 @@ export function MonthlyPlanningPanel({ month, canManage, formOwnerId, planningMo
     if (readiness.missing.length) { changeStep(4); setError("Doplňte povinné vstupy uvedené v souhrnu před vytvořením návrhu."); return; }
     const prepared = buildMonthlyFormInput(formData);
     if (!prepared.ok) { changeStep(4); setError(prepared.message); return; }
-    revision.current++; setBusy(true); setView(null); setConfirmed(false); setRestored(false); onResult(month, null);
+    revision.current++; setBusy(true); setGenerating(true); setView(null); setConfirmed(false); setRestored(false); onResult(month, null);
     try {
       const response = await fetch("/api/planning/monthly/run", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ input: prepared.value, ...(planningMode === "simulated" || useDemo ? { scenario: "complete", providerOverride: useDemo ? "simulated" : undefined } : {}) }) });
       const result = await response.json();
@@ -270,7 +276,7 @@ export function MonthlyPlanningPanel({ month, canManage, formOwnerId, planningMo
         return;
       }
       rememberDraft(result.id); setView(result); onResult(month, result);
-    } catch { setError("Spojení se serverem selhalo. Vyplněné hodnoty zůstaly zachované."); } finally { setBusy(false); }
+    } catch { setError("Spojení se serverem selhalo. Vyplněné hodnoty zůstaly zachované."); } finally { setGenerating(false); setBusy(false); }
   }
   async function confirm() {
     if (!view) return;
@@ -327,6 +333,7 @@ export function MonthlyPlanningPanel({ month, canManage, formOwnerId, planningMo
     <div className="monthly-form-heading"><div><p className="eyebrow">Celý kalendářní měsíc</p><h2 id={`monthly-title-${month}`}>Návrh rozpisu · {month}</h2></div><span className="monthly-step-count">Krok {step + 1} z {STEPS.length}</span></div>
     <p>Návrh se ukládá odděleně. Rozpis se změní až po potvrzení manažerem.</p>
     {canManage ? <MonthlyRunsManager month={month} canManage={canManage} refreshKey={`${view?.id ?? ""}:${confirmed}`} onRemoved={(id) => { revision.current++; if (view?.id === id) { setView(null); setConfirmed(false); setRestored(false); } onRemoved(month, id); }} /> : null}
+    {generating ? <MonthlyGenerationStatus active statusRef={generationStatusRef} /> : null}
     {canManage ? <div className="monthly-muted" role="status">
       <p>{!formOwnerId || formStorage === "unavailable" ? "Rozepsané zadání nelze v tomto prohlížeči bezpečně uložit; po odchodu se může ztratit." : formStorage === "invalid" ? "Uložené zadání nelze načíst. Vymažte jej, pokud chcete ukládat nové." : formStorage === "conflict" ? "Zadání bylo změněno v jiném okně. Změny v tomto okně se nyní neukládají. Pro načtení druhé verze obnovte stránku; zdejší změny se tím ztratí." : formStorage === "cleared" ? "Rozepsané zadání bylo z tohoto prohlížeče vymazáno." : formStorage === "empty" ? "Zadání se začne ukládat v tomto prohlížeči při vyplňování." : formStorage === "loading" ? "Načítám rozepsané zadání z tohoto prohlížeče." : formRestored ? "Rozepsané zadání bylo obnoveno a průběžně se ukládá v tomto prohlížeči." : "Rozepsané zadání se průběžně ukládá v tomto prohlížeči."}</p>
       <p>V zařízení zůstávají i jména a pokyny. Na sdíleném zařízení k nim mohou mít přístup další uživatelé zařízení.</p>
@@ -378,7 +385,7 @@ export function MonthlyPlanningPanel({ month, canManage, formOwnerId, planningMo
           <label className="monthly-block-label" htmlFor={`monthly-instructions-${month}`}>Doplňující pokyny<textarea className="input" id={`monthly-instructions-${month}`} value={instructions} onChange={(event) => setInstructions(event.target.value)} /></label>
         </> : null}
 
-        {step === 4 ? <div className="monthly-review-summary"><h3>Souhrn před vytvořením návrhu</h3><dl><div><dt>Měsíc</dt><dd>{month}</dd></div><div><dt>Zaměstnanci</dt><dd>{readiness.employeeCount}</dd></div><div><dt>Výchozí dostupnost</dt><dd>Obě směny každý den včetně víkendů; platí zadané výjimky</dd></div><div><dt>Absence</dt><dd>{readiness.absenceCount + partialAbsences.length}</dd></div><div><dt>Vyplněné hodnoty obsazení</dt><dd>{readiness.filledStaffingCount} z 14</dd></div><div><dt>Fond práce</dt><dd>{readiness.filledWorkFundCount === 0 ? "Nevyplněno (volitelné); naplnění fondu nepůjde ověřit" : `${readiness.filledWorkFundCount} z ${readiness.employeeCount} zaměstnanců vyplněno; zbytek zůstane neověřený`}</dd></div><div><dt>Střídání směn</dt><dd>{planningMode === "cloudflare" && shiftRotationPreference ? "Požadováno jako nezávazné přání" : "Bez preference"}</dd></div><div><dt>Doplňující pokyny</dt><dd>{instructions.trim() ? planningMode === "gemini" || planningMode === "cloudflare" ? "Zadány; AI je může zohlednit, nezávisle ověřeny nejsou" : planningMode === "simulated" ? "Zadány; tento režim je automaticky nevyhodnocuje" : "Zadány; bez nastaveného plánovače nejsou zpracovány" : "Bez doplňujících pokynů"}</dd></div></dl>{readiness.warnings.length ? <div className="monthly-missing" role="status"><strong>Upozornění k obsazení:</strong><ul>{readiness.warnings.map((warning) => <li key={warning}>{warning}</li>)}</ul></div> : null}{readiness.missing.length ? <div className="monthly-missing" role="alert"><strong>Před návrhem doplňte:</strong><ul>{readiness.missing.map((item) => <li key={item}>{item}</li>)}</ul></div> : <p className="monthly-ready" role="status">Povinná pole jsou vyplněna. Výsledek stále může být neúplný nebo neověřený a pak jej nebude možné potvrdit.</p>}<button className="btn btn--primary" type="submit" disabled={!canManage || busy || readiness.missing.length > 0}>{busy ? "Pracuji…" : "Vytvořit měsíční návrh"}</button></div> : null}
+        {step === 4 ? <div className="monthly-review-summary"><h3>Souhrn před vytvořením návrhu</h3><dl><div><dt>Měsíc</dt><dd>{month}</dd></div><div><dt>Zaměstnanci</dt><dd>{readiness.employeeCount}</dd></div><div><dt>Výchozí dostupnost</dt><dd>Obě směny každý den včetně víkendů; platí zadané výjimky</dd></div><div><dt>Absence</dt><dd>{readiness.absenceCount + partialAbsences.length}</dd></div><div><dt>Vyplněné hodnoty obsazení</dt><dd>{readiness.filledStaffingCount} z 14</dd></div><div><dt>Fond práce</dt><dd>{readiness.filledWorkFundCount === 0 ? "Nevyplněno (volitelné); naplnění fondu nepůjde ověřit" : `${readiness.filledWorkFundCount} z ${readiness.employeeCount} zaměstnanců vyplněno; zbytek zůstane neověřený`}</dd></div><div><dt>Střídání směn</dt><dd>{planningMode === "cloudflare" && shiftRotationPreference ? "Požadováno jako nezávazné přání" : "Bez preference"}</dd></div><div><dt>Doplňující pokyny</dt><dd>{instructions.trim() ? planningMode === "gemini" || planningMode === "cloudflare" ? "Zadány; AI je může zohlednit, nezávisle ověřeny nejsou" : planningMode === "simulated" ? "Zadány; tento režim je automaticky nevyhodnocuje" : "Zadány; bez nastaveného plánovače nejsou zpracovány" : "Bez doplňujících pokynů"}</dd></div></dl>{readiness.warnings.length ? <div className="monthly-missing" role="status"><strong>Upozornění k obsazení:</strong><ul>{readiness.warnings.map((warning) => <li key={warning}>{warning}</li>)}</ul></div> : null}{readiness.missing.length ? <div className="monthly-missing" role="alert"><strong>Před návrhem doplňte:</strong><ul>{readiness.missing.map((item) => <li key={item}>{item}</li>)}</ul></div> : <p className="monthly-ready" role="status">Povinná pole jsou vyplněna. Výsledek stále může být neúplný nebo neověřený a pak jej nebude možné potvrdit.</p>}<button className="btn btn--primary" type="submit" disabled={!canManage || busy || readiness.missing.length > 0}>{generating ? "Vytvářím návrh…" : "Vytvořit měsíční návrh"}</button></div> : null}
       </fieldset>
       {step === 4 && planningMode !== "simulated" ? <div className="monthly-demo-action">
         <div><strong>Ukázka bez AI</strong><p>Vytvoří simulovaný návrh pro prezentaci. Není to výsledek AI, nemusí splňovat pravidla a uloží se jako nepotvrzený návrh.</p></div>
@@ -409,4 +416,14 @@ export function MonthlyPlanningPanel({ month, canManage, formOwnerId, planningMo
       {!view.validation.canConfirm ? <p>Potvrzení je zablokováno, dokud nejsou vyřešené problémy a ověřené potřebné podklady.</p> : null}
     </div> : null}
   </section>;
+}
+
+export function MonthlyGenerationStatus({ active, statusRef }: { active: boolean; statusRef?: React.Ref<HTMLDivElement> }) {
+  if (!active) return null;
+  return <div ref={statusRef} tabIndex={-1} className="monthly-generation-status" role="status" aria-live="polite" aria-busy="true">
+    <span className="monthly-generation-status__spinner" aria-hidden="true" />
+    <div><strong>Vytvářím měsíční návrh</strong><p>Generování může chvíli trvat. Nezobrazuje se průběžné procento, protože přesný průběh nelze spolehlivě určit.</p>
+      <p className="monthly-generation-status__warning">Během generování stránku neobnovujte ani neopouštějte. Zavření nebo obnovení může požadavek přerušit a výsledek se nemusí zobrazit. Prohlížeč může při zavření nabídnout vlastní potvrzení; jeho zobrazení nelze zaručit.</p>
+    </div>
+  </div>;
 }
