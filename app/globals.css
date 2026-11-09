@@ -2727,78 +2727,22 @@ textarea {
 
 .month-strip {
   display: flex;
-  align-items: stretch;
-  min-height: 82px;
+  align-items: center;
+  min-height: 58px;
   margin-bottom: 16px;
-  overflow: hidden;
   border: 1px solid var(--border);
   border-radius: 8px;
   background: var(--surface);
 }
 
-.month-strip__days {
-  display: flex;
-  flex: 1 1 auto;
-  min-width: 0;
-  overflow-x: auto;
-  scrollbar-width: thin;
-  scrollbar-color: var(--border-strong) transparent;
-}
-
-.month-strip__day {
-  display: flex;
-  flex: 1 0 36px;
-  min-width: 32px;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  padding: 7px 2px;
-  border: 0;
-  border-right: 1px solid var(--border);
-  background: transparent;
-  color: var(--ink-2);
-  cursor: pointer;
-}
-
-.month-strip__day > span {
-  font-size: 12px;
-}
-
-.month-strip__day > strong {
-  font-size: 15px;
-  font-weight: 500;
-}
-
-.month-strip__day:hover,
-.month-strip__day:focus-visible {
-  background: var(--surface-3);
-}
-
-.month-strip__day--weekend {
-  background: rgba(243, 198, 19, 0.11);
-  color: var(--violet);
-}
-
-.month-strip__day--selected {
-  box-shadow: inset 0 1px var(--accent), inset 0 -1px var(--accent);
-  color: var(--ink);
-}
-
-.month-strip__day--selected-start {
-  box-shadow: inset 1px 0 var(--accent), inset 0 1px var(--accent),
-    inset 0 -1px var(--accent);
-  border-radius: 5px 0 0 5px;
-}
-
-.month-strip__day--selected-end {
-  box-shadow: inset -1px 0 var(--accent), inset 0 1px var(--accent),
-    inset 0 -1px var(--accent);
-  border-radius: 0 5px 5px 0;
-}
-
-.month-strip__day--selected > strong {
-  font-weight: 700;
+.month-strip__title {
+  flex: 1;
+  margin: 0;
+  color: var(--accent);
+  font-size: 19px;
+  font-weight: 650;
+  text-align: center;
+  text-transform: capitalize;
 }
 
 .month-strip__nav {
@@ -3017,22 +2961,6 @@ textarea {
   padding-left: 20px;
 }
 
-.week-banner {
-  margin: 16px 0 14px;
-  text-align: center;
-}
-
-.week-banner h2 {
-  color: var(--ink);
-  font-size: 26px;
-}
-
-.week-banner p {
-  margin-top: 3px;
-  color: var(--accent);
-  font-size: 18px;
-}
-
 .schedule-card {
   overflow: hidden;
   margin-bottom: 14px;
@@ -3128,6 +3056,127 @@ textarea {
 .shell--planning .roster__employee-col,
 .shell--planning .roster__cell {
   background: var(--surface);
+}
+
+.roster--monthly {
+  width: max-content;
+  min-width: max-content;
+  table-layout: fixed;
+}
+
+.roster--monthly .roster__employee-col {
+  width: 190px;
+  min-width: 190px;
+  max-width: 190px;
+  white-space: normal;
+}
+
+.roster--monthly .roster__day,
+.roster--monthly .roster__cell {
+  width: 58px;
+  min-width: 58px;
+  max-width: 58px;
+  padding: 5px 2px;
+}
+
+.roster--monthly .roster__day--week-start,
+.roster--monthly .roster__cell--week-start {
+  border-left: 2px solid var(--border-strong);
+}
+
+.monthly-roster__scroll {
+  max-height: min(72vh, 760px);
+  overflow: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+}
+
+.monthly-roster__scroll:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+}
+
+.roster--monthly thead th {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+}
+
+.roster--monthly thead .roster__employee-col {
+  z-index: 4;
+}
+
+.roster--monthly tbody .roster__employee-col {
+  z-index: 1;
+  overflow-wrap: anywhere;
+}
+
+.roster--monthly tbody tr:hover .roster__employee-col,
+.roster--monthly tbody tr:hover td {
+  background: var(--surface-3);
+}
+
+.monthly-roster__legend {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 18px;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border);
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.monthly-roster__legend > span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.monthly-roster__key,
+.monthly-roster__cell {
+  display: inline-grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 5px;
+  font-size: 12px;
+  font-weight: 750;
+  font-style: normal;
+}
+
+.monthly-roster__key--morning,
+.monthly-roster__cell--morning {
+  background: var(--shift-morning-bg);
+  color: var(--shift-morning-ink);
+}
+
+.monthly-roster__key--afternoon,
+.monthly-roster__cell--afternoon {
+  background: var(--violet-soft);
+  color: var(--violet);
+}
+
+.monthly-roster__key--off,
+.monthly-roster__cell--off {
+  background: var(--shift-off-bg);
+  color: var(--shift-off-ink);
+}
+
+.monthly-roster__key--unknown,
+.monthly-roster__cell--unknown {
+  background: var(--surface-3);
+  color: var(--muted);
+}
+
+.monthly-roster__cell--fixed {
+  border: 1px dashed var(--border-strong);
+  background: var(--surface-2);
+  color: var(--ink-2);
+}
+
+.roster--monthly .roster__cell .monthly-roster__cell + .monthly-roster__cell {
+  margin-top: 2px;
 }
 
 .shell--planning .roster tbody tr:hover .roster__employee-col,
@@ -3236,9 +3285,6 @@ textarea {
     gap: 4px 14px;
   }
 
-  .month-strip__day {
-    flex-basis: 42px;
-  }
 }
 
 @media (max-width: 620px) {
@@ -3246,20 +3292,23 @@ textarea {
     font-size: 28px;
   }
 
-  .planning-heading span {
-    font-size: 21px;
-  }
-
   .month-strip {
-    min-height: 72px;
+    min-height: 52px;
   }
 
-  .week-banner h2 {
-    font-size: 22px;
-  }
-
-  .week-banner p {
+  .month-strip__title {
     font-size: 16px;
+  }
+
+  .monthly-roster__legend {
+    gap: 8px 12px;
+    padding: 10px 12px;
+  }
+
+  .roster--monthly .roster__employee-col {
+    width: 150px;
+    min-width: 150px;
+    max-width: 150px;
   }
 }
 
