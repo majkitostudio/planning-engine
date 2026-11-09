@@ -6,7 +6,7 @@ Stručný přehled současné aplikace, ověřených doménových pravidel a toh
 
 Plánovací Engine je nekomerční ukázková aplikace pro jednoho manažera call centra. Má sestavit použitelný rozpis na celý kalendářní měsíc. Manažer zadává zaměstnance, absence, dostupnost, potřebné obsazení a případné pokyny. Hlavním výsledkem má být samostatně vytvořený návrh, ne seznam kombinací, které musí manažer ručně hledat.
 
-Projekt není hotový ani produkčně ověřený. Současný měsíční běh využívá Cloudflare Workers AI, ale rozhodnutí z 9. 11. 2026 říká vrátit OR-Tools jako hlavní solver. Tato výměna je zatím **PLANNED**. Cílovým hostováním zůstávají Vercel Hobby a stávající Neon Free; možnost běžet tam spolehlivě s OR-Tools zatím není prokázána.
+Projekt není hotový ani produkčně ověřený. Rozhodnutí z 9. 11. 2026 říká vrátit OR-Tools jako hlavní solver. Výměna je **IN_PROGRESS**: model a explicitně volitelný provider jsou implementovány, ale výchozí nastavení nebylo přepnuto a celý tok s perzistencí není ověřen. Cílovým hostováním zůstávají Vercel Hobby a stávající Neon Free.
 
 ## Tok aplikace
 
@@ -53,7 +53,7 @@ Tyto body zachycují schválené požadavky, ne potvrzení, že všechny jsou sp
 - **Implementováno:** měsíční UI/API, Cloudflare adaptér, deterministický validátor, simulovaný provider, oddělené potvrzení a perzistence v Prisma režimu.
 - **Částečně ověřeno:** některé izolované kontroly, syntetické běhy a dřívější lokální ověření databázového toku. Každý důkaz platí jen pro konkrétní prostředí a scénář.
 - **Neověřeno:** opakovatelná kvalita aktuálního Cloudflare návrhu, plný online provoz celé cesty, produkční bezpečnost a připravenost pro běžné použití.
-- **Plánováno:** návrat OR-Tools jako hlavního měsíčního solveru. Původní Python subprocess není automaticky vhodný pro Vercel; online hostování je první rozhodovací brána.
+- **Rozpracováno:** návrat OR-Tools jako hlavního měsíčního solveru. Model, online HTTP hranice a klient prošly dílčím syntetickým ověřením ve Vercel Preview; celý aplikační tok s perzistencí a produkční zapnutí zůstávají neověřené. Podrobnosti jsou v plánu výměny.
 - **Otevřeno:** zda bude AI někdy pouze převádět text do potvrditelných strukturovaných vstupů. Nesmí rozhodovat o přiřazení směn.
 
 Stav je snímek dokumentačního úklidu z 9. 11. 2026. Před tvrzením o aktuálním stavu kontroluj implementaci, pracovní strom a odpovídající ověření.
@@ -72,7 +72,7 @@ Historii lze dohledat přes uvedené commity a `git log`; starší jednotlivé z
 | 4.–5. 11. | Rozšířena kontrola historie a hranic měsíce, částečných vstupů, CI, syntetických scénářů, zabezpečení a provozních částí. Některé dřívější funkce později přestaly patřit do rozsahu pilotu. |
 | 6. 11. (`cecb725`, `f6d616d`) | Zvolen Cloudflare Workers AI jako online měsíční plánovač a sjednoceno UI; lokální Python solver byl odstraněn, aby projekt neměl dvě paralelní hlavní implementace a lokální subprocess závislost. To vyřešilo záměr online volání, ne důkaz spolehlivosti AI plánování. |
 | 7. 11. (`c886214`, `05021a2`) | Upřesněn cíl: manažer chce použitelný samostatně sestavený rozpis celého měsíce. Nevyžaduje se matematické optimum; neúspěch najít návrh se nesmí vydávat za důkaz nemožnosti. Pilot zúžen na celý měsíc a plné úvazky. |
-| 9. 11. 2026 | Uživatel změnil směr: OR-Tools se má vrátit jako hlavní solver. Zatím je to nové rozhodnutí a plán, nikoli obnovený kód; online runtime je nutné ověřit. |
+| 9. 11. 2026 | Uživatel změnil směr: OR-Tools se má vrátit jako hlavní solver. Vznikl izolovaný model a proběhla dílčí syntetická měření; napojení a ověření celého online toku zbývá. |
 
 Při starém OR-Tools pokusu byla optimalizační váha rotace směn a odchylky pracovního fondu pouze implementační volbou. Nesmí se znovu použít bez samostatného potvrzení. Starý solver také vynucoval přesné obsazení, což neodpovídá požadavku zobrazit neúplný, nepotvrditelný návrh; plán návratu tuto změnu výslovně řeší.
 

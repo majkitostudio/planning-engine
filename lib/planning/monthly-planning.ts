@@ -2,10 +2,14 @@ import { AiProviderError, isPlanDraft } from "./ai-provider";
 import { validateMonthlyInput, type MonthlyPlanningInput, type MonthlyRosterSnapshot } from "./domain/month-input";
 import { validateMonthlyPlan, type MonthlyBoundaryData, type MonthlyValidation } from "./domain/month-validation";
 import type { PlanDraft } from "./domain/types";
+import { MonthlySolverError } from "./monthly-ortools-client";
+import { MonthlyOrtoolsResultError } from "./monthly-ortools-provider";
 
 export interface MonthlyPlanDraft extends Omit<PlanDraft, "weekStart"> {
   readonly month: string;
   readonly instructionsOutcome: string;
+  readonly solverStatus?: "OPTIMAL" | "FEASIBLE";
+  readonly solverModelVersion?: string;
   readonly simulationScenario?: "complete" | "partial" | "unverified";
 }
 
@@ -17,7 +21,7 @@ export interface MonthlyPlanningProvider {
 export function isMonthlyPlanDraft(value: unknown, month: string, options: { allowLegacyEmptyAlternativeId?: boolean } = {}): value is MonthlyPlanDraft {
   if (typeof value !== "object" || value === null || Array.isArray(value)) return false;
   const draft = value as Record<string, unknown>;
-  if (draft.month !== month || typeof draft.instructionsOutcome !== "string" || (draft.simulationScenario !== undefined && draft.simulationScenario !== "complete" && draft.simulationScenario !== "partial" && draft.simulationScenario !== "unverified") || !isPlanDraft({ ...draft, weekStart: `${month}-01` }, options)) return false;
+  if (draft.month !== month || typeof draft.instructionsOutcome !== "string" || (draft.solverStatus !== undefined && draft.solverStatus !== "OPTIMAL" && draft.solverStatus !== "FEASIBLE") || (draft.solverModelVersion !== undefined && (typeof draft.solverModelVersion !== "string" || !draft.solverModelVersion.trim())) || (draft.simulationScenario !== undefined && draft.simulationScenario !== "complete" && draft.simulationScenario !== "partial" && draft.simulationScenario !== "unverified") || !isPlanDraft({ ...draft, weekStart: `${month}-01` }, options)) return false;
   const normalized = draft as unknown as MonthlyPlanDraft;
   return [...normalized.assignments, ...normalized.alternatives.flatMap((alternative) => alternative.assignments)].every((assignment) => assignment.shiftKind === "morning" || assignment.shiftKind === "afternoon");
 }
@@ -43,7 +47,7 @@ export function validateMonthlyDraft(input: MonthlyPlanningInput, draft: Monthly
 
 export type MonthlyPlanningOutcome =
   | { readonly ok: true; readonly draft: MonthlyPlanDraft; readonly validation: MonthlyValidation }
-  | { readonly ok: false; readonly code: "invalid_input" | "ai_failed" | "ai_invalid_output"; readonly message: string };
+  | { readonly ok: false; readonly code: "invalid_input" | "ai_failed" | "ai_invalid_output" | "solver_unknown" | "solver_infeasible" | "solver_failed" | "solver_invalid_output" | "solver_timeout"; readonly message: string };
 
 /** Jeden vstup, jedno volání poskytovatele a nezávislá kontrola celého návrhu. */
 export async function executeMonthlyPlanning(input: MonthlyPlanningInput, boundary: MonthlyBoundaryData, provider: MonthlyPlanningProvider): Promise<MonthlyPlanningOutcome> {
@@ -52,6 +56,16 @@ export async function executeMonthlyPlanning(input: MonthlyPlanningInput, bounda
   let draft: unknown;
   try { draft = await provider.generateMonthlyPlan(validated.value, boundary); }
   catch (error) {
+    if (error instanceof MonthlyOrtoolsResultError) {
+      if (error.status === "UNKNOWN") return { ok: false, code: "solver_unknown", message: "Solver v časovém limitu neurčil výsledek. Nejde o důkaz, že řešení neexistuje." };
+      if (error.status === "INFEASIBLE") return { ok: false, code: "solver_infeasible", message: "Solver pro zadaný model prokázal neproveditelnost. Příčina nebyla určena." };
+      return { ok: false, code: "solver_failed", message: "Solver nemohl zpracovat zadané podklady. Návrh nebyl uložen." };
+    }
+    if (error instanceof MonthlySolverError) {
+      if (error.code === "timeout") return { ok: false, code: "solver_timeout", message: "Vypršel časový limit solveru. Nejde o důkaz neproveditelnosti." };
+      if (error.code === "invalid_output") return { ok: false, code: "solver_invalid_output", message: "Solver vrátil neplatnou odpověď. Návrh nebyl uložen." };
+      return { ok: false, code: "solver_failed", message: "Solver nebo jeho vstup není dostupný či správně nakonfigurovaný. Návrh nebyl uložen." };
+    }
     if (error instanceof AiProviderError && error.code === "invalid_output") return { ok: false, code: "ai_invalid_output", message: "AI vrátila neplatný návrh." };
     if (error instanceof AiProviderError && error.code === "not_configured") {
       return { ok: false, code: "ai_failed", message: "AI plánovač není nakonfigurovaný: chybí přístupové údaje. Návrh nebyl vytvořen." };

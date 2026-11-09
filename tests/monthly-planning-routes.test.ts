@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const actor = { userId: "m", email: "m@example.test", displayName: "Test", role: "manager" };
 const access = vi.fn();
@@ -7,7 +7,7 @@ const confirm = vi.fn();
 const loadBoundary = vi.fn();
 const getConfirmed = vi.fn();
 const loadPreviousWeeklyEmployees = vi.fn();
-const monthlyMode = vi.hoisted(() => ({ value: "simulated" as "simulated" | "cloudflare" }));
+const monthlyMode = vi.hoisted(() => ({ value: "simulated" as "simulated" | "cloudflare" | "ortools" }));
 const generateCloudflare = vi.hoisted(() => vi.fn());
 vi.mock("@/lib/auth/route-access", () => ({ requirePlanningActor: () => access() }));
 vi.mock("@/lib/planning/monthly-runtime", () => ({ getMonthlyRuntime: () => ({ configured: true, mode: monthlyMode.value, create, confirm, loadBoundary, getConfirmed }), getMonthlyPersistenceRuntime: () => ({ configured: true, create, confirm, loadBoundary, getConfirmed, loadPreviousWeeklyEmployees }) }));
@@ -21,6 +21,7 @@ const input = { month: "2026-11", employees: [{ id: "e1", displayName: "Test", e
 const request = (body: unknown) => new Request("http://localhost", { method: "POST", body: JSON.stringify(body), headers: { "Content-Type": "application/json" } });
 
 beforeEach(() => { vi.clearAllMocks(); monthlyMode.value = "simulated"; access.mockResolvedValue({ ok: true, actor }); loadBoundary.mockResolvedValue({ before: { complete: false, assignments: [] }, after: { complete: false, assignments: [] } }); });
+afterEach(() => { vi.unstubAllEnvs(); vi.unstubAllGlobals(); });
 
 describe("měsíční plánovací API", () => {
   it("uloží pouze návrh a vrátí neověřené kontroly", async () => {
@@ -42,6 +43,29 @@ describe("měsíční plánovací API", () => {
     expect(body.mode).toBe("cloudflare");
     expect(generateCloudflare).toHaveBeenCalledOnce();
     expect(create).toHaveBeenCalledWith(expect.objectContaining({ mode: "cloudflare", providerName: "cloudflare" }));
+  });
+  it("spustí OR-Tools, uloží jen návrh a částečné obsazení blokuje potvrzení", async () => {
+    monthlyMode.value = "ortools";
+    vi.stubEnv("PLANNING_ORTOOLS_URL", "https://solver.example/api/monthly_solver");
+    vi.stubEnv("PLANNING_ORTOOLS_TOKEN", "x".repeat(32));
+    vi.stubGlobal("fetch", vi.fn(async () => Response.json({ status: "FEASIBLE", modelVersion: "monthly-cpsat-v1", assignments: [] })));
+    const response = await run(request({ input: { ...input, staffingRequirements: [{ date: "2026-11-02", shiftKind: "morning", requiredEmployees: 1 }] } }));
+    const body = await response.json();
+    expect(response.status).toBe(200);
+    expect(body).toMatchObject({ mode: "ortools", draft: { solverStatus: "FEASIBLE", solverModelVersion: "monthly-cpsat-v1" }, validation: { status: "invalid", canConfirm: false } });
+    expect(create).toHaveBeenCalledWith(expect.objectContaining({ mode: "ortools", providerName: "ortools" }));
+    expect(confirm).not.toHaveBeenCalled();
+  });
+  it("při UNKNOWN neuloží návrh ani nepřepne na jiný provider", async () => {
+    monthlyMode.value = "ortools";
+    vi.stubEnv("PLANNING_ORTOOLS_URL", "https://solver.example/api/monthly_solver");
+    vi.stubEnv("PLANNING_ORTOOLS_TOKEN", "x".repeat(32));
+    vi.stubGlobal("fetch", vi.fn(async () => Response.json({ status: "UNKNOWN" })));
+    const response = await run(request({ input }));
+    expect(response.status).toBe(422);
+    expect(await response.json()).toMatchObject({ ok: false, code: "solver_unknown" });
+    expect(create).not.toHaveBeenCalled();
+    expect(generateCloudflare).not.toHaveBeenCalled();
   });
   it("viewer nemůže spustit ani potvrdit běh", async () => {
     access.mockResolvedValue({ ok: true, actor: { ...actor, role: "viewer" } });

@@ -19,14 +19,14 @@ export function monthlyRosterCaption({ confirmed, month, mode }: { readonly conf
   const modeLabel = mode === "simulated" ? " · simulovaný"
     : mode === "cloudflare" ? " · AI Cloudflare"
       : mode === "gemini" ? " · AI Gemini"
-        : mode === "ortools" ? " · starší místní plánovač"
+        : mode === "ortools" ? " · OR-Tools"
           : "";
   return `${confirmed ? "Potvrzený rozpis" : "Nepotvrzený návrh"} · ${month}${modeLabel}`;
 }
 
 export function monthlyInstructionMessage(mode: "simulated" | "gemini" | "ortools" | "cloudflare", outcome: string): string {
   if (mode === "simulated") return "Ukázkový návrh doplňující pokyny nevyhodnocuje.";
-  if (mode === "ortools") return "Starší místní plánovač doplňující pokyny nevyhodnotil.";
+  if (mode === "ortools") return "Plánovač OR-Tools doplňující pokyny nevyhodnotil.";
   const statement = outcome.trim() || "AI neposkytla vysvětlení k pokynům.";
   return `AI uvedla: ${statement} Toto tvrzení nebylo samostatně ověřeno.`;
 }

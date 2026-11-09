@@ -30,6 +30,14 @@ export type MonthlyProviderRuntime =
 
 export function getMonthlyProviderRuntime(env: Readonly<Record<string, string | undefined>> = process.env): MonthlyProviderRuntime {
   const explicit = env.PLANNING_MONTHLY_PROVIDER?.trim();
+  if (explicit === "ortools") {
+    try {
+      const url = new URL(env.PLANNING_ORTOOLS_URL ?? "");
+      const token = env.PLANNING_ORTOOLS_TOKEN ?? "";
+      if (url.protocol === "https:" && !url.username && !url.password && !url.search && !url.hash && token.length >= 32 && token.trim() === token && !/[\r\n]/.test(token)) return { configured: true, mode: explicit };
+    } catch { /* Neplatná konfigurace nesmí zapnout jiný provider. */ }
+    return { configured: false, reason: "Režim OR-Tools vyžaduje platnou HTTPS adresu solveru a přístupový klíč v nastavení serveru." };
+  }
   if (explicit === "gemini") return monthlyGeminiUnavailable;
   if (explicit === "cloudflare") {
     return hasCloudflareCredentials(env)
@@ -37,7 +45,7 @@ export function getMonthlyProviderRuntime(env: Readonly<Record<string, string | 
       : monthlyCloudflareUnavailable;
   }
   if (explicit === "simulated") return { configured: true, mode: explicit };
-  if (explicit) return { configured: false, reason: "PLANNING_MONTHLY_PROVIDER má neznámou hodnotu. Povolené jsou „simulated“, „gemini“ a „cloudflare“." };
+  if (explicit) return { configured: false, reason: "PLANNING_MONTHLY_PROVIDER má neznámou hodnotu. Povolené jsou „simulated“, „gemini“, „cloudflare“ a „ortools“." };
   const planning = getPlanningRuntime(env);
   if (planning.configured && planning.mode === "gemini") return monthlyGeminiUnavailable;
   return planning.configured ? { configured: true, mode: planning.mode } : { configured: false, reason: planning.reason };

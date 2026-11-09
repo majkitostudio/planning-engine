@@ -4,6 +4,15 @@ import { getMonthlyPersistenceRuntime, getMonthlyProviderRuntime, getMonthlyRunt
 afterEach(() => vi.unstubAllEnvs());
 
 describe("měsíční provozní konfigurace", () => {
+  it("povolí OR-Tools jen výslovně a bez záložního provideru", () => {
+    const token = "a".repeat(32);
+    expect(getMonthlyProviderRuntime({ PLANNING_MONTHLY_PROVIDER: "ortools", PLANNING_ORTOOLS_URL: "https://example.com/api/monthly_solver", PLANNING_ORTOOLS_TOKEN: token })).toEqual({ configured: true, mode: "ortools" });
+    for (const env of [
+      { PLANNING_MONTHLY_PROVIDER: "ortools", PLANNING_PROVIDER: "simulated" },
+      { PLANNING_MONTHLY_PROVIDER: "ortools", PLANNING_ORTOOLS_URL: "http://example.com", PLANNING_ORTOOLS_TOKEN: token },
+      { PLANNING_MONTHLY_PROVIDER: "ortools", PLANNING_ORTOOLS_URL: "https://example.com", PLANNING_ORTOOLS_TOKEN: "short" },
+    ]) expect(getMonthlyProviderRuntime(env)).toMatchObject({ configured: false });
+  });
   it.each([
     { PLANNING_MONTHLY_PROVIDER: "gemini", PLANNING_PROVIDER: "" },
     { PLANNING_PROVIDER: "gemini" },
