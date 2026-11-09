@@ -74,6 +74,7 @@ Ověřen zdroj `scripts/monthly_solver.py` a adaptér v rodiči `f6d616d` proti 
 - Lokální výchozí Python 3.15 nemá dostupný wheel OR-Tools 9.15.6755; tato verze byla pro další izolované pokusy nainstalována mimo repozitář pod Pythonem 3.14. Instalace není ověření měsíčního modelu ani online provozu.
 - První samostatný Python CP-SAT model minimalizuje součet neobsazených míst, nepoužívá měkké váhy a zachovává stavy `OPTIMAL` a `FEASIBLE`. Neznámé požadavky, dostupnost přiřazených a úplnost návazností vrací zvlášť; ještě není propojen s TypeScript kontraktem ani nezávislým validátorem. Při implementaci byla opravena historická mez kontroly šestice začínající sedm dní před měsícem.
 - Jedno lokální syntetické měření pro 100 zaměstnanců, 30 dní a 20 lidí na každou směnu: 2,11 s včetně sestavení modelu, `OPTIMAL`, 1 200 přiřazení, nulový součet nedostatků. Není to měření Preview, souběhu, nejhoršího případu ani důkaz použitelné kvality rozpisu; další testy jsou nutné.
+- Lokální syntetické porovnání Python modelu s nezávislým TypeScript validátorem zahrnuje úplné pokrytí, částečný návrh, chybějící požadavek, dostupnost a historii a vlastní čas před měsícem. Částečný i neověřené návrhy validátor odmítl k potvrzení; porovnávají se také jednotlivé nedostatečně obsazené směny. Python test navíc prověřuje oba přechody času přímo v modelu přes hranici měsíce. Přidán CI job pro Python 3.14, modelové testy a toto porovnání; vzdálený CI běh zatím nebyl ověřen.
 
 ### 3. Obnovit a upravit CP-SAT model
 

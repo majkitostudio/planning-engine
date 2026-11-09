@@ -70,6 +70,20 @@ class MonthlySolverTest(unittest.TestCase):
             start = solver.local_instant(day + dt.timedelta(days=2), "07:45", zone)
             self.assertEqual((start - end).total_seconds() / 3600, expected)
 
+    def test_dst_rest_across_month_boundary(self):
+        for month, previous, start, expect_shortage in (("2024-04", "2024-03", 25, True), ("2021-11", "2021-10", 25, False)):
+            with self.subTest(month=month):
+                request = fixture(month)
+                request["boundary"]["before"]["complete"] = False
+                requirement(request, f"{month}-01")
+                request["boundary"]["before"]["assignments"] = [
+                    {"employeeId": "e0", "date": f"{previous}-{day}", "startTime": "12:00", "endTime": "21:00"}
+                    for day in range(start, start + 6)
+                ]
+                result = solver.solve(request)
+                self.assertEqual(result["status"], "OPTIMAL")
+                self.assertEqual(bool(result["shortages"]), expect_shortage)
+
     def test_invalid_inputs_and_runtime_error(self):
         request = fixture()
         cases = []
