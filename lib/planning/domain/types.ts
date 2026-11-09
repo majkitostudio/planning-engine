@@ -13,8 +13,8 @@ import type { PlanProposal } from "../types";
  * - zamykání přiřazení (OQ9–OQ11, OQ7);
  * - potvrzení nebo uložení plánu — to je samostatný krok mimo AI i validaci.
  *
- * Kontrakt je návrh k ověření (`PROPOSAL`), ne hotová doménová specifikace.
- * Podrobný popis a otevřené otázky jsou v `docs/PLANNING_CONTRACT.md`.
+ * Jde o starší týdenní kontrakt. Aktuální rozsah projektu a stavy rozhodnutí
+ * shrnuje `docs/PROJECT_MAP.md`; při změně ověř volající kód a testy.
  */
 
 /** Kalendářní datum ve formátu `YYYY-MM-DD` v časové zóně plánu. */

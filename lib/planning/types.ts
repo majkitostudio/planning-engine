@@ -2,9 +2,8 @@
  * Kontrakty čistého plánovacího jádra.
  *
  * Jádro je záměrně **doménově nezávislé**: nezná směny, zaměstnance, úvazky
- * ani tvrdá pravidla H1–H7. Konkrétní doménové typy se doplní až po
- * schválení kontraktu (viz `docs/DOMAIN_SPECIFICATION.md`, OQ3–OQ5 a
- * OQ9–OQ11).
+ * ani tvrdá pravidla H1–H7. Jde o obecnou vrstvu; aktuální měsíční pravidla a
+ * rozsah shrnuje `docs/PROJECT_MAP.md`.
  *
  * Cílový tok:
  *

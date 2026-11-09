@@ -1,7 +1,7 @@
 /**
  * Doménově omezený systémový prompt pro plánovače směn.
  *
- * Používá POUZE ověřená rozhodnutí z AGENTS.md a docs/DOMAIN_SPECIFICATION.md.
+ * Používá POUZE ověřená rozhodnutí z AGENTS.md a docs/PROJECT_MAP.md.
  * Všechno neověřené musí být explicitně uvedeno v assumptions. Nic se nesmí
  * domýšlet (limity, přestávky, role apod.).
  */
