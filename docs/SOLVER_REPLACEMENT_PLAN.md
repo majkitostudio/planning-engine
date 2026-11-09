@@ -49,6 +49,18 @@ Tím je ověřena dostupnost Python funkce, instalace OR-Tools a její základn�
 
 **Brána 1 — základní runtime:** minimální instalace, sestavení a běh OR-Tools ve Vercel Preview prošly; lze pokračovat k obnově skutečného měsíčního modelu. Před jeho přepnutím do hlavní aplikace ještě změřit velikost kompletní funkce, cold start, souběh, limity času a běh na syntetickém měsíci s cílovým počtem lidí. Pokud tyto kontroly neprojdou, předložit varianty hostování a nákladů k rozhodnutí; nepřepínat na neověřenou variantu.
 
+### Porovnání původního solveru se současným kódem (9. 11. 2026)
+
+Ověřen zdroj `scripts/monthly_solver.py` a adaptér v rodiči `f6d616d` proti současnému `month-input.ts`, `month-validation.ts` a měsíční orchestraci. Samotné porovnání neznamená obnovení solveru.
+
+- Starý model požaduje úplný seznam obsazení a přesný počet přiřazení na každou směnu. Současný vstup připouští chybějící požadavky; validátor je označuje jako neověřené. Návrat musí bezpečně rozlišit chybějící podklad od zadané nuly a neúplného obsazení.
+- Starý model řeší jeden celý měsíc i historický částečný rozsah a částečné úvazky; nový pilot vyžaduje celý měsíc a plné úvazky. Starý adaptér spouští lokální podproces a není hotovým online řešením.
+- Starý model používá odchylku fondu a opakování typu směny jako vážený měkký cíl. Současný validátor uvádí pracovní fond a střídání v samostatných informativních nálezech; samy neblokují potvrzení. Historické váhy proto nejsou schváleným výchozím nastavením.
+- Starý adaptér z okolní historie vynechává směny bez typu a označuje danou stranu jako neúplnou. Současný validátor umí kontrolovat také vlastní přesné časy; nový model a adaptér musí tyto podklady zohlednit bez předstírání úplnosti.
+- Starý solver slučuje `OPTIMAL` a `FEASIBLE` do `feasible`. Nový výstup musí oba stavy zachovat a `UNKNOWN` ani provozní chybu nevydávat za `INFEASIBLE`.
+- Současný validátor blokuje potvrzení při nedostatečném obsazení a při neověřených nezbytných podkladech. Cílené existující syntetické testy validátoru, měsíční orchestrace a rout prošly lokálně: 3 soubory, 44 testů. Nejde o test obnoveného solveru ani celého databázového toku.
+- Historický Python solver a jeho testy byly z rodiče `f6d616d` spuštěny mimo pracovní strom na lokálním Pythonu 3.14 s OR-Tools 9.15.6755: prošlo 28 historických testů. Ověřují starý model, nikoli požadované nové chování, výkon nebo online integraci.
+
 ### 3. Obnovit a upravit CP-SAT model
 
 Původní zdroj je dohledatelný v rodiči commitu `f6d616d` (commit `31c634d` přidal měsíční solver; `f6d616d` jej odstranil). Před kopírováním porovnat tehdejší model se současným měsíčním kontraktem. Obnovit pouze aktuálně potřebný celý kalendářní měsíc a plné úvazky; starou podporu částečných úvazků a částečných měsíců nepřenášet do pilotu bez nové dohody.
