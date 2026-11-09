@@ -1,6 +1,7 @@
 import copy
 import datetime as dt
 import unittest
+from concurrent.futures import ThreadPoolExecutor
 from unittest.mock import patch
 
 from ortools.sat.python import cp_model
@@ -123,6 +124,25 @@ class MonthlySolverTest(unittest.TestCase):
         for day in range(2, 9):
             requirement(request, f"2026-11-{day:02d}")
         self.assertEqual(solver.solve(request), solver.solve(request))
+
+    def test_real_solver_timeout_is_not_infeasible(self):
+        request = fixture(people=10)
+        for day in range(1, 31):
+            for kind in solver.KINDS:
+                requirement(request, f"2026-11-{day:02d}", 3, kind)
+        request["timeoutSeconds"] = 1e-9
+        self.assertEqual(solver.solve(request), {"status": "UNKNOWN"})
+
+    def test_concurrent_requests_remain_independent(self):
+        requests = [fixture(people=2) for _ in range(4)]
+        for index, request in enumerate(requests):
+            requirement(request, "2026-11-02", index)
+        with ThreadPoolExecutor(max_workers=4) as pool:
+            results = list(pool.map(solver.solve, requests))
+        for index, result in enumerate(results):
+            self.assertEqual(result["status"], "OPTIMAL")
+            self.assertEqual(len(result["assignments"]), min(index, 2))
+            self.assertEqual(sum(item["missing"] for item in result["shortages"]), max(0, index - 2))
 
     def test_infeasible_fixed_history(self):
         request = fixture()
