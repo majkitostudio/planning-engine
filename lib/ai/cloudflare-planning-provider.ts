@@ -129,7 +129,29 @@ function buildWeekPayload(
   week: WeekRange,
   previousAssignments: readonly MonthlyPlanDraft["assignments"][number][],
 ) {
-  const employeeIds = new Set(input.employees.map((employee) => employee.id));
+  const employeeIndexes = new Map(input.employees.map((employee, index) => [employee.id, index]));
+  const availabilityByCell = new Map(
+    input.availability
+      .filter((item) => inRange(item.date, week))
+      .map((item) => [`${item.employeeId}|${item.date}|${item.shiftKind}`, item.available] as const),
+  );
+  const shiftCode = (shiftKind: "morning" | "afternoon") => shiftKind === "morning" ? "M" : "A";
+  const compactAssignments = (assignments: readonly MonthlyPlanDraft["assignments"][number][]) =>
+    assignments.flatMap((item) => {
+      const employeeIndex = employeeIndexes.get(item.employeeId);
+      return employeeIndex === undefined ? [] : [[employeeIndex, item.date, shiftCode(item.shiftKind)]];
+    });
+  const compactBoundaryAssignments = (assignments: MonthlyBoundaryData["before"]["assignments"]) =>
+    assignments.flatMap((item) => {
+      const employeeIndex = employeeIndexes.get(item.employeeId);
+      return employeeIndex === undefined ? [] : [[
+        employeeIndex,
+        item.date,
+        item.shiftKind ? shiftCode(item.shiftKind) : "?",
+        item.startTime ?? null,
+        item.endTime ?? null,
+      ]];
+    });
   return {
     month: input.month,
     weekStart: week.startDate,
@@ -140,21 +162,58 @@ function buildWeekPayload(
       displayName: employee.displayName,
       employmentType: employee.employmentType,
     })),
-    absences: input.absences.filter((absence) => absence.to >= week.startDate && absence.from <= week.endDate),
-    availability: input.availability.filter((item) => inRange(item.date, week)),
-    staffingRequirements: input.staffingRequirements.filter((item) => inRange(item.date, week)),
+    // Explicit categories prevent true, false, and an omitted record from
+    // becoming indistinguishable while keeping the per-week payload compact.
+    availabilityLegend: "availability entries are [employeeIndex, dateIndex, shiftKind]; dateIndex points into dates; shiftKind is morning or afternoon; available means known true, unavailable means known false, missing means no source record (unknown, not true)",
+    availability: (() => {
+      const states = {
+        available: [] as [number, number, "morning" | "afternoon"][],
+        unavailable: [] as [number, number, "morning" | "afternoon"][],
+        missing: [] as [number, number, "morning" | "afternoon"][],
+      };
+      input.employees.forEach((employee, employeeIndex) => {
+        week.dates.forEach((date, dateIndex) => {
+          (["morning", "afternoon"] as const).forEach((shiftKind) => {
+            const available = availabilityByCell.get(`${employee.id}|${date}|${shiftKind}`);
+            const state = available === undefined ? "missing" : available ? "available" : "unavailable";
+            states[state].push([employeeIndex, dateIndex, shiftKind]);
+          });
+        });
+      });
+      return states;
+    })(),
+    absenceLegend: "absences are objects {employeeIndex, from, to, type, status}; type and status use their full input values. approved is a confirmed absence and blocks assignments; pending is not approved; rejected is not an absence approval. Do not treat pending or rejected as approved.",
+    absences: input.absences
+      .filter((absence) => absence.to >= week.startDate && absence.from <= week.endDate)
+      .map((absence) => ({
+        employeeIndex: employeeIndexes.get(absence.employeeId),
+        from: absence.from,
+        to: absence.to,
+        type: absence.type,
+        status: absence.status,
+      })),
+    staffingRequirements: input.staffingRequirements
+      .filter((item) => inRange(item.date, week))
+      .map((item) => [item.date, shiftCode(item.shiftKind), item.requiredEmployees]),
     requiredAssignmentsTotal: input.staffingRequirements
       .filter((item) => inRange(item.date, week))
       .reduce((sum, item) => sum + item.requiredEmployees, 0),
-    workFunds: input.workFunds ?? [],
+    workFunds: (input.workFunds ?? []).map((fund) => [employeeIndexes.get(fund.employeeId), fund.hours, fund.excusedHours]),
     instructions: input.instructions,
     shiftRotationPreference: input.shiftRotationPreference === true,
+    boundaryLegend: "boundary assignments rows are [employeeIndex, date, shiftCode, startTime, endTime]; M=morning, A=afternoon, ?=shift kind unknown, null=missing time",
     boundary: {
-      before: boundary.before.assignments.filter((item) => employeeIds.has(item.employeeId)),
-      after: boundary.after.assignments.filter((item) => employeeIds.has(item.employeeId)),
+      before: {
+        complete: boundary.before.complete,
+        assignments: compactBoundaryAssignments(boundary.before.assignments),
+      },
+      after: {
+        complete: boundary.after.complete,
+        assignments: compactBoundaryAssignments(boundary.after.assignments),
+      },
     },
-    // Návaznost uvnitř měsíce: předchozí týdny jsou už hotové.
-    previousAssignments: previousAssignments.filter((item) => item.date < week.startDate),
+    // Preserve the complete preceding history; compact employee IDs to indexes.
+    previousAssignments: compactAssignments(previousAssignments.filter((item) => item.date < week.startDate)),
   };
 }
 
@@ -179,7 +238,7 @@ function buildPrompt(payload: unknown): string {
     "",
     "# Úkol",
     "Vyplň pouze dny uvedené v `dates`; ostatní dny neměň.",
-    "Cílem je pokrýt co nejvíce požadovaného obsazení: pro každý den v `dates` a každý `shiftKind` v `staffingRequirements` přiřaď přesně `requiredEmployees` zaměstnanců, pokud to pravidla dovolí. Směnu nech nepokrytou jen s doloženým důvodem.",
+    "Cílem je pokrýt co nejvíce požadovaného obsazení: pro každý řádek `staffingRequirements` přiřaď požadovaný počet zaměstnanců, pokud to pravidla dovolí. Směnu nech nepokrytou jen s doloženým důvodem.",
     "Nepřiřazuj jednomu zaměstnanci ranní i odpolední směnu ve stejný den.",
     requiredTotal !== null
       ? `V tomto týdnu je požadováno celkem ${requiredTotal} přiřazení (součet requiredEmployees); snaž se dosáhnout tohoto počtu.`
@@ -191,6 +250,8 @@ function buildPrompt(payload: unknown): string {
     "Textové instrukce jsou přání, nikoli další tvrdé pravidlo; popiš, jak jsi je zohlednil, v `instructionsOutcome`.",
     "Použij skutečná jména i ID ze vstupu. Nezkracuj seznam zaměstnanců.",
     "Vrať pouze validní JSON podle schématu z `response_format`.",
+    "",
+    "Kódování: index zaměstnance je pozice v `employees`, počínaje nulou; ve výstupu použij jeho skutečné ID, nikoli index. `availability` obsahuje oddělené seznamy `available`, `unavailable` a `missing`, jejichž položky [index zaměstnance, index data, směna] odkazují na `employees`, `dates` a plný název směny (`morning`/`afternoon`). Zachovej přesné rozlišení: available=známé true, unavailable=známé false, missing=žádný údaj/unknown; missing nikdy neznamená dostupný. Absence jsou objekty s indexem zaměstnance, `from`, `to`, plným `type` a plným `status` (`approved`, `pending`, `rejected`). Schválené (`approved`) absence jsou potvrzené a blokují přiřazení; pending není schválená absence a rejected není schválená absence. Nezaměňuj statusy. Požadavky jsou [datum, směna (M=ranní, A=odpolední), počet]. Fondy jsou [index zaměstnance, fond v hodinách, omluvené hodiny]. Historie přiřazení jsou [index zaměstnance, datum, směna]. Boundary assignments jsou [index zaměstnance, datum, směna, začátek, konec] (?=neznámý typ směny, null=chybějící čas); `complete` říká, zda jsou podklady hranice úplné.",
     "",
     "# Vstup",
     JSON.stringify(payload),
