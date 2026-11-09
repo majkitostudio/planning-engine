@@ -9,6 +9,7 @@ import { executeMonthlyPlanning } from "@/lib/planning/monthly-planning";
 import { getMonthlyRuntime } from "@/lib/planning/monthly-runtime";
 import { SimulatedMonthlyProvider } from "@/lib/planning/simulated/monthly-provider";
 import { MonthlyOrtoolsProvider } from "@/lib/planning/monthly-ortools-provider";
+import { resolveOrtoolsUrl } from "@/lib/planning/monthly-ortools-client";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -40,7 +41,7 @@ export async function POST(request: Request) {
     const effectiveMode = providerOverride === "simulated" ? "simulated" : current.mode;
     const provider = effectiveMode === "simulated" ? new SimulatedMonthlyProvider("complete")
       : effectiveMode === "gemini" ? new GeminiPlanningProvider()
-        : effectiveMode === "ortools" ? new MonthlyOrtoolsProvider({ url: process.env.PLANNING_ORTOOLS_URL ?? "", token: process.env.PLANNING_ORTOOLS_TOKEN ?? "" })
+        : effectiveMode === "ortools" ? new MonthlyOrtoolsProvider({ url: resolveOrtoolsUrl(process.env), token: process.env.PLANNING_ORTOOLS_TOKEN ?? "" })
         : new CloudflarePlanningProvider();
     const result = await executeMonthlyPlanning(planningInput, boundary, provider);
     if (!result.ok) {

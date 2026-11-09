@@ -46,7 +46,7 @@ export function LoginForm({
           Heslo bylo změněno. Přihlaste se znovu novým heslem.
         </p>
       ) : null}
-      <form className="login__form" onSubmit={(event) => void handleSignIn(event)}>
+      <form className="login__form" method="post" action="/prihlaseni" onSubmit={(event) => void handleSignIn(event)}>
         {authMode === "local" || authMode === "database" ? (
           <>
             <div className="field">

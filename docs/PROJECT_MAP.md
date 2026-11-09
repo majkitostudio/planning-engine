@@ -53,7 +53,7 @@ Tyto body zachycují schválené požadavky, ne potvrzení, že všechny jsou sp
 - **Implementováno:** měsíční UI/API, Cloudflare adaptér, deterministický validátor, simulovaný provider, oddělené potvrzení a perzistence v Prisma režimu.
 - **Částečně ověřeno:** některé izolované kontroly, syntetické běhy a dřívější lokální ověření databázového toku. Každý důkaz platí jen pro konkrétní prostředí a scénář.
 - **Neověřeno:** opakovatelná kvalita aktuálního Cloudflare návrhu, plný online provoz celé cesty, produkční bezpečnost a připravenost pro běžné použití.
-- **Rozpracováno:** návrat OR-Tools jako hlavního měsíčního solveru. Model, online HTTP hranice a klient prošly syntetickým ověřením ve Vercel Preview a jednoduchý přihlášený tok s izolovanou databází prošel lokálně; produkční zapnutí zůstává neprovedené. Podrobnosti jsou v plánu výměny.
+- **Rozpracováno:** návrat OR-Tools jako hlavního měsíčního solveru. Model, online HTTP hranice a klient prošly syntetickým ověřením a celý jednoduchý přihlášený tok prošel i ve Vercel Preview s oddělenou testovací databází; produkční zapnutí zůstává neprovedené. Podrobnosti jsou v plánu výměny.
 - **Otevřeno:** zda bude AI někdy pouze převádět text do potvrditelných strukturovaných vstupů. Nesmí rozhodovat o přiřazení směn.
 
 Stav je snímek dokumentačního úklidu z 9. 11. 2026. Před tvrzením o aktuálním stavu kontroluj implementaci, pracovní strom a odpovídající ověření.

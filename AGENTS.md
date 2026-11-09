@@ -26,7 +26,7 @@ Pracovní pravidla pro samostatný projekt `planning-engine`.
 
 ## Plánovací směr a pravidla
 
-- Rozhodnutí uživatele z 9. 11. 2026: obnovit OR-Tools jako hlavní solver. Stav je **PLANNED**, zatím neimplementováno. Starší rozhodnutí o Cloudflare AI jako hlavní logice je nahrazeno. Kód Cloudflare nemaž ani tiše nepoužívej jako záložní solver; podrobnosti a postup jsou v [`docs/SOLVER_REPLACEMENT_PLAN.md`](docs/SOLVER_REPLACEMENT_PLAN.md).
+- Rozhodnutí uživatele z 9. 11. 2026: obnovit OR-Tools jako hlavní solver. Stav je **IN_PROGRESS**: implementace je výslovně volitelná a synteticky ověřená, produkční přepnutí zatím neproběhlo. Starší rozhodnutí o Cloudflare AI jako hlavní logice je nahrazeno. Kód Cloudflare nemaž ani tiše nepoužívej jako záložní solver; podrobnosti a postup jsou v [`docs/SOLVER_REPLACEMENT_PLAN.md`](docs/SOLVER_REPLACEMENT_PLAN.md).
 - AI není autoritou pro přiřazování směn. Její možná role při převodu volného textu na strukturovaný vstup zůstává otevřená; nepřipojuj takové zpracování do běhu bez schváleného rozsahu.
 - Měsíční návrh, jeho nezávislá deterministická validace a manažerem potvrzené změny jsou různé stavy. Návrh sám nesmí změnit potvrzený rozpis. `invalid` a `not_verified` blokují potvrzení; chybějící podklad není důkazem správnosti ani neproveditelnosti.
 - Pilot cílí na celý kalendářní měsíc a zaměstnance na plný úvazek. Týdenní tabulka je pohled do měsíce. Částečné úvazky a integrace jsou mimo současný rozsah.

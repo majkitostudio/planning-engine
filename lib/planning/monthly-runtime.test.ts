@@ -13,6 +13,14 @@ describe("měsíční provozní konfigurace", () => {
       { PLANNING_MONTHLY_PROVIDER: "ortools", PLANNING_ORTOOLS_URL: "https://example.com", PLANNING_ORTOOLS_TOKEN: "short" },
     ]) expect(getMonthlyProviderRuntime(env)).toMatchObject({ configured: false });
   });
+  it("na Vercelu použije vlastní deployment, nikoli libovolného hostitele", () => {
+    const token = "a".repeat(32);
+    expect(getMonthlyProviderRuntime({ PLANNING_MONTHLY_PROVIDER: "ortools", VERCEL: "1", VERCEL_URL: "planning-engine-test.vercel.app", PLANNING_ORTOOLS_TOKEN: token })).toEqual({ configured: true, mode: "ortools" });
+    for (const host of ["example.com", "example.vercel.app.evil.com", "https://example.vercel.app", "example.vercel.app/path"]) {
+      expect(getMonthlyProviderRuntime({ PLANNING_MONTHLY_PROVIDER: "ortools", VERCEL: "1", VERCEL_URL: host, PLANNING_ORTOOLS_TOKEN: token })).toMatchObject({ configured: false });
+    }
+    expect(getMonthlyProviderRuntime({ PLANNING_MONTHLY_PROVIDER: "ortools", VERCEL_URL: "example.vercel.app", PLANNING_ORTOOLS_TOKEN: token })).toMatchObject({ configured: false });
+  });
   it.each([
     { PLANNING_MONTHLY_PROVIDER: "gemini", PLANNING_PROVIDER: "" },
     { PLANNING_PROVIDER: "gemini" },

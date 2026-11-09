@@ -18,6 +18,15 @@ export interface OrtoolsClientOptions {
   readonly fetcher?: typeof fetch;
 }
 
+/** Vercel poskytuje název právě běžícího deploymentu; nikdy nepřebíráme hostitele z HTTP požadavku. */
+export function resolveOrtoolsUrl(env: Readonly<Record<string, string | undefined>>): string {
+  const explicit = env.PLANNING_ORTOOLS_URL?.trim();
+  if (explicit) return explicit;
+  const host = env.VERCEL_URL?.trim().toLowerCase();
+  if (env.VERCEL !== "1" || !host || !/^[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.vercel\.app$/.test(host)) return "";
+  return `https://${host}/api/monthly_solver`;
+}
+
 // Technické limity přenosu, nikoli produktové limity počtu zaměstnanců.
 const MAX_REQUEST_BYTES = 3_000_000;
 const MAX_RESPONSE_BYTES = 3_000_000;

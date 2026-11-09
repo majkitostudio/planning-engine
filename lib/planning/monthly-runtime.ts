@@ -8,6 +8,7 @@ import { loadMonthlyBoundary, loadMonthlyRosterSnapshot, loadPreviousWeeklyEmplo
 import { resolveMonthlyRosterHistory } from "./domain/month-history";
 import type { PlanningActor } from "../auth/actor";
 import type { MonthlyDraftRecord } from "./monthly-store";
+import { resolveOrtoolsUrl } from "./monthly-ortools-client";
 
 const memory = new InMemoryMonthlyStore();
 const missingBoundary = { before: { complete: false, assignments: [] }, after: { complete: false, assignments: [] } } as const;
@@ -32,7 +33,7 @@ export function getMonthlyProviderRuntime(env: Readonly<Record<string, string | 
   const explicit = env.PLANNING_MONTHLY_PROVIDER?.trim();
   if (explicit === "ortools") {
     try {
-      const url = new URL(env.PLANNING_ORTOOLS_URL ?? "");
+      const url = new URL(resolveOrtoolsUrl(env));
       const token = env.PLANNING_ORTOOLS_TOKEN ?? "";
       if (url.protocol === "https:" && !url.username && !url.password && !url.search && !url.hash && token.length >= 32 && token.trim() === token && !/[\r\n]/.test(token)) return { configured: true, mode: explicit };
     } catch { /* Neplatná konfigurace nesmí zapnout jiný provider. */ }
