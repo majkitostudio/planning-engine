@@ -6,7 +6,7 @@ Stručný přehled současné aplikace, ověřených doménových pravidel a toh
 
 Plánovací Engine je nekomerční ukázková aplikace pro jednoho manažera call centra. Má sestavit použitelný rozpis na celý kalendářní měsíc. Manažer zadává zaměstnance, absence, dostupnost, potřebné obsazení a případné pokyny. Hlavním výsledkem má být samostatně vytvořený návrh, ne seznam kombinací, které musí manažer ručně hledat.
 
-Projekt není hotový ani produkčně ověřený. Rozhodnutí z 9. 11. 2026 říká vrátit OR-Tools jako hlavní solver. Výměna je **IN_PROGRESS**: model a explicitně volitelný provider jsou implementovány, ale výchozí nastavení nebylo přepnuto a celý tok s perzistencí není ověřen. Cílovým hostováním zůstávají Vercel Hobby a stávající Neon Free.
+Projekt není hotový ani produkčně ověřený. Rozhodnutí z 9. 11. 2026 říká vrátit OR-Tools jako hlavní solver. Výměna je **IN_PROGRESS**: model a explicitně volitelný provider jsou implementovány a jednoduchý syntetický tok s perzistencí prošel; výchozí a produkční nastavení nebylo přepnuto. Cílovým hostováním zůstávají Vercel Hobby a stávající Neon Free.
 
 ## Tok aplikace
 
@@ -53,7 +53,7 @@ Tyto body zachycují schválené požadavky, ne potvrzení, že všechny jsou sp
 - **Implementováno:** měsíční UI/API, Cloudflare adaptér, deterministický validátor, simulovaný provider, oddělené potvrzení a perzistence v Prisma režimu.
 - **Částečně ověřeno:** některé izolované kontroly, syntetické běhy a dřívější lokální ověření databázového toku. Každý důkaz platí jen pro konkrétní prostředí a scénář.
 - **Neověřeno:** opakovatelná kvalita aktuálního Cloudflare návrhu, plný online provoz celé cesty, produkční bezpečnost a připravenost pro běžné použití.
-- **Rozpracováno:** návrat OR-Tools jako hlavního měsíčního solveru. Model, online HTTP hranice a klient prošly dílčím syntetickým ověřením ve Vercel Preview; celý aplikační tok s perzistencí a produkční zapnutí zůstávají neověřené. Podrobnosti jsou v plánu výměny.
+- **Rozpracováno:** návrat OR-Tools jako hlavního měsíčního solveru. Model, online HTTP hranice a klient prošly syntetickým ověřením ve Vercel Preview a jednoduchý přihlášený tok s izolovanou databází prošel lokálně; produkční zapnutí zůstává neprovedené. Podrobnosti jsou v plánu výměny.
 - **Otevřeno:** zda bude AI někdy pouze převádět text do potvrditelných strukturovaných vstupů. Nesmí rozhodovat o přiřazení směn.
 
 Stav je snímek dokumentačního úklidu z 9. 11. 2026. Před tvrzením o aktuálním stavu kontroluj implementaci, pracovní strom a odpovídající ověření.
