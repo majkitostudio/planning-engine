@@ -2,9 +2,18 @@
 
 **Rozhodnutí uživatele:** 9. 11. 2026 obnovit OR-Tools jako hlavní solver měsíčního rozpisu.
 
-**Stav:** `PLANNED` — implementace návratu ještě nezačala.
+**Stav:** `IN_PROGRESS` — existuje izolovaný první model, není napojen do aplikace ani ověřen pro online provoz.
 
 **Cíl:** jeden spolehlivý měsíční tok: manažer zadá podklady, solver sám hledá návrh, aplikace jej nezávisle ověří a manažer výslovně potvrdí.
+
+## Aktuální To-Do
+
+- [ ] Uzavřít omezený solverový kontrakt pro celý měsíc a plné úvazky; zachovat neznámé podklady a vlastní časy historie.
+- [ ] Obnovit CP-SAT model s explicitními neobsazenými místy a jediným cílem minimalizovat jejich součet, bez historických měkkých vah.
+- [ ] Synteticky ověřit pravidla, návaznosti, DST, chybové stavy, částečné návrhy, nezávislou validaci a výkon 100+ zaměstnanců.
+- [ ] Před přepnutím samostatně schválit a ověřit skutečný měsíční model v Preview včetně velikosti, cold startu, souběhu a limitů.
+- [ ] Podle výsledků bezpečně napojit explicitní provider, neutrální stavy a UI, bez fallbacku; zachovat historii a manažerské potvrzení.
+- [ ] Izolovaně ověřit celý tok včetně odmítnutí částečného návrhu; spustit kontroly, projít diff a vytvořit související commity.
 
 ## Co se mění a co zůstává
 
@@ -63,6 +72,8 @@ Ověřen zdroj `scripts/monthly_solver.py` a adaptér v rodiči `f6d616d` proti 
 - Při opětovné kontrole aktuálního kódu bylo potvrzeno, že chybějící dostupnost přiřazeného člověka je `not_verified`, nikoli známá dostupnost, a že nezadaný požadavek na obsazení není totéž co zadaná nula. Měsíční orchestrace dosud používá AI-specifické chyby a runtime zatím volbu `ortools` nepodporuje.
 - Doplněny syntetické regresní testy současného nezávislého validátoru pro jarní a podzimní změnu času v Praze. Společný cílený běh validátoru a měsíční orchestrace prošel: 2 soubory, 37 testů. Tyto testy nejsou testem solveru ani důkazem připravenosti nasazení.
 - Lokální výchozí Python 3.15 nemá dostupný wheel OR-Tools 9.15.6755; tato verze byla pro další izolované pokusy nainstalována mimo repozitář pod Pythonem 3.14. Instalace není ověření měsíčního modelu ani online provozu.
+- První samostatný Python CP-SAT model minimalizuje součet neobsazených míst, nepoužívá měkké váhy a zachovává stavy `OPTIMAL` a `FEASIBLE`. Neznámé požadavky, dostupnost přiřazených a úplnost návazností vrací zvlášť; ještě není propojen s TypeScript kontraktem ani nezávislým validátorem. Při implementaci byla opravena historická mez kontroly šestice začínající sedm dní před měsícem.
+- Jedno lokální syntetické měření pro 100 zaměstnanců, 30 dní a 20 lidí na každou směnu: 2,11 s včetně sestavení modelu, `OPTIMAL`, 1 200 přiřazení, nulový součet nedostatků. Není to měření Preview, souběhu, nejhoršího případu ani důkaz použitelné kvality rozpisu; další testy jsou nutné.
 
 ### 3. Obnovit a upravit CP-SAT model
 
