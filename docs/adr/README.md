@@ -1,18 +1,21 @@
 # Architektonická rozhodnutí (ADR)
 
-Krátké záznamy rozhodnutí, která platí v kódu. Nejsou to požadavky ani doménová
-pravidla — popisují **proč** je technické rozhodnutí takové a co z něj plyne.
+ADR zaznamenávají důvody architektonických rozhodnutí. Nejsou to doménová
+pravidla; ty jsou v [`../DOMAIN_SPECIFICATION.md`](../DOMAIN_SPECIFICATION.md).
+Při rozporu platí nejnovější výslovné rozhodnutí uživatele zaznamenané v
+[`../DOMAIN_DECISIONS.md`](../DOMAIN_DECISIONS.md) nebo novějším ADR; starší
+záznam zůstává kvůli historii označen jako nahrazený.
 
 | # | Rozhodnutí | Stav |
 | --- | --- | --- |
-| [0001](0001-domenove-nezavisle-jadro.md) | Doménově nezávislé plánovací jádro | `IMPLEMENTED` |
-| [0002](0002-tri-stavy-kontroly.md) | Tři stavy kontroly a význam `not_verified` | `IMPLEMENTED` |
-| [0003](0003-zdroj-navrhu-neni-schvaleni.md) | Zdroj návrhu není schválení | `IMPLEMENTED` |
-| [0004](0004-chyba-pravidla-se-nepolyka.md) | Chyba uvnitř pravidla se nepolyká | `IMPLEMENTED` |
-| [0005](0005-ai-navrhuje-validace-overuje.md) | AI navrhuje, validace ověřuje, manažer potvrzuje | `IMPLEMENTED` (rozhodnutí) |
-| [0006](0006-mesicni-ai-cloudflare-workers-ai.md) | Měsíční AI plánovač na Cloudflare Workers AI | `IMPLEMENTED`; reálné volání ověřeno, širší spolehlivost `NOT VERIFIED` |
-| [0007](0007-nekomerci-hosting-vercel-neon.md) | Nekomerční hosting: Vercel Hobby a jediná Neon databáze | `VERIFIED` rozhodnutí; aktuální provozní stav `NOT VERIFIED` |
-| [0008](0008-cloudflare-only-and-unified-ui.md) | Online AI plánování a jednotné UI | `VERIFIED` rozhodnutí; rozsah ověření viz roadmapa |
+| [0001](0001-domenove-nezavisle-jadro.md) | Doménově nezávislé plánovací jádro | Platí; implementace je v `lib/planning/` |
+| [0002](0002-tri-stavy-kontroly.md) | Tři stavy kontroly a význam `not_verified` | Platí |
+| [0003](0003-zdroj-navrhu-neni-schvaleni.md) | Zdroj návrhu není schválení | Platí |
+| [0004](0004-chyba-pravidla-se-nepolyka.md) | Chyba uvnitř pravidla se nepolyká | Platí |
+| [0005](0005-ai-navrhuje-validace-overuje.md) | AI navrhuje, validace ověřuje, manažer potvrzuje | Platí; kvalita návrhů není tímto rozhodnutím ověřena |
+| [0006](0006-mesicni-ai-cloudflare-workers-ai.md) | Měsíční AI plánovač na Cloudflare Workers AI | Aktuální volba provideru; spolehlivost `NOT VERIFIED` pro běžné použití |
+| [0007](0007-nekomerci-hosting-vercel-neon.md) | Nekomerční hosting: Vercel Hobby a jediná Neon databáze | Cílové rozhodnutí; online nasazení `NOT VERIFIED` |
+| [0008](0008-cloudflare-only-and-unified-ui.md) | Online AI plánování a jednotné UI | Aktuální směr; lokální OR-Tools byl odstraněn |
 
 ## Jak přidat další rozhodnutí
 

@@ -2,7 +2,7 @@
 
 - **Stav:** `PLANNED`; nic není nasazené ani ověřené v online prostředí
 - **Datum:** 6. 11. 2026
-- **Kontext:** `README.md`, `docs/PRE_PUBLISH_CHECKLIST.md`,
+- **Kontext:** `README.md`, `docs/DOMAIN_DECISIONS.md`, `docs/ROADMAP.md`,
   `prisma.config.ts`, `lib/db.ts`
 
 ## Kontext

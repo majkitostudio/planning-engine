@@ -1,653 +1,70 @@
-# Návrh doménové specifikace — Plánovací Engine
+# Doménová specifikace měsíčního pilotu
 
-Technický repozitář: `planning-engine`
-Dokument: `docs/DOMAIN_SPECIFICATION.md`
+**Rozsah:** současný pilot Planning Engine. Platnost potvrzených rozhodnutí řídí [`DOMAIN_DECISIONS.md`](DOMAIN_DECISIONS.md) a pracovní pravidla [`../AGENTS.md`](../AGENTS.md). Dlouhá historická verze specifikace zůstává v [`archive/2026-11-07/DOMAIN_SPECIFICATION.md`](archive/2026-11-07/DOMAIN_SPECIFICATION.md).
 
-> **Stav dokumentu: ČÁSTEČNĚ POTVRZENÝ NÁVRH (PARTIALLY VERIFIED PROPOSAL).**
->
-> Dokument obsahuje **potvrzený kontext domény** (§0.1), rozhodnutí (§0.2),
-> časy směn a dvě pracovní pravidla. Měsíční AI plánovač je Cloudflare
-> Workers AI; lokální OR-Tools byl odstraněn. Rozdíl mezi záměrem
-> a ověřenou kvalitou je zaznamenán v `docs/DOMAIN_DECISIONS.md`. Zbytek zůstává `PROPOSAL` nebo `OPEN QUESTION` — dokument
-> stále není úplná schválená specifikace a nevymýšlí chybějící pravidla.
-> Každý pracovní předpoklad je označen `ASSUMPTION`, každá nevyřešená věc
-> `OPEN QUESTION`.
->
-> **Aktuální model měsíčního MVP:** měsíční přiřazení má sestavovat Cloudflare
-> Workers AI (adaptér `IMPLEMENTED`, reálné volání `VERIFIED (6. 11. 2026)`); lokální
-> OR-Tools byl odstraněn. Deterministická validace nezávisle kontroluje
-> celý měsíc; manažer rozhoduje o potvrzení. Historický týdenní AI tok zůstává
-> oddělený.
->
-> **Implementační stav (`IMPLEMENTED`, ne schválení domény):** doménové typy,
-> potvrzené časy, `validatePlan()`, AI kontrakt, adaptér Cloudflare Workers AI,
-> Gemini adaptér a orchestrátor existují. To nemění nic na tom, že nepotvrzená
-> pravidla a výklady zůstávají `ASSUMPTION` nebo `OPEN QUESTION`.
+Tato specifikace popisuje, co pilot plánuje a kontroluje. Neznamená, že je každá popsaná funkce provozně ověřená; kód a jeho stav ověření uvádí [`ROADMAP.md`](ROADMAP.md).
 
-## 0. Jak číst tento dokument
+## Produktový cíl a rozsah
 
-| Označení | Význam |
+Manažer zadává jeden celý kalendářní měsíc, zaměstnance, potřebné obsazení a dostupné informace o absencích či dostupnosti a získá návrh rozpisu. Hlavním cílem je automatické sestavení použitelného návrhu. Při nejasnosti nebo nedostatku informací se nejistota přizná; aplikace nemá domýšlet hodnoty ani slibovat optimum.
+
+Pilot je určen pro zaměstnance na plný úvazek. Týdenní tabulka je pouze zobrazením části měsíčního návrhu. Částečné úvazky a integrace s dalšími systémy jsou mimo pilot, i pokud je některá související technická část přítomná v kódu.
+
+## Vstupy
+
+- měsíc a zaměstnanci zahrnutí do plánování;
+- potřebný počet zaměstnanců podle data a typu směny;
+- schválené absence a výslovná dostupnost, pokud jsou pro plán zadány;
+- existující potvrzené směny před nebo po měsíci, jsou-li dostupné;
+- volitelný pracovní fond, který vytváří neblokující upozornění;
+- volné pokyny manažera, které AI může zohledňovat, ale které nejsou samy o sobě deterministicky ověřenými tvrdými pravidly.
+
+Výchozí dostupnost a mapování konkrétních polí aplikace jsou popsány u měsíčního formuláře v kódu. Rozsah a přesná sémantika zadávání volna a časových omezení je otevřená otázka; existující vstupy se bez rozhodnutí nemažou.
+
+## Směny a potvrzená pravidla
+
+| Směna | Čas |
 | --- | --- |
-| `PROPOSAL` | Návrh, není rozhodnutí |
-| `VERIFIED` | Ověřeno v projektu/příkazem, nebo explicitně potvrzeno uživatelem |
-| `ASSUMPTION` | Pracovní předpoklad, není ověřený ani schválený |
-| `OPEN QUESTION` | Nevyřešená otázka vyžadující rozhodnutí uživatele |
-| `DEMO` / `PŘÍKLAD` | Čistě ilustrativní, fiktivní data |
-| `NOT VERIFIED` | Nebylo ověřeno |
-| `BLOCKED` | Nelze pokračovat bez rozhodnutí |
+| Ranní, všední den i víkend | 07:45–16:30 |
+| Odpolední, všední den | 13:15–21:00 |
+| Odpolední, víkend | 12:45–21:00 |
 
-### 0.1 Potvrzený kontext domény (`VERIFIED`)
+1. Pracovním dnem se pro pravidlo šesti dnů počítá kalendářní den s alespoň jednou směnou.
+2. Po šesti po sobě jdoucích pracovních dnech musí být nejméně 35 hodin nepřetržitého odpočinku.
+3. Kdo pracuje o víkendu, má během stejného týdne dva dny volna. Týden je pondělí–neděle a dny volna nemusí být souvislé.
+4. Zaměstnanec nesmí být přiřazen ke směně v době schválené absence nebo výslovné nedostupnosti.
+5. Překrývající se přiřazení zaměstnance jsou neplatná.
+6. Požadované obsazení je vstup manažera. Minima se nesmějí domýšlet z historických rosterů.
+7. Úplnost a návaznosti se kontrolují za celý měsíc. Chybějící historie může dotčené kontroly ponechat jako `not_verified`.
 
-Následující skutečnosti uživatel explicitně potvrdil v tomto projektu:
+Časy směn jsou potvrzené pro projekt, ale nepředstavují úplný právní výpočet pracovní doby. První verze používá hrubý interval začátku a konce; přestávky nejsou samostatně modelovány.
 
-- Jedná se o **chytrý plánovač směn** pro **zaměstnance call centra společnosti
-  AAAAuto**.
-- Nástroj je určen pro **managera telemarketingového oddělení**.
-- Dlouhodobým cílem je sestavování **měsíčních rozpisů směn** pro **více než
-  100 zaměstnanců**; aktuální MVP plánuje jeden celý kalendářní měsíc.
-- Technologický směr: **Next.js, React, TypeScript, PostgreSQL a Prisma**.
-- Plánovací předmět tedy není obecný „slot", ale **pracovní směna** v call centru.
+## Preference a pracovní fond
 
-Tato kontextová fakta jsou `VERIFIED` (potvrzena požadavkem). Konkrétní pravidla,
-entity i role zůstávají `ASSUMPTION` nebo `OPEN QUESTION`, dokud je uživatel
-nezávazně nepotvrdí.
+- Preference střídání ranní/odpolední směny (S6) je nezávazná. Volný text ani jiné preference se automaticky nestávají tvrdými pravidly.
+- Pracovní fond lze zadat po zaměstnancích a pro celý měsíc. Odchylka vytváří neblokující nález; chybějící fond se nesmí vydávat za ověřený.
+- Přesné měkké váhy a pořadí rozhodování jsou implementační volby, pokud nejsou výslovně potvrzeny jako doménové pravidlo.
 
-### 0.2 Potvrzená rozhodnutí z 24. 10. až 3. 11. 2026 (`VERIFIED`)
+## Stavy návrhu a potvrzení
 
-Následující rozhodnutí potvrdil uživatel v zadání pro pokračování projektu.
-Jsou závazná pro další implementaci:
+1. **Návrh:** výstup poskytovatele plánování, který může obsahovat mezery nebo nálezy.
+2. **Ověření:** samostatná deterministická kontrola celého návrhu. `invalid` znamená nalezené porušení; `not_verified` znamená nedostatek podkladů.
+3. **Potvrzení:** výslovná akce manažera. Návrh s blokujícím porušením, neúplností nebo neověřenými povinnými kontrolami nelze potvrdit.
 
-- **AI je schváleným záměrem hlavní plánovací logiky.** Aktuální měsíční
-  implementace používá Cloudflare Workers AI; lokální OR-Tools byl odstraněn.
-- **Deterministická validace je nezávislá kontrola návrhu.** Nenahrazuje
-  plánování; ověřuje, co provider navrhl.
-- **Manažer návrh kontroluje a potvrzuje.** Bez potvrzení se nemění potvrzený
-  rozpis; nepotvrzený návrh lze uložit odděleně.
-- **Návrh, ověřený návrh a potvrzené změny jsou tři různé stavy.**
-- **Neověřené nebo chybějící informace se nesmí prezentovat jako jistota.**
-  Systém musí přiznat omezení a může nabídnout podložené praktické alternativy;
-  nepožaduje se důkaz matematického optima.
-- **Aktuální měsíční MVP:** celý kalendářní měsíc a zaměstnanci na plný
-  úvazek; týdenní tabulka je pohled do měsíčního návrhu. Částečné úvazky a
-  integrace zůstávají mimo rozsah.
-- **Potřebné obsazení směn je konfigurovatelný vstup.** Historické počty se
-  nepovažují za univerzálně platné bez ověření.
-- **Střídání ranních a odpoledních směn je měkké přání managera.** Porovnávají
-  se sousední pracovní směny zaměstnance i přes libovolný počet dnů volna;
-  potvrzená pravidla a potřebné obsazení mají přednost. Výjimky se zobrazí,
-  ale samy neblokují potvrzení. Pokud chybí směna před nebo po plánovaném
-  měsíci, střídání v dotčeném okraji je neověřené. `VERIFIED`, 3. 11. 2026.
+Nenalezení řešení není důkazem matematické neproveditelnosti. Aplikace má sdělit zjištěné překážky a nejistotu; počet chybějících zaměstnanců uvádí pouze tehdy, když je doložen.
 
-#### Potvrzené časy směn
+## Co není součástí této specifikace
 
-| Typ směny | Začátek | Konec | Hrubá délka |
-| --- | ---: | ---: | ---: |
-| Ranní směna (všední den i víkend) | 7:45 | 16:30 | 8 h 45 min |
-| Odpolední směna ve všední den | 13:15 | 21:00 | 7 h 45 min |
-| Víkendová odpolední směna | 12:45 | 21:00 | 8 h 15 min |
+- automatická správa docházky a evidence skutečně odpracovaných hodin;
+- samostatný systém žádostí o dovolenou či nemocenskou;
+- plánování částečných úvazků v pilotu;
+- plánování pouze části měsíce;
+- výpočet úplného pracovněprávního souladu včetně přestávek;
+- garance matematického optima nebo libovolného porozumění přirozenému jazyku.
 
-Víkendová ranní směna se řídí ranním časem výše, protože dokumentace ani
-potvrzené rozhodnutí neříká jiný čas.
+## Navazující zdroje
 
-Víkendová odpolední směna začíná ve 12:45 záměrně, aby se do pevného času
-12:45–21:00 vešla půlhodinová obědová přestávka. Nejde o přesčas ani o
-operativní prodloužení směny.
-
-`VERIFIED` **(OQ24) — přestávky a výpočet odpracované doby:** první verze
-validace používá hrubý interval začátku a konce směny. Přestávka ani odpracovaná
-doba nejsou tvrdým validačním pravidlem. Toto rozhodnutí popisuje chování
-plánovacího engine; nejde o pracovněprávní posudek ani výpočet placené doby.
-
-#### Potvrzená pravidla
-
-- **Odpočinek po šesti dnech:** po šesti po sobě jdoucích pracovních dnech musí
-  následovat alespoň **35 hodin nepřetržitého odpočinku**. `VERIFIED`
-- **Víkend a dva dny volna:** zaměstnanec, který pracuje o víkendu, má mít
-  během téhož týdne **dva dny volna**. `VERIFIED`; výklad „během týdne“ jako
-  pondělí–neděle je také `VERIFIED` (rozhodnutí uživatele 6. 11. 2026).
-  Dny volna nemusí následovat
-  po sobě; odpočinek po šesti pracovních dnech se kontroluje samostatně. `VERIFIED`
-- **Plný úvazek:** první verze neobsahuje zaměstnance na částečný úvazek.
-  `VERIFIED` jako rozsah, ne jako doménové pravidlo.
-- **Konfigurovatelné obsazení:** počty potřebných zaměstnanců na směnách jsou
-  vstup, ne historická konstanta. `VERIFIED`
-- **Provozní minima pro MVP:** Po–Pá ráno 23 a odpoledne 8; So–Ne ráno 12 a
-  odpoledne 9. Jde o výchozí profil konfigurovatelného vstupu, potvrzený
-  managerem 30. 10. 2026. `VERIFIED`
-- **Pracovní den pro pravidlo šesti dnů:** kalendářní den s alespoň jednou
-  směnou; více směn v jednom dni se počítá jako jeden pracovní den. `VERIFIED`
-- **Potvrzení neúplného návrhu:** neúplný návrh se smí zobrazit k posouzení,
-  ale nesmí být potvrzen. `VERIFIED` (OQ23)
-
-### 0.3 Potvrzený směr operativních náhrad (29. 10. 2026)
-
-Následující rozhodnutí potvrzují rozsah přípravy dalšího implementačního řezu.
-Nejsou schválením dosud otevřených pracovněprávních nebo personálních pravidel.
-
-- Náhrada začíná nad posledním manažerem potvrzeným plánem týdne a po potvrzení
-  vytváří novou verzi celého týdne.
-- První řez řeší jednu celou směnu. Dílčí nástup uprostřed směny se zatím
-  nepodporuje.
-- AI smí navrhnout změny i u dalších celých přiřazení v týdnu, pokud je každá
-  změna viditelná v dopadu návrhu.
-- Výpadek je samostatný provozní incident na konkrétní směně; před potvrzením
-  zůstává pouze v rozpracovaném návrhu.
-- AI má dodat tři odlišné konkrétní varianty, pokud jsou dostupné. Pokud jich
-  není dost, systém to přizná.
-- Dopad variant se počítá deterministicky. Po výběru manažerem se vybraná
-  varianta znovu ověří stejnou validací jako běžný týdenní návrh.
-- Minimální obsazení je konfigurovatelný vstup po jednotlivých dnech a směnách.
-  Potvrzený výchozí profil managera je Po–Pá 23 ráno / 8 odpoledne a So–Ne
-  12 ráno / 9 odpoledne. Jde o interní provozní minimum, nikoli zákonný limit.
-- Délka směny je pevně daná definicí směny. Operativní náhrada nesmí směnu
-  prodlužovat, zkracovat ani dělit.
-- Přesčasy se v tomto provozu nepoužívají. Varianta vyžadující práci mimo
-  pevnou směnu je neplatná.
-- Priorita návrhu je: zachovat minimální obsazení, neporušit ověřená tvrdá
-  pravidla, změnit co nejméně dalších lidí a zobrazit celý řetězec následků,
-  pokud se mu nelze vyhnout.
-- Při běžném plánování každé evidované volno blokuje směnu. Při operativní
-  náhradě smí AI navrhnout kandidáta s potvrzeným volnem, pokud tím neporuší
-  pravidlo 35 h odpočinku po šesti pracovních dnech. O kontaktování zaměstnance
-  a změně volna rozhoduje manager. Změna se zaznamená a systém navrhne
-  náhradní volno; jeho datum ani přidělení se nesmí domýšlet či aplikovat bez
-  potvrzení managera. `VERIFIED` jako procesní směr; termín náhradního volna
-  zůstává `OPEN QUESTION`.
-- První řez používá syntetická data. Měsíční AI plánovač je Cloudflare Workers
-  AI; Gemini zůstává jako starší adaptér mimo měsíční tok.
-- V prvním řezu se audit zaměřuje na potvrzenou změnu, původní a nový rozpis,
-  incident, vybranou variantu, výchozí verzi a identitu managera.
-- Limity budou připravené jako konfigurovatelný profil. Právní baseline je
-  pouze `SOURCE EVIDENCE`; bez interního a právního potvrzení zůstává jejich
-  vyhodnocení `NOT VERIFIED`.
-- V provozním vstupu se nesmí automaticky zaměnit skutečná dovolená, plánovaný
-  den volna a náhradní volno po víkendové práci. Pokud jejich přesné rozlišení
-  není dostupné, návrh musí tuto nejistotu přiznat.
-
-### 0.5 Právní baseline (`SOURCE EVIDENCE`, 29. 10. 2026)
-
-Pro nastavitelný profil limitů byly zkontrolovány příslušné části aktuálního
-znění zákoníku práce v příručce MPSV. Tento přehled není právní posudek ani
-automaticky schválené pravidlo aplikace:
-
-- § 79 a § 80: standardní týdenní pracovní doba a písemně sjednaná kratší
-  pracovní doba,
-- § 83: maximální délka směny 12 hodin,
-- § 84: standardní oznámení rozvrhu nebo jeho změny nejpozději 2 týdny předem,
-- § 88: přestávka nejméně 30 minut po nejvýše 6 hodinách nepřetržité práce,
-- § 90 a § 92: denní a týdenní nepřetržitý odpočinek,
-- § 93: podmínky a limity práce přesčas,
-- § 217: určování, změna a odvolání z dovolené včetně možných nákladů.
-
-Odkazy na zdroje: [MPSV — pracovní doba a odpočinek](https://ppropo.mpsv.cz/VIIIPracovnidobaadobaodpocinku),
-[MPSV — úplné znění zákoníku práce](https://ppropo.mpsv.cz/zakon_262_2006),
-[MPSV — dovolená](https://ppropo.mpsv.cz/XDovolena).
-
-### 0.4 Evidence z původního emailu managera (`SOURCE EVIDENCE`, 28. 10. 2026)
-
-Původní email s odpověďmi managera potvrzuje současný pracovní postup:
-čtvrteční plánování na další týden, nejprve zadání absencí, následné obsazení
-odpoledních směn a víkendu, požadavky sbírané přes Outlook a ruční přepis
-hotového rozpisu do současného rosteru. Automatický přenos proto není
-požadavkem prvního řezu.
-
-Email také uvádí minima 23 / 8 ve všední den a 12 / 9 o víkendu a šest
-částečných úvazků. Manager 30. 10. 2026 potvrdil tato minima jako nový zdroj
-pravdy pro výchozí konfigurovatelný profil. Částečné úvazky zůstávají mimo MVP,
-ale jsou plánovaným budoucím rozšířením.
-
-Email obsahuje rozpor proti potvrzeným víkendovým časům v §0.2: uvádí ranní
-7:45–18:00 a odpolední 10:45–21:00, zatímco aktuální projektové rozhodnutí
-uvádí 7:45–16:30 a 12:45–21:00. Do vyřešení tohoto rozporu se potvrzené časy
-nemění. Pravidlo 35 hodin po šesti pracovních dnech se naopak shoduje.
-
-Manager potvrdil, že požadavky schvaluje nebo odmítá ručně. Aplikace má ukázat
-mezery vzniklé při vyhovění požadavku a navrhnout jejich pokrytí; nesmí je
-automaticky vyhodnotit. Dřívější odeslání samo o sobě neurčuje automatickou
-prioritu.
-
-## 1. Účel a hranice první verze
-
-### 1.1 Účel (`VERIFIED`)
-
-Poskytnout základ pro **chytrý plánovač směn** pro **zaměstnance call centra
-společnosti AAAAuto** (nástroj pro managera telemarketingového oddělení, §0.1):
-co se plánuje, z jakých vstupů, jakými pravidly a jak se reportují konflikty.
-Hlavní měsíční MVP má manažerovi ušetřit práci: AI připraví praktický návrh na celý měsíc ze zadaných lidí, obsazení, absencí, dostupnosti a pokynů; nezávislá validace jej zkontroluje a manažer rozhodne o potvrzení. Nevyžaduje se matematický důkaz optimálního rozpisu ani univerzální optimalizační systém.
-
-`VERIFIED` (upřesnění uživatele, 7. 11. 2026): manažer potřebuje zadat konkrétní lidi, obsazení a jejich požadavky, například více období volna nebo omezení na ranní směnu v určeném týdnu. Při nejasném výkladu má aplikace požádat o upřesnění, nikoli si rozhodnutí domyslet. Srozumitelný přepis volného textu do kontrolovaných vstupů je požadovaný směr; jeho úplná implementace a spolehlivost jsou `NOT VERIFIED`.
-
-### 1.2 V rozsahu aktuálního měsíčního MVP (`VERIFIED`)
-
-- Jeden celý kalendářní měsíc; týdenní tabulka je pohled do měsíčního návrhu.
-  Doplňování části měsíce bylo z aktuálního pilotu 6. 11. 2026 odstraněno.
-- `VERIFIED` (rozhodnutí uživatele, 3. 11. 2026): střídání ranních a
-  odpoledních je přání, nikoli povinné pravidlo. Nezávislá kontrola je
-  vyhodnocuje jako neblokující nález; AI je může zohlednit.
-  Střídání se vztahuje na sousední pracovní směny i přes dny volna.
-- **Pilot je pouze pro plné úvazky** (`VERIFIED`, 6. 11. 2026). Poloviční
-  úvazek je v kódu implementovaný, ale mimo pilot: ranní 7:45–15:00 a odpolední
-  15:00–21:00 (pouze všední den), o víkendu v plné délce směny. Podrobnosti v
-  `DOMAIN_DECISIONS.md` a `ROADMAP.md`.
-- Měsíční AI plánovač používá Cloudflare Workers AI; skutečné volání a některé
-  malé platné návrhy byly ověřeny, opakovatelnost a provozní kvalita zůstávají
-  `NOT VERIFIED`. Lokální OR-Tools byl odstraněn.
-- Deterministická validace nezávisle kontroluje celý měsíc podle dostupných podkladů.
-- Výstup rozlišuje nalezený návrh, konkrétní zjištěné nedostatky a situaci, kdy
-  řešení nebylo nalezeno nebo dokončeno; samotné nenalezení není důkaz nemožnosti.
-- AI může přihlížet ke slovním pokynům; jejich splnění samo o sobě není
-  deterministicky ověřeným tvrdým pravidlem.
-- Nepotvrzený návrh lze uložit odděleně; potvrzený rozpis se mění až po
-  samostatném potvrzení manažerem.
-- Testy a demonstrace používají syntetická data; schválené použití externí AI
-  se skutečnými údaji se řídí podmínkami v `AGENTS.md`.
-
-### 1.3 Mimo rozsah měsíčního MVP (explicitně)
-
-- Zaměstnanci na částečný úvazek.
-- Integrace s Countdown CRM, EDocházkou, mzdami nebo jinými systémy.
-- Automatické ukládání nebo aplikace návrhu bez potvrzení manažera.
-- Produkční úroveň záloh, monitoringu a zabezpečení. Nekomerční online MVP na
-  Vercel Hobby + stávající Neon je `PLANNED`; nejde o produkční nasazení.
-- Skutečná osobní data v repozitáři nebo demo scénářích.
-- Vymýšlení pravidel, která nejsou potvrzená (H1–H7 a S1–S5 zůstávají
-  z velké části `ASSUMPTION`/`OPEN QUESTION`).
-
-**Poznámka k databázi a API:** technologický směr zahrnuje **PostgreSQL a
-Prisma** (`VERIFIED`). Návrh měsíce se ukládá jako samostatný nepotvrzený běh;
-potvrzený rozpis se změní až samostatným potvrzením manažera.
-
-### 1.4 Aktuální měsíční plánovací model (`VERIFIED`)
-
-```text
-vstupní podklady
-  → AI vytvoří měsíční návrh
-  → deterministická validace návrh nezávisle zkontroluje
-  → výsledek: návrh + nálezy + neověřené kontroly
-  → manažer zkontroluje a rozhodne o potvrzení
-  → teprve potvrzením se změní potvrzený rozpis
-```
-
-Výsledek validace není schválení; schválení je vždy samostatný krok manažera.
-Simulovaný režim není AI plánovač a textové pokyny nevyhodnocuje.
-
-### 1.5 Další implementační řez: operativní náhrada (`IMPLEMENTED` / `SIMULATED`)
-
-Další práce navazuje na hotový týdenní návrh, ale není jeho součástí. Cílem je
-workflow:
-
-```text
-potvrzený týdenní plán
-  → výpadek konkrétního člověka na konkrétní směně
-  → tři AI varianty náhrady
-  → výběr managerem
-  → deterministická validace vybrané varianty
-  → potvrzení a nová verze týdne
-```
-
-Pojmy `ShiftIncident`, `ReplacementRequest` a `ReplacementOption` jsou
-implementované pro syntetický pilot v `lib/planning/domain/types.ts`. Nejsou
-produkční doménovou specifikací; jejich rozšíření zůstává závislé na OQ2–OQ4,
-OQ9–OQ11 a OQ20. OQ22 je částečně zodpovězená; otevřený zůstává přesný termín
-náhradního volna po záskoku během schválené dovolené.
-
-## 2. Co má plánovací nástroj plánovat
-
-`VERIFIED` — předmětem plánování jsou **směny zaměstnanců call centra** (§0.1).
-Otázka OQ1 je tedy zodpovězena.
-
-`VERIFIED` pro první verzi:
-
-- Měsíční MVP plánuje **celý kalendářní měsíc** pro zaměstnance na plný úvazek; týdenní pohled není samostatný plán.
-- Směna má potvrzený časový rozsah (ranní / odpolední, všední den / víkend).
-- Potřebné obsazení každé směny je vstup; nemusí být stejné pro všechny dny.
-- Návrh může obsahovat nepokryté směny, ale musí je přiznat a nabídnout
-  alternativy; nesmí je vydávat za plně ověřený plán.
-
-`ASSUMPTION`:
-
-- Role/dovednost může být volitelný atribut, ale žádné pravidlo o rolích není
-  potvrzené. První řez se bez něj obejde.
-
-`OPEN QUESTION`:
-
-2. **Historická otázka původního týdenního návrhu; pro měsíční MVP nahrazena.**
-   Manažer může upravit nepotvrzený návrh ve vybraném týdenním pohledu. Každá
-   úprava vytvoří novou verzi po nezávislé kontrole celého měsíce. Potvrzený
-   rozpis se mění až samostatným potvrzením manažera.
-
-## 3. Základní pojmy a entity
-
-Konkrétní minimální kontrakt první verze je v
-[`PLANNING_CONTRACT.md`](PLANNING_CONTRACT.md) a v TypeScriptu v
-`lib/planning/domain/`. Následující tabulka je pojmový přehled, ne druhá
-definice kontraktu.
-
-| Entita | Popis | Stav |
-| --- | --- | --- |
-| `PlanningWeek` | Legacy týdenní kontrakt; v měsíčním MVP jde o pohled do měsíčního návrhu | `IMPLEMENTED` (legacy) |
-| `Employee` | Zaměstnanec call centra; v první verzi plný úvazek, fiktivní data | `VERIFIED` (rozsah) |
-| `ShiftDefinition` | Potvrzené časy ranní/odpolední směny ve všední den a o víkendu | `VERIFIED` |
-| `StaffingRequirement` | Kolik zaměstnanců je potřeba na dané směně v daném dni | `VERIFIED` (vstup) |
-| `Absence` | Dovolená, nemoc nebo jiná absence; schválená blokuje přiřazení | `ASSUMPTION` (stav) |
-| `EmployeeRequest` | Požadavek na volno nebo preference směny | `IMPLEMENTED` / `SIMULATED` (manager review); skutečný příjem požadavků není implementován |
-| `ExistingAssignment` | Již existující směna, vůči které se počítají změny | `VERIFIED` (vstup) |
-| `PlanningRules` | Potvrzená pravidla odpočinku a víkendových dnů volna | `VERIFIED` |
-| `PlanDraft` | Legacy návrh AI a společný tvar přiřazení; měsíční návrh připravuje AI | `IMPLEMENTED` (typ) |
-| `ShiftIncident` | Provozní výpadek zaměstnance na konkrétní směně | `IMPLEMENTED` / `SIMULATED` |
-| `ReplacementRequest` | Požadavek na náhradu nad konkrétní verzí potvrzeného týdne | `IMPLEMENTED` / `SIMULATED` |
-| `ReplacementOption` | Jedna konkrétní varianta náhrady s dopočítaným dopadem | `IMPLEMENTED` / `SIMULATED` |
-| `ControlResult` | Výsledek nezávislé validace | `IMPLEMENTED` (jádro) |
-| `ConfirmedPlan` | Až manažerem potvrzený výsledek; nevzniká automaticky | `IMPLEMENTED` (typ) / `PLANNED` (vznik potvrzením) |
-
-`OPEN QUESTION`:
-
-3. Které entity jsou skutečně potřeba a které jsou nadbytečné? *(pro první řez
-   je navržen minimální kontrakt; potvrzení vznikne ověřením v implementaci)*
-4. Jaké atributy entit jsou povinné (např. role, kapacita směny, dovednosti, typ kampaně)?
-5. Existuje pojem „pobočka/umístění call centra", nebo stačí plochý seznam?
-   *(první řez předpokládá plochý seznam — `ASSUMPTION`)*
-
-## 4. Vstupy a výstupy
-
-Konkrétní minimální tvar je v [`PLANNING_CONTRACT.md`](PLANNING_CONTRACT.md).
-Zde je obsahový přehled.
-
-### 4.1 Vstupy
-
-| Vstup | Popis | Stav |
-| --- | --- | --- |
-| Měsíc | Celý kalendářní měsíc; týden pondělí–neděle je důležitý pro pravidla | `VERIFIED` |
-| Zaměstnanci | Identita, plný úvazek; syntetická data | `VERIFIED` (rozsah) |
-| Potřebné obsazení | Počet zaměstnanců na směně v daném dni | `VERIFIED` (vstup) |
-| Schválené absence | Dovolená, nemoc, jiná absence; blokují přiřazení | `VERIFIED` (význam), `ASSUMPTION` (stav) |
-| Požadavky a preference | Volno, preference ranní/odpolední | `IMPLEMENTED` / `SIMULATED` (náhled a rozhodnutí nad dvěma fixture požadavky); skutečný příjem a plánovací AI tok `NOT VERIFIED` |
-| Existující směny | Výchozí stav, vůči kterému se počítají změny | `VERIFIED` (vstup) |
-| Výpadek směny | Konkrétní zaměstnanec, datum, směna a výchozí verze plánu | `PROPOSAL` pro operativní řez |
-| Pravidla | Odpočinek po 6 dnech, víkendové dny volna | `VERIFIED` |
-| Časy směn | Potvrzené ranní/odpolední časy | `VERIFIED` |
-| Role/dovednosti | V měsíčním pilotu se neevidují jako pravidlo obsazení | `VERIFIED` |
-
-Aktuální adaptér předává AI podklady po týdnech včetně potřebných návazností.
-Skutečná jména a volný text jsou za podmínek `AGENTS.md` povoleny; syntetická
-data používáme při testování. Výslovnou nedostupnost lze zadat pro konkrétní
-den a směnu. Další tvrdé limity se bez potvrzení nedoplňují; OQ9–OQ11 jsou pro
-měsíční pilot vyřešeny v `DOMAIN_DECISIONS.md`.
-
-### 4.2 Výstupy
-
-| Výstup | Popis | Stav |
-| --- | --- | --- |
-| Navržené směny | Konkrétní přiřazení zaměstnanec–den–směna | `IMPLEMENTED` (typ) |
-| Změny oproti stavu | Přidané, odebrané a zachované směny | `IMPLEMENTED` (výpočet) |
-| Nesplněné požadavky | Nepokryté pozice podle konkrétního požadovaného obsazení | `IMPLEMENTED` (výpočet pokrytí); nejde automaticky o minimální počet dalších zaměstnanců pro měsíc |
-| Výsledek validace | Nálezy nezávislých pravidel se závažností | `IMPLEMENTED` (jádro) |
-| Vysvětlení | Proč AI zvolila dané přiřazení a co omezuje | `IMPLEMENTED` (typ; plnění AI `NOT VERIFIED`) |
-| Alternativy | Konkrétní náhradní řešení při konfliktu | `IMPLEMENTED` (typ; plnění AI `NOT VERIFIED`) |
-| Varianty náhrady | Tři odlišné celé varianty s kandidátem, dopadem a kompromisy | `IMPLEMENTED` / `SIMULATED`; kvalita AI výstupu `NOT VERIFIED` |
-| Stav návrhu | Návrh / ověřený návrh / čeká na potvrzení | `IMPLEMENTED` (typy stavů) |
-| Potvrzené změny | Samostatný výsledek až po rozhodnutí manažera | `IMPLEMENTED` / `SIMULATED`; produkční DB `NOT VERIFIED` |
-
-Historické otázky původního řezu; aktuální měsíční zadání se řídí §1.2:
-
-6. Jak se vstupy zadávají (ručně, soubor, budoucí integrace)? První řez
-   pracuje s připravenými syntetickými daty.
-7. Jaký je požadovaný tvar výstupu (seznam, tabulka, export)? První řez
-   zobrazí návrh v existující obrazovce.
-8. Mají se preference vyhodnocovat vždy, nebo až po splnění tvrdých pravidel?
-   Zpracování preferencí není potvrzené.
-
-## 5. Pravidla
-
-Následující seznam rozlišuje potvrzená pravidla od kandidátů. Potvrzené pravidlo
-musí být vynuceno deterministickou validací, ne jen instrukcí pro AI.
-
-| # | Pravidlo | Stav | Poznámka |
-| --- | --- | --- | --- |
-| H1 | Každé přiřazení je jeden zaměstnanec na jedné směně; směna může mít víc přiřazení podle obsazení | `VERIFIED` (význam) | Nahrazuje starší „max. jeden na směnu“. |
-| H2 | Zaměstnanec nesmí být ve dvou směnách, které se překrývají | `VERIFIED` (integrita) | Základní invariant návrhu. |
-| H3 | Schválená absence blokuje přiřazení | `VERIFIED` | Výslovná nedostupnost pro konkrétní směnu také brání přiřazení. |
-| H4 | Směnu smí obsadit jen zaměstnanec s požadovanou rolí/dovedností | `VERIFIED` (rozhodnutí manažera 5. 11. 2026) | Ne — všichni zaměstnanci mohou obsadit libovolnou směnu. Role se neevidují. |
-| H5 | Maximální počet hodin nebo směn za období | `VERIFIED` (rozhodnutí manažera 5. 11. 2026) | Žádný tvrdý limit. Fond práce zůstává nezávazným cílem (H13). |
-| H6 | Po šesti po sobě jdoucích pracovních dnech alespoň 35 h nepřetržitého odpočinku | `VERIFIED` | Pracovní den je kalendářní den s alespoň jednou směnou (OQ21). |
-| H7 | Uzamčené přiřazení nelze přepsat | `VERIFIED` (rozhodnutí manažera 5. 11. 2026) | Ne — manažer nemůže přiřazení zamknout; solver může přepsat cokoli. |
-| H8 | Zaměstnanec pracující o víkendu má v témže týdnu dva dny volna | `VERIFIED` | Výklad „během týdne“ = pondělí–nedělí je `VERIFIED` (rozhodnutí uživatele 6. 11. 2026). |
-| H9 | Plné a poloviční úvazky | `VERIFIED` (rozhodnutí manažera 5. 11. 2026), pilot omezen 6. 11. 2026 | Kód podporuje oba typy, ale **pilot je pouze pro plné úvazky**. Poloviční úvazek zůstává mimo pilot; o víkendu používá plnou délku směny. |
-| H10 | Potřebné obsazení je splněno, nebo je nedostatek přiznán | `VERIFIED` | Podobsazení blokuje potvrzení; částečný návrh lze zobrazit. |
-| H11 | Potvrzený rozpis se nemění bez rozhodnutí manažera | `VERIFIED` (proces) | Nepotvrzený návrh se může uložit odděleně. |
-| H12 | Operativní náhrada nesmí prodlužovat, zkracovat ani dělit pevnou směnu; přesčas se nepoužívá | `VERIFIED` (interní) | Náhrada se vybírá pouze z celých existujících směn. |
-| H13 | Měsíční fond práce je nezávazný cíl; odchylka ani chybějící údaj neblokují potvrzení | `VERIFIED` (rozhodnutí uživatele 5. 11. 2026) | Fond v hodinách zadává manažer včetně omluvených hodin; plánovaná doba se počítá z potvrzených časů směn. |
-
-Historické otázky; OQ9–OQ11 jsou pro měsíční pilot rozhodnuté:
-
-9. Která z kandidátních pravidel (H4, H5, H7) jsou skutečně tvrdá? — **UZAVŘENO (5. 11. 2026):** H4 = ne, H5 = žádný tvrdý limit, H7 = ne.
-10. Jaké jsou konkrétní limity? — **UZAVŘENO pro pilot:** žádný další tvrdý limit hodin nebo směn; potvrzená pravidla odpočinku zůstávají v platnosti.
-11. Existují další pravidla mimo seznam (svátky, jazyky, kontinuita týmu)? — **UZAVŘENO (5. 11. 2026):** žádná další pravidla.
-OQ21 je uzavřena: pracovní den je kalendářní den s alespoň jednou směnou;
-více směn v jednom dni se započítá jednou.
-
-Měsíční fond práce podle H13 není tvrdý maximální limit H5. Manažer zadává
-fond i omluvené hodiny výslovně pro každého zaměstnance; aplikace je
-nedopočítává. Deterministická validace spočítá naplánovanou dobu z potvrzených
-časů směn, zobrazí nedostatečné i nadměrné naplnění a chybějící fond označí
-jako neověřený. Tyto nálezy zůstávají nezávazné a samy neblokují potvrzení.
-AI může fond zohlednit jako nezávazný cíl; aplikace neslibuje matematicky
-optimální rozdělení hodin.
-
-## 6. Měkké preference (kandidáti, `ASSUMPTION`)
-
-| # | Kandidát na měkkou preferenci | Stav |
-| --- | --- | --- |
-| S1 | Rovnoměrné rozložení směn mezi zaměstnance | `ASSUMPTION` |
-| S2 | Respektovat preference zaměstnanců (obliba směn/časů) | `ASSUMPTION` |
-| S3 | Práce mimo pevnou směnu | `VERIFIED` (interní zákaz; viz H12) |
-| S4 | Preferovat kontinuitu (stejný tým/kampaň v rámci období) | `ASSUMPTION` |
-| S5 | Vyvažovat složitost/obtížnost směn | `ASSUMPTION` |
-| S6 | Střídat ranní a odpolední mezi sousedními pracovními směnami i přes dny volna | `VERIFIED` (měkké přání managera, 3. 11. 2026) |
-
-Preference S6 může manager výslovně zapnout pro měsíční návrh. AI ji může
-zohlednit a nezávislá validace zobrazí opakování nebo chybějící
-návaznost. Nejde o tvrdé pravidlo a tyto nálezy samy neblokují potvrzení.
-Další měkké preference (S1–S5) se do pilotu nepřidávají — potvrzeno
-managerem 5. 11. 2026. Zůstává pouze S6 (střídání ranní/odpolední). Manager
-rozhoduje, zda požadavku vyhoví; aplikace pouze ukáže dopad na obsazení a
-navrhne pokrytí.
-U operativní náhrady platí aktuální minimum nastavené pro konkrétní datum a
-směnu, ověřená tvrdá pravidla a co nejmenší dopad na další lidi. Deterministická
-validace nesmí žádnou měkkou preferenci vydávat za splněný nárok.
-
-OQ12–OQ14 jsou pro pilot uzavřené: S1–S5 a váhy se nezavádějí; S6 zůstává
-nezávazným přáním. Historická OQ22 se týká operativní náhrady, nikoli garance
-matematicky nejlepšího měsíčního rozpisu.
-
-## 7. Konflikty a neřešitelné situace
-
-`VERIFIED` — chování první verze:
-
-- AI se pokusí sestavit prakticky použitelný úplný návrh, který respektuje
-  zadané podklady a potvrzená pravidla; globální optimum se nepožaduje.
-- Deterministická validace návrh nezávisle zkontroluje a nálezy vrátí.
-- Pokud se nepodaří splnit všechny požadavky, systém to **přizná** a vypíše
-  známé konkrétní nedostatky; pokud jsou k dispozici, může nabídnout alternativy.
-  Nenalezení řešení samo nedokazuje neproveditelnost. Přesný počet potřebných
-  dalších zaměstnanců uvádí jen tehdy, je-li podložený; jinak přizná nejistotu.
-- Manažer rozhoduje, zda návrh potvrdí. Aplikace může uložit nepotvrzený návrh,
-  ale automaticky neaplikuje změny do potvrzeného rozpisu.
-- Neúplný návrh je přípustný výstup k posouzení, ale není „platný schválený
-  plán“. Podle OQ23 jej manažer v první verzi potvrdit nemůže.
-
-`ASSUMPTION` — typy situací:
-
-| Situace | Popis |
-| --- | --- |
-| Nedostatek obsazení | Na směnu je méně dostupných zaměstnanců, než požaduje obsazení |
-| Kolize pravidel | Navržené přiřazení porušuje odpočinek, absenci nebo překryv |
-| Neúplný vstup | Chybí povinný údaj (např. obsazení nebo čas směny) |
-| Neplatný výstup AI | AI vrátí strukturu, která neodpovídá kontraktu |
-| Selhání validace | Pravidlo vyhodí chybu; výsledek se nesmí tvářit jako čistý |
-
-`OPEN QUESTION`:
-
-17. Jak se mají obětovat preference, když se vylučují? (navazuje na §6)
-23. Může manažer potvrdit i částečně neúplný návrh, nebo musí nejdřív doplnit
-    obsazení?
-
-## 8. Předpokládané uživatelské role
-
-`VERIFIED` — primárním uživatelem je **manager telemarketingového oddělení** (§0.1).
-Jeho úloha v první verzi: zkontrolovat vstupní podklady, spustit tvorbu návrhu,
-posoudit návrh a výsledky validace, případně zvolit alternativu a potvrdit
-uložení. AI ani validace neschvalují. Žádná autentizace není v rozsahu.
-
-| Role | Předpokládaná schopnost | Stav |
-| --- | --- | --- |
-| Manažer telemarketingového oddělení | Primární uživatel; spouští návrh, kontroluje a potvrzuje změny | `VERIFIED` (identita a potvrzení) |
-| Prohlížeč (viewer) | Čte plán a reporty, nemůže měnit | `ASSUMPTION` |
-| Správce (admin) | Spravuje pravidla/role (zda vůbec existuje) | `OPEN QUESTION` |
-
-`OPEN QUESTION`:
-
-19. Jaké další role mimo managera telemarketingového oddělení?
-20. Existuje rozdíl mezi „plánovačem" a „vedoucím", který schvaluje?
-21. Je potřeba sledovat, kdo plán vytvořil/upravil (audit)?
-
-## 9. Ilustrační příklady (`DEMO`)
-
-> Následující příklady jsou **čistě fiktivní** (`DEMO`). Nejsou to skutečná data,
-> ani návod, jak se plánuje. Slouží jen k nastínění tvaru vstupu a výstupu.
-
-### Příklad 1 — základní týden (`DEMO`)
-
-- Období: **jeden týden**, 8 zaměstnanců na plný úvazek (ukázka zjednodušena).
-- Obsazení: ráno 3 lidé, odpoledne 2 lidé; o víkendu stejný princip podle
-  potvrzených časů.
-- Pravidla: absence, překryv, 35 h odpočinku po 6 dnech, dva dny volna po
-  víkendu.
-- Výstup: tabulka přiřazení + seznam „nepokryté směny“ (prázdné), vysvětlení
-  a výsledek validace.
-
-### Příklad 2 — konflikt (`DEMO`)
-
-- Na páteční ranní směnu je potřeba 3 lidé, ale dva jsou na schválené dovolené
-  a třetí by porušil 35 h odpočinku.
-- Očekávaný výstup: návrh přizná nedostatek, nabídne konkrétní alternativu
-  (např. přesun jiného zaměstnance z odpoledne) a uvede, co by to ovlivnilo.
-  Validace nález potvrdí; manažer rozhodne.
-
-### Příklad 3 — preference (`DEMO`)
-
-- Dva zaměstnanci mohou nastoupit na odpolední směnu; jeden má preferenci
-  odpoledne. AI ho zvolí a vysvětlí proč. Preference není nárok a validace ji
-  nevyžaduje.
-
-## 10. Otevřené otázky a rozhodnutí (shrnutí)
-
-Autoritativní seznam otázek. Čísla `OQ` odpovídají číslům `OPEN QUESTION` v sekcích
-výše; v závorce je uvedena sekce (`S`).
-
-Praktická podoba těchto otázek pro vyplnění s managerem (varianty, dopad na kód,
-místo na odpověď) je v [`DOMAIN_DECISIONS.md`](DOMAIN_DECISIONS.md). Zůstává
-podřízený tomuto dokumentu — autoritativní seznam je tento.
-
-### Vyřešené otázky
-
-- **OQ1** (S2) — `VERIFIED`: předmětem plánování jsou **směny zaměstnanců call centra**;
-  nástroj je pro **managera telemarketingového oddělení** (§0.1).
-- **OQ15** (S7) — `VERIFIED`: AI navrhne, validace zkontroluje, manažer potvrdí.
-  Nejedná se o automatické schválení AI.
-- **OQ16** (S7) — `VERIFIED`: neúplný návrh je přípustný výstup k posouzení,
-  musí být označen jako neúplný a nesmí se vydávat za plně ověřený.
-- **AI role, rozsah prvního řezu, časy směn, 35 h odpočinku, dva dny volna po
-  víkendu a výklady OQ21, OQ23 a OQ24** — `VERIFIED` (§0.2). Jde o závazná
-  rozhodnutí v jejich popsaném rozsahu.
-- **OQ9–OQ11** — `VERIFIED` pro měsíční pilot podle rozhodnutí manažera
-  z 5. 11. v `DOMAIN_DECISIONS.md`: role a dovednosti se neevidují, další tvrdý
-  maximální počet hodin či směn není stanoven, zamykání přiřazení se nezavádí
-  a další pravidla mimo odsouhlasený seznam se nepřidávají. Fond práce je
-  nezávazný nález. Nejde o pracovněprávní posudek ani obecné tvrzení o právních limitech.
-
-### Historické otázky širšího / operativního řešení
-
-Následující otázky se týkají staršího týdenního operativního řezu nebo širšího
-modelu. Jejich uvedení samo o sobě neznamená překážku měsíčního pilotu.
-
-- **OQ2** (S2) Je plán statický nebo průběžně upravovaný? Pro operativní řez je
-  potvrzeno průběžné vytváření nové verze týdne; širší pravidla historie zůstávají otevřená.
-- **OQ3** (S3) Které entity jsou skutečně potřeba a které nadbytečné? Syntetický
-  pilot používá `ShiftIncident`, `ReplacementRequest` a `ReplacementOption`; jejich
-  produkční rozšíření zůstává otevřené.
-  *(minimální kontrakt první verze je navržený v `PLANNING_CONTRACT.md`)*
-- **OQ4** (S3) Které atributy entit jsou povinné? Výpadek musí nejméně odkazovat
-  na zaměstnance, datum, celou směnu a výchozí verzi plánu; přesný kontrakt je otevřený.
-- **OQ5** (S3) Existuje pojem pobočky/umístění call centra?
-
-### Historické otázky chování operativního výstupu
-
-- **OQ6** (S4) Jak se vstupy zadávají (ručně / soubor / budoucí integrace)? Pro první
-  operativní řez je zvolen ruční vstup v UI; Outlook a import zůstávají mimo rozsah.
-- **OQ7** (S4) Jaký je požadovaný tvar výstupu? Pro první řez jsou cílem tři karty
-  variant s kandidátem, změnami, pokrytím, validací a kompromisy.
-- **OQ8** (S4) Kdy se preference vyhodnocují?
-
-### Blokující pro preference a optimalizaci
-
-- **OQ22** (S6) Manager schvaluje či odmítá ručně a při přijetí vidí dopad;
-  po záskoku během schválené dovolené zůstává otevřené přesné datum náhradního
-  volna. `PARTIALLY ANSWERED` — rozhodnuto, že manažer rozhoduje ručně; otevřené
-  zůstává pouze datum náhradního volna.
-
-OQ12–OQ14 a OQ17 jsou pro pilot uzavřeny (`VERIFIED` v `DOMAIN_DECISIONS.md`):
-preference S1–S5 se nezavádějí, zůstává pouze S6 (střídání ranní/odpolední) jako
-nezávazné přání bez vah, a pořadí obětování je „nejprve pokrytí, potom tvrdá
-pravidla, potom nejmenší dopad".
-
-### Blokující pro role a data
-
-- **OQ18** (S8) Jaké další role mimo managera telemarketingového oddělení?
-- **OQ19** (S8) Rozdíl mezi plánovačem a schvalovatelem?
-- **OQ20** (S8) Je potřeba audit (kdo plán vytvořil/upravil)? Pro první řez je
-  potvrzen základní audit potvrzené změny; rozsah odmítnutých variant je otevřený.
-
-## 11. Souvislost s aktuálním stavem projektu
-
-| Položka | Odkaz / stav |
-| --- | --- |
-| Základ pro budoucí logiku | `lib/planning/README.md` — jádro, doménový kontrakt, AI kontrakt a orchestrátor `IMPLEMENTED` |
-| Datové kontrakty | [`PLANNING_CONTRACT.md`](PLANNING_CONTRACT.md) — týdenní kontrakt je historický; měsíční provider a validace jsou popsány v §11.1 (`IMPLEMENTED`) |
-| Doménové typy | `lib/planning/domain/` — `IMPLEMENTED` (kontrakt a potvrzená pravidla); zbytek `OPEN QUESTION` |
-| Přehled dokumentace | `docs/README.md` |
-| Projektové instrukce | `AGENTS.md` |
-| Technologický stack | Next.js + React + TypeScript + PostgreSQL + Prisma (`VERIFIED`) |
-| Tento dokument | `PARTIALLY VERIFIED PROPOSAL` — potvrzený kontext a rozhodnutí §0.2, zbytek čeká na rozhodnutí |
-
-Výchozí tok měsíčního MVP plánuje celý zvolený kalendářní měsíc lokálním OR-Tools providerem; manažer může také výslovně zvolit souvislý úsek, týdny jsou pouze pohledy do měsíčního návrhu. Syntetický integrační průchod ověřil vytvoření návrhu, ruční úpravu, novou kontrolu a obnovení nepotvrzené verze. Návrh zůstal `NOT VERIFIED`, protože chyběly potřebné návazné podklady a otevřený výklad víkendového volna; potvrzení zůstalo zablokované. Preference střídání S6 je `IMPLEMENTED`: lokální solver ji používá jako měkký cíl a nezávislá validace vrací výjimky i neověřenou návaznost bez toho, aby preference sama blokovala potvrzení. Částečné úvazky, další preference, produkční provoz a další integrace zůstávají mimo tento ověřený řez. Doménu ani čísla nedomýšlej.
-
-Návaznost z exportu rosteru je nyní `IMPLEMENTED`: klient převádí semicolon CSV s hlavičkou dne/zkratky týdne, manažer volí měsíc a aplikace ověří shodu kalendáře. Ukládají se jen výslovné směny a volno; prázdné buňky, dovolená a nemoc zůstávají neznámé, dokud je manažer výslovně neopraví. Surový text, jména zdrojových řádků ani soubor se neposílají na server. Uložená historie a její přesné časy vstupují do validace návaznosti; totožné překryvy se sloučí a rozpory ponechají stav neúplný. OR-Tools nedostává vlastní časy jako typ ranní/odpolední. Historické syntetické ověření ze 4. 11. 2026 prošlo: `npm test` — 479 úspěšných, 6 přeskočených; lint, typecheck, build a Prisma validace prošly; Python testy lokálního solveru — 21 úspěšných v dočasném prostředí Python 3.14 s připnutými závislostmi. Na oddělené dočasné lokální PostgreSQL 16 databázi `planning_monthly_test` prošlo nasazení všech 7 migrací, oba měsíční Prisma integrační testy (včetně souběžného potvrzení a auditní události) a syntetické uložení/načtení návaznosti přes Prisma store (idempotentní opakování, přesné časy směny a výslovné volno). V následném přihlášeném browser průchodu manager načetl 48 syntetických zaměstnanců, výchozí potvrzené obsazení a úplné sedmidenní okraje historie, vytvořil návrh lokálním OR-Tools a potvrdil jej až po nezávislé kontrole bez blokátorů. Návrh měl 840 směn; po obnovení stránky API vrátilo `confirmed: true`, režim `ortools` a 840 přiřazení. Databáze obsahovala jeden potvrzený měsíční běh, jednu auditní událost, jeden import s 672 známými okrajovými buňkami; stránka Návaznost směn import načetla a browser konzole nehlásila chyby ani varování. Všechna data byla syntetická; testovací kontejner byl po ověření odstraněn. Přímý syntetický import a uložení CSV přes UI je ověřeno v následném aplikačním průchodu doplánování.
-
-**Doplánování úseku měsíce — `IMPLEMENTED`, jeden syntetický aplikační průchod `VERIFIED`:** manažer může vybrat souvislý úsek. Server načte uložený roster a při chybějícím či rozporném pevném dni nebo při překryvu se známým dnem v úseku výpočet odmítne. OR-Tools zachová známé dny mimo úsek, včetně vlastních časů pro výpočet odpočinku; nové směny vytváří pouze v úseku. Nezávislá kontrola prověří měsíc, přiřazení a návaznosti; přesné vlastní časy bez známého typu směny neprokazují pokrytí ranní ani odpolední. Před potvrzením se v databázové transakci porovná uložený snímek s aktuálním rosterem. Potvrzený výsledek zachovává pevné dny pro další měsíc. Opětovné uložení aktuálního importu je idempotentní; obnovení staršího obsahu vytváří novou verzi. Syntetické testy pokrývají skutečný lokální solver, kontrolu změny podkladu a simulovanou databázovou transakci. Na izolované lokální PostgreSQL 16 byly ověřeny migrace a přímé Prisma uložení/načtení rosteru; potvrzení měsíčního záznamu prošlo databázovými integračními testy.
-
-Přihlášený průchod přes UI/API a dočasnou PostgreSQL 16 použil úsek `2026-11-15` až `2026-11-30`, 48 syntetických zaměstnanců a verzi 2 syntetického rosteru s 1 344 známými buňkami mimo doplňovaný úsek. Vstupní pevné směny mimo úsek pocházely z odděleného úplného syntetického návrhu s ověřeným obsazením. První pokus s podhodnoceným testovacím obsazením byl správně zablokován; po opravě fixture nezávislá kontrola prošla bez problémů. OR-Tools vytvořil 446 přiřazení a žádné nové přiřazení mimo vybraný úsek; uložený snapshot zachoval všech 394 pevných směn mimo rozsah. Týdenní tabulka je označila `P` a zobrazila jejich časy. Manažer potvrdil návrh; po obnovení stránky UI stále zobrazovalo potvrzený rozpis a `GET /api/planning/monthly` vrátil `confirmed: true`, správný rozsah, verzi rosteru 2 a 446 přiřazení. Databáze měla jeden potvrzený částečný běh a jednu auditní událost; browser konzole neměla chyby ani varování. CSV import přes UI i konflikt změněného rosteru byly následně ověřeny v běžné aplikaci a oddělené lokální PostgreSQL; produkční provoz a nasazení zůstávají `NOT VERIFIED`.
-
-**Rozhraní manažera — `IMPLEMENTED`, browser ověření `PARTIALLY VERIFIED`:** přehled zobrazuje krátké české výsledky nezávislé kontroly a konkrétní nálezy. U lokálního plánovače i ukázky je zřejmé, že volný text nevyhodnocují; výstup AI je označen jako tvrzení AI, které není nezávisle ověřené. Ruční editace návrhu a volba ukázkového scénáře byly odstraněny; jedno výslovné tlačítko potvrzení zůstává a samo potvrzení neprovádí. Ukázkové seznamy a interní názvy režimů byly odstraněny z přehledu; nastavení uvádí srozumitelný stav, pokud uložení není dostupné. Cílené testy, lint, typová kontrola, Prisma validace a build prošly. Prohlížeč ověřil rozměry 390×844 a 1280×900 px, klávesnicový přístup k odkazu přeskočení i rozbalení náhledu syntetického CSV. Náhled správně rozlišil 1 směnu, 1 výslovné volno a 28 neznámých buněk. Přímé syntetické Prisma uložení a načtení rosteru je nyní ověřené na izolované lokální DB; přihlášené UI ověřilo náhled, uložení CSV podkladů, vytvoření a potvrzení doplnění i načtení po obnovení. Ověřeny jsou také blokace zastaralého návrhu a aplikační oprávnění viewer účtu.
-
-**Externí AI — `VERIFIED` rozhodnutím uživatele (6. 11. 2026):** měsíční AI plánovač smí posílat skutečná jména, směny, absence i volný text. Zvolený provider je Cloudflare Workers AI s modelem, který podle dokumentace uchovává nula dat a netrénuje na zákaznickém obsahu. Starší Gemini adaptér zůstává v kódu; měsíční runtime jej nadále odmítá, protože bezplatná úroveň není pro aplikaci v EHP přípustná a placená odporuje rozpočtu. Reálné volání Cloudflare AI a kvalita návrhu zůstávají `NOT VERIFIED`. Vstupní textové pokyny se ukládají jako součást snapshotu; doba uchování a mazání zůstávají předmětem dalšího rozhodnutí.
-
-**Doplňující běžné aplikační ověření 2026-11-04:** Ve dvou oddělených dočasných lokálních PostgreSQL 16 databázích byla použita pouze syntetická data. V prvním přihlášeném průchodu 48 zaměstnanců manažer přes stránku Návaznost směn uložil pět verzí CSV; změněný obsah vytvořil novou verzi, shodný zůstal idempotentní a známý den uvnitř doplňovaného úseku byl odmítnut. Po změně podkladu API odmítlo potvrdit starší návrh odpovědí 409 a aplikace to zobrazila. Po obnovení původního CSV nový návrh lokálního OR-Tools se 446 směnami prošel kontrolou a manažer jej potvrdil; po obnovení stránky zůstal potvrzený. V této databázi byly tři měsíční běhy, jeden potvrzený. V samostatném běhu s 48 syntetickými zaměstnanci a dvěma syntetickými účty vytvořil návrh bez okolní historie 840 směn, ale aplikace jej označila jako neověřený a potvrzovací tlačítko vypnula. Při novém návrhu pouze s jedním vybraným zaměstnancem a nezměněným nastavením obsazení formulář ukázal kapacitní limit; po spuštění API vrátilo 422, zobrazila se chyba o nemožnosti sestavit úplné obsazení a žádný nový běh se neuložil. Přihlášený viewer mohl číst měsíční stav, ale API mu zamítlo správu účtů, zápis zaměstnanců a spuštění plánovacího běhu odpovědí 403; přímá stránka správy účtů zobrazila omezení na managera. Druhá databáze obsahovala jeden neověřený běh a žádný potvrzený. Oba testovací běhy byly po ověření zastaveny. Tímto jsou ověřeny jen popsané aplikační cesty, nikoli celé MVP.
-
-Další běžný aplikační průchod na třetí dočasné lokální PostgreSQL 16 použil 48 syntetických zaměstnanců a účty manager/viewer. V UI návrhu celodenní absence odstranila zaměstnanci směnu 2. 11.; ranní absence odstranila ranní směnu zaměstnance 3. 11. a zůstalo obsazení 23 ranních a 8 odpoledních. Oba typy absencí samostatně vytvořily 840 přiřazení; kvůli chybějící okolní historii byly návrhy neověřené a nepotvrzené. Se dvěma celodenními a jednou ranní absencí solver ve dvou pokusech vrátil timeout (504, `solver_timeout`); aplikace sdělila, že proveditelnost není rozhodnuta, a počet uložených běhů zůstal 3. Přímé přehrání syntetického vstupu v lokálním solveru potvrdilo stav `unknown` po přibližně 20,9 sekundy při nakonfigurovaném limitu 20 sekund. Bez absencí a s každým typem samostatně solver dokončil návrh za 2,2–3,6 sekundy; kombinace jedné celodenní a jedné ranní nedostupnosti dokončila 840 přiřazení za 2,35 sekundy. Hustší třívýjimková kombinace zůstává NOT VERIFIED z hlediska proveditelnosti a kvality návrhu; dosažení časového limitu není důkazem neproveditelnosti. Manažer přes UI uložil nezměněných 14 hodnot potřebného obsazení; po obnovení zůstaly hodnoty zachovány (23/8 ve všední den, 12/9 o víkendu). Viewer načetl všech 14 hodnot (200), ale zápis přes API byl zamítnut (403) a UI nastavení zobrazilo jako pouze pro čtení. V databázi nebyl žádný potvrzený běh. Cílené Vitest kontroly formuláře a API pro měsíční plánování a obsazení prošly (22 testů); Python testy solveru prošly (21 testů).
-
-**Doplňující ověření 2026-11-04:** Na nové dočasné lokální PostgreSQL 16 bylo úspěšně aplikováno všech 7 migrací; do tabulky zaměstnanců bylo vloženo 48 syntetických záznamů a databáze byla po ověření odstraněna. Rozšířená sada 8 cílených Vitest souborů prošla (53 úspěšných, 2 přeskočené); Python testy solveru prošly (21). Nová přihlášená UI relace nebyla spuštěna, proto přepínač preference střídání směn zatím nemá samostatné ověření v běžné aplikaci.
-
-**Zátěžová kontrola preference střídání 2026-11-04:** Přímé volání lokálního solveru se 48 syntetickými zaměstnanci, listopadovým obsazením 23/8 ve všední den a 12/9 o víkendu, bez absencí a se zapnutou preferencí vytvořilo 840 přiřazení. Při limitu 20 sekund a jednom pracovníkovi zůstalo 333 sousedních pracovních směn stejného typu; při 30 sekundách a jednom pracovníkovi 324 (stav `FEASIBLE`, cíl 324, dolní mez 0). Diagnostický běh s osmi pracovníky a limitem 20 sekund snížil počet na 313, stále se stavem `FEASIBLE`. Jde o přímou solverovou kontrolu, nikoli ověření přes UI; kvalita optimalizace preference ve větším měsíčním zadání proto zůstává `NOT VERIFIED`.
-
-**Aplikační ověření preference střídání 2026-11-04:** V přihlášené lokální aplikaci s dočasnou PostgreSQL 16 a 48 syntetickými zaměstnanci byl zapnut přepínač střídání. Měsíční API vrátilo 200 a návrh 840 směn; nezávislá kontrola jej při chybějící okolní historii označila `not_verified` a potvrzení vypnula. UI zobrazilo 441 nálezů preference: 345 opakování typu směny a 96 upozornění na chybějící historii. Po obnovení stránky se uložený návrh, preference i nálezy znovu zobrazily a potvrzení zůstalo vypnuté. Databáze obsahovala jeden návrh s uloženou preferencí a žádný potvrzený rozpis. Stejný syntetický vstup byl následně přehrán přímo v solveru s vypnutou preferencí: vzniklo 840 směn a 565 opakování. Zapnutí preference tedy v tomto konkrétním porovnání snížilo počet opakování o 220. Zadání obsahovalo 591 ranních a 249 odpoledních směn; při nejvýše 48 zaměstnancích je matematická dolní mez opakování uvnitř měsíce 294. Optimální řešení ani obecná kvalita preference tímto porovnáním nejsou prokázány.
-
-**Aplikační ověření ruční opravy podkladů 2026-11-04:** V přihlášené místní aplikaci se syntetickým CSV byl nespárovaný řádek zablokován pro uložení; po ručním spárování se syntetickým zaměstnancem se uložení zpřístupnilo. Změna neznámého dne na směnu bez časů opět uložení zablokovala. Po doplnění časů a změně jiného neznámého dne na volno uložení vrátilo 201 a verzi 1. Databáze obsahovala pouze tři známé buňky: volno, původní směnu 07:45–16:30 a opravenou směnu 08:05–16:45; neznámé buňky se neuložily jako volno. Po obnovení stránky UI znovu zobrazilo verzi 1 a tři známé dny.
-
-**Aplikační ověření zrušení náhledu 2026-11-04:** V téže lokální aplikaci se syntetickým CSV změna vloženého textu i vybraného měsíce zneplatnila předchozí náhled. Hlavička neodpovídající měsíci byla odmítnuta. Zrušení nového náhledu vymazalo obsah formuláře, ponechalo již uloženou verzi viditelnou a nezměnilo počty v databázi: jeden import, tři známé buňky a jeden měsíční běh.
-
-**Aplikační ověření výběru souboru CSV 2026-11-04:** V přihlášené místní aplikaci bylo vybráno syntetické listopadové CSV pro jednoho syntetického zaměstnance. Náhled ukázal jednoznačné spárování, jednu směnu, jeden den volna a 28 neznámých buněk. Uložení vytvořilo import verze 1 se dvěma známými dny; v databázi byly po uložení dva importy, pět známých dnů, jeden měsíční běh a žádný potvrzený běh. U nového importu se zachovalo volno 1. 11. a směna 7:45–16:30 dne 2. 11.; prázdné buňky se neuložily jako volno. Po obnovení stránky UI znovu zobrazilo oba importy a jejich počty známých dnů.
-
-**Aplikační ověření blokace neúplného doplánování 2026-11-04:** Místní aplikace načetla 48 syntetických zaměstnanců a umožnila vybrat souvislý úsek 15.–30. 11. 2026; rozsah zůstal zachován při přechodu formulářem. Protože mimo úsek chyběly jednoznačné podklady rosteru, API vrátilo 422 s důvodem chybějící směny nebo volna. UI návrh nezobrazilo a potvrzení neproběhlo; API před uložením návrhu vrací tento vstup jako neplatný.
-
-**Překladač záměrů — `IMPLEMENTED` (izolovaný kontrakt a Gemini adaptér), zapojení do aplikace `NOT IMPLEMENTED`, živé volání Gemini `NOT VERIFIED`:** provider-neutrální kontrakt přijímá text a typ zadavatele `manager`; jediným rozpoznatelným záměrem je S6. Výstup je verzovaný a runtime validace odmítá neznámá pole, verze a záměry. Adaptér neposílá plánovací vstupy ani roster, ale volající text sám není kontrolován na osobní údaje. Dosavadní testy používají syntetické věty a mockovaný `fetch`; žádná žádost do Gemini nebyla odeslána. Neexistuje API ani obrazovka, která by překlad zpřístupnila. Před provozním zapojením je nutné vyřešit ochranu a uchovávání textu a doplnit manažerské schválení výkladu.
+- [`DOMAIN_DECISIONS.md`](DOMAIN_DECISIONS.md) — rozhodnutí a otevřené otázky.
+- [`PLAN_OVERENI_AI.md`](PLAN_OVERENI_AI.md) — doložené syntetické běhy AI a jejich meze.
+- [`PLANNING_CONTRACT.md`](PLANNING_CONTRACT.md) — starší týdenní kontrakt; není API specifikací měsíčního UI.
+- Implementační pravda: `lib/planning/domain/month-validation.ts` a jeho testy.

@@ -1,8 +1,8 @@
 # ADR 0005 — AI navrhuje, validace ověřuje, manažer potvrzuje
 
-- **Stav:** schválený záměr; měsíční AI provider je od 6. 11. 2026 Cloudflare
-  Workers AI (viz [ADR 0006](0006-mesicni-ai-cloudflare-workers-ai.md)).
-  Lokální OR-Tools zůstává offline. Viz [`DOMAIN_DECISIONS.md`](../DOMAIN_DECISIONS.md).
+- **Stav:** schválený záměr; měsíční AI provider je upřesněn v ADR 0006 a 0008.
+  Aktuální rozhodnutí a otevřené otázky jsou v
+  [`DOMAIN_DECISIONS.md`](../DOMAIN_DECISIONS.md).
 - **Datum:** 24. 10. 2026, aktualizováno 26. 10. 2026 a 6. 11. 2026
 - **Kontext kódu:** `lib/planning/types.ts`, `lib/planning/domain/types.ts`,
   `lib/planning/ai-provider.ts`, `lib/planning/orchestrator.ts`,

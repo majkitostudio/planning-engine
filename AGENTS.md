@@ -190,13 +190,10 @@ směny; přestávky ani výpočet odpracované doby nejsou samostatné tvrdé pr
   Chybná hodnota ani nedostupný plánovač nesmějí tiše přepnout provider.
 - Simulovaný provider (`lib/planning/simulated/`) vrací tři fixture scénáře
   (`complete`, `partial`, `unverified`) pro pevný týden 5.–11. 10. 2026.
-- Doménová specifikace: `PARTIALLY VERIFIED PROPOSAL` —
-  `docs/DOMAIN_SPECIFICATION.md` — část rozhodnutí je `VERIFIED` (zejména AI
-  role, rozsah prvního řezu, časy směn, OQ21, OQ23 a OQ24), zbytek zůstává
-  `PROPOSAL`/`OPEN QUESTION`.
-- Rozhodovací list pro managera: `docs/DOMAIN_DECISIONS.md` — částečně
-  zodpovězený; otevřené otázky zůstávají `OPEN QUESTION`. Odpovědi ani doménu
-  nedomýšlej.
+- Doménová pravidla a aktuální otevřené otázky jsou udržovány v
+  `docs/DOMAIN_SPECIFICATION.md` a `docs/DOMAIN_DECISIONS.md`. Starší podrobný
+  pracovní záznam je zachován v `docs/archive/2026-11-07/` a není zdrojem
+  současných pravidel.
 - Dostupné kontroly zahrnují lint, typecheck, testy, build a validaci Prisma
   schématu. Dřívější dílčí lokální smoke neprokazuje produkční úroveň ani
   aktuální stav připojení; podrobnosti jsou v `docs/ROADMAP.md`.

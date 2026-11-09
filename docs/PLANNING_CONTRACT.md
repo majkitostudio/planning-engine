@@ -1,14 +1,13 @@
 # Minimální datový kontrakt plánovacího jádra
 
-> **Rozsah:** především starší týdenní kontrakt a syntetické operativní náhrady.
-> Požadavky na tři varianty či detaily staršího solveru z něj nepřenášej do
-> měsíčního pilotu. Aktuální praktický měsíční cíl a stav uvádí
-> `DOMAIN_DECISIONS.md` a `ROADMAPA_DALSIHO_POSTUPU.md`.
+> **Historický technický kontrakt:** popisuje starší týdenní API a některé
+> provozní náhrady. Není specifikací měsíčního UI ani autoritativním seznamem
+> aktuálních pravidel. Měsíční pilot popisují
+> [`DOMAIN_SPECIFICATION.md`](DOMAIN_SPECIFICATION.md) a [`ROADMAP.md`](ROADMAP.md).
 
-> Tento dokument zachycuje původní týdenní kontrakt a související AI provider.
-> Měsíční MVP má samostatný tok: Cloudflare Workers AI navrhuje, deterministická
-> validace ověřuje a manažer potvrzuje. Lokální OR-Tools zůstává pro offline běh.
-> Podrobnosti uvádí [`DOMAIN_DECISIONS.md`](DOMAIN_DECISIONS.md).
+> Tento dokument zachycuje původní týdenní kontrakt a jeho historické
+> implementační předpoklady. Lokální OR-Tools byl z měsíční aplikace odstraněn
+> rozhodnutím v [ADR 0008](adr/0008-cloudflare-only-and-unified-ui.md).
 
 - **Stav:** kontrakt je `PROPOSAL` (doména zůstává částečně otevřená);
   jeho implementace je `IMPLEMENTED` a ověřená testy.
@@ -596,8 +595,9 @@ typů.
 - AI kontrakt: `IMPLEMENTED` v `lib/planning/ai-provider.ts` — rozhraní
   `PlanningModelProvider`, chyby poskytovatele a `isPlanDraft()`.
 - Cloudflare Workers AI adaptér: `IMPLEMENTED` v
-  `lib/ai/cloudflare-planning-provider.ts`; reálné volání a kvalita výstupu jsou
-  `NOT VERIFIED`.
+  `lib/ai/cloudflare-planning-provider.ts`; reálná volání jsou ověřena na
+  syntetických scénářích. Kvalita výsledků je částečně ověřena, ale spolehlivost
+  pro běžné použití zůstává `NOT VERIFIED`; viz `docs/PLAN_OVERENI_AI.md`.
 - Gemini adaptér: `IMPLEMENTED` v `lib/ai/gemini-planning-provider.ts`; reálné
   volání je `VERIFIED` integračním testem, produkční kvalita výstupu je
   `NOT VERIFIED`.
