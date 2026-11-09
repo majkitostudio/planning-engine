@@ -60,6 +60,9 @@ Ověřen zdroj `scripts/monthly_solver.py` a adaptér v rodiči `f6d616d` proti 
 - Starý solver slučuje `OPTIMAL` a `FEASIBLE` do `feasible`. Nový výstup musí oba stavy zachovat a `UNKNOWN` ani provozní chybu nevydávat za `INFEASIBLE`.
 - Současný validátor blokuje potvrzení při nedostatečném obsazení a při neověřených nezbytných podkladech. Cílené existující syntetické testy validátoru, měsíční orchestrace a rout prošly lokálně: 3 soubory, 44 testů. Nejde o test obnoveného solveru ani celého databázového toku.
 - Historický Python solver a jeho testy byly z rodiče `f6d616d` spuštěny mimo pracovní strom na lokálním Pythonu 3.14 s OR-Tools 9.15.6755: prošlo 28 historických testů. Ověřují starý model, nikoli požadované nové chování, výkon nebo online integraci.
+- Při opětovné kontrole aktuálního kódu bylo potvrzeno, že chybějící dostupnost přiřazeného člověka je `not_verified`, nikoli známá dostupnost, a že nezadaný požadavek na obsazení není totéž co zadaná nula. Měsíční orchestrace dosud používá AI-specifické chyby a runtime zatím volbu `ortools` nepodporuje.
+- Doplněny syntetické regresní testy současného nezávislého validátoru pro jarní a podzimní změnu času v Praze. Společný cílený běh validátoru a měsíční orchestrace prošel: 2 soubory, 37 testů. Tyto testy nejsou testem solveru ani důkazem připravenosti nasazení.
+- Lokální výchozí Python 3.15 nemá dostupný wheel OR-Tools 9.15.6755; tato verze byla pro další izolované pokusy nainstalována mimo repozitář pod Pythonem 3.14. Instalace není ověření měsíčního modelu ani online provozu.
 
 ### 3. Obnovit a upravit CP-SAT model
 

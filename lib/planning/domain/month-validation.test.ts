@@ -111,6 +111,21 @@ describe("měsíční validace", () => {
     expect(result.problems.some((problem) => problem.code === "REST_AFTER_SIX_DAYS")).toBe(true);
   });
 
+  it.each([
+    { month: "2026-03", start: 23, next: "2026-03-30", violates: true },
+    { month: "2026-10", start: 19, next: "2026-10-26", violates: false },
+  ])("počítá odpočinek jako skutečný čas přes změnu času v $month", ({ month, start, next, violates }) => {
+    const days = Array.from({ length: 6 }, (_, i) => `${month}-${String(start + i).padStart(2, "0")}`);
+    const shifts = [...days.map((date) => ({ ...assignment(date), shiftKind: "afternoon" as const })), assignment(next)];
+    const monthlyInput: MonthlyPlanningInput = {
+      ...input, month,
+      staffingRequirements: datesInMonth(month).flatMap((date) => (["morning", "afternoon"] as const).map((shiftKind) => ({ date, shiftKind, requiredEmployees: 0 }))),
+      availability: shifts.map(({ employeeId, date, shiftKind }) => ({ employeeId, date, shiftKind, available: true })),
+    };
+    const result = validateMonthlyPlan(monthlyInput, shifts, completeBoundary);
+    expect(result.problems.some((problem) => problem.code === "REST_AFTER_SIX_DAYS")).toBe(violates);
+  });
+
   it("přijme dostatečný nepřerušený odpočinek přes hranici měsíce", () => {
     const before = ["2026-10-25", "2026-10-26", "2026-10-27", "2026-10-28", "2026-10-29", "2026-10-30"].map(assignment);
     const result = validateMonthlyPlan(input, [assignment("2026-11-01")], { ...completeBoundary, before: { complete: true, assignments: before } });
