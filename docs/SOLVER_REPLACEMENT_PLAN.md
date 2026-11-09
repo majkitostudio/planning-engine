@@ -43,7 +43,11 @@ Vytvořit nejmenší izolovaný syntetický Python solver a zavolat jej přes c�
 - Ověřit aktuální nastavení Vercel Hobby, Python verzi, build a runtime limity v cílovém projektu. Dokumentační limit nepovažovat za důkaz úspěšného deploye.
 - Neprovádět produkční nasazení ani zápis do databáze v rámci tohoto pokusu. Preview/deploy je samostatný schvalovaný krok podle `AGENTS.md`.
 
-**Brána 1 — hosting:** pokračovat s Vercel Python Function pouze po opakovatelném úspěšném sestavení a běhu v cílovém preview s přijatelnou rezervou času a velikosti. Pokud neprojde, předložit varianty hostování a nákladů k rozhodnutí; neimplementovat plný solver do neověřeného runtime.
+**Výsledek syntetického pokusu (9. 11. 2026):** v propojeném Vercel projektu nastaveném na Next.js proběhl Preview build minimální Next.js aplikace s izolovanou Python funkcí. Funkce běžela na Pythonu 3.14.9, načetla OR-Tools 9.15.6755 a na pevném tříproměnném syntetickém CP-SAT modelu vrátila `OPTIMAL`. První HTTP požadavek trval celkem 547 ms, z toho 86 ms uvnitř solveru; druhý 328 ms celkem a 1,27 ms uvnitř solveru. Neautorizované volání vrátilo 404. Preview neobsahovalo Planning Engine UI, databázový kód ani zaměstnanecká data a nemělo přidaný trvalý projektový tajný údaj.
+
+Tím je ověřena dostupnost Python funkce, instalace OR-Tools a její základní běh v izolovaném Preview na tomto Vercel projektu. Není tím ověřen celý měsíční model, velikost jeho balíčku, souběžné požadavky, škála 100+ zaměstnanců, mezní timeouty, přenos reálného měsíčního DTO ani napojení funkce do aplikace.
+
+**Brána 1 — základní runtime:** minimální instalace, sestavení a běh OR-Tools ve Vercel Preview prošly; lze pokračovat k obnově skutečného měsíčního modelu. Před jeho přepnutím do hlavní aplikace ještě změřit velikost kompletní funkce, cold start, souběh, limity času a běh na syntetickém měsíci s cílovým počtem lidí. Pokud tyto kontroly neprojdou, předložit varianty hostování a nákladů k rozhodnutí; nepřepínat na neověřenou variantu.
 
 ### 3. Obnovit a upravit CP-SAT model
 
