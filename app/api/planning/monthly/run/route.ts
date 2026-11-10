@@ -26,19 +26,19 @@ export async function POST(request: Request) {
   let body: unknown;
   try { body = await request.json(); } catch { return NextResponse.json({ ok: false, message: "Neplatný JSON." }, { status: 400 }); }
   const record = typeof body === "object" && body !== null ? body as Record<string, unknown> : {};
+  if (Object.hasOwn(record, "providerOverride")) return NextResponse.json({ ok: false, message: "Režim plánování nelze měnit v požadavku." }, { status: 400 });
   if (typeof record.input === "object" && record.input !== null && Object.hasOwn(record.input, "rosterHistory")) return NextResponse.json({ ok: false, message: "Podklady rosteru načítá server; nelze je poslat ve vstupu." }, { status: 400 });
   const input = validateMonthlyInput(record.input);
   if (!input.ok) return NextResponse.json({ ok: false, message: input.message }, { status: 400 });
   const current = getMonthlyRuntime();
   if (!current.configured) return NextResponse.json({ ok: false, message: current.reason }, { status: 503 });
   const scenario = record.scenario;
-  const providerOverride = record.providerOverride === "simulated" ? "simulated" : null;
   if (current.mode === "simulated" && scenario !== "complete" && scenario !== "partial" && scenario !== "unverified") return NextResponse.json({ ok: false, message: "Zvolte platný simulovaný scénář." }, { status: 400 });
   try {
     const employeeIds = input.value.employees.map((employee) => employee.id);
     const boundary = await current.loadBoundary(input.value.month, employeeIds);
     const planningInput = input.value;
-    const effectiveMode = providerOverride === "simulated" ? "simulated" : current.mode;
+    const effectiveMode = current.mode;
     const provider = effectiveMode === "simulated" ? new SimulatedMonthlyProvider("complete")
       : effectiveMode === "gemini" ? new GeminiPlanningProvider()
         : effectiveMode === "ortools" ? new MonthlyOrtoolsProvider({ url: resolveOrtoolsUrl(process.env), token: process.env.PLANNING_ORTOOLS_TOKEN ?? "" })

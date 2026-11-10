@@ -12,7 +12,6 @@ const CONFIRMED_RULES = [
   ["Potvrzení manažera", "Nepotvrzený návrh lze uložit k posouzení, ale bez výslovného potvrzení manažera se nesmí aplikovat jako potvrzený rozpis."],
   ["Částečný návrh", "Částečný nebo neověřený návrh se může zobrazit a projednat, ale nelze jej potvrdit."],
   ["Obsazení", "Potřebné obsazení směn je konfigurovatelný vstup. Nedostatečné pokrytí se musí přiznat; neúplný návrh nelze potvrdit."],
-  ["Měsíční fond práce", "Naplánovaná doba se porovnává s manažerem zadaným fondem v hodinách. Odchylka i chybějící údaj jsou nezávazné a neblokují potvrzení."],
   ["Přestávky", "Validace používá hrubý interval začátku a konce směny; přestávky ani odpracovaná doba nejsou samostatné tvrdé pravidlo."],
   ["Role a limity", "Role ani dovednosti se neevidují, další tvrdé limity počtu hodin či směn nejsou schváleny a přiřazení nelze zamykat."],
   ["Střídání směn", "Manažer může zapnout měkké přání střídat ranní a odpolední směny mezi sousedními pracovními směnami. Nejde o tvrdé pravidlo."],

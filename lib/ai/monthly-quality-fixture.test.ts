@@ -37,16 +37,16 @@ describe("synthetic monthly quality fixture (offline)", () => {
     expect(validateMonthlyInput(duplicate)).toMatchObject({ ok: false, message: "Dostupnost je duplicitní." });
   });
 
-  it("marks missing boundary history unverified and blocks confirmation", () => {
+  it("reports missing boundary history as a warning without blocking confirmation", () => {
     const incompleteBoundary = {
       before: { complete: false, assignments: [] },
       after: { complete: false, assignments: [] },
     };
     const result = validateMonthlyPlan(monthlyQualityInput, monthlyQualityDraft.assignments, incompleteBoundary);
 
-    expect(result.status).toBe("not_verified");
-    expect(result.unverified.some((finding) => finding.code === "BOUNDARY_HISTORY_INCOMPLETE")).toBe(true);
-    expect(result.canConfirm).toBe(false);
+    expect(result.status).toBe("valid");
+    expect(result.warnings.some((finding) => finding.code === "BOUNDARY_HISTORY_INCOMPLETE")).toBe(true);
+    expect(result.canConfirm).toBe(true);
   });
 
   it("marks a boundary assignment inside the month as invalid boundary history", () => {

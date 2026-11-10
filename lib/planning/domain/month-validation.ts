@@ -12,9 +12,16 @@ export interface MonthlyBoundaryAssignment {
   readonly endTime?: LocalTime;
 }
 
+export interface MonthlyBoundarySide {
+  readonly complete: boolean;
+  readonly assignments: readonly MonthlyBoundaryAssignment[];
+  /** True means available history sources disagree on at least one cell. */
+  readonly conflicts?: boolean;
+}
+
 export interface MonthlyBoundaryData {
-  readonly before: { readonly complete: boolean; readonly assignments: readonly MonthlyBoundaryAssignment[] };
-  readonly after: { readonly complete: boolean; readonly assignments: readonly MonthlyBoundaryAssignment[] };
+  readonly before: MonthlyBoundarySide;
+  readonly after: MonthlyBoundarySide;
 }
 export interface MonthlyFinding {
   readonly code: string;
@@ -27,22 +34,19 @@ export interface MonthlyValidation {
   readonly status: "valid" | "invalid" | "not_verified";
   readonly problems: readonly MonthlyFinding[];
   readonly unverified: readonly MonthlyFinding[];
+  readonly warnings: readonly MonthlyFinding[];
   readonly preferenceFindings: readonly MonthlyFinding[];
-  /** Nezávazná kontrola měsíčního fondu; nikdy sama neblokuje potvrzení. */
-  readonly workFundFindings: readonly MonthlyFinding[];
   readonly canConfirm: boolean;
 }
-
-const formatFundHours = (seconds: number) => String(Math.round(seconds / 36) / 100).replace(".", ",");
 
 /** Kontroluje celý měsíční návrh; samotný výsledek nepotvrzuje rozpis. */
 export function validateMonthlyPlan(input: MonthlyPlanningInput, assignments: readonly ProposedAssignment[], boundary: MonthlyBoundaryData): MonthlyValidation {
   const problems: MonthlyFinding[] = [];
   const unverified: MonthlyFinding[] = [];
+  const warnings: MonthlyFinding[] = [];
   const preferenceFindings: MonthlyFinding[] = [];
-  const workFundFindings: MonthlyFinding[] = [];
   const parsed = validateMonthlyInput(input);
-  if (!parsed.ok) return { status: "invalid", problems: [{ code: "INPUT_INVALID", message: parsed.message }], unverified, preferenceFindings, workFundFindings, canConfirm: false };
+  if (!parsed.ok) return { status: "invalid", problems: [{ code: "INPUT_INVALID", message: parsed.message }], unverified, warnings, preferenceFindings, canConfirm: false };
   const dates = datesInMonth(input.month);
   const first = dates[0];
   const last = dates[dates.length - 1];
@@ -137,8 +141,14 @@ const expected = getConfirmedShiftWindow(item.shiftKind, isWeekendDate(item.date
   const afterWeek = weeks[weeks.length - 1];
   const beforeNeeded = monthWork.some((item) => item.date <= addDays(first, 5)) || (beforeWeek < first && partialWeekNeedsHistory(beforeWeek));
   const afterNeeded = monthWork.some((item) => item.date >= addDays(last, -5)) || (addDays(afterWeek, 6) > last && partialWeekNeedsHistory(afterWeek));
+  if (beforeNeeded && boundary?.before?.conflicts) {
+    unverified.push({ code: "BOUNDARY_HISTORY_CONFLICT", message: "Dostupné podklady před měsícem si odporují; návazné kontroly nelze spolehlivě ověřit." });
+  }
+  if (afterNeeded && boundary?.after?.conflicts) {
+    unverified.push({ code: "BOUNDARY_HISTORY_CONFLICT", message: "Dostupné podklady po měsíci si odporují; návazné kontroly nelze spolehlivě ověřit." });
+  }
   if ((!beforeComplete && beforeNeeded) || (!afterComplete && afterNeeded)) {
-    unverified.push({ code: "BOUNDARY_HISTORY_INCOMPLETE", message: "Pro kontrolu odpočinku nebo víkendového volna chybí potřebné podklady před měsícem nebo po něm." });
+    warnings.push({ code: "BOUNDARY_HISTORY_INCOMPLETE", message: "Pro kontrolu odpočinku nebo víkendového volna chybí potřebné podklady před měsícem nebo po něm. Manažer může pokračovat, ale návaznost není ověřená." });
   }
   for (const date of dates) for (const kind of ["morning", "afternoon"] as const) {
     const requirement = input.staffingRequirements.find((item) => item.date === date && item.shiftKind === kind);
@@ -182,27 +192,23 @@ const expected = getConfirmedShiftWindow(item.shiftKind, isWeekendDate(item.date
     for (const week of weeks) {
       const weekDates = datesInWeek(week);
       if (!work.some((item) => weekDates.includes(item.date) && isWeekendDate(item.date))) continue;
-      if ((week < first && !beforeComplete) || (weekDates[6] > last && !afterComplete)) continue;
-      const off = weekDates.filter((date) => !workDates.includes(date));
-      if (off.length < 2) problems.push({ code: "WEEKEND_TWO_DAYS_OFF", message: "Při víkendové práci chybí dva dny volna v týdnu.", date: week, employeeId: employee.id });
-    }
-
-    const fund = input.workFunds?.find((item) => item.employeeId === employee.id);
-    if (!fund) {
-      workFundFindings.push({ code: "WORK_FUND_MISSING", message: "Pracovní fond zaměstnance není zadán; naplnění fondu nelze ověřit.", employeeId: employee.id });
-    } else {
-      const plannedSeconds = Math.round(work
-        .filter((item) => item.date >= first && item.date <= last)
-        .reduce((sum, item) => {
-          const span = shiftInterval(item);
-          return sum + (span.endMs - span.startMs);
-        }, 0) / 1000);
-      const targetSeconds = Math.round(fund.hours * 3600);
-      const excusedSeconds = Math.round(fund.excusedHours * 3600);
-      const totalSeconds = plannedSeconds + excusedSeconds;
-      const detail = `naplánováno ${formatFundHours(plannedSeconds)} h a omluveno ${formatFundHours(excusedSeconds)} h z fondu ${formatFundHours(targetSeconds)} h`;
-      if (totalSeconds < targetSeconds) workFundFindings.push({ code: "WORK_FUND_UNDER", message: `Fond práce není naplněn: ${detail}.`, employeeId: employee.id });
-      else if (totalSeconds > targetSeconds) workFundFindings.push({ code: "WORK_FUND_OVER", message: `Fond práce je překročen: ${detail}.`, employeeId: employee.id });
+      const knownOff = weekDates.filter((date) => {
+        if (workDates.includes(date)) return false;
+        if (date < first) return beforeComplete;
+        if (date > last) return afterComplete;
+        if (!range || (date >= range.startDate && date <= range.endDate)) return true;
+        return input.rosterHistory?.days.find((item) => item.employeeId === employee.id && item.date === date)?.status === "off";
+      });
+      const unknownOffPossible = weekDates.filter((date) => {
+        if (workDates.includes(date)) return false;
+        if (date < first) return !beforeComplete;
+        if (date > last) return !afterComplete;
+        if (range && (date < range.startDate || date > range.endDate)) {
+          return (input.rosterHistory?.days.find((item) => item.employeeId === employee.id && item.date === date)?.status ?? "unknown") === "unknown";
+        }
+        return false;
+      });
+      if (knownOff.length + unknownOffPossible.length < 2) problems.push({ code: "WEEKEND_TWO_DAYS_OFF", message: "Při víkendové práci chybí dva dny volna v týdnu.", date: week, employeeId: employee.id });
     }
 
     if (input.shiftRotationPreference) {
@@ -227,5 +233,5 @@ const expected = getConfirmedShiftWindow(item.shiftKind, isWeekendDate(item.date
     }
   }
   const status = problems.length ? "invalid" : unverified.length ? "not_verified" : "valid";
-  return { status, problems, unverified, preferenceFindings, workFundFindings, canConfirm: status === "valid" };
+  return { status, problems, unverified, warnings, preferenceFindings, canConfirm: status === "valid" };
 }

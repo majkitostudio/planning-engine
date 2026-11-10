@@ -32,7 +32,8 @@ describe("měsíční validace", () => {
       ? { employeeId: "e1", date, status: "shift" as const, startTime: "07:45", endTime: "16:30", shiftKind: "morning" as const }
       : { employeeId: "e1", date, status: date >= "2021-02-15" ? "unknown" as const : "off" as const }) };
     const result = validateMonthlyPlan({ ...input, month, planningRange: { startDate: "2021-02-15", endDate: "2021-02-28" }, rosterHistory, staffingRequirements: dates.flatMap((date) => (["morning", "afternoon"] as const).map((shiftKind) => ({ date, shiftKind, requiredEmployees: 0 }))) }, [], { before: { complete: false, assignments: [] }, after: { complete: false, assignments: [] } });
-    expect(result.unverified.some((finding) => finding.code === "BOUNDARY_HISTORY_INCOMPLETE")).toBe(true);
+    expect(result.warnings.some((finding) => finding.code === "BOUNDARY_HISTORY_INCOMPLETE")).toBe(true);
+    expect(result.unverified.length).toBeGreaterThan(0);
     expect(result.canConfirm).toBe(false);
   });
   it("vyžaduje známé pevné dny mimo rozsah a neumožní přepsat existující buňku", () => {
@@ -80,9 +81,68 @@ describe("měsíční validace", () => {
     const result = validateMonthlyPlan({ ...input, availability }, days.map(assignment), completeBoundary);
     expect(result.status).toBe("valid");
   });
-  it("označí chybějící podklady za neověřené a blokuje potvrzení", () => {
+  it("označí chybějící okolní historii jako upozornění bez blokace potvrzení", () => {
     const result = validateMonthlyPlan(input, [], { before: { complete: false, assignments: [] }, after: { complete: false, assignments: [] } });
+    expect(result.status).toBe("valid");
+    expect(result.warnings.some((finding) => finding.code === "BOUNDARY_HISTORY_INCOMPLETE")).toBe(true);
+    expect(result.canConfirm).toBe(true);
+  });
+
+  it("blokuje potvrzení, když vedle chybějící historie nelze ověřit dostupnost", () => {
+    const result = validateMonthlyPlan(input, [assignment("2026-11-02")], { before: { complete: false, assignments: [] }, after: { complete: false, assignments: [] } });
+    expect(result.warnings.some((finding) => finding.code === "BOUNDARY_HISTORY_INCOMPLETE")).toBe(true);
+    expect(result.unverified.some((finding) => finding.code === "AVAILABILITY_MISSING")).toBe(true);
     expect(result.status).toBe("not_verified");
+    expect(result.canConfirm).toBe(false);
+  });
+
+  it("blokuje potvrzení při nalezeném problému i s chybějící okolní historií", () => {
+    const result = validateMonthlyPlan({
+      ...input,
+      absences: [{ id: "a", employeeId: "e1", from: "2026-11-02", to: "2026-11-02", type: "vacation", status: "approved" }],
+    }, [assignment("2026-11-02")], { before: { complete: false, assignments: [] }, after: { complete: false, assignments: [] } });
+    expect(result.warnings.some((finding) => finding.code === "BOUNDARY_HISTORY_INCOMPLETE")).toBe(true);
+    expect(result.problems.some((finding) => finding.code === "ABSENCE_APPROVED")).toBe(true);
+    expect(result.status).toBe("invalid");
+    expect(result.canConfirm).toBe(false);
+  });
+
+  it("blokuje prokazatelně nedostatečné víkendové volno i bez předchozího týdne", () => {
+    const month = "2026-09";
+    const dates = datesInMonth(month);
+    const assignments = ["2026-09-01", "2026-09-02", "2026-09-03", "2026-09-04", "2026-09-05", "2026-09-06"].map(assignment);
+    const septemberInput: MonthlyPlanningInput = {
+      ...input,
+      month,
+      availability: assignments.map((item) => ({ employeeId: item.employeeId, date: item.date, shiftKind: item.shiftKind, available: true })),
+      staffingRequirements: dates.flatMap((date) => (["morning", "afternoon"] as const).map((shiftKind) => ({ date, shiftKind, requiredEmployees: 0 }))),
+    };
+    const result = validateMonthlyPlan(septemberInput, assignments, { before: { complete: false, assignments: [] }, after: { complete: true, assignments: [] } });
+    expect(result.problems.some((problem) => problem.code === "WEEKEND_TWO_DAYS_OFF")).toBe(true);
+    expect(result.canConfirm).toBe(false);
+  });
+
+  it("umožní víkendový týden s pěti známými pracovními dny, když chybějící den může doplnit druhé volno", () => {
+    const month = "2026-09";
+    const dates = datesInMonth(month);
+    const assignments = ["2026-09-01", "2026-09-02", "2026-09-03", "2026-09-04", "2026-09-05"].map(assignment);
+    const septemberInput: MonthlyPlanningInput = {
+      ...input,
+      month,
+      availability: assignments.map((item) => ({ employeeId: item.employeeId, date: item.date, shiftKind: item.shiftKind, available: true })),
+      staffingRequirements: dates.flatMap((date) => (["morning", "afternoon"] as const).map((shiftKind) => ({ date, shiftKind, requiredEmployees: 0 }))),
+    };
+    const result = validateMonthlyPlan(septemberInput, assignments, { before: { complete: false, assignments: [] }, after: { complete: true, assignments: [] } });
+    expect(result.problems.some((problem) => problem.code === "WEEKEND_TWO_DAYS_OFF")).toBe(false);
+    expect(result.warnings.some((warning) => warning.code === "BOUNDARY_HISTORY_INCOMPLETE")).toBe(true);
+    expect(result.canConfirm).toBe(true);
+  });
+
+  it("blokuje kontrolu, pokud okrajová historie obsahuje skutečný rozpor", () => {
+    const date = "2026-11-01";
+    const conflictInput = { ...input, availability: [{ employeeId: "e1", date, shiftKind: "morning" as const, available: true }] };
+    const result = validateMonthlyPlan(conflictInput, [assignment(date)], { before: { complete: false, conflicts: true, assignments: [] }, after: { complete: true, assignments: [] } });
+    expect(result.unverified.some((finding) => finding.code === "BOUNDARY_HISTORY_CONFLICT")).toBe(true);
     expect(result.canConfirm).toBe(false);
   });
 
@@ -238,74 +298,11 @@ describe("měsíční validace", () => {
     expect(result.canConfirm).toBe(false);
   });
 
-  it("počítá měsíční fond z potvrzených časů a odchylku hlásí nezávazně", () => {
+  it("při kontrole návrhu ignoruje fond uložený ve starém vstupu", () => {
     const date = "2026-11-02";
     const withAvailability = { ...input, availability: [{ employeeId: "e1", date, shiftKind: "morning" as const, available: true }] };
-    const validate = (workFunds: { employeeId: string; hours: number; excusedHours: number }[]) =>
-      validateMonthlyPlan({ ...withAvailability, workFunds }, [assignment(date)], completeBoundary);
-
-    const exact = validate([{ employeeId: "e1", hours: 8.75, excusedHours: 0 }]);
-    expect(exact.workFundFindings).toEqual([]);
-    expect(exact.canConfirm).toBe(true);
-
-    const withExcused = validate([{ employeeId: "e1", hours: 9, excusedHours: 0.25 }]);
-    expect(withExcused.workFundFindings).toEqual([]);
-    expect(withExcused.canConfirm).toBe(true);
-
-    const under = validate([{ employeeId: "e1", hours: 9, excusedHours: 0 }]);
-    expect(under.workFundFindings.map((finding) => finding.code)).toContain("WORK_FUND_UNDER");
-    expect(under.canConfirm).toBe(true);
-
-    const over = validate([{ employeeId: "e1", hours: 8, excusedHours: 0 }]);
-    expect(over.workFundFindings.map((finding) => finding.code)).toContain("WORK_FUND_OVER");
-    expect(over.canConfirm).toBe(true);
-  });
-
-  it("počítá poloviční ranní směnu jako 7 h 15 min a víkendovou jako plnou směnu", () => {
-    const partTimeInput = {
-      ...input,
-      employees: [{ id: "e1", displayName: "Test", employmentType: "part_time" as const }],
-      staffingRequirements: input.staffingRequirements.map((item) => item.date === "2026-11-02" && item.shiftKind === "morning"
-        ? { ...item, requiredEmployees: 1 }
-        : item),
-      workFunds: [{ employeeId: "e1", hours: 7.25, excusedHours: 0 }],
-    };
-    const weekday = validateMonthlyPlan(partTimeInput, [assignment("2026-11-02")], completeBoundary);
-    expect(weekday.workFundFindings).toEqual([]);
-
-    const weekendInput = {
-      ...partTimeInput,
-      staffingRequirements: input.staffingRequirements.map((item) => item.date === "2026-11-07" && item.shiftKind === "morning"
-        ? { ...item, requiredEmployees: 1 }
-        : item),
-      workFunds: [{ employeeId: "e1", hours: 8.75, excusedHours: 0 }],
-    };
-    const weekend = validateMonthlyPlan(weekendInput, [assignment("2026-11-07")], completeBoundary);
-    expect(weekend.workFundFindings).toEqual([]);
-  });
-
-  it("označí chybějící fond jako neověřený, ale neblokuje potvrzení", () => {
-    const date = "2026-11-02";
-    const result = validateMonthlyPlan({ ...input, availability: [{ employeeId: "e1", date, shiftKind: "morning" as const, available: true }] }, [assignment(date)], completeBoundary);
-
-    expect(result.workFundFindings.some((finding) => finding.code === "WORK_FUND_MISSING")).toBe(true);
+    const result = validateMonthlyPlan({ ...withAvailability, workFunds: [{ employeeId: "e1", hours: 1000, excusedHours: 0 }] }, [assignment(date)], completeBoundary);
     expect(result.canConfirm).toBe(true);
-  });
-
-  it("započítá do fondu i převzatou směnu s vlastními časy mimo doplňovaný úsek", () => {
-    const rosterHistory = {
-      imports: [],
-      days: datesInMonth("2026-11").map((date) => date === "2026-11-02"
-        ? { employeeId: "e1", date, status: "shift" as const, startTime: "08:05", endTime: "20:00" }
-        : { employeeId: "e1", date, status: date < "2026-11-15" ? "off" as const : "unknown" as const }),
-    };
-    const result = validateMonthlyPlan({
-      ...input,
-      planningRange: { startDate: "2026-11-15", endDate: "2026-11-30" },
-      rosterHistory,
-      workFunds: [{ employeeId: "e1", hours: 715 / 60, excusedHours: 0 }],
-    }, [], completeBoundary);
-
-    expect(result.workFundFindings).toEqual([]);
+    expect(result).not.toHaveProperty("workFundFindings");
   });
 });

@@ -116,7 +116,9 @@ describe("podklady navazujících rozpisů", () => {
     ]);
 
     expect(missing.before.complete).toBe(false);
+    expect(missing.before.conflicts).toBeUndefined();
     expect(conflict.before.complete).toBe(false);
+    expect(conflict.before.conflicts).toBe(true);
   });
 
   it("vytvoří snapshot bez jmen s explicitními dny, neznámem a rozporem", () => {

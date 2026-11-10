@@ -144,6 +144,7 @@ export function buildMonthlyBoundary(
 
   const collect = (days: readonly IsoDate[]) => {
     let complete = true;
+    let conflicts = false;
     const assignments: MonthlyBoundaryAssignment[] = [];
     for (const date of days) {
       for (const employeeId of requiredIds) {
@@ -159,7 +160,8 @@ export function buildMonthlyBoundary(
           if (entry) facts.push(importedFact(date, entry, period.employmentTypes?.[employeeId] ?? "full_time"));
         }
         const keys = new Set(facts.map(factKey));
-        if (keys.size !== 1) { complete = false; continue; }
+        if (keys.size === 0) { complete = false; continue; }
+        if (keys.size > 1) { complete = false; conflicts = true; continue; }
         const fact = facts[0];
         if (fact.status === "shift") assignments.push({
           employeeId,
@@ -170,7 +172,7 @@ export function buildMonthlyBoundary(
         });
       }
     }
-    return { complete, assignments };
+    return { complete, assignments, ...(conflicts ? { conflicts: true } : {}) };
   };
   return {
     before: collect(Array.from({ length: 7 }, (_, index) => addDays(dates[0], index - 7))),

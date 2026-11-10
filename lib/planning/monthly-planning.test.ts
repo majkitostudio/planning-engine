@@ -31,7 +31,8 @@ describe("měsíční plánovací běh", () => {
     expect(result.ok).toBe(true);
     if (result.ok) {
       expect(result.validation.canConfirm).toBe(false);
-      expect(result.validation.unverified.some((item) => item.code === "BOUNDARY_HISTORY_INCOMPLETE")).toBe(true);
+      expect(result.validation.warnings.some((item) => item.code === "BOUNDARY_HISTORY_INCOMPLETE")).toBe(true);
+      expect(result.validation.unverified.some((item) => item.code === "COVERAGE_REQUIREMENT_MISSING")).toBe(true);
     }
   });
   it("nepřijme návrh pro jiný měsíc ani chybný tvar", async () => {

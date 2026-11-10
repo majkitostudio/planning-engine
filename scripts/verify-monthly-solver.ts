@@ -53,7 +53,10 @@ assert.deepEqual(
 
 check({ ...input, staffingRequirements: input.staffingRequirements.slice(1) }, completeBoundary, "not_verified");
 check({ ...input, availability: [] }, completeBoundary, "not_verified");
-check(input, { ...completeBoundary, before: { complete: false, assignments: [] } }, "not_verified");
+const missingBoundary: MonthlyBoundaryData = { ...completeBoundary, before: { complete: false, assignments: [] } };
+const missingBoundaryRun = check(input, missingBoundary, "valid");
+const missingBoundaryValidation = validateMonthlyPlan(input, missingBoundaryRun.assignments, missingBoundary);
+assert.ok(missingBoundaryValidation.warnings.some(({ code }) => code === "BOUNDARY_HISTORY_INCOMPLETE"));
 
 const customBoundary: MonthlyBoundaryData = { ...completeBoundary, before: { complete: true, assignments:
   [25, 26, 27, 28, 29, 30].map((day) => ({ employeeId: "e0", date: `2026-10-${day}`, startTime: "12:00", endTime: "21:00" })) } };

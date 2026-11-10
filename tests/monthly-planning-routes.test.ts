@@ -56,6 +56,14 @@ describe("měsíční plánovací API", () => {
     expect(create).toHaveBeenCalledWith(expect.objectContaining({ mode: "ortools", providerName: "ortools" }));
     expect(confirm).not.toHaveBeenCalled();
   });
+  it("odmítne klientské přepnutí nakonfigurovaného OR-Tools na simulaci", async () => {
+    monthlyMode.value = "ortools";
+    const response = await run(request({ input, providerOverride: "simulated" }));
+    expect(response.status).toBe(400);
+    expect(await response.json()).toMatchObject({ ok: false, message: expect.stringContaining("nelze měnit") });
+    expect(loadBoundary).not.toHaveBeenCalled();
+    expect(create).not.toHaveBeenCalled();
+  });
   it("při UNKNOWN neuloží návrh ani nepřepne na jiný provider", async () => {
     monthlyMode.value = "ortools";
     vi.stubEnv("PLANNING_ORTOOLS_URL", "https://solver.example/api/monthly_solver");

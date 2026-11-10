@@ -18,8 +18,8 @@ export function summarizeIntegrationRun(input: MonthlyPlanningInput, draft: Mont
     canConfirm: validation.canConfirm,
     problemCounts: countCodes(validation.problems),
     unverifiedCounts: countCodes(validation.unverified),
+    warningCounts: countCodes(validation.warnings),
     preferenceCounts: countCodes(validation.preferenceFindings),
-    workFundCounts: countCodes(validation.workFundFindings),
     durationMs: Math.round(durationMs),
   };
 }

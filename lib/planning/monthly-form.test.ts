@@ -70,35 +70,14 @@ describe("vstupy měsíčního formuláře", () => {
       expect(result.value.instructions).toBe("Pokyn");
     }
   });
-  it("převede měsíční fond a omluvené hodiny včetně české desetinné čárky", () => {
-    const form = { month: "2026-11", employees: [{ id: "e1", name: "Test" }], absences: [], availability: [], staffing: Array(14).fill("0"), instructions: "", workFunds: [{ employeeId: "e1", hours: "168", excusedHours: "8,5" }] };
-    const result = buildMonthlyFormInput(form);
-    expect(result.ok).toBe(true);
-    if (result.ok) expect(result.value.workFunds).toEqual([{ employeeId: "e1", hours: 168, excusedHours: 8.5 }]);
-    expect(buildMonthlyFormInput({ ...form, workFunds: [{ employeeId: "e1", hours: "", excusedHours: "0" }] }).ok).toBe(false);
-    expect(buildMonthlyFormInput({ ...form, workFunds: [{ employeeId: "e1", hours: "-1", excusedHours: "0" }] }).ok).toBe(false);
-    expect(buildMonthlyFormInput({ ...form, workFunds: [{ employeeId: "e1", hours: "168", excusedHours: "" }] }).ok).toBe(false);
-    expect(buildMonthlyFormInput({ ...form, workFunds: [{ employeeId: "e1", hours: "168", excusedHours: "0" }, { employeeId: "e1", hours: "160", excusedHours: "0" }] }).ok).toBe(false);
-  });
-
-  it("ponechává měsíční fond volitelný a prázdné řádky nevyžaduje", () => {
-    const employees = [{ id: "e1", name: "Test" }];
-    const base = { month: "2026-11", employees, absences: [], availability: [], staffing: Array(14).fill("0"), instructions: "" };
-    const withoutFunds = monthlyFormReadiness(base);
-    expect(withoutFunds).toMatchObject({ filledWorkFundCount: 0, missing: [], warnings: [] });
-    expect(monthlyFormReadiness({ ...base, workFunds: [{ employeeId: "e1", hours: "", excusedHours: "" }] }).missing).toEqual([]);
-    expect(monthlyFormReadiness({ ...base, workFunds: [{ employeeId: "e1", hours: "168", excusedHours: "0" }] })).toMatchObject({ filledWorkFundCount: 1 });
-    const partial = monthlyFormReadiness({ ...base, workFunds: [{ employeeId: "e1", hours: "168", excusedHours: "" }] });
-    expect(partial.filledWorkFundCount).toBe(0);
-    expect(partial.missing).toContain("Doplňte měsíční fond i omluvené hodiny pro Test, nebo obě pole vymažte.");
-  });
-
-  it("vynechá prázdné řádky fondu a návrh vytvoří i bez fondu", () => {
+  it("ignoruje fond hodin ze starého zadání při tvorbě nového návrhu", () => {
     const form = { month: "2026-11", employees: [{ id: "e1", name: "Test" }], absences: [], availability: [], staffing: Array(14).fill("0"), instructions: "" };
-    const blank = buildMonthlyFormInput({ ...form, workFunds: [{ employeeId: "e1", hours: " ", excusedHours: "" }] });
-    expect(blank.ok).toBe(true);
-    if (blank.ok) expect(blank.value).not.toHaveProperty("workFunds");
-    expect(buildMonthlyFormInput(form).ok).toBe(true);
+    const legacyForm = { ...form, workFunds: [{ employeeId: "e1", hours: "168", excusedHours: "" }] };
+    const readiness = monthlyFormReadiness(legacyForm);
+    const prepared = buildMonthlyFormInput(legacyForm);
+    expect(readiness.missing).toEqual([]);
+    expect(prepared.ok).toBe(true);
+    if (prepared.ok) expect(prepared.value).not.toHaveProperty("workFunds");
   });
 
   it("předá výslovně zvolenou preferenci střídání jako strukturovaný vstup", () => {

@@ -35,9 +35,15 @@ describe("uložení měsíčního návrhu", () => {
     expect(await store.confirm("p1", viewer, complete, new Date("2026-11-01T00:00:00Z"))).toMatchObject({ ok: false, code: "forbidden" });
     expect((await store.get("p1"))?.confirmed).toBeNull();
   });
-  it("znovu ověří podklady při potvrzení a brání potvrzení neověřeného návrhu", async () => {
+  it("umožní potvrzení, pokud jediným nedostatkem je okolní historie", async () => {
     const store = new InMemoryMonthlyStore();
     await store.create({ id: "p1", input, draft, providerName: "simulated", mode: "simulated" });
+    expect(await store.confirm("p1", manager, incomplete, new Date("2026-11-01T00:00:00Z"))).toMatchObject({ ok: true, alreadyConfirmed: false });
+    expect((await store.get("p1"))?.confirmed).not.toBeNull();
+  });
+  it("stále blokuje potvrzení při jiném neověřeném podkladu", async () => {
+    const store = new InMemoryMonthlyStore();
+    await store.create({ id: "p1", input: { ...input, staffingRequirements: input.staffingRequirements.slice(1) }, draft, providerName: "simulated", mode: "simulated" });
     expect(await store.confirm("p1", manager, incomplete, new Date("2026-11-01T00:00:00Z"))).toMatchObject({ ok: false, code: "confirmation_blocked" });
     expect((await store.get("p1"))?.confirmed).toBeNull();
   });

@@ -26,7 +26,7 @@ describe("ruční úprava měsíčního návrhu", () => {
     expect(result.ok).toBe(true);
     if (!result.ok) return;
     expect(result.validation.problems).toEqual(expect.arrayContaining([expect.objectContaining({ code: "COVERAGE_UNDERSTAFFED", date: "2026-11-30" })]));
-    expect(result.validation.unverified).toEqual(expect.arrayContaining([expect.objectContaining({ code: "BOUNDARY_HISTORY_INCOMPLETE" })]));
+    expect(result.validation.warnings).toEqual(expect.arrayContaining([expect.objectContaining({ code: "BOUNDARY_HISTORY_INCOMPLETE" })]));
     expect(result.validation.canConfirm).toBe(false);
     expect((await store.get("old"))?.draft.assignments).toEqual(draft.assignments);
     expect((await store.get("new"))?.confirmed).toBeNull();

@@ -25,7 +25,7 @@ export interface MonthlyRosterSnapshot {
   readonly days: readonly MonthlyRosterDay[];
 }
 
-/** Měsíční fond práce, který zadává manažer; aplikace výchozí hodnotu nedopočítává. */
+/** Legacy pole pro čtení starších uložených běhů; nové formuláře je neposílají. */
 export interface MonthlyWorkFund {
   readonly employeeId: string;
   /** Měsíční fond práce v hodinách. */
@@ -44,7 +44,7 @@ export interface MonthlyPlanningInput {
   readonly instructions: string;
   /** Schválené přání: střídat sousední pracovní směny i přes dny volna. */
   readonly shiftRotationPreference?: boolean;
-  /** Volitelný měsíční fond práce; chybějící záznam znamená neověřené naplnění. */
+  /** Legacy fond ze starších vstupů; neovlivňuje aktuální návrh ani kontrolu. */
   readonly workFunds?: readonly MonthlyWorkFund[];
   /** Souvislý úsek, který má plánovač vytvořit; absence zachovává celý měsíc. */
   readonly planningRange?: MonthlyPlanningRange;

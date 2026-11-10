@@ -43,7 +43,7 @@ Umístění se může měnit; při implementaci vždy ověř aktuální soubory 
 - Pokud zaměstnanec pracuje o víkendu, má mít v témže týdnu pondělí–neděle dva dny volna; nemusí být sousední.
 - Obsazení směn je konfigurovatelný vstup. Staré číselné hodnoty v testech nebo historii nejsou univerzální pravidlo.
 - Schválená absence a výslovná nedostupnost vylučují přiřazení; překrývající se směny jsou neplatné.
-- Částečný návrh lze zobrazit a prodiskutovat, ale nelze ho potvrdit. Chybějící historii na hranici měsíce označ jako `not_verified`, ne jako úspěšnou kontrolu.
+- Částečný návrh lze zobrazit a prodiskutovat, ale nelze ho potvrdit. Chybějící historii na hranici měsíce zobraz jako upozornění a povol potvrzení jen tehdy, pokud není jiný neověřený nález ani problém. Rozpor v dostupných zdrojích a prokazatelné porušení pravidla zůstávají blokující.
 - Volný text sám není deterministicky ověřená podmínka. Není schváleno konkrétní soft skóre ani matematická optimalita; nepřenášej historické váhy solveru jako produktové pravidlo.
 
 Tyto body zachycují schválené požadavky, ne potvrzení, že všechny jsou správně implementovány. Rozsah pracovněprávních pravidel je omezen; tento projektový přehled není právní výklad.

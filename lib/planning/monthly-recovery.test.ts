@@ -33,7 +33,7 @@ describe("obnovení měsíčního návrhu", () => {
     expect(result).toMatchObject({ ok: true, id: "draft", draft, validation: { canConfirm: false } });
     if (result.ok) {
       expect(result.validation.problems).toEqual(expect.arrayContaining([expect.objectContaining({ code: "COVERAGE_UNDERSTAFFED", date: "2026-11-30" })]));
-      expect(result.validation.unverified).toEqual(expect.arrayContaining([expect.objectContaining({ code: "BOUNDARY_HISTORY_INCOMPLETE" })]));
+      expect(result.validation.warnings).toEqual(expect.arrayContaining([expect.objectContaining({ code: "BOUNDARY_HISTORY_INCOMPLETE" })]));
     }
     expect(await recoverMonthlyDraft(store, "draft", "2026-12", boundary)).toMatchObject({ ok: false });
     expect(await recoverMonthlyDraft(store, "unknown", "2026-11", boundary)).toMatchObject({ ok: false });
